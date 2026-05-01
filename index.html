@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MITRE ATT&CK — Hunt Reference</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+  .index-hero { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 40px 20px; text-align: center; }
+  .index-title { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+  .index-sub { font-size: 13px; color: var(--text3); margin-bottom: 24px; }
+  .index-search-wrap { max-width: 480px; margin: 0 auto; position: relative; }
+  .index-search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+  #tactic-search { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 10px 14px 10px 36px; outline: none; transition: border-color .15s; }
+  #tactic-search:focus { border-color: var(--accent2); }
+  #tactic-search::placeholder { color: var(--text3); }
+  .section-label { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; padding: 20px 20px 8px; max-width: 1200px; margin: 0 auto; display: block; }
+  .tactic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; padding: 0 20px 28px; max-width: 1200px; margin: 0 auto; }
+  .tactic-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; text-decoration: none; transition: all .2s; display: block; }
+  .tactic-card:hover { background: var(--bg3); transform: translateY(-2px); }
+  .tactic-card.soon { opacity: .4; pointer-events: none; }
+  .card-id { font-family: var(--mono); font-size: 11px; font-weight: 700; margin-bottom: 6px; }
+  .card-name { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .card-desc { font-size: 11px; color: var(--text3); line-height: 1.6; margin-bottom: 12px; }
+  .card-count { font-family: var(--mono); font-size: 10px; color: var(--text2); }
+  .card-pill { display: inline-block; font-family: var(--mono); font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<div class="index-hero">
+  <div class="index-title">MITRE ATT&amp;CK // Hunt Reference</div>
+  <div class="index-sub">Network analyst threat hunting — indicators, detection syntax, and APT attribution across the attack lifecycle</div>
+  <div class="index-search-wrap">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+    <input id="tactic-search" type="text" placeholder="Filter tactics..." autocomplete="off">
+  </div>
+</div>
+
+<span class="section-label">Available</span>
+<div class="tactic-grid">
+  <a href="recon.html" class="tactic-card" data-tags="reconnaissance recon ta0043 scanning phishing identity network osint">
+    <div class="card-id" style="color:#58a6ff">TA0043</div>
+    <span class="card-pill" style="background:rgba(88,166,255,.12);color:#58a6ff">80 indicators · 10 techniques</span>
+    <div class="card-name">Reconnaissance</div>
+    <div class="card-desc">Pre-compromise intelligence gathering — active scanning, identity enumeration, network info, phishing for info, and OSINT collection. Arkime, Kibana, and Suricata syntax for all indicators.</div>
+    <div class="card-count">&#9654; Open reference</div>
+  </a>
+  <a href="initial_access.html" class="tactic-card" data-tags="initial access ta0001 phishing exploit supply chain valid accounts vpn rdp">
+    <div class="card-id" style="color:#3fb950">TA0001</div>
+    <span class="card-pill" style="background:rgba(63,185,80,.12);color:#3fb950">65 indicators · 9 techniques</span>
+    <div class="card-name">Initial Access</div>
+    <div class="card-desc">Gaining a foothold — valid accounts, removable media, external remote services, drive-by, public-facing app exploitation, supply chain, hardware additions, phishing, and content injection.</div>
+    <div class="card-count">&#9654; Open reference</div>
+  </a>
+  <a href="c2.html" class="tactic-card" data-tags="command control c2 ta0011 dns beacon cobalt ja3 ja4 tor proxy tunnel rmm teamviewer anydesk ngrok cloudflare">
+    <div class="card-id" style="color:#bc8cff">TA0011</div>
+    <span class="card-pill" style="background:rgba(188,140,255,.12);color:#bc8cff">74 indicators · 10 techniques</span>
+    <div class="card-name">Command &amp; Control</div>
+    <div class="card-desc">Adversary communications — application layer protocols, DGA / fast flux, web service abuse, encrypted channels (JA3/JA4), ICMP/raw TCP, proxies, domain fronting, tunneling, ingress tool transfer, RMM tool abuse.</div>
+    <div class="card-count">&#9654; Open reference</div>
+  </a>
+  <a href="discovery.html" class="tactic-card" data-tags="discovery ta0007 enumeration host port share ldap samr kerberos bloodhound trust gmsa adminsdholder">
+    <div class="card-id" style="color:#d29922">TA0007</div>
+    <span class="card-pill" style="background:rgba(210,153,34,.12);color:#d29922">42 indicators · 10 techniques</span>
+    <div class="card-name">Discovery</div>
+    <div class="card-desc">Internal reconnaissance — host enumeration, port scans, share discovery, AD account / group / trust enumeration, BloodHound signatures, Kerberos/SAMR/LSARPC patterns, file enumeration, system info gathering.</div>
+    <div class="card-count">&#9654; Open reference</div>
+  </a>
+</div>
+
+<span class="section-label" id="wip-label">Coming Soon</span>
+<div class="tactic-grid">
+
+  <div class="tactic-card soon" data-tags="credential access ta0006 kerberoasting ntlm dumping brute">
+    <div class="card-id" style="color:#f85149">TA0006</div>
+    <span class="card-pill" style="background:rgba(248,81,73,.12);color:#f85149">In progress</span>
+    <div class="card-name">Credential Access</div>
+    <div class="card-desc">Stealing credentials — Kerberoasting, AS-REP roasting, NTLM relay, credential dumping, brute force.</div>
+    <div class="card-count">Coming soon</div>
+  </div>
+
+  <div class="tactic-card soon" data-tags="lateral movement ta0008 pass hash rdp smb wmi psexec">
+    <div class="card-id" style="color:#ffa600">TA0008</div>
+    <span class="card-pill" style="background:rgba(255,166,0,.12);color:#ffa600">In progress</span>
+    <div class="card-name">Lateral Movement</div>
+    <div class="card-desc">Moving through the network — pass-the-hash, RDP hijacking, SMB lateral movement, WMI, PsExec, SSH hijacking.</div>
+    <div class="card-count">Coming soon</div>
+  </div>
+
+  <div class="tactic-card soon" data-tags="collection ta0009 email keylog screen capture data staged">
+    <div class="card-id" style="color:#39d353">TA0009</div>
+    <span class="card-pill" style="background:rgba(57,211,83,.12);color:#39d353">In progress</span>
+    <div class="card-name">Collection</div>
+    <div class="card-desc">Gathering data of interest — email collection, screen capture, keylogging, clipboard data, data staged for exfil.</div>
+    <div class="card-count">Coming soon</div>
+  </div>
+
+  <div class="tactic-card soon" data-tags="exfiltration ta0010 dns exfil c2 transfer data theft">
+    <div class="card-id" style="color:#ff7b72">TA0010</div>
+    <span class="card-pill" style="background:rgba(255,123,114,.12);color:#ff7b72">In progress</span>
+    <div class="card-name">Exfiltration</div>
+    <div class="card-desc">Moving data out — exfil over C2, DNS exfil, scheduled transfer, alternative protocols, physical media.</div>
+    <div class="card-count">Coming soon</div>
+  </div>
+
+</div>
+
+<script>
+document.getElementById('tactic-search').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  document.querySelectorAll('.tactic-card').forEach(card => {
+    const text = (card.textContent + ' ' + (card.dataset.tags || '')).toLowerCase();
+    card.style.display = !q || text.includes(q) ? '' : 'none';
+  });
+  document.getElementById('wip-label').style.display =
+    [...document.querySelectorAll('#wip-label ~ .tactic-grid .tactic-card')]
+      .some(c => c.style.display !== 'none') ? '' : 'none';
+});
+</script>
+</body>
+</html>
