@@ -2,7 +2,7 @@
 
 An offline-first, single-page network threat hunting reference. Each MITRE ATT&CK tactic page lists indicators with paste-ready query syntax for **Arkime**, **Kibana (KQL)**, and **Suricata**, plus operational notes and APT attribution context for each.
 
-Built for network analysts who want a fast lookup tool on isolated workstations.
+Built for network analysts who want a fast lookup tool that works on isolated workstations — no internet, no backend, no telemetry. Just open `index.html`.
 
 ## Live demo
 
@@ -15,7 +15,7 @@ https://crimsonpistil.github.io/hunt-reference/
 | Reconnaissance | TA0043 | 10 | 80 |
 | Initial Access | TA0001 | 9 | 65 |
 | Command & Control | TA0011 | 10 | 74 |
-| Credential Access | TA0006 | — | planned |
+| Credential Access | TA0006 | 12 | 20 |
 | Discovery | TA0007 | 10 | 42 |
 | Lateral Movement | TA0008 | 8 | 31 |
 | Collection | TA0009 | — | planned |
@@ -52,7 +52,7 @@ cd hunt-reference
 # open index.html in any browser
 ```
 
-Or download the repo as a ZIP and double-click `index.html`.
+Or just download the repo as a ZIP and double-click `index.html`. No build step, no install.
 
 For analyst workstations on isolated networks: drop the folder onto the system, open the HTML, done.
 
