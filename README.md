@@ -18,7 +18,7 @@ https://crimsonpistil.github.io/hunt-reference/
 | Credential Access | TA0006 | 12 | 20 |
 | Discovery | TA0007 | 10 | 42 |
 | Lateral Movement | TA0008 | 8 | 31 |
-| Collection | TA0009 | — | planned |
+| Collection | TA0009 | 12 | 16 |
 | Exfiltration | TA0010 | — | planned |
 
 Each indicator includes:
