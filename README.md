@@ -17,7 +17,7 @@ https://crimsonpistil.github.io/hunt-reference/
 | Command & Control | TA0011 | 10 | 74 |
 | Credential Access | TA0006 | — | planned |
 | Discovery | TA0007 | 10 | 42 |
-| Lateral Movement | TA0008 | — | planned |
+| Lateral Movement | TA0008 | 8 | 31 |
 | Collection | TA0009 | — | planned |
 | Exfiltration | TA0010 | — | planned |
 
