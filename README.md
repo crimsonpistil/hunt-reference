@@ -52,7 +52,7 @@ cd hunt-reference
 # open index.html in any browser
 ```
 
-Or just download the repo as a ZIP and double-click `index.html`. No build step, no install.
+Or download the repo as a ZIP and double-click `index.html`.
 
 For analyst workstations on isolated networks: drop the folder onto the system, open the HTML, done.
 
