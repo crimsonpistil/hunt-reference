@@ -2,7 +2,7 @@
 
 An offline-first, single-page network threat hunting reference. Each MITRE ATT&CK tactic page lists indicators with paste-ready query syntax for **Arkime**, **Kibana (KQL)**, and **Suricata**, plus operational notes and APT attribution context for each.
 
-Built for network analysts who want a fast lookup tool that works on isolated workstations — no internet, no backend, no telemetry. Just open `index.html`.
+Built for network analysts who want a fast lookup tool on isolated workstations.
 
 ## Live demo
 
@@ -52,7 +52,7 @@ cd hunt-reference
 # open index.html in any browser
 ```
 
-Or just download the repo as a ZIP and double-click `index.html`. No build step, no install.
+Or download the repo as a ZIP and double-click `index.html`.
 
 For analyst workstations on isolated networks: drop the folder onto the system, open the HTML, done.
 
