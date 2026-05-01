@@ -25,6 +25,23 @@
   .card-desc { font-size: 11px; color: var(--text3); line-height: 1.6; margin-bottom: 12px; }
   .card-count { font-family: var(--mono); font-size: 10px; color: var(--text2); }
   .card-pill { display: inline-block; font-family: var(--mono); font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px; margin-bottom: 10px; }
+
+  .info-section { max-width: 1200px; margin: 16px auto 0; padding: 0 20px 32px; }
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .info-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+  .info-card h3 { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; }
+  .info-card p { font-size: 12px; color: var(--text2); line-height: 1.65; margin: 0 0 8px; }
+  .info-card p:last-child { margin-bottom: 0; }
+  .info-card ul { margin: 0; padding: 0 0 0 16px; font-size: 12px; color: var(--text2); line-height: 1.7; }
+  .info-card ul li { margin-bottom: 4px; }
+  .info-card code { font-family: var(--mono); font-size: 11px; background: var(--bg3); padding: 1px 5px; border-radius: 3px; color: var(--text); }
+  .info-callout { background: var(--bg3); border-left: 2px solid var(--accent2); padding: 10px 14px; border-radius: 0 4px 4px 0; font-size: 11px; color: var(--text2); line-height: 1.6; margin-top: 10px; }
+  .info-callout code { background: var(--bg2); }
+
+  footer.site-footer { margin-top: auto; padding: 22px 20px; border-top: 1px solid var(--border); background: var(--bg2); text-align: center; }
+  footer.site-footer p { font-size: 11px; color: var(--text3); line-height: 1.6; margin: 0 0 4px; }
+  footer.site-footer p:last-child { margin-bottom: 0; }
+  footer.site-footer code { font-family: var(--mono); font-size: 10px; color: var(--text2); }
 </style>
 </head>
 <body>
@@ -42,7 +59,7 @@
 <div class="tactic-grid">
   <a href="recon.html" class="tactic-card" data-tags="reconnaissance recon ta0043 scanning phishing identity network osint">
     <div class="card-id" style="color:#58a6ff">TA0043</div>
-    <span class="card-pill" style="background:rgba(88,166,255,.12);color:#58a6ff">80 indicators · 10 techniques</span>
+    <span class="card-pill" style="background:rgba(88,166,255,.12);color:#58a6ff">80 indicators · 8 techniques</span>
     <div class="card-name">Reconnaissance</div>
     <div class="card-desc">Pre-compromise intelligence gathering — active scanning, identity enumeration, network info, phishing for info, and OSINT collection. Arkime, Kibana, and Suricata syntax for all indicators.</div>
     <div class="card-count">&#9654; Open reference</div>
@@ -102,6 +119,50 @@
   </a>
 </div>
 
+<span class="section-label">About this reference</span>
+<section class="info-section">
+  <div class="info-grid">
+
+    <div class="info-card">
+      <h3>What this is</h3>
+      <p>A network threat hunting reference covering eight MITRE ATT&amp;CK tactics across the intrusion lifecycle. Every indicator includes paste-ready query syntax for <strong>Arkime</strong>, <strong>Kibana (KQL)</strong>, and <strong>Suricata</strong>, plus operational notes and APT attribution context.</p>
+      <p>Built for SOC analysts and threat hunters working in environments where pulling docs from the internet isn't an option. Single-page, fully offline, no telemetry.</p>
+    </div>
+
+    <div class="info-card">
+      <h3>How to use it</h3>
+      <ul>
+        <li>Pick a tactic card above to open its reference page</li>
+        <li>Use the search box or technique filter buttons to narrow down indicators</li>
+        <li>Copy the query syntax matching your tool (Arkime, Kibana, or Suricata)</li>
+        <li>Click the &#9733; star on any row to add it to your hunt list</li>
+        <li>Open <strong>My Hunts</strong> from the header to review and export your hunt as TXT or CSV with a CMS-ready template</li>
+      </ul>
+      <div class="info-callout">
+        Variables like <code>$INTERNAL</code>, <code>$DOMAIN_CONTROLLERS</code>, and <code>$ADMIN_HOSTS</code> in queries are placeholders &mdash; replace them with values from your environment before running.
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h3>About hunts</h3>
+      <p>Starred indicators persist across browser restarts and sync across open tabs in real-time. Hunts are stored in <code>localStorage</code> under the key <code>hunt_reference_hunts_v1</code> &mdash; nothing leaves your browser.</p>
+      <p>Each export comes pre-formatted as a CMS-ready hunt package with timestamps, technique IDs, query syntax, and notes. Ordering is chronological so the export reads as a hunt timeline.</p>
+    </div>
+
+    <div class="info-card">
+      <h3>About MITRE ATT&amp;CK</h3>
+      <p>MITRE ATT&amp;CK is the industry-standard framework cataloging real-world adversary behavior across the attack lifecycle &mdash; reconnaissance through exfiltration. Each technique (T-number) describes a specific tactic adversaries use, with documented examples from real intrusions.</p>
+      <p>This reference is organized around ATT&amp;CK tactics so detection work maps cleanly to the same taxonomy used in CISA advisories, vendor reporting, and red team engagements.</p>
+    </div>
+
+  </div>
+</section>
+
+<footer class="site-footer">
+  <p>Built on the MITRE ATT&amp;CK<sup>&reg;</sup> framework. ATT&amp;CK is a registered trademark of The MITRE Corporation.</p>
+  <p><code>~/hunt-reference</code> &middot; offline-first network threat hunting reference</p>
+</footer>
+
 <script>
 document.getElementById('tactic-search').addEventListener('input', function() {
   const q = this.value.toLowerCase().trim();
@@ -109,9 +170,6 @@ document.getElementById('tactic-search').addEventListener('input', function() {
     const text = (card.textContent + ' ' + (card.dataset.tags || '')).toLowerCase();
     card.style.display = !q || text.includes(q) ? '' : 'none';
   });
-  document.getElementById('wip-label').style.display =
-    [...document.querySelectorAll('#wip-label ~ .tactic-grid .tactic-card')]
-      .some(c => c.style.display !== 'none') ? '' : 'none';
 });
 </script>
 </body>
