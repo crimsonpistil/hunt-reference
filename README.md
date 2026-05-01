@@ -12,14 +12,15 @@ https://crimsonpistil.github.io/hunt-reference/
 
 | Tactic | ID | Techniques | Indicators |
 |---|---|---|---|
-| Reconnaissance | TA0043 | 10 | 80 |
+| Reconnaissance | TA0043 | 8 | 80 |
 | Initial Access | TA0001 | 9 | 65 |
 | Command & Control | TA0011 | 10 | 74 |
 | Credential Access | TA0006 | 12 | 20 |
 | Discovery | TA0007 | 10 | 42 |
 | Lateral Movement | TA0008 | 8 | 31 |
 | Collection | TA0009 | 12 | 16 |
-| Exfiltration | TA0010 | — | planned |
+| Exfiltration | TA0010 | 11 | 15 |
+| **Total** | **8 tactics** | **80** | **343** |
 
 Each indicator includes:
 
