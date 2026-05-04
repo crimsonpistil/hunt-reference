@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MITRE ATT&CK — Hunt Reference</title>
+<title>MITRE ATT&CK // Host Threat Hunt Reference</title>
+<meta name="description" content="MITRE ATT&CK network-based detection reference. Kibana, Arkime, Suricata filters/queries. APT Correlation. OSINT Notes.">
 <link rel="stylesheet" href="css/style.css">
 <style>
   body { display: flex; flex-direction: column; min-height: 100vh; }
@@ -53,7 +54,7 @@
     <a href="https://host.6b74.dev" class="switcher-side">HOST</a>
   </div>
   <div class="index-title">MITRE ATT&amp;CK // Hunt Reference</div>
-  <div class="index-sub">Network analyst threat hunting — indicators, detection syntax, and APT attribution across the attack lifecycle</div>
+  <div class="index-sub">Network analyst threat hunting: indicators, detection syntax, and APT attribution across the attack lifecycle</div>
   <div class="index-search-wrap">
     <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
     <input id="tactic-search" type="text" placeholder="Filter tactics..." autocomplete="off">
@@ -66,28 +67,28 @@
     <div class="card-id" style="color:#58a6ff">TA0043</div>
     <span class="card-pill" style="background:rgba(88,166,255,.12);color:#58a6ff">80 indicators · 8 techniques</span>
     <div class="card-name">Reconnaissance</div>
-    <div class="card-desc">Pre-compromise intelligence gathering — active scanning, identity enumeration, network info, phishing for info, and OSINT collection. Arkime, Kibana, and Suricata syntax for all indicators.</div>
+    <div class="card-desc">Pre-compromise intelligence gathering - active scanning, identity enumeration, network info, phishing for info, and OSINT collection. Arkime, Kibana, and Suricata syntax for all indicators.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
   <a href="initial_access.html" class="tactic-card" data-tags="initial access ta0001 phishing exploit supply chain valid accounts vpn rdp">
     <div class="card-id" style="color:#3fb950">TA0001</div>
     <span class="card-pill" style="background:rgba(63,185,80,.12);color:#3fb950">65 indicators · 9 techniques</span>
     <div class="card-name">Initial Access</div>
-    <div class="card-desc">Gaining a foothold — valid accounts, removable media, external remote services, drive-by, public-facing app exploitation, supply chain, hardware additions, phishing, and content injection.</div>
+    <div class="card-desc">Gaining a foothold - valid accounts, removable media, external remote services, drive-by, public-facing app exploitation, supply chain, hardware additions, phishing, and content injection.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
   <a href="c2.html" class="tactic-card" data-tags="command control c2 ta0011 dns beacon cobalt ja3 ja4 tor proxy tunnel rmm teamviewer anydesk ngrok cloudflare">
     <div class="card-id" style="color:#bc8cff">TA0011</div>
     <span class="card-pill" style="background:rgba(188,140,255,.12);color:#bc8cff">74 indicators · 10 techniques</span>
     <div class="card-name">Command &amp; Control</div>
-    <div class="card-desc">Adversary communications — application layer protocols, DGA / fast flux, web service abuse, encrypted channels (JA3/JA4), ICMP/raw TCP, proxies, domain fronting, tunneling, ingress tool transfer, RMM tool abuse.</div>
+    <div class="card-desc">Adversary communications - application layer protocols, DGA / fast flux, web service abuse, encrypted channels (JA3/JA4), ICMP/raw TCP, proxies, domain fronting, tunneling, ingress tool transfer, RMM tool abuse.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
   <a href="discovery.html" class="tactic-card" data-tags="discovery ta0007 enumeration host port share ldap samr kerberos bloodhound trust gmsa adminsdholder">
     <div class="card-id" style="color:#d29922">TA0007</div>
     <span class="card-pill" style="background:rgba(210,153,34,.12);color:#d29922">42 indicators · 10 techniques</span>
     <div class="card-name">Discovery</div>
-    <div class="card-desc">Internal reconnaissance — host enumeration, port scans, share discovery, AD account / group / trust enumeration, BloodHound signatures, Kerberos/SAMR/LSARPC patterns, file enumeration, system info gathering.</div>
+    <div class="card-desc">Internal reconnaissance - host enumeration, port scans, share discovery, AD account / group / trust enumeration, BloodHound signatures, Kerberos/SAMR/LSARPC patterns, file enumeration, system info gathering.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
 
@@ -95,7 +96,7 @@
     <div class="card-id" style="color:#ffa600">TA0008</div>
     <span class="card-pill" style="background:rgba(255,166,0,.12);color:#ffa600">31 indicators · 8 techniques</span>
     <div class="card-name">Lateral Movement</div>
-    <div class="card-desc">Adversary movement between hosts — RDP, SMB administrative shares (PsExec/Impacket), DCOM (MMC20.Application), SSH, WinRM/PSRemoting, lateral tool transfer, EternalBlue/ZeroLogon/PrintNightmare exploits, session hijacking.</div>
+    <div class="card-desc">Adversary movement between hosts - RDP, SMB administrative shares (PsExec/Impacket), DCOM (MMC20.Application), SSH, WinRM/PSRemoting, lateral tool transfer, EternalBlue/ZeroLogon/PrintNightmare exploits, session hijacking.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
 
@@ -103,7 +104,7 @@
     <div class="card-id" style="color:#f85149">TA0006</div>
     <span class="card-pill" style="background:rgba(248,81,73,.12);color:#f85149">20 indicators · 12 techniques</span>
     <div class="card-name">Credential Access</div>
-    <div class="card-desc">Stealing or extracting credentials — Kerberoasting, AS-REProasting, DCSync, password spraying, NTLM coercion (PetitPotam/PrinterBug/DFSCoerce), LLMNR poisoning + relay, Golden/Silver Tickets, credential stuffing, private key theft, LSASS dumping, MFA fatigue.</div>
+    <div class="card-desc">Stealing or extracting credentials - Kerberoasting, AS-REProasting, DCSync, password spraying, NTLM coercion (PetitPotam/PrinterBug/DFSCoerce), LLMNR poisoning + relay, Golden/Silver Tickets, credential stuffing, private key theft, LSASS dumping, MFA fatigue.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
 
@@ -111,7 +112,7 @@
     <div class="card-id" style="color:#39d353">TA0009</div>
     <span class="card-pill" style="background:rgba(57,211,83,.12);color:#39d353">16 indicators · 12 techniques</span>
     <div class="card-name">Collection</div>
-    <div class="card-desc">Gathering data for theft — bulk SMB share traversal, Confluence/SharePoint/code repo enumeration, EWS bulk email reads, forwarding rule creation, S3/Blob bulk download, network device config dumps, local/remote staging, archive creation including password-protected.</div>
+    <div class="card-desc">Gathering data for theft - bulk SMB share traversal, Confluence/SharePoint/code repo enumeration, EWS bulk email reads, forwarding rule creation, S3/Blob bulk download, network device config dumps, local/remote staging, archive creation including password-protected.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
 
@@ -119,7 +120,7 @@
     <div class="card-id" style="color:#ff7b72">TA0010</div>
     <span class="card-pill" style="background:rgba(255,123,114,.12);color:#ff7b72">15 indicators · 11 techniques</span>
     <div class="card-name">Exfiltration</div>
-    <div class="card-desc">Moving data out — exfil over C2 channel (HTTPS POST bursts, DNS tunneling, bytes ratio), SSH/FTP/outbound SMB, exfil-friendly cloud (Mega, Bunkr) and mainstream cloud volume anomalies, code repo abuse, paste sites, Discord webhook stealer pattern, scheduled/chunked/automated timing fingerprints.</div>
+    <div class="card-desc">Moving data out - exfil over C2 channel (HTTPS POST bursts, DNS tunneling, bytes ratio), SSH/FTP/outbound SMB, exfil-friendly cloud (Mega, Bunkr) and mainstream cloud volume anomalies, code repo abuse, paste sites, Discord webhook stealer pattern, scheduled/chunked/automated timing fingerprints.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
 </div>
@@ -152,12 +153,6 @@
       <h3>About hunts</h3>
       <p>Starred indicators persist across browser restarts and sync across open tabs in real-time. Hunts are stored in <code>localStorage</code> under the key <code>hunt_reference_hunts_v1</code> &mdash; nothing leaves your browser.</p>
       <p>Each export comes pre-formatted as a CMS-ready hunt package with timestamps, technique IDs, query syntax, and notes. Ordering is chronological so the export reads as a hunt timeline.</p>
-    </div>
-
-    <div class="info-card">
-      <h3>About MITRE ATT&amp;CK</h3>
-      <p>MITRE ATT&amp;CK is the industry-standard framework cataloging real-world adversary behavior across the attack lifecycle &mdash; reconnaissance through exfiltration. Each technique (T-number) describes a specific tactic adversaries use, with documented examples from real intrusions.</p>
-      <p>This reference is organized around ATT&amp;CK tactics so detection work maps cleanly to the same taxonomy used in CISA advisories, vendor reporting, and red team engagements.</p>
     </div>
 
   </div>
