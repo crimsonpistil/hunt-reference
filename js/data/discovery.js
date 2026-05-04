@@ -141,7 +141,7 @@ AND network.protocol: netbios-ns`,
 && ip.src != $DNS_SERVERS
 && protocols == dns
 && dns.query-type == PTR
-&& dns.host =~ /\\.in-addr\\.arpa$/
+&& dns.host == "*.in-addr.arpa"
 && unique-ptr-count groupby
   ip.src > 50 within 300s`,
         kibana: `source.ip: $INTERNAL
@@ -759,10 +759,11 @@ AND smb.command: "get_dfs_referral"`,
 && ip.src != $LDAP_CLIENTS
 && port.dst == [389 || 636]
 && protocols == ldap
-&& ldap.filter =~
-  /\\(objectClass=user\\)|
-   \\(objectCategory=person\\)|
-   \\(samAccountType=805306368\\)/
+&& ldap.filter == [
+  *(objectClass=user)*
+  || *(objectCategory=person)*
+  || *(samAccountType=805306368)*
+]
 && ldap.scope == subtree`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $LDAP_CLIENTS
@@ -797,15 +798,19 @@ AND ldap.filter: (
         arkime: `ip.src == $INTERNAL
 && port.dst == [389 || 636]
 && protocols == ldap
-&& ldap.filter =~
-  /\\(\\|\\(samAccountType=
-   805306368\\)\\(samAccountType=
-   805306369\\)\\(samAccountType=
-   536870912\\)\\(samAccountType=
-   536870913\\)\\(objectCategory=
-   group\\)\\(objectCategory=
-   organizationalUnit\\)/
-&& ldap.attributes-count > 20`,
+&& ldap.filter == [
+  *samAccountType=805306368*
+  || *samAccountType=805306369*
+  || *samAccountType=536870912*
+  || *samAccountType=536870913*
+  || *objectCategory=group*
+  || *objectCategory=organizationalUnit*
+]
+&& ldap.attributes-count > 20
+// BloodHound's signature is a deeply-nested OR filter
+// querying for many object types in one request. The
+// list above catches the components; the full nested
+// pattern is in the Suricata pcre column.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: *samAccountType=805306368*
@@ -840,10 +845,10 @@ AND ldap.filter: *objectCategory=group*`,
         arkime: `ip.src == $INTERNAL
 && port.dst == [389 || 636]
 && protocols == ldap
-&& ldap.filter =~
-  /\\(servicePrincipalName=
-   \\*\\)|
-   \\(.*servicePrincipalName.*\\)/
+&& ldap.filter == [
+  *(servicePrincipalName=*)*
+  || *servicePrincipalName*
+]
 && ldap.scope == subtree`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
@@ -873,9 +878,7 @@ AND ldap.filter: *servicePrincipalName*`,
         arkime: `ip.src == $INTERNAL
 && port.dst == [389 || 636]
 && protocols == ldap
-&& ldap.filter =~
-  /userAccountControl:1\\.2\\.840
-   \\.113556\\.1\\.4\\.803:=4194304/`,
+&& ldap.filter == "*userAccountControl:1.2.840.113556.1.4.803:=4194304*"`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: *4194304*`,
@@ -984,11 +987,12 @@ AND kerberos.error_code: (
         arkime: `ip.src == $INTERNAL
 && port.dst == [389 || 636]
 && protocols == ldap
-&& ldap.filter =~
-  /CN=Domain Admins|
-   CN=Enterprise Admins|
-   CN=Schema Admins|
-   adminCount=1/`,
+&& ldap.filter == [
+  *CN=Domain Admins*
+  || *CN=Enterprise Admins*
+  || *CN=Schema Admins*
+  || *adminCount=1*
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: (
@@ -1025,9 +1029,7 @@ AND ldap.filter: (
         arkime: `ip.src == $INTERNAL
 && port.dst == [389 || 636]
 && protocols == ldap
-&& ldap.filter =~
-  /memberOf:1\\.2\\.840\\.113556
-   \\.1\\.4\\.1941:=/
+&& ldap.filter == "*memberOf:1.2.840.113556.1.4.1941:=*"
 && ldap.scope == subtree`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
@@ -1127,11 +1129,10 @@ AND dcerpc.interface_uuid: (
         arkime: `ip.src == $INTERNAL
 && port.dst == [389 || 636]
 && protocols == ldap
-&& ldap.filter =~
-  /\\(objectClass=msDS-Group
-   ManagedServiceAccount\\)|
-   \\(samAccountType=
-   536870913\\)/`,
+&& ldap.filter == [
+  *(objectClass=msDS-GroupManagedServiceAccount)*
+  || *(samAccountType=536870913)*
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: (
@@ -1169,9 +1170,10 @@ AND ldap.filter: (
         arkime: `ip.src == $INTERNAL
 && port.dst == [389 || 636]
 && protocols == ldap
-&& ldap.filter =~
-  /\\(objectClass=trustedDomain\\)|
-   \\(objectCategory=trustedDomain\\)/`,
+&& ldap.filter == [
+  *(objectClass=trustedDomain)*
+  || *(objectCategory=trustedDomain)*
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: (
@@ -1311,8 +1313,7 @@ AND ldap.attributes: (
         arkime: `ip.src == $INTERNAL
 && protocols == dns
 && dns.query-type == SRV
-&& dns.host =~
-  /_ldap\\._tcp\\..+/
+&& dns.host == "_ldap._tcp.*"
 && dns.host != $LOCAL_DOMAIN_SRV
 && session-count groupby
   ip.src > 5 within 600s`,

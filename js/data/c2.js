@@ -307,10 +307,13 @@ AND NOT destination.ip: $KNOWN_MAIL_PROVIDERS`,
         indicator: "DNS tunneling - high volume of long subdomain queries to single domain",
         arkime: `ip.src == $INTERNAL
 && protocols == dns
-&& dns.host =~ /^[a-zA-Z0-9]
-  {30,}\\..+/
 && dns.query-count groupby
-  dns.host > 50 within 600s`,
+  dns.host > 50 within 600s
+&& dns.host != $KNOWN_GOOD
+// Long-subdomain detection requires regex - not
+// expressible in pure Arkime. See Suricata pcre column
+// or use Kibana KQL regex syntax for runtime matching.
+// Logical spec: dns.host matches /^[a-zA-Z0-9]{30,}\\..+/`,
         kibana: `source.ip: $INTERNAL
 AND network.protocol: dns
 AND dns.question.name: /[a-zA-Z0-9]{30,}\\..+/`,
@@ -496,11 +499,12 @@ AND NOT dns.question.name: $KNOWN_GOOD`,
         indicator: "High-entropy domain queries - algorithmically generated subdomain or domain string",
         arkime: `ip.src == $INTERNAL
 && protocols == dns
-&& dns.host =~ /^[a-z0-9]
-  {12,30}\\.(com|net|org|info|
-  biz|us|ru|cn|tk|ml|ga|cf|
-  xyz|top|online|site)$/
-&& dns.host != $KNOWN_GOOD`,
+&& dns.host != $KNOWN_GOOD
+// DGA / high-entropy detection requires regex - not
+// expressible in pure Arkime. See Suricata pcre column
+// or use Kibana KQL regex syntax for runtime matching.
+// Logical spec: dns.host matches
+//   /^[a-z0-9]{12,30}\\.(com|net|org|info|biz|us|ru|cn|tk|ml|ga|cf|xyz|top|online|site)$/`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.name: /[a-z0-9]{12,30}\\.(com|net|org|info|biz|tk|ml|xyz|top)/
 AND NOT dns.question.name: $KNOWN_GOOD`,
@@ -536,8 +540,11 @@ AND NOT dns.question.name: $KNOWN_GOOD`,
   ip.dst > 10 within 60s
 && subsequent.dns.response-code
   == NOERROR
-&& subsequent.dns.host
-  =~ /^[a-z0-9]{10,}\\..+/`,
+// DGA round-success detection requires regex on the
+// subsequent successful host - not expressible in
+// pure Arkime. See Suricata pcre column.
+// Logical spec: subsequent.dns.host matches
+//   /^[a-z0-9]{10,}\\..+/`,
         kibana: `destination.ip: $INTERNAL
 AND network.protocol: dns
 AND ((dns.response_code: "NXDOMAIN" AND _exists_: dns.question.name)
@@ -1197,7 +1204,7 @@ AND NOT tls.client.ja4: $HOST_JA4_BASELINE`,
         indicator: "JA4 fingerprint inconsistent with claimed User-Agent - TLS client lying about browser identity",
         arkime: `ip.src == $INTERNAL
 && protocols == [tls && http]
-&& http.user-agent =~ /Mozilla/
+&& http.user-agent == "*Mozilla*"
 && tls.ja4 != $BROWSER_JA4_RANGE`,
         kibana: `source.ip: $INTERNAL
 AND user_agent.original: *Mozilla*
@@ -1904,9 +1911,11 @@ AND destination.port: (
   e7d705a3286e19ea42f587b344ee6865
   || 7dd50e112cd23734a310b90f6f44a7cd
 ]
-|| tls.cert-subject =~
-  /CN=[a-f0-9]{16,}/
-&& port.dst == [443 || 80]`,
+&& port.dst == [443 || 80]
+// Random-CN cert detection requires regex - not
+// expressible in pure Arkime. See Suricata pcre column.
+// Logical spec: tls.cert-subject matches
+//   /CN=[a-f0-9]{16,}/`,
         kibana: `source.ip: $INTERNAL
 AND tls.client.ja3: (
   "e7d705a3286e19ea42f587b344ee6865"
@@ -2554,9 +2563,12 @@ AND NOT destination.ip: $KNOWN_GOOD`,
   || *.vbs || *.hta
   || *.bat || *.scr
 ]
-&& dns.host =~ /\\.(xyz|top|club|
-  online|site|live|fun|pw|cc|
-  tk|ml|ga|cf)$/
+&& dns.host == [
+  *.xyz || *.top || *.club
+  || *.online || *.site || *.live
+  || *.fun || *.pw || *.cc
+  || *.tk || *.ml || *.ga || *.cf
+]
 || dns.host-age < 14d`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET
@@ -2596,14 +2608,17 @@ AND url.domain: /.+\\.(xyz|top|club|online|site|tk|ml|ga|cf)$/`,
         indicator: "Executable downloaded from IP address rather than domain - direct-IP fetch bypassing DNS reputation",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& http.host =~ /^[0-9]+\\.[0-9]+
-  \\.[0-9]+\\.[0-9]+$/
 && http.uri == [
   *.exe || *.dll || *.ps1
   || *.vbs || *.hta
   || *.bat || *.scr
 ]
-&& ip.dst != $KNOWN_GOOD`,
+&& ip.dst != $KNOWN_GOOD
+// Direct-IP host detection requires regex - not
+// expressible in pure Arkime (http.host is a string,
+// no IP-shape match operator). See Suricata pcre column.
+// Logical spec: http.host matches
+//   /^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$/`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: /^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$/
 AND url.path: (
@@ -2641,10 +2656,8 @@ AND url.path: (
         arkime: `ip.dst == $INTERNAL
 && protocols == http
 && http.statuscode == 200
-&& http.response-body =~
-  /TVqQAAMAAAAEAAAA/
-|| http.response-body =~
-  /4d5a900003000000/`,
+&& (http.response-body == "*TVqQAAMAAAAEAAAA*"
+    || http.response-body == "*4d5a900003000000*")`,
         kibana: `destination.ip: $INTERNAL
 AND http.response.status_code: 200
 AND http.response.body: (

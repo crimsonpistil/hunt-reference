@@ -138,8 +138,7 @@ AND rdp.auth_result: "failure"`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 3389
 && protocols == rdp
-&& rdp.cookie =~
-  /Cookie: mstshash=/
+&& rdp.cookie == "*Cookie: mstshash=*"
 && rdp.security-protocol ==
   Standard
 && ip.src != $LEGACY_RDP_CLIENTS`,
@@ -171,9 +170,13 @@ AND rdp.security_protocol: "standard"`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 3389
 && protocols == rdp
-&& payload =~
-  /\\x03\\x00.{2}\\x02\\xf0\\x80
-   .*MS_T120/`,
+&& payload == "*MS_T120*"
+// BlueKeep's full byte signature (TPKT header +
+// MS_T120 channel reference) requires regex on
+// binary payload - not expressible in pure Arkime.
+// See Suricata pcre column for full byte-pattern match.
+// Logical spec: payload matches
+//   /\\x03\\x00.{2}\\x02\\xf0\\x80.*MS_T120/`,
         kibana: `destination.port: 3389
 AND _exists_: rdp.channel
 AND rdp.channel: "MS_T120"`,
@@ -318,8 +321,13 @@ AND smb.share.name: (
 && protocols == smb
 && smb.command == [write || create]
 && smb.share-name == ADMIN$
-&& smb.filename =~
-  /\\.(exe|dll|bat|ps1|vbs)$/i`,
+&& smb.filename == [
+  *.exe
+  || *.dll
+  || *.bat
+  || *.ps1
+  || *.vbs
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND smb.share.name: "ADMIN$"
@@ -385,9 +393,13 @@ AND dcerpc.opnum: (12 OR 24 OR 31)`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& smb.pipe-name =~
-  /psexesvc|paexec|remcom|
-   csexec|impacket-/i`,
+&& smb.pipe-name == [
+  *psexesvc*
+  || *paexec*
+  || *remcom*
+  || *csexec*
+  || *impacket-*
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND smb.named_pipe: (
@@ -423,8 +435,11 @@ AND smb.named_pipe: (
 && protocols == smb
 && smb.command == read
 && smb.share-name == ADMIN$
-&& smb.filename =~
-  /__\\d+\\.\\d+/`,
+// Impacket wmiexec.py writes output files named
+// __<timestamp>.<microseconds> - filename pattern
+// requires regex, not expressible in pure Arkime.
+// See Suricata pcre column.
+// Logical spec: smb.filename matches /__\\d+\\.\\d+/`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND smb.share.name: "ADMIN$"
@@ -495,8 +510,7 @@ AND dcerpc.opnum: (3 OR 4)`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 135
 && protocols == dcerpc
-&& payload =~
-  /49B2791A-B1AE-4C90-9B8E-E860BA07F889/i`,
+&& payload == "*49B2791A-B1AE-4C90-9B8E-E860BA07F889*"`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 135
 AND _exists_: dcerpc.activation_clsid
@@ -527,9 +541,10 @@ AND dcerpc.activation_clsid: "49b2791a-b1ae-4c90-9b8e-e860ba07f889"`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 135
 && protocols == dcerpc
-&& payload =~
-  /9BA05972-F6A8-11CF-A442-00A0C90A8F39|
-   C08AFD90-F2A1-11D1-8455-00A0C91F3880/i`,
+&& payload == [
+  *9BA05972-F6A8-11CF-A442-00A0C90A8F39*
+  || *C08AFD90-F2A1-11D1-8455-00A0C91F3880*
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 135
 AND dcerpc.activation_clsid: (
@@ -560,9 +575,10 @@ AND dcerpc.activation_clsid: (
         arkime: `ip.src == $INTERNAL
 && port.dst == 135
 && protocols == dcerpc
-&& payload =~
-  /00020812-0000-0000-C000-000000000046|
-   00024500-0000-0000-C000-000000000046/i`,
+&& payload == [
+  *00020812-0000-0000-C000-000000000046*
+  || *00024500-0000-0000-C000-000000000046*
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 135
 AND dcerpc.activation_clsid: (
@@ -796,10 +812,9 @@ AND destination.port: (5985 OR 5986)`,
         arkime: `ip.src == $INTERNAL
 && port.dst == [5985 || 5986]
 && protocols == http
-&& http.uri =~ /\\/wsman/
+&& http.uri == "*/wsman*"
 && http.method == POST
-&& http.user-agent =~
-  /Microsoft WinRM Client/`,
+&& http.user-agent == "*Microsoft WinRM Client*"`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (5985 OR 5986)
 AND url.path: */wsman*
@@ -831,9 +846,16 @@ AND user_agent.original: *Microsoft WinRM Client*`,
         arkime: `ip.src == $INTERNAL
 && port.dst == [5985 || 5986]
 && protocols == http
-&& http.user-agent =~
-  /Ruby|^Faraday/i
-&& http.uri =~ /\\/wsman/`,
+&& http.user-agent == [
+  *Ruby*
+  || *Faraday*
+]
+&& http.uri == "*/wsman*"
+// Note: Faraday match here is a substring match.
+// Original regex anchored to start of UA (/^Faraday/).
+// Pure Arkime cannot anchor on string start - the
+// substring match may catch UAs containing "Faraday"
+// elsewhere. Acceptable trade-off for this indicator.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (5985 OR 5986)
 AND user_agent.original: (*Ruby* OR Faraday*)
@@ -905,8 +927,16 @@ AND destination.bytes > 50000`,
 && port.dst == 445
 && protocols == smb
 && smb.command == write
-&& smb.filename =~
-  /\\.(exe|dll|bat|ps1|vbs|7z|zip|rar)$/i
+&& smb.filename == [
+  *.exe
+  || *.dll
+  || *.bat
+  || *.ps1
+  || *.vbs
+  || *.7z
+  || *.zip
+  || *.rar
+]
 && session-count groupby
   ip.src > 10 within 300s`,
         kibana: `source.ip: $INTERNAL
@@ -956,7 +986,11 @@ AND file.name: /.+\\.(exe|dll|bat|ps1|vbs|7z|zip|rar)$/`,
 && smb.command == [
   trans2 || nt_trans
 ]
-&& payload =~ /\\xff\\x53\\x4d\\x42\\x32/`,
+// EternalBlue's SMB header byte signature
+// (\\xff\\x53\\x4d\\x42\\x32 = "\\xffSMB2") requires
+// regex on binary payload - not expressible in
+// pure Arkime. See Suricata pcre column.
+// Logical spec: payload matches /\\xff\\x53\\x4d\\x42\\x32/`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND smb.dialect: ("NT LM 0.12" OR "PC NETWORK PROGRAM 1.0")
@@ -992,7 +1026,10 @@ AND smb.command: ("trans2" OR "nt_trans")`,
 && dcerpc.interface ==
   12345678-1234-abcd-ef00-01234567cffb
 && dcerpc.opnum == 26
-&& payload =~ /\\x00{16}/`,
+// ZeroLogon all-zero credential signature requires
+// regex on binary payload - not expressible in pure
+// Arkime. See Suricata pcre column.
+// Logical spec: payload matches /\\x00{16}/`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "12345678-1234-abcd-ef00-01234567cffb"
@@ -1028,8 +1065,13 @@ AND dcerpc.opnum: 26`,
 && dcerpc.interface ==
   12345678-1234-abcd-ef00-0123456789ab
 && dcerpc.opnum == 89
-&& payload =~ /\\\\\\?\\?\\\\UNC\\\\|
-  \\\\\\\\.+\\\\.+\\.dll/`,
+&& payload == [
+  *\\??\\UNC\\*
+  || *.dll*
+]
+// Full UNC-path-with-DLL signature requires regex - the
+// list above catches the components. See Suricata pcre column.
+// Logical spec: payload matches /\\\\\\?\\?\\\\UNC\\\\|\\\\\\\\.+\\\\.+\\.dll/`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "12345678-1234-abcd-ef00-0123456789ab"

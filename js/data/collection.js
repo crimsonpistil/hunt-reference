@@ -51,7 +51,15 @@ AND _exists_: file.path`,
 && ip.src != $ADMIN_HOSTS
 && port.dst == 445
 && protocols == smb
-&& smb.tree =~ /\\\\\\\\.+\\\\(C\\$|ADMIN\\$|IPC\\$|.+\\$)/i`,
+&& smb.tree == [
+  *\\\\C$
+  || *\\\\ADMIN$
+  || *\\\\IPC$
+]
+// Generic admin/hidden-share detection (any *$ share)
+// requires regex - not expressible in pure Arkime.
+// See Suricata pcre column for full coverage.
+// Logical spec: smb.tree matches /\\\\\\\\.+\\\\.+\\$/`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $ADMIN_HOSTS
 AND destination.port: 445
@@ -81,11 +89,20 @@ AND smb.tree: (*$\\C$ OR *$\\ADMIN$ OR *\\*$)`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& smb.filename =~
-  /password|passwd|secret|credential|
-   confidential|payroll|salary|ssn|
-   tax|merger|acquisition|
-   financial.{0,10}statement/i`,
+&& smb.filename == [
+  *password*
+  || *passwd*
+  || *secret*
+  || *credential*
+  || *confidential*
+  || *payroll*
+  || *salary*
+  || *ssn*
+  || *tax*
+  || *merger*
+  || *acquisition*
+  || *financial*statement*
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND file.name: (*password* OR *passwd* OR *secret* OR *credential* OR *confidential* OR *payroll* OR *salary* OR *ssn* OR *tax* OR *merger* OR *acquisition*)`,
@@ -122,8 +139,7 @@ AND file.name: (*password* OR *passwd* OR *secret* OR *credential* OR *confident
         indicator: "Confluence REST API search burst - single user, many distinct queries",
         arkime: `ip.src == $INTERNAL
 && port.dst == [80 || 443 || 8090]
-&& http.uri =~
-  /\\/rest\\/api\\/content\\/search/i
+&& http.uri == "*/rest/api/content/search*"
 && unique-query-count groupby
   ip.src > 20 within 600s`,
         kibana: `source.ip: $INTERNAL
@@ -163,10 +179,11 @@ AND url.path: */rest/api/content/search*`,
         indicator: "SharePoint search API burst - bulk site enumeration and document discovery",
         arkime: `ip.src == $INTERNAL
 && port.dst == [80 || 443]
-&& http.uri =~
-  /\\/_api\\/search\\/query|
-   \\/_api\\/web\\/lists|
-   \\/_vti_bin\\/search\\.asmx/i
+&& http.uri == [
+  */_api/search/query*
+  || */_api/web/lists*
+  || */_vti_bin/search.asmx*
+]
 && unique-uri-count groupby
   ip.src > 30 within 600s`,
         kibana: `source.ip: $INTERNAL
@@ -208,7 +225,7 @@ AND url.path: (*/_api/search/query* OR */_api/web/lists* OR */_vti_bin/search*)`
         indicator: "Git clone burst - single source cloning many repositories",
         arkime: `ip.src == $INTERNAL
 && port.dst == [22 || 80 || 443 || 9418]
-&& (http.uri =~ /\\/info\\/refs\\?service=git-upload-pack/
+&& (http.uri == "*/info/refs?service=git-upload-pack*"
     || protocols == ssh)
 && unique-repo-count groupby
   ip.src > 5 within 600s`,
@@ -251,9 +268,13 @@ AND url.path: */info/refs?service=git-upload-pack*`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& smb.filename =~
-  /\\.pst$|\\.ost$|\\.nst$|
-   archive\\.pst|backup\\.pst/i
+&& smb.filename == [
+  *.pst
+  || *.ost
+  || *.nst
+  || *archive.pst*
+  || *backup.pst*
+]
 && smb.filesize > 52428800`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
@@ -289,10 +310,13 @@ AND file.size > 52428800`,
         indicator: "EWS FindItem / GetItem burst - bulk email enumeration via Exchange Web Services",
         arkime: `ip.src == $INTERNAL
 && port.dst == 443
-&& http.uri =~ /\\/EWS\\/Exchange\\.asmx/i
+&& http.uri == "*/EWS/Exchange.asmx*"
 && http.method == POST
-&& http.body =~
-  /<.*FindItem|<.*GetItem|<.*ExportItems/i
+&& http.body == [
+  *FindItem*
+  || *GetItem*
+  || *ExportItems*
+]
 && count groupby ip.src > 100 within 600s`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
@@ -335,13 +359,18 @@ AND http.request.body: (*FindItem* OR *GetItem* OR *ExportItems*)`,
         indicator: "EWS UpdateInboxRules / Set-InboxRule - forwarding rule creation pattern",
         arkime: `ip.src == $INTERNAL
 && port.dst == 443
-&& http.uri =~ /\\/EWS\\/Exchange\\.asmx|
-   \\/PowerShell|\\/v1\\.0\\/me\\/mailFolders/i
-&& http.body =~
-  /UpdateInboxRules|Set-InboxRule|
-   ForwardAsAttachmentToRecipients|
-   ForwardToRecipients|
-   "forwardingSmtpAddress"/i`,
+&& http.uri == [
+  */EWS/Exchange.asmx*
+  || */PowerShell*
+  || */v1.0/me/mailFolders*
+]
+&& http.body == [
+  *UpdateInboxRules*
+  || *Set-InboxRule*
+  || *ForwardAsAttachmentToRecipients*
+  || *ForwardToRecipients*
+  || *forwardingSmtpAddress*
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND url.path: (*/EWS/Exchange.asmx* OR */PowerShell* OR */v1.0/me/mailFolders*)
@@ -379,9 +408,11 @@ AND http.request.body: (*UpdateInboxRules* OR *Set-InboxRule* OR *ForwardToRecip
         indicator: "S3 ListObjects / GetObject burst - bulk bucket enumeration and download",
         arkime: `ip.src == $INTERNAL
 && port.dst == 443
-&& host.dst =~ /\\.s3.*\\.amazonaws\\.com$|
-   \\.blob\\.core\\.windows\\.net$|
-   storage\\.googleapis\\.com$/i
+&& host.dst == [
+  *.s3*.amazonaws.com
+  || *.blob.core.windows.net
+  || *storage.googleapis.com*
+]
 && http.method == GET
 && count groupby ip.src > 200 within 600s`,
         kibana: `source.ip: $INTERNAL
@@ -423,9 +454,10 @@ AND destination.domain: (*.s3*.amazonaws.com OR *.blob.core.windows.net OR stora
         arkime: `ip.src == $INTERNAL
 && port.dst == 161
 && protocols == snmp
-&& snmp.oid =~
-  /1\\.3\\.6\\.1\\.4\\.1\\.9\\.9\\.96|
-   1\\.3\\.6\\.1\\.4\\.1\\.9\\.2\\.1\\.55/
+&& snmp.oid == [
+  *1.3.6.1.4.1.9.9.96*
+  || *1.3.6.1.4.1.9.2.1.55*
+]
 && snmp.command == [getbulk || getnext]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 161
@@ -455,9 +487,13 @@ AND snmp.oid: (1.3.6.1.4.1.9.9.96.* OR 1.3.6.1.4.1.9.2.1.55.*)`,
 && port.dst == [69 || 22]
 && (protocols == tftp
     || (protocols == ssh && bytes-out > 5000))
-&& filename =~
-  /running-config|startup-config|
-   \\.cfg$|\\.conf$|config\\.txt/i`,
+&& filename == [
+  *running-config*
+  || *startup-config*
+  || *.cfg
+  || *.conf
+  || *config.txt*
+]`,
         kibana: `source.ip: $NETWORK_DEVICES
 AND destination.port: (69 OR 22)
 AND file.name: (running-config* OR startup-config* OR *.cfg OR *.conf)`,
@@ -494,10 +530,14 @@ AND file.name: (running-config* OR startup-config* OR *.cfg OR *.conf)`,
 && port.dst == 445
 && protocols == smb
 && smb.command == write
-&& smb.path =~
-  /\\$Recycle\\.Bin|\\\\Windows\\\\Temp|
-   \\\\ProgramData|\\\\Users\\\\Public|
-   PerfLogs|Intel\\\\Logs/i`,
+&& smb.path == [
+  *$Recycle.Bin*
+  || *\\Windows\\Temp*
+  || *\\ProgramData*
+  || *\\Users\\Public*
+  || *PerfLogs*
+  || *Intel\\Logs*
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND smb.command: "write"
@@ -575,9 +615,14 @@ AND file.size > 104857600`,
 && port.dst == 445
 && protocols == smb
 && smb.command == write
-&& smb.filename =~
-  /\\.zip$|\\.rar$|\\.7z$|\\.tar\\.gz$|
-   \\.tgz$|\\.tar$/i
+&& smb.filename == [
+  *.zip
+  || *.rar
+  || *.7z
+  || *.tar.gz
+  || *.tgz
+  || *.tar
+]
 && smb.filesize > 10485760`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
@@ -611,7 +656,11 @@ AND file.size > 10485760`,
 && port.dst == 445
 && protocols == smb
 && smb.command == write
-&& smb.filename =~ /\\.zip$|\\.rar$|\\.7z$/i
+&& smb.filename == [
+  *.zip
+  || *.rar
+  || *.7z
+]
 && file-content-bytes-1to8 ==
   [PK signature with encrypt flag
    || RAR! signature
