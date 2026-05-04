@@ -1774,11 +1774,14 @@ AND process.name: (
   || *.appsync-api.*
   || $KNOWN_C2_DOMAINS
 ]
-|| dns.host =~ /^[a-z0-9]{16,}\\.
-  (com|net|org|info)$/
 && process == [
   *update* || *agent*
-]`,
+]
+// DGA detection requires regex - not expressible
+// in pure Arkime. See Suricata pcre column or use
+// Kibana KQL regex syntax for runtime matching.
+// Logical spec: dns.host matches
+//   /^[a-z0-9]{16,}\\.(com|net|org|info)$/`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.type:
   ("A" OR "AAAA")

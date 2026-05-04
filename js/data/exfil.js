@@ -261,11 +261,17 @@ N/A pure Suricata`,
         indicator: "Outbound TLS to known exfil-friendly cloud storage - Mega, Anonfiles, Bunkr, etc.",
         arkime: `ip.src == $INTERNAL
 && port.dst == 443
-&& tls.sni =~
-  /mega\\.nz|mega\\.io|anonfiles\\.com|
-   bunkr\\.|gofile\\.io|
-   filebin\\.net|catbox\\.moe|
-   1fichier\\.com|file\\.io/i`,
+&& tls.sni == [
+  *mega.nz*
+  || *mega.io*
+  || *anonfiles.com*
+  || *bunkr.*
+  || *gofile.io*
+  || *filebin.net*
+  || *catbox.moe*
+  || *1fichier.com*
+  || *file.io*
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND tls.client.server_name: (*mega.nz OR *mega.io OR *anonfiles* OR *bunkr* OR *gofile* OR *filebin* OR *catbox* OR *1fichier* OR *file.io)`,
@@ -296,13 +302,14 @@ AND tls.client.server_name: (*mega.nz OR *mega.io OR *anonfiles* OR *bunkr* OR *
         indicator: "Outbound TLS to mainstream cloud storage with high upload volume",
         arkime: `ip.src == $INTERNAL
 && port.dst == 443
-&& tls.sni =~
-  /\\.dropbox\\.com$|
-   \\.dropboxusercontent\\.com$|
-   onedrive\\.live\\.com|
-   files\\.1drv\\.com|
-   drive\\.google\\.com|
-   docs\\.google\\.com/i
+&& tls.sni == [
+  *.dropbox.com
+  || *.dropboxusercontent.com
+  || *onedrive.live.com*
+  || *files.1drv.com*
+  || *drive.google.com*
+  || *docs.google.com*
+]
 && bytes-src > 1073741824
 && bytes-src / bytes-dst > 50`,
         kibana: `source.ip: $INTERNAL
@@ -341,10 +348,13 @@ SNI match only via Suricata`,
         arkime: `ip.src == $INTERNAL
 && ip.src != $DEVELOPER_HOSTS
 && port.dst == 443
-&& tls.sni =~
-  /github\\.com|gitlab\\.com|
-   bitbucket\\.org|gitea\\.|
-   codeberg\\.org/i
+&& tls.sni == [
+  *github.com*
+  || *gitlab.com*
+  || *bitbucket.org*
+  || *gitea.*
+  || *codeberg.org*
+]
 && bytes-src > 52428800`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $DEVELOPER_HOSTS
@@ -383,12 +393,17 @@ AND source.bytes > 52428800`,
         indicator: "Outbound TLS to paste / temporary file sites - Pastebin, transfer.sh, ix.io, etc.",
         arkime: `ip.src == $INTERNAL
 && port.dst == 443
-&& tls.sni =~
-  /pastebin\\.com|paste\\.ee|
-   transfer\\.sh|ix\\.io|
-   dpaste\\.com|hastebin\\.com|
-   ghostbin\\.|0bin\\.net|
-   privatebin\\./i`,
+&& tls.sni == [
+  *pastebin.com*
+  || *paste.ee*
+  || *transfer.sh*
+  || *ix.io*
+  || *dpaste.com*
+  || *hastebin.com*
+  || *ghostbin.*
+  || *0bin.net*
+  || *privatebin.*
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND tls.client.server_name: (*pastebin* OR *paste.ee OR *transfer.sh OR *ix.io OR *dpaste* OR *hastebin* OR *ghostbin* OR *0bin* OR *privatebin*)`,
@@ -423,9 +438,9 @@ AND tls.client.server_name: (*pastebin* OR *paste.ee OR *transfer.sh OR *ix.io O
         indicator: "Outbound TLS to Discord webhook endpoint - POST to /api/webhooks/",
         arkime: `ip.src == $INTERNAL
 && port.dst == 443
-&& (tls.sni =~ /discord\\.com|discordapp\\.com/i
-    || (http.host =~ /discord/i
-        && http.uri =~ /\\/api\\/webhooks\\//i
+&& (tls.sni == [*discord.com*, *discordapp.com*]
+    || (http.host == "*discord*"
+        && http.uri == "*/api/webhooks/*"
         && http.method == POST))`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443

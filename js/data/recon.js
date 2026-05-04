@@ -500,7 +500,7 @@ AND url.path: (
   sid:9158912; rev:1;)`,
         notes: "Exposes tenant ID, supported auth flows, token endpoint URLs, and signing keys - all required for targeted Azure AD attacks. The /discovery/keys endpoint exposes the token-signing certificate used for golden SAML forgery (T1606.002). Federation metadata reveals ADFS use and claims. Tenant-specific namespace is more targeted than /common/ - flag especially.",
         apt: [
-          { name: "Midnight Blizzard", cls: "apt-ru", note: "Harvested federation metadata as prerequisite for 2023–2024 Microsoft corporate intrusion and Teams-based social engineering." },
+          { name: "Midnight Blizzard", cls: "apt-ru", note: "Harvested federation metadata as prerequisite for 2023-2024 Microsoft corporate intrusion and Teams-based social engineering." },
           { name: "Charming Kitten", cls: "apt-ir", note: "Profiles Entra ID tenants of academic institutions, using federation metadata to identify ADFS configs for golden SAML attacks." },
           { name: "APT41", cls: "apt-cn", note: "Enumerates federation metadata to identify ADFS misconfigurations for golden SAML token forgery (T1606.002)." },
         ],
@@ -656,9 +656,9 @@ AND icmp.code: 0`,
     seconds 15;
   classtype:attempted-recon;
   sid:9159005; rev:1;)`,
-        notes: "ICMP type 11 code 0 = 'TTL exceeded in transit' from your routers in response to probes with incrementing TTL. Maps hop-by-hop topology including internal routing infrastructure. Also watch UDP traceroute (ports 33434–33534) and tcptraceroute.",
+        notes: "ICMP type 11 code 0 = 'TTL exceeded in transit' from your routers in response to probes with incrementing TTL. Maps hop-by-hop topology including internal routing infrastructure. Also watch UDP traceroute (ports 33434-33534) and tcptraceroute.",
         apt: [
-          { name: "Sandworm", cls: "apt-ru", note: "Traceroute-based topology mapping of Ukrainian power grid/government networks prior to 2015–2016 destructive attacks." },
+          { name: "Sandworm", cls: "apt-ru", note: "Traceroute-based topology mapping of Ukrainian power grid/government networks prior to 2015-2016 destructive attacks." },
           { name: "APT40", cls: "apt-cn", note: "Traceroute-based mapping of maritime and government target perimeters." },
           { name: "APT33", cls: "apt-ir", note: "Network topology mapping to identify IT/OT boundary routers at energy sector targets." },
           { name: "Volt Typhoon", cls: "apt-cn", note: "Mapped routing infrastructure to understand network paths to OT systems." },
@@ -667,7 +667,7 @@ AND icmp.code: 0`,
       },
       {
         sub: "T1590.004 - Network Topology",
-        indicator: "UDP traceroute - high-port probing (33434–33534)",
+        indicator: "UDP traceroute - high-port probing (33434-33534)",
         arkime: `ip.src != $INTERNAL
 && protocols == udp
 && port.dst >= 33434
@@ -906,9 +906,9 @@ AND url.path: (
   http.uri;
   classtype:attempted-recon;
   sid:9159012; rev:1;)`,
-        notes: "/dana-na/auth/ = Ivanti/Pulse Secure, /remote/logincheck = Fortinet, /+CSCOE+/ = Cisco AnyConnect, /global-protect/ = Palo Alto GlobalProtect, /sslvpn/Login/ = SonicWall, /my.policy = F5 BIG-IP APM. Single GET uniquely identifies vendor. APT33 path probing preceded Pulse/Fortinet exploitation by 4–6 weeks in documented intrusions. 200 response = trigger patch verification immediately.",
+        notes: "/dana-na/auth/ = Ivanti/Pulse Secure, /remote/logincheck = Fortinet, /+CSCOE+/ = Cisco AnyConnect, /global-protect/ = Palo Alto GlobalProtect, /sslvpn/Login/ = SonicWall, /my.policy = F5 BIG-IP APM. Single GET uniquely identifies vendor. APT33 path probing preceded Pulse/Fortinet exploitation by 4-6 weeks in documented intrusions. 200 response = trigger patch verification immediately.",
         apt: [
-          { name: "APT33", cls: "apt-ir", note: "Probed /dana-na/auth/ and /remote/logincheck paths at scale before mass exploitation of CVE-2019-11510 and CVE-2018-13379 - 4–6 weeks preceding exploitation." },
+          { name: "APT33", cls: "apt-ir", note: "Probed /dana-na/auth/ and /remote/logincheck paths at scale before mass exploitation of CVE-2019-11510 and CVE-2018-13379 - 4-6 weeks preceding exploitation." },
           { name: "Volt Typhoon", cls: "apt-cn", note: "Probed /global-protect/ and Cisco AnyConnect paths against US critical infrastructure per CISA AA23-144A." },
           { name: "APT29", cls: "apt-ru", note: "Probed Fortinet SSL-VPN paths prior to CVE-2022-42475 exploitation in government/defense targeting." },
           { name: "Lazarus", cls: "apt-kp", note: "SSL-VPN portal path probing against financial sector targets to identify exploitable remote access infrastructure." },
@@ -3057,7 +3057,7 @@ AND http.request.body.bytes < 500`,
   http.request_body;
   classtype:social-engineering;
   sid:9159802; rev:1;)`,
-        notes: "POST body 50–500 bytes is the sweet spot for a username+password submission. Also match 'passwd=', 'pwd=', 'pass=', 'credential=' variants. Pair with proxy category for the destination domain.",
+        notes: "POST body 50-500 bytes is the sweet spot for a username+password submission. Also match 'passwd=', 'pwd=', 'pass=', 'credential=' variants. Pair with proxy category for the destination domain.",
         apt: [
           { name: "APT33", cls: "apt-ir", note: "Dedicated credential harvesting infrastructure targeting energy/aviation via fake O365/OWA portals." },
           { name: "Charming Kitten", cls: "apt-ir", note: "HYPERSCRAPE tool collects credentials from fake Gmail and Yahoo portals." },
@@ -3096,7 +3096,7 @@ AND NOT url.domain: $KNOWN_GOOD`,
   sid:9159803; rev:1;)`,
         notes: "AiTM frameworks (Evilginx2, Modlishka, Muraena) proxy the real IdP - MFA succeeds but session token is captured. Look for Secure+HttpOnly cookies set by domains NOT in your IdP list (Okta, Azure AD, Duo). Follow up in identity logs: successful MFA + new device or impossible travel = confirmed incident.",
         apt: [
-          { name: "Midnight Blizzard", cls: "apt-ru", note: "Used AiTM phishing against Microsoft corporate and government targets 2023–2024." },
+          { name: "Midnight Blizzard", cls: "apt-ru", note: "Used AiTM phishing against Microsoft corporate and government targets 2023-2024." },
           { name: "Charming Kitten", cls: "apt-ir", note: "Deployed Evilginx2 infrastructure targeting academic and government O365 tenants." },
           { name: "Scattered Spider", cls: "apt-mul", note: "Deployed EvilProxy at scale against MGM Resorts and Caesars Entertainment." },
         ],

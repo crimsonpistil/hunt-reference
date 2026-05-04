@@ -49,8 +49,7 @@ AND NOT kerberos.cname: krbtgt`,
 && ip.src != $LDAP_ADMINS
 && port.dst == 389
 && protocols == ldap
-&& ldap.filter =~
-  /servicePrincipalName=\\*/i
+&& ldap.filter == "*servicePrincipalName=*"
 && ldap.scope == subtree`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $LDAP_ADMINS
@@ -124,8 +123,7 @@ AND kerberos.msg_type: "tgs-req"`,
 && ip.src != $LDAP_ADMINS
 && port.dst == 389
 && protocols == ldap
-&& ldap.filter =~
-  /userAccountControl:1\\.2\\.840\\.113556\\.1\\.4\\.803:=4194304/i`,
+&& ldap.filter == "*userAccountControl:1.2.840.113556.1.4.803:=4194304*"`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $LDAP_ADMINS
 AND destination.port: 389
@@ -591,8 +589,12 @@ N/A pure Suricata`,
         indicator: "Authentication burst from external source against many accounts - leaked credential testing",
         arkime: `ip.src == $EXTERNAL
 && port.dst == [443 || 80]
-&& http.uri =~
-  /\\/login|\\/auth|\\/signin|\\/owa/i
+&& http.uri == [
+  */login*
+  || */auth*
+  || */signin*
+  || */owa*
+]
 && unique-username-count groupby
   ip.src > 20 within 600s`,
         kibana: `source.ip: NOT $INTERNAL
@@ -631,9 +633,15 @@ AND url.path: (*login* OR *auth* OR *signin* OR *owa*)`,
         indicator: "SMB / SCP file access for SSH private keys - id_rsa exfiltration pattern",
         arkime: `ip.src == $INTERNAL
 && port.dst == [445 || 22]
-&& smb.filename =~
-  /id_rsa|id_dsa|id_ecdsa|id_ed25519|
-   \\.pem|\\.key|\\.ppk/i`,
+&& smb.filename == [
+  *id_rsa*
+  || *id_dsa*
+  || *id_ecdsa*
+  || *id_ed25519*
+  || *.pem
+  || *.key
+  || *.ppk
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (445 OR 22)
 AND file.name: (id_rsa* OR id_dsa* OR id_ecdsa* OR id_ed25519* OR *.pem OR *.key OR *.ppk)`,
@@ -672,9 +680,11 @@ AND file.name: (id_rsa* OR id_dsa* OR id_ecdsa* OR id_ed25519* OR *.pem OR *.key
 && port.dst == 445
 && protocols == smb
 && smb.command == write
-&& smb.filename =~
-  /lsass\\.dmp|lsass.{0,5}\\.dmp|
-   \\.dmp$|memory\\.dmp/i
+&& smb.filename == [
+  *lsass*.dmp
+  || *.dmp
+  || *memory*.dmp
+]
 && smb.filesize > 10485760`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
