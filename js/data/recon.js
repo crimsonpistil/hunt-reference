@@ -5,7 +5,7 @@ const DATA = [
     desc: ".001 Credentials · .002 Email Addresses · .003 Employee Names",
     rows: [
       {
-        sub: "T1589.001 — Credentials",
+        sub: "T1589.001 - Credentials",
         indicator: "Azure AD / O365 GetCredentialType username enumeration",
         arkime: `ip.src != $INTERNAL
 && http.method == POST
@@ -32,7 +32,7 @@ AND http.request.method: POST`,
     count 10, seconds 60;
   classtype:attempted-recon;
   sid:9158901; rev:1;)`,
-        notes: "Returns UPN existence, auth method, and federation status without authentication. Tools: AADInternals, o365enum, TREVORspray. Enumerate thousands of usernames via this endpoint. Monitor via proxy/CASB egress logs — this hits Microsoft infrastructure, not your perimeter directly.",
+        notes: "Returns UPN existence, auth method, and federation status without authentication. Tools: AADInternals, o365enum, TREVORspray. Enumerate thousands of usernames via this endpoint. Monitor via proxy/CASB egress logs - this hits Microsoft infrastructure, not your perimeter directly.",
         apt: [
           { name: "Midnight Blizzard", cls: "apt-ru", note: "Used GetCredentialType enumeration to profile Microsoft corporate O365 tenants prior to 2024 corporate email compromise." },
           { name: "Charming Kitten", cls: "apt-ir", note: "Profiles O365 tenants of academic, NGO, and government contractor targets using AADInternals-equivalent tooling." },
@@ -42,7 +42,7 @@ AND http.request.method: POST`,
         cite: "MITRE ATT&CK T1589.001, Microsoft MSTIC, industry reporting"
       },
       {
-        sub: "T1589.001 — Credentials",
+        sub: "T1589.001 - Credentials",
         indicator: "O365 Autodiscover username validation",
         arkime: `ip.src != $INTERNAL
 && http.method == [GET || POST]
@@ -82,7 +82,7 @@ AND url.path: (
     seconds 30;
   classtype:attempted-recon;
   sid:9158902; rev:1;)`,
-        notes: "Autodiscover returns different HTTP response codes (200 vs 401 vs 404) per username — classic oracle. MAPI/NSPI endpoints particularly abused for Outlook profile enumeration. Tools: MailSniper, ruler, o365recon. 200 response to autodiscover with no prior auth session is a strong signal.",
+        notes: "Autodiscover returns different HTTP response codes (200 vs 401 vs 404) per username - classic oracle. MAPI/NSPI endpoints particularly abused for Outlook profile enumeration. Tools: MailSniper, ruler, o365recon. 200 response to autodiscover with no prior auth session is a strong signal.",
         apt: [
           { name: "APT10", cls: "apt-cn", note: "Autodiscover enumeration against on-premises Exchange in MSP customer environments during Cloud Hopper." },
           { name: "APT28", cls: "apt-ru", note: "Autodiscover and MAPI/NSPI enumeration against Exchange at election campaign/government targets." },
@@ -91,7 +91,7 @@ AND url.path: (
         cite: "MITRE ATT&CK T1589.001, CISA Exchange advisories, industry reporting"
       },
       {
-        sub: "T1589.001 — Credentials",
+        sub: "T1589.001 - Credentials",
         indicator: "OWA / EWS user enumeration via timed response differential",
         arkime: `ip.src != $INTERNAL
 && http.method == POST
@@ -131,7 +131,7 @@ AND http.response.status_code:
     seconds 60;
   classtype:attempted-user;
   sid:9158903; rev:1;)`,
-        notes: "OWA returns subtly different responses for valid vs invalid usernames — timing oracle. EWS abused by MailSniper and ruler for both enumeration and post-auth data collection. Monitor sustained POST volume outside business hours especially. A patient operator at 1 request/30 seconds will slip under the threshold — supplement with 24-hour cumulative Kibana query.",
+        notes: "OWA returns subtly different responses for valid vs invalid usernames - timing oracle. EWS abused by MailSniper and ruler for both enumeration and post-auth data collection. Monitor sustained POST volume outside business hours especially. A patient operator at 1 request/30 seconds will slip under the threshold - supplement with 24-hour cumulative Kibana query.",
         apt: [
           { name: "APT10", cls: "apt-cn", note: "OWA/EWS enumeration as standard step in MSP compromise chains using MailSniper-equivalent tooling." },
           { name: "APT33", cls: "apt-ir", note: "OWA targeted at energy sector/defense contractor organizations for credential collection." },
@@ -141,8 +141,8 @@ AND http.response.status_code:
         cite: "MITRE ATT&CK T1589.001, CISA AA21-116A, industry reporting"
       },
       {
-        sub: "T1589.001 — Credentials",
-        indicator: "Credential validation against breach / leak check APIs — internal host",
+        sub: "T1589.001 - Credentials",
+        indicator: "Credential validation against breach / leak check APIs - internal host",
         arkime: `ip.src == $INTERNAL
 && http.host == [
   *haveibeenpwned.com*
@@ -176,7 +176,7 @@ AND url.domain: (
   http.header;
   classtype:policy-violation;
   sid:9158904; rev:1;)`,
-        notes: "Internal hosts querying breach databases against your own domain = red team (document it) or compromised host validating harvested creds before use. Dehashed/Snusbase/IntelX are paid API services — automated bulk queries from an endpoint = adversarial tooling signal. Correlate source host identity.",
+        notes: "Internal hosts querying breach databases against your own domain = red team (document it) or compromised host validating harvested creds before use. Dehashed/Snusbase/IntelX are paid API services - automated bulk queries from an endpoint = adversarial tooling signal. Correlate source host identity.",
         apt: [
           { name: "Lazarus", cls: "apt-kp", note: "Validated harvested credential lists against breach databases prior to financial sector targeting and credential stuffing." },
           { name: "APT33", cls: "apt-ir", note: "Used breach database lookups to identify previously compromised employee accounts at energy sector targets." },
@@ -185,7 +185,7 @@ AND url.domain: (
         cite: "MITRE ATT&CK T1589.001, T1586.002, industry reporting"
       },
       {
-        sub: "T1589.002 — Email Addresses",
+        sub: "T1589.002 - Email Addresses",
         indicator: "SMTP VRFY / EXPN enumeration against mail servers",
         arkime: `ip.src != $INTERNAL
 && port.dst == 25
@@ -204,7 +204,7 @@ AND network.transport: tcp`,
   content:"VRFY "; nocase;
   classtype:attempted-recon;
   sid:9158905; rev:1;)`,
-        notes: "VRFY confirms address existence; EXPN expands list membership. Both should be disabled on all internet-facing MTAs — misconfigurations persist on legacy Exchange/Postfix. Add a second rule for EXPN (SID+1). RCPT TO oracle still works even when VRFY/EXPN are disabled — catch-all configuration eliminates this entirely.",
+        notes: "VRFY confirms address existence; EXPN expands list membership. Both should be disabled on all internet-facing MTAs - misconfigurations persist on legacy Exchange/Postfix. Add a second rule for EXPN (SID+1). RCPT TO oracle still works even when VRFY/EXPN are disabled - catch-all configuration eliminates this entirely.",
         apt: [
           { name: "Charming Kitten", cls: "apt-ir", note: "SMTP VRFY/EXPN to validate email lists before spearphishing campaigns targeting academics and journalists." },
           { name: "Kimsuky", cls: "apt-kp", note: "Enumerates email addresses at South Korean government orgs and US think tanks via SMTP." },
@@ -213,8 +213,8 @@ AND network.transport: tcp`,
         cite: "MITRE ATT&CK T1589.002, CISA advisories, industry reporting"
       },
       {
-        sub: "T1589.002 — Email Addresses",
-        indicator: "SMTP RCPT TO oracle — valid vs invalid address discrimination",
+        sub: "T1589.002 - Email Addresses",
+        indicator: "SMTP RCPT TO oracle - valid vs invalid address discrimination",
         arkime: `ip.src != $INTERNAL
 && port.dst == 25
 && protocols == smtp
@@ -236,16 +236,16 @@ AND network.packets > 40`,
     seconds 60;
   classtype:attempted-recon;
   sid:9158906; rev:1;)`,
-        notes: "Even with VRFY/EXPN disabled — different response codes for valid/invalid RCPT TO = oracle. High packet count with many RCPT TO lines in SMTP stream is the indicator. Tools: smtp-user-enum, Metasploit smtp_enum, swaks. Catch-all configuration eliminates this entirely.",
+        notes: "Even with VRFY/EXPN disabled - different response codes for valid/invalid RCPT TO = oracle. High packet count with many RCPT TO lines in SMTP stream is the indicator. Tools: smtp-user-enum, Metasploit smtp_enum, swaks. Catch-all configuration eliminates this entirely.",
         apt: [
-          { name: "APT35", cls: "apt-ir", note: "RCPT TO enumeration to build validated email lists when VRFY/EXPN disabled — documented against academic institutions and news organizations." },
+          { name: "APT35", cls: "apt-ir", note: "RCPT TO enumeration to build validated email lists when VRFY/EXPN disabled - documented against academic institutions and news organizations." },
           { name: "Kimsuky", cls: "apt-kp", note: "RCPT TO oracle against Korean government and US think tank mail infrastructure." },
           { name: "Multi", cls: "apt-mul", note: "Heavily used by criminal IABs building target lists for ransomware affiliate programs." },
         ],
         cite: "MITRE ATT&CK T1589.002, industry reporting"
       },
       {
-        sub: "T1589.002 — Email Addresses",
+        sub: "T1589.002 - Email Addresses",
         indicator: "O365 / Google Workspace email format validation via login page",
         arkime: `ip.src != $INTERNAL
 && http.method == POST
@@ -295,7 +295,7 @@ AND http.request.method: POST`,
         cite: "MITRE ATT&CK T1589.002, Microsoft MSTIC, industry reporting"
       },
       {
-        sub: "T1589.002 — Email Addresses",
+        sub: "T1589.002 - Email Addresses",
         indicator: "Web scraping of staff directory / contact pages for email harvesting",
         arkime: `ip.src != $INTERNAL
 && http.method == GET
@@ -334,7 +334,7 @@ AND http.response.bytes > 50000`,
     count 20, seconds 60;
   classtype:web-application-activity;
   sid:9158908; rev:1;)`,
-        notes: "High-volume GETs to people/directory pages from single IP with large response bytes = automated scraping. Correlate UA — Python-requests, HeadlessChrome, PhantomJS common. Adversaries derive email format (first.last@, flast@) from scraped names then validate against cloud IdP endpoints. Directory scraping → cloud IdP validation is a documented two-step chain.",
+        notes: "High-volume GETs to people/directory pages from single IP with large response bytes = automated scraping. Correlate UA - Python-requests, HeadlessChrome, PhantomJS common. Adversaries derive email format (first.last@, flast@) from scraped names then validate against cloud IdP endpoints. Directory scraping → cloud IdP validation is a documented two-step chain.",
         apt: [
           { name: "Charming Kitten", cls: "apt-ir", note: "Scrapes academic/research/think tank staff directories to identify high-value spearphishing targets." },
           { name: "Kimsuky", cls: "apt-kp", note: "Targets government agency and defense contractor staff directories for precision targeting packages." },
@@ -344,7 +344,7 @@ AND http.response.bytes > 50000`,
         cite: "MITRE ATT&CK T1589.002, T1591.003, industry reporting"
       },
       {
-        sub: "T1589.003 — Employee Names",
+        sub: "T1589.003 - Employee Names",
         indicator: "LinkedIn / OSINT enrichment API queries from internal hosts",
         arkime: `ip.src == $INTERNAL
 && http.host == [
@@ -388,7 +388,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9158909; rev:1;)`,
-        notes: "Hunter.io, RocketReach, Apollo, Clearbit are identity enrichment APIs — bulk queries from internal hosts against your own domain are a red flag. Baseline expected use from sales/marketing teams. Anomalous volume from IT/security endpoints warrants investigation. LinkedIn scraping at high velocity generates 429s visible in proxy logs.",
+        notes: "Hunter.io, RocketReach, Apollo, Clearbit are identity enrichment APIs - bulk queries from internal hosts against your own domain are a red flag. Baseline expected use from sales/marketing teams. Anomalous volume from IT/security endpoints warrants investigation. LinkedIn scraping at high velocity generates 429s visible in proxy logs.",
         apt: [
           { name: "Lazarus", cls: "apt-kp", note: "Identity enrichment platforms to map org structures at financial sector targets prior to BEC operations." },
           { name: "APT33", cls: "apt-ir", note: "People-search APIs to identify OT staff and privileged account holders at energy sector targets." },
@@ -397,7 +397,7 @@ AND url.path: (
         cite: "MITRE ATT&CK T1589.003, T1591.004, industry reporting"
       },
       {
-        sub: "T1589.003 — Employee Names",
+        sub: "T1589.003 - Employee Names",
         indicator: "LDAP / LDAPS external anonymous bind or unauthenticated enumeration",
         arkime: `ip.src != $INTERNAL
 && port.dst == [
@@ -421,7 +421,7 @@ AND network.transport: tcp`,
   sid:9158910; rev:1;)`,
         notes: "External LDAP reach = P1 misconfiguration. Anonymous bind dumps usernames, emails, group memberships, org structure from AD without credentials. LDAPS requires TLS but doesn't prevent anonymous enumeration. Remediate firewall rules before tuning detection. Internally, non-DC hosts with large LDAP queries to DCs during off-hours = lateral movement precursor.",
         apt: [
-          { name: "APT10", cls: "apt-cn", note: "Exploited internet-exposed LDAP in MSP environments to enumerate AD — usernames, group memberships, privileged accounts." },
+          { name: "APT10", cls: "apt-cn", note: "Exploited internet-exposed LDAP in MSP environments to enumerate AD - usernames, group memberships, privileged accounts." },
           { name: "APT28", cls: "apt-ru", note: "LDAP enumeration against government AD environments to map group structures and identify high-value accounts." },
           { name: "Volt Typhoon", cls: "apt-cn", note: "LDAP enumeration post-initial-access to map AD structure and identify service accounts in critical infrastructure." },
           { name: "APT33", cls: "apt-ir", note: "LDAP queries to enumerate OT-adjacent accounts at energy sector targets." },
@@ -429,8 +429,8 @@ AND network.transport: tcp`,
         cite: "MITRE ATT&CK T1589.003, T1087.002, CISA advisories, industry reporting"
       },
       {
-        sub: "T1589.003 — Employee Names",
-        indicator: "Kerberos user enumeration — AS-REQ without pre-auth (Kerbrute)",
+        sub: "T1589.003 - Employee Names",
+        indicator: "Kerberos user enumeration - AS-REQ without pre-auth (Kerbrute)",
         arkime: `ip.src != $INTERNAL
 && port.dst == 88
 && protocols == [krb5 || udp]
@@ -461,7 +461,7 @@ AND network.transport: (
         cite: "MITRE ATT&CK T1589.003, T1558.003, industry reporting"
       },
       {
-        sub: "T1589.003 — Employee Names",
+        sub: "T1589.003 - Employee Names",
         indicator: "Azure AD / Entra ID federation metadata and OpenID configuration harvesting",
         arkime: `ip.src != $INTERNAL
 && http.method == GET
@@ -498,7 +498,7 @@ AND url.path: (
     seconds 30;
   classtype:attempted-recon;
   sid:9158912; rev:1;)`,
-        notes: "Exposes tenant ID, supported auth flows, token endpoint URLs, and signing keys — all required for targeted Azure AD attacks. The /discovery/keys endpoint exposes the token-signing certificate used for golden SAML forgery (T1606.002). Federation metadata reveals ADFS use and claims. Tenant-specific namespace is more targeted than /common/ — flag especially.",
+        notes: "Exposes tenant ID, supported auth flows, token endpoint URLs, and signing keys - all required for targeted Azure AD attacks. The /discovery/keys endpoint exposes the token-signing certificate used for golden SAML forgery (T1606.002). Federation metadata reveals ADFS use and claims. Tenant-specific namespace is more targeted than /common/ - flag especially.",
         apt: [
           { name: "Midnight Blizzard", cls: "apt-ru", note: "Harvested federation metadata as prerequisite for 2023–2024 Microsoft corporate intrusion and Teams-based social engineering." },
           { name: "Charming Kitten", cls: "apt-ir", note: "Profiles Entra ID tenants of academic institutions, using federation metadata to identify ADFS configs for golden SAML attacks." },
@@ -514,7 +514,7 @@ AND url.path: (
     desc: ".001 Domain Properties · .002 DNS · .003 Network Trust · .004 Topology · .005 IP Addresses · .006 Security Appliances",
     rows: [
       {
-        sub: "T1590.001 — Domain Properties",
+        sub: "T1590.001 - Domain Properties",
         indicator: "WHOIS / RDAP automated org and domain queries",
         arkime: `ip.src != $INTERNAL
 && port.dst == 43
@@ -530,7 +530,7 @@ AND network.transport: tcp`,
   flow:established,to_server;
   classtype:attempted-recon;
   sid:9159004; rev:1;)`,
-        notes: "Port 43 TCP is WHOIS. Inbound to your authoritative server from external IPs is uncommon. RDAP (HTTP/443) is the modern replacement — watch for outbound internal hits to rdap.arin.net and rdap.ripe.net querying your own ASN.",
+        notes: "Port 43 TCP is WHOIS. Inbound to your authoritative server from external IPs is uncommon. RDAP (HTTP/443) is the modern replacement - watch for outbound internal hits to rdap.arin.net and rdap.ripe.net querying your own ASN.",
         apt: [
           { name: "Volt Typhoon", cls: "apt-cn", note: "Used WHOIS/domain registration data to map org relationships and identify MSP connections to critical infrastructure." },
           { name: "APT29", cls: "apt-ru", note: "Queried domain registration and RDAP data to map subsidiary relationships during pre-SolarWinds recon." },
@@ -539,8 +539,8 @@ AND network.transport: tcp`,
         cite: "MITRE ATT&CK T1590.001, industry reporting"
       },
       {
-        sub: "T1590.002 — DNS",
-        indicator: "DNS zone transfer attempt — AXFR / IXFR",
+        sub: "T1590.002 - DNS",
+        indicator: "DNS zone transfer attempt - AXFR / IXFR",
         arkime: `ip.src != $INTERNAL
 && protocols == dns
 && dns.query-type == [AXFR || IXFR]
@@ -559,7 +559,7 @@ AND destination.port: 53`,
   offset:2; depth:2;
   classtype:attempted-recon;
   sid:9159001; rev:1;)`,
-        notes: "AXFR (type 252) over TCP dumps entire zone — all hostnames, IPs, mail servers, internal naming. Must be blocked to all but authorised secondaries. Any external AXFR that reaches your resolver = misconfiguration AND active recon. IXFR (type 251) is incremental — watch both. Content '|00 FC|' is AXFR type in wire format.",
+        notes: "AXFR (type 252) over TCP dumps entire zone - all hostnames, IPs, mail servers, internal naming. Must be blocked to all but authorised secondaries. Any external AXFR that reaches your resolver = misconfiguration AND active recon. IXFR (type 251) is incremental - watch both. Content '|00 FC|' is AXFR type in wire format.",
         apt: [
           { name: "APT10", cls: "apt-cn", note: "Zone transfer attempts against MSP DNS infrastructure in Cloud Hopper to enumerate customer environments." },
           { name: "Sandworm", cls: "apt-ru", note: "DNS enumeration including AXFR attempts against Ukrainian government infrastructure." },
@@ -568,7 +568,7 @@ AND destination.port: 53`,
         cite: "MITRE ATT&CK T1590.002, CISA AA20-296A, industry reporting"
       },
       {
-        sub: "T1590.002 — DNS",
+        sub: "T1590.002 - DNS",
         indicator: "Bulk subdomain brute-force / DNS enumeration",
         arkime: `ip.src != $INTERNAL
 && protocols == dns
@@ -593,7 +593,7 @@ AND NOT dns.resolved_ip: *`,
     count 20, seconds 30;
   classtype:attempted-recon;
   sid:9159002; rev:1;)`,
-        notes: "Tools: dnsx, amass, subfinder, fierce. High NXDOMAIN ratio from single source IP is strongest signal — correlate query count vs NXDOMAIN response count. 70%+ NXDOMAIN rate from one source over 60 seconds = near-certain brute force. Watch slow-and-low variants staying under per-minute thresholds.",
+        notes: "Tools: dnsx, amass, subfinder, fierce. High NXDOMAIN ratio from single source IP is strongest signal - correlate query count vs NXDOMAIN response count. 70%+ NXDOMAIN rate from one source over 60 seconds = near-certain brute force. Watch slow-and-low variants staying under per-minute thresholds.",
         apt: [
           { name: "APT41", cls: "apt-cn", note: "Thorough subdomain enumeration to identify dev/staging environments with weaker controls." },
           { name: "APT28", cls: "apt-ru", note: "Subdomain enumeration equivalent tooling pre-intrusion against government and military targets." },
@@ -603,7 +603,7 @@ AND NOT dns.resolved_ip: *`,
         cite: "MITRE ATT&CK T1590.002, industry reporting"
       },
       {
-        sub: "T1590.003 — Network Trust Dependencies",
+        sub: "T1590.003 - Network Trust Dependencies",
         indicator: "CDP / LLDP passive topology leakage",
         arkime: `ip.src == $INTERNAL
 && protocols == [cdp || lldp]
@@ -626,17 +626,17 @@ AND destination.mac: (
   offset:0; depth:6;
   classtype:policy-violation;
   sid:9159008; rev:1;)`,
-        notes: "CDP/LLDP broadcasts device vendor, model, IOS version, management IP, VLAN, and port ID to every adjacent host. Adversary with any segment foothold can passively capture these — zero active probes, no IDS alerts. Disable on all access-facing ports. Zeek CDP/LLDP analyzer is cleaner than Suricata for this detection. Presence implies adversary is already on segment.",
+        notes: "CDP/LLDP broadcasts device vendor, model, IOS version, management IP, VLAN, and port ID to every adjacent host. Adversary with any segment foothold can passively capture these - zero active probes, no IDS alerts. Disable on all access-facing ports. Zeek CDP/LLDP analyzer is cleaner than Suricata for this detection. Presence implies adversary is already on segment.",
         apt: [
           { name: "Sandworm", cls: "apt-ru", note: "Passively captured CDP/LLDP to map Layer 2/3 topology of Ukrainian ICS networks before destructive operations." },
           { name: "APT41", cls: "apt-cn", note: "Passive L2 enumeration post-initial-access to plan lateral movement paths." },
-          { name: "Multi", cls: "apt-mul", note: "Post-compromise indicator — requires existing foothold." },
+          { name: "Multi", cls: "apt-mul", note: "Post-compromise indicator - requires existing foothold." },
         ],
         cite: "MITRE ATT&CK T1590.003, ICS-CERT, industry reporting"
       },
       {
-        sub: "T1590.004 — Network Topology",
-        indicator: "Traceroute — TTL-exceeded ICMP mapping",
+        sub: "T1590.004 - Network Topology",
+        indicator: "Traceroute - TTL-exceeded ICMP mapping",
         arkime: `ip.src != $INTERNAL
 && protocols == icmp
 && icmp.type == 11
@@ -666,8 +666,8 @@ AND icmp.code: 0`,
         cite: "MITRE ATT&CK T1590.004, CISA AA22-076A, industry reporting"
       },
       {
-        sub: "T1590.004 — Network Topology",
-        indicator: "UDP traceroute — high-port probing (33434–33534)",
+        sub: "T1590.004 - Network Topology",
+        indicator: "UDP traceroute - high-port probing (33434–33534)",
         arkime: `ip.src != $INTERNAL
 && protocols == udp
 && port.dst >= 33434
@@ -688,7 +688,7 @@ AND destination.bytes: 0`,
     seconds 15;
   classtype:attempted-recon;
   sid:9159006; rev:1;)`,
-        notes: "Classic Unix traceroute uses UDP 33434+ with incrementing TTL. Zero-byte payload distinguishes traceroute probes from legitimate UDP services. Windows traceroute uses ICMP echo by default — cover both. tcptraceroute (TCP SYN to 80/443) requires TTL pattern analysis.",
+        notes: "Classic Unix traceroute uses UDP 33434+ with incrementing TTL. Zero-byte payload distinguishes traceroute probes from legitimate UDP services. Windows traceroute uses ICMP echo by default - cover both. tcptraceroute (TCP SYN to 80/443) requires TTL pattern analysis.",
         apt: [
           { name: "Sandworm", cls: "apt-ru", note: "UDP traceroute in ICS network reconnaissance phases." },
           { name: "APT41", cls: "apt-cn", note: "Automated network mapping suites combining UDP and ICMP traceroute." },
@@ -697,8 +697,8 @@ AND destination.bytes: 0`,
         cite: "MITRE ATT&CK T1590.004, industry reporting"
       },
       {
-        sub: "T1590.004 — Network Topology",
-        indicator: "SNMP community string enumeration — v1/v2c",
+        sub: "T1590.004 - Network Topology",
+        indicator: "SNMP community string enumeration - v1/v2c",
         arkime: `ip.src != $INTERNAL
 && port.dst == 161
 && protocols == udp
@@ -714,16 +714,16 @@ AND network.transport: udp`,
   depth:1;
   classtype:attempted-recon;
   sid:9159007; rev:1;)`,
-        notes: "Community strings (public, private, community, cisco, snmp) tried in bulk by onesixtyone and snmpwalk. Successful read exposes interface tables, ARP cache, routing table, CDP neighbors — complete internal topology map. Content '|30|' matches BER sequence tag opening every SNMP PDU. External UDP/161 reaching devices = misconfiguration finding.",
+        notes: "Community strings (public, private, community, cisco, snmp) tried in bulk by onesixtyone and snmpwalk. Successful read exposes interface tables, ARP cache, routing table, CDP neighbors - complete internal topology map. Content '|30|' matches BER sequence tag opening every SNMP PDU. External UDP/161 reaching devices = misconfiguration finding.",
         apt: [
-          { name: "APT10", cls: "apt-cn", note: "SNMP enumeration against MSP network devices — used harvested interface/ARP tables to map customer topology." },
+          { name: "APT10", cls: "apt-cn", note: "SNMP enumeration against MSP network devices - used harvested interface/ARP tables to map customer topology." },
           { name: "Dragonfly", cls: "apt-ru", note: "Systematic SNMP community string sweeps against energy sector IT/OT boundary devices prior to ICS targeting." },
           { name: "APT33", cls: "apt-ir", note: "SNMP enumeration against oil/gas sector network devices to identify OT segments." },
         ],
         cite: "MITRE ATT&CK T1590.004, CISA AA21-008A, ICS-CERT advisories"
       },
       {
-        sub: "T1590.005 — IP Addresses",
+        sub: "T1590.005 - IP Addresses",
         indicator: "Reverse DNS / PTR walking of your IP ranges",
         arkime: `ip.src != $INTERNAL
 && protocols == dns
@@ -754,8 +754,8 @@ AND dns.question.name:
         cite: "MITRE ATT&CK T1590.005, CISA AA22-076A, industry reporting"
       },
       {
-        sub: "T1590.005 — IP Addresses",
-        indicator: "ASN / BGP enumeration via external looking glass — from internal host",
+        sub: "T1590.005 - IP Addresses",
+        indicator: "ASN / BGP enumeration via external looking glass - from internal host",
         arkime: `ip.src == $INTERNAL
 && http.host == [
   *bgp.he.net*
@@ -797,7 +797,7 @@ AND url.domain: (
         cite: "MITRE ATT&CK T1590.005, industry reporting"
       },
       {
-        sub: "T1590.005 — IP Addresses",
+        sub: "T1590.005 - IP Addresses",
         indicator: "Shodan / Censys / BinaryEdge crawler IPs probing perimeter",
         arkime: `ip.src == [
   66.240.192.0/19
@@ -826,7 +826,7 @@ AND url.domain: (
     Shodan/Censys scanner IP";
   classtype:attempted-recon;
   sid:9159010; rev:1;)`,
-        notes: "Shodan (66.240.x, 198.20.69.x), Censys (162.142.125.x), BinaryEdge (45.33.x). If these IPs reach anything beyond your public web tier, you have an exposure. Use GreyNoise API for dynamic enrichment — static CIDRs go stale. Your Shodan indexed exposure IS the adversary's target list.",
+        notes: "Shodan (66.240.x, 198.20.69.x), Censys (162.142.125.x), BinaryEdge (45.33.x). If these IPs reach anything beyond your public web tier, you have an exposure. Use GreyNoise API for dynamic enrichment - static CIDRs go stale. Your Shodan indexed exposure IS the adversary's target list.",
         apt: [
           { name: "APT40", cls: "apt-cn", note: "Reviews Shodan/Censys data to identify exposed services on maritime/defense/government targets prior to exploitation." },
           { name: "Volt Typhoon", cls: "apt-cn", note: "Queried Shodan for exposed management interfaces (RDP, VNC, OT protocols) on US critical infrastructure." },
@@ -835,7 +835,7 @@ AND url.domain: (
         cite: "MITRE ATT&CK T1590.005, T1596.005, CISA advisories, industry reporting"
       },
       {
-        sub: "T1590.006 — Network Security Appliances",
+        sub: "T1590.006 - Network Security Appliances",
         indicator: "VPN gateway IKE vendor-ID fingerprinting",
         arkime: `ip.src != $INTERNAL
 && port.dst == [500 || 4500]
@@ -856,7 +856,7 @@ AND destination.bytes: [28 TO 500]`,
     seconds 30;
   classtype:attempted-recon;
   sid:9159011; rev:1;)`,
-        notes: "IKEv1 vendor-IDs uniquely identify VPN vendor and version (Cisco ASA, Palo Alto, Fortinet, Check Point, SonicWall). ike-scan enumerates in seconds. Version disclosure enables CVE selection — CVE-2024-21762 FortiOS, CVE-2023-46805 Ivanti both preceded by systematic IKE fingerprinting. IKEv2 less verbose but still fingerprintable via transform sets.",
+        notes: "IKEv1 vendor-IDs uniquely identify VPN vendor and version (Cisco ASA, Palo Alto, Fortinet, Check Point, SonicWall). ike-scan enumerates in seconds. Version disclosure enables CVE selection - CVE-2024-21762 FortiOS, CVE-2023-46805 Ivanti both preceded by systematic IKE fingerprinting. IKEv2 less verbose but still fingerprintable via transform sets.",
         apt: [
           { name: "Volt Typhoon", cls: "apt-cn", note: "Systematic IKE VPN fingerprinting of US critical infrastructure prior to LOTL footholds per CISA AA23-144A." },
           { name: "APT33", cls: "apt-ir", note: "Fingerprinted Pulse Secure/Fortinet VPN gateways before CVE-2019-11510 and CVE-2018-13379 exploitation." },
@@ -866,8 +866,8 @@ AND destination.bytes: [28 TO 500]`,
         cite: "MITRE ATT&CK T1590.006, CISA AA23-144A, CISA AA20-073A, industry reporting"
       },
       {
-        sub: "T1590.006 — Network Security Appliances",
-        indicator: "SSL-VPN portal path fingerprinting — vendor-deterministic URI probing",
+        sub: "T1590.006 - Network Security Appliances",
+        indicator: "SSL-VPN portal path fingerprinting - vendor-deterministic URI probing",
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.method == GET
@@ -908,7 +908,7 @@ AND url.path: (
   sid:9159012; rev:1;)`,
         notes: "/dana-na/auth/ = Ivanti/Pulse Secure, /remote/logincheck = Fortinet, /+CSCOE+/ = Cisco AnyConnect, /global-protect/ = Palo Alto GlobalProtect, /sslvpn/Login/ = SonicWall, /my.policy = F5 BIG-IP APM. Single GET uniquely identifies vendor. APT33 path probing preceded Pulse/Fortinet exploitation by 4–6 weeks in documented intrusions. 200 response = trigger patch verification immediately.",
         apt: [
-          { name: "APT33", cls: "apt-ir", note: "Probed /dana-na/auth/ and /remote/logincheck paths at scale before mass exploitation of CVE-2019-11510 and CVE-2018-13379 — 4–6 weeks preceding exploitation." },
+          { name: "APT33", cls: "apt-ir", note: "Probed /dana-na/auth/ and /remote/logincheck paths at scale before mass exploitation of CVE-2019-11510 and CVE-2018-13379 - 4–6 weeks preceding exploitation." },
           { name: "Volt Typhoon", cls: "apt-cn", note: "Probed /global-protect/ and Cisco AnyConnect paths against US critical infrastructure per CISA AA23-144A." },
           { name: "APT29", cls: "apt-ru", note: "Probed Fortinet SSL-VPN paths prior to CVE-2022-42475 exploitation in government/defense targeting." },
           { name: "Lazarus", cls: "apt-kp", note: "SSL-VPN portal path probing against financial sector targets to identify exploitable remote access infrastructure." },
@@ -916,7 +916,7 @@ AND url.path: (
         cite: "MITRE ATT&CK T1590.006, CISA AA23-144A, CISA AA21-062A, industry reporting"
       },
       {
-        sub: "T1590.006 — Network Security Appliances",
+        sub: "T1590.006 - Network Security Appliances",
         indicator: "Security appliance vendor banner in HTTP response headers",
         arkime: `ip.src != $INTERNAL
 && protocols == http
@@ -948,7 +948,7 @@ AND http.response.headers.server: (
   http.header;
   classtype:policy-violation;
   sid:9159013; rev:1;)`,
-        notes: "This rule fires on egress — your own appliance advertising its identity. Remediate: suppress or genericize Server headers, customize block pages to remove product branding. Check Point, Fortinet, F5 all have suppression settings. Banner disclosure is passive intel — adversaries receive it without triggering any alert unless you instrument egress responses.",
+        notes: "This rule fires on egress - your own appliance advertising its identity. Remediate: suppress or genericize Server headers, customize block pages to remove product branding. Check Point, Fortinet, F5 all have suppression settings. Banner disclosure is passive intel - adversaries receive it without triggering any alert unless you instrument egress responses.",
         apt: [
           { name: "APT33", cls: "apt-ir", note: "Correlates HTTP Server header disclosures with Shodan data and SSL-VPN path probing to build confirmed target profiles." },
           { name: "Volt Typhoon", cls: "apt-cn", note: "Documented using banner disclosure correlated with internet scan data for target profiling." },
@@ -964,7 +964,7 @@ AND http.response.headers.server: (
     desc: ".001 Physical Locations · .002 Business Relationships",
     rows: [
       {
-        sub: "T1591.001 — Physical Locations",
+        sub: "T1591.001 - Physical Locations",
         indicator: "HR scraper bots hitting career / about / team pages",
         arkime: `ip.src != $INTERNAL
 && http.uri == [
@@ -993,7 +993,7 @@ AND http.response.bytes > 50000`,
     count 20, seconds 60;
   classtype:web-application-activity;
   sid:9159101; rev:1;)`,
-        notes: "High-volume GETs to /careers, /about, /team from single external IP in short window. Correlate UA — Python-requests, curl, headless browser UAs (HeadlessChrome, PhantomJS) common. Adversaries derive org chart, tech stack, and high-value target roles from job descriptions.",
+        notes: "High-volume GETs to /careers, /about, /team from single external IP in short window. Correlate UA - Python-requests, curl, headless browser UAs (HeadlessChrome, PhantomJS) common. Adversaries derive org chart, tech stack, and high-value target roles from job descriptions.",
         apt: [
           { name: "APT28", cls: "apt-ru", note: "Used LLMs to gather information about satellite capabilities and org structure." },
           { name: "Lazarus", cls: "apt-kp", note: "Studied publicly available org info to tailor spearphishing against specific departments and individuals." },
@@ -1003,7 +1003,7 @@ AND http.response.bytes > 50000`,
         cite: "MITRE ATT&CK T1591, industry reporting"
       },
       {
-        sub: "T1591.001 — Physical Locations",
+        sub: "T1591.001 - Physical Locations",
         indicator: "Bulk subsidiary / affiliate DNS enumeration",
         arkime: `ip.src != $INTERNAL
 && protocols == dns
@@ -1037,7 +1037,7 @@ AND dns.question.name: (
         cite: "MITRE ATT&CK T1591, industry reporting"
       },
       {
-        sub: "T1591.001 — Physical Locations",
+        sub: "T1591.001 - Physical Locations",
         indicator: "WHOIS / RDAP automated org and domain queries",
         arkime: `ip.src != $INTERNAL
 && port.dst == 43
@@ -1053,16 +1053,16 @@ AND network.transport: tcp`,
   flow:established,to_server;
   classtype:attempted-recon;
   sid:9159103; rev:1;)`,
-        notes: "Port 43 TCP is WHOIS. Inbound to your authoritative server from external IPs is uncommon outside of automation or targeted recon tooling mapping registered domains and ASN contacts. RDAP (HTTP/443) is the modern replacement — watch for outbound internal hits to rdap.arin.net and rdap.ripe.net querying your own ASN.",
+        notes: "Port 43 TCP is WHOIS. Inbound to your authoritative server from external IPs is uncommon outside of automation or targeted recon tooling mapping registered domains and ASN contacts. RDAP (HTTP/443) is the modern replacement - watch for outbound internal hits to rdap.arin.net and rdap.ripe.net querying your own ASN.",
         apt: [
           { name: "Volt Typhoon", cls: "apt-cn", note: "Used WHOIS and domain registration data to map organizational relationships and identify MSP connections." },
           { name: "APT29", cls: "apt-ru", note: "Queried domain registration and RDAP data to map subsidiary relationships prior to SolarWinds." },
-          { name: "Multi", cls: "apt-mul", note: "Standard early-phase technique across CN/RU/IR actors — typically automated tooling." },
+          { name: "Multi", cls: "apt-mul", note: "Standard early-phase technique across CN/RU/IR actors - typically automated tooling." },
         ],
         cite: "MITRE ATT&CK T1591, industry reporting"
       },
       {
-        sub: "T1591.002 — Business Relationships",
+        sub: "T1591.002 - Business Relationships",
         indicator: "Business relationship / third-party vendor enumeration via OSINT",
         arkime: `ip.src == $INTERNAL
 && http.host == [
@@ -1105,7 +1105,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159104; rev:1;)`,
-        notes: "Internal hosts querying business intelligence platforms against your own org or vendors may indicate a compromised host mapping third-party relationships for supply chain targeting. Baseline expected use from BD/sales teams — anomalous volume from IT or security hosts is the flag.",
+        notes: "Internal hosts querying business intelligence platforms against your own org or vendors may indicate a compromised host mapping third-party relationships for supply chain targeting. Baseline expected use from BD/sales teams - anomalous volume from IT or security hosts is the flag.",
         apt: [
           { name: "FIN7", cls: "apt-mul", note: "Compiled victim lists by filtering companies by revenue using Zoominfo." },
           { name: "APT41", cls: "apt-cn", note: "Researches business relationships to identify supply chain access paths." },
@@ -1121,8 +1121,8 @@ AND url.path: (
     desc: ".001 Hardware · .002 Software · .003 Firmware · .004 Client Configurations",
     rows: [
       {
-        sub: "T1592.001 — Hardware",
-        indicator: "NetBIOS Name Service (NBNS) enumeration — external host querying your broadcast domain",
+        sub: "T1592.001 - Hardware",
+        indicator: "NetBIOS Name Service (NBNS) enumeration - external host querying your broadcast domain",
         arkime: `ip.src != $INTERNAL
 && port.dst == 137
 && protocols == udp
@@ -1138,7 +1138,7 @@ AND network.transport: udp`,
   offset:2; depth:2;
   classtype:attempted-recon;
   sid:9159201; rev:1;)`,
-        notes: "NBNS (UDP/137) resolves NetBIOS names to IPs and returns the NetBIOS name, workgroup/domain name, and MAC address. External NBNS should never reach internal hosts. Internally, watch for non-Windows hosts generating NBNS queries in bulk — Responder generates distinctive query patterns visible in Zeek nbns.log.",
+        notes: "NBNS (UDP/137) resolves NetBIOS names to IPs and returns the NetBIOS name, workgroup/domain name, and MAC address. External NBNS should never reach internal hosts. Internally, watch for non-Windows hosts generating NBNS queries in bulk - Responder generates distinctive query patterns visible in Zeek nbns.log.",
         apt: [
           { name: "APT10", cls: "apt-cn", note: "Used NetBIOS enumeration for MSP network host discovery during Cloud Hopper, mapping workstation and server names without touching AD." },
           { name: "APT28", cls: "apt-ru", note: "Used NBNS and SMB enumeration to identify host hardware configurations and domain membership in government network targeting." },
@@ -1147,8 +1147,8 @@ AND network.transport: udp`,
         cite: "MITRE ATT&CK T1592.001, CISA advisories, industry reporting"
       },
       {
-        sub: "T1592.001 — Hardware",
-        indicator: "NBNS broadcast sweep — internal host performing name resolution sweep",
+        sub: "T1592.001 - Hardware",
+        indicator: "NBNS broadcast sweep - internal host performing name resolution sweep",
         arkime: `ip.src == $INTERNAL
 && port.dst == 137
 && protocols == udp
@@ -1169,7 +1169,7 @@ AND destination.ip: "255.255.255.255"`,
     count 20, seconds 30;
   classtype:attempted-recon;
   sid:9159202; rev:1;)`,
-        notes: "An internal host broadcasting NBNS queries to 255.255.255.255 at high volume = scanner (nmap -sU, nbtscan, enum4linux) or host discovery tool. Content '|20|' at offset 12 matches NetBIOS encoded name wildcard. 20+ in 30 seconds from a single non-DC host is anomalous. Post-foothold indicator — combine with source host identity and off-hours timing.",
+        notes: "An internal host broadcasting NBNS queries to 255.255.255.255 at high volume = scanner (nmap -sU, nbtscan, enum4linux) or host discovery tool. Content '|20|' at offset 12 matches NetBIOS encoded name wildcard. 20+ in 30 seconds from a single non-DC host is anomalous. Post-foothold indicator - combine with source host identity and off-hours timing.",
         apt: [
           { name: "APT28", cls: "apt-ru", note: "Uses NBNS broadcast sweeps post-initial-access to enumerate workstation/server names without touching AD LDAP." },
           { name: "APT41", cls: "apt-cn", note: "Performs internal NBNS enumeration using nbtscan-equivalent tooling to build host inventory maps before lateral movement." },
@@ -1178,8 +1178,8 @@ AND destination.ip: "255.255.255.255"`,
         cite: "MITRE ATT&CK T1592.001, T1016, CISA advisories"
       },
       {
-        sub: "T1592.001 — Hardware",
-        indicator: "UPnP SSDP M-SEARCH — device hardware discovery via multicast probe",
+        sub: "T1592.001 - Hardware",
+        indicator: "UPnP SSDP M-SEARCH - device hardware discovery via multicast probe",
         arkime: `ip.src != $INTERNAL
 && port.dst == 1900
 && protocols == udp
@@ -1196,7 +1196,7 @@ AND network.transport: udp`,
   content:"ssdp:discover";
   classtype:attempted-recon;
   sid:9159203; rev:1;)`,
-        notes: "SSDP M-SEARCH to UDP/1900 discovers UPnP devices — printers, NAS, routers, IoT — and returns device type, model, manufacturer, and firmware version. External SSDP reaching internal devices = perimeter misconfiguration. Internally, SSDP M-SEARCH from non-IoT hosts is anomalous. Tools: Miranda, UPnP-Inspector, Metasploit UPnP scanner.",
+        notes: "SSDP M-SEARCH to UDP/1900 discovers UPnP devices - printers, NAS, routers, IoT - and returns device type, model, manufacturer, and firmware version. External SSDP reaching internal devices = perimeter misconfiguration. Internally, SSDP M-SEARCH from non-IoT hosts is anomalous. Tools: Miranda, UPnP-Inspector, Metasploit UPnP scanner.",
         apt: [
           { name: "Sandworm", cls: "apt-ru", note: "Used UPnP enumeration to identify network-connected hardware in Ukrainian industrial environments." },
           { name: "Volt Typhoon", cls: "apt-cn", note: "Enumerated UPnP-capable devices in SOHO environments to identify hardware with exploitable UPnP implementations." },
@@ -1205,8 +1205,8 @@ AND network.transport: udp`,
         cite: "MITRE ATT&CK T1592.001, CISA ICS advisories, industry reporting"
       },
       {
-        sub: "T1592.001 — Hardware",
-        indicator: "UPnP description XML fetch — hardware detail harvest post-SSDP discovery",
+        sub: "T1592.001 - Hardware",
+        indicator: "UPnP description XML fetch - hardware detail harvest post-SSDP discovery",
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.method == GET
@@ -1248,8 +1248,8 @@ AND url.path: (
         cite: "MITRE ATT&CK T1592.001, CISA AA23-144A, industry reporting"
       },
       {
-        sub: "T1592.001 — Hardware",
-        indicator: "WMI remote queries — external or lateral WMI hardware enumeration (DCOM/RPC)",
+        sub: "T1592.001 - Hardware",
+        indicator: "WMI remote queries - external or lateral WMI hardware enumeration (DCOM/RPC)",
         arkime: `ip.src != $INTERNAL
 && port.dst == [135 || 445]
 && protocols == [dce-rpc || smb]
@@ -1271,7 +1271,7 @@ AND destination.bytes > 0`,
     count 3, seconds 30;
   classtype:attempted-recon;
   sid:9159205; rev:1;)`,
-        notes: "WMI over DCOM (TCP/135 + dynamic high ports) allows remote hardware enumeration — Win32_ComputerSystem returns manufacturer/model/memory. External TCP/135 or TCP/445 should never reach internal hosts. Content '|05 00|' matches DCE/RPC bind header. Zeek dce_rpc.log captures operation names — look for IWbemServices::ExecQuery calls.",
+        notes: "WMI over DCOM (TCP/135 + dynamic high ports) allows remote hardware enumeration - Win32_ComputerSystem returns manufacturer/model/memory. External TCP/135 or TCP/445 should never reach internal hosts. Content '|05 00|' matches DCE/RPC bind header. Zeek dce_rpc.log captures operation names - look for IWbemServices::ExecQuery calls.",
         apt: [
           { name: "APT41", cls: "apt-cn", note: "Uses remote WMI queries extensively post-initial-access to enumerate hardware configuration across target environments." },
           { name: "APT28", cls: "apt-ru", note: "Uses WMI remote enumeration against government/military targets, using hardware inventory to select architecture-appropriate payloads." },
@@ -1280,8 +1280,8 @@ AND destination.bytes > 0`,
         cite: "MITRE ATT&CK T1592.001, T1047, CISA advisories, industry reporting"
       },
       {
-        sub: "T1592.001 — Hardware",
-        indicator: "MAC address OUI harvesting via ARP sweep — hardware vendor identification",
+        sub: "T1592.001 - Hardware",
+        indicator: "MAC address OUI harvesting via ARP sweep - hardware vendor identification",
         arkime: `ip.src == $INTERNAL
 && protocols == arp
 && packets.src > 30
@@ -1300,17 +1300,17 @@ AND network.transport: "arp"`,
     count 30, seconds 30;
   classtype:attempted-recon;
   sid:9159206; rev:1;)`,
-        notes: "ARP responses include the MAC address of each responding host. The first three octets (OUI) identify the hardware vendor — Cisco, Dell, Fortinet, Raspberry Pi, VMware. An internal host generating 30+ ARP requests in 30 seconds is performing a sweep. Requires existing foothold (ARP is layer 2). Zeek arp.log captures all ARP activity including OUIs.",
+        notes: "ARP responses include the MAC address of each responding host. The first three octets (OUI) identify the hardware vendor - Cisco, Dell, Fortinet, Raspberry Pi, VMware. An internal host generating 30+ ARP requests in 30 seconds is performing a sweep. Requires existing foothold (ARP is layer 2). Zeek arp.log captures all ARP activity including OUIs.",
         apt: [
           { name: "Sandworm", cls: "apt-ru", note: "Performed ARP-based hardware enumeration in Ukrainian network environments to identify Cisco, GE, and Siemens hardware on OT-adjacent segments." },
           { name: "APT41", cls: "apt-cn", note: "Uses ARP sweeps post-initial-access to identify hardware vendors and select appropriate exploitation paths." },
-          { name: "Multi", cls: "apt-mul", note: "Post-compromise indicator — requires existing segment access." },
+          { name: "Multi", cls: "apt-mul", note: "Post-compromise indicator - requires existing segment access." },
         ],
         cite: "MITRE ATT&CK T1592.001, T1018, industry reporting"
       },
       {
-        sub: "T1592.002 — Software",
-        indicator: "mDNS / Bonjour service browse — software and service inventory via multicast DNS",
+        sub: "T1592.002 - Software",
+        indicator: "mDNS / Bonjour service browse - software and service inventory via multicast DNS",
         arkime: `ip.src != $INTERNAL
 && port.dst == 5353
 && protocols == udp
@@ -1328,7 +1328,7 @@ AND destination.ip: "224.0.0.251"`,
   depth:2;
   classtype:attempted-recon;
   sid:9159207; rev:1;)`,
-        notes: "mDNS (UDP/5353 to multicast 224.0.0.251) allows zero-config service discovery — any host can query for _http._tcp, _smb._tcp, _ssh._tcp, _printer._tcp and receive responses advertising software names, versions, and hostnames. External mDNS reaching internal segments = perimeter misconfiguration. Content '|00 0c|' matches PTR record type used for service browsing.",
+        notes: "mDNS (UDP/5353 to multicast 224.0.0.251) allows zero-config service discovery - any host can query for _http._tcp, _smb._tcp, _ssh._tcp, _printer._tcp and receive responses advertising software names, versions, and hostnames. External mDNS reaching internal segments = perimeter misconfiguration. Content '|00 0c|' matches PTR record type used for service browsing.",
         apt: [
           { name: "Volt Typhoon", cls: "apt-cn", note: "Used mDNS enumeration in SOHO environments to identify software services on network-connected devices." },
           { name: "Sandworm", cls: "apt-ru", note: "Used mDNS service browsing to enumerate software on network-connected devices in Ukrainian target environments." },
@@ -1337,7 +1337,7 @@ AND destination.ip: "224.0.0.251"`,
         cite: "MITRE ATT&CK T1592.002, industry reporting"
       },
       {
-        sub: "T1592.002 — Software",
+        sub: "T1592.002 - Software",
         indicator: "HTTP Server header software version disclosure in egress responses",
         arkime: `ip.src != $INTERNAL
 && protocols == http
@@ -1378,17 +1378,17 @@ AND http.response.headers.server: (
   http.header;
   classtype:policy-violation;
   sid:9159209; rev:1;)`,
-        notes: "HTTP Server headers advertising specific versions (Apache/2.4.49, nginx/1.18.0, PHP/7.4.3) give adversaries a precise CVE selection guide. This rule fires on egress — your own servers advertising their stack. Remediate: Apache: ServerTokens Prod; nginx: server_tokens off. Also watch X-Powered-By, X-Generator, X-AspNet-Version headers.",
+        notes: "HTTP Server headers advertising specific versions (Apache/2.4.49, nginx/1.18.0, PHP/7.4.3) give adversaries a precise CVE selection guide. This rule fires on egress - your own servers advertising their stack. Remediate: Apache: ServerTokens Prod; nginx: server_tokens off. Also watch X-Powered-By, X-Generator, X-AspNet-Version headers.",
         apt: [
           { name: "APT40", cls: "apt-cn", note: "Harvests HTTP Server header version strings from maritime/defense/government web infrastructure for CVE-targeted exploitation." },
           { name: "APT33", cls: "apt-ir", note: "Systematically collects HTTP Server header disclosures from energy sector web infrastructure to select exploitation paths." },
-          { name: "Multi", cls: "apt-mul", note: "Passive intel — adversaries collect from normal web traffic without generating probe traffic." },
+          { name: "Multi", cls: "apt-mul", note: "Passive intel - adversaries collect from normal web traffic without generating probe traffic." },
         ],
         cite: "MITRE ATT&CK T1592.002, industry reporting"
       },
       {
-        sub: "T1592.002 — Software",
-        indicator: "X-Powered-By / X-Generator header — CMS and framework version disclosure",
+        sub: "T1592.002 - Software",
+        indicator: "X-Powered-By / X-Generator header - CMS and framework version disclosure",
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.response-header == [
@@ -1418,7 +1418,7 @@ AND http.response.headers: (
   http.header;
   classtype:policy-violation;
   sid:9159210; rev:1;)`,
-        notes: "X-Powered-By exposes PHP/ASP.NET/Express version; X-Generator exposes WordPress/Drupal/Joomla version; X-AspNet-Version exposes .NET runtime. Default in most frameworks — requires explicit suppression. Combined with Server headers, gives adversaries a complete software stack fingerprint in a single HTTP response.",
+        notes: "X-Powered-By exposes PHP/ASP.NET/Express version; X-Generator exposes WordPress/Drupal/Joomla version; X-AspNet-Version exposes .NET runtime. Default in most frameworks - requires explicit suppression. Combined with Server headers, gives adversaries a complete software stack fingerprint in a single HTTP response.",
         apt: [
           { name: "APT41", cls: "apt-cn", note: "Collects framework/CMS version headers to identify WordPress plugin versions, PHP runtime, and .NET versions for CVE exploitation." },
           { name: "APT33", cls: "apt-ir", note: "Harvests X-Powered-By and X-AspNet-Version from energy sector and defense contractor web applications." },
@@ -1427,8 +1427,8 @@ AND http.response.headers: (
         cite: "MITRE ATT&CK T1592.002, industry reporting"
       },
       {
-        sub: "T1592.002 — Software",
-        indicator: "SMB protocol negotiation — OS and software version fingerprinting",
+        sub: "T1592.002 - Software",
+        indicator: "SMB protocol negotiation - OS and software version fingerprinting",
         arkime: `ip.src != $INTERNAL
 && port.dst == 445
 && protocols == smb
@@ -1447,7 +1447,7 @@ AND destination.bytes > 0`,
   content:"|ff 53 4d 42|"; depth:5;
   classtype:attempted-recon;
   sid:9159211; rev:1;)`,
-        notes: "SMB protocol negotiation reveals OS version, SMB dialect (SMB1/2/3), and build number — enough to identify Windows version down to patch level without authentication. Content '|ff 53 4d 42|' = SMB1 header magic; SMB2 uses '|fe 53 4d 42|'. External TCP/445 should never reach internal hosts. Zeek smb.log captures dialect negotiation details.",
+        notes: "SMB protocol negotiation reveals OS version, SMB dialect (SMB1/2/3), and build number - enough to identify Windows version down to patch level without authentication. Content '|ff 53 4d 42|' = SMB1 header magic; SMB2 uses '|fe 53 4d 42|'. External TCP/445 should never reach internal hosts. Zeek smb.log captures dialect negotiation details.",
         apt: [
           { name: "APT28", cls: "apt-ru", note: "Uses SMB negotiation fingerprinting to identify Windows versions and SMB dialect support, selecting CVEs like EternalBlue and PrintNightmare." },
           { name: "APT10", cls: "apt-cn", note: "Used SMB negotiation fingerprinting against MSP environments to identify Windows versions across customer workstation fleets." },
@@ -1456,8 +1456,8 @@ AND destination.bytes > 0`,
         cite: "MITRE ATT&CK T1592.002, industry reporting"
       },
       {
-        sub: "T1592.002 — Software",
-        indicator: "RDP protocol negotiation — software version and NLA configuration fingerprinting",
+        sub: "T1592.002 - Software",
+        indicator: "RDP protocol negotiation - software version and NLA configuration fingerprinting",
         arkime: `ip.src != $INTERNAL
 && port.dst == 3389
 && protocols == rdp
@@ -1477,7 +1477,7 @@ AND destination.bytes > 0`,
   content:"|03 00|"; depth:2;
   classtype:attempted-recon;
   sid:9159212; rev:1;)`,
-        notes: "RDP connection negotiation reveals whether NLA is enforced, RDP protocol version, and supported encryption levels — before any authentication. Connect-and-disconnect with low packet count (<5) from external IP is the classic RDP fingerprint pattern. Content '|03 00|' matches TPKT header. Tools: rdp-sec-check, nmap RDP scripts. NLA disabled = pre-auth attack surface (BlueKeep CVE-2019-0708).",
+        notes: "RDP connection negotiation reveals whether NLA is enforced, RDP protocol version, and supported encryption levels - before any authentication. Connect-and-disconnect with low packet count (<5) from external IP is the classic RDP fingerprint pattern. Content '|03 00|' matches TPKT header. Tools: rdp-sec-check, nmap RDP scripts. NLA disabled = pre-auth attack surface (BlueKeep CVE-2019-0708).",
         apt: [
           { name: "Lazarus", cls: "apt-kp", note: "Fingerprints RDP NLA configuration and version on financial sector targets to identify systems vulnerable to credential spray or CVE exploitation." },
           { name: "APT28", cls: "apt-ru", note: "Uses RDP protocol negotiation fingerprinting against government targets to identify Windows versions before RDP-based lateral movement." },
@@ -1486,8 +1486,8 @@ AND destination.bytes > 0`,
         cite: "MITRE ATT&CK T1592.002, CISA ransomware advisories, industry reporting"
       },
       {
-        sub: "T1592.003 — Firmware",
-        indicator: "SNMP sysDescr OID walk — firmware version string harvest from network devices",
+        sub: "T1592.003 - Firmware",
+        indicator: "SNMP sysDescr OID walk - firmware version string harvest from network devices",
         arkime: `ip.src != $INTERNAL
 && port.dst == 161
 && protocols == udp
@@ -1506,7 +1506,7 @@ AND destination.bytes: [1 TO 200]`,
     01 01 00|";
   classtype:attempted-recon;
   sid:9159213; rev:1;)`,
-        notes: "SNMP sysDescr OID (1.3.6.1.2.1.1.1.0) returns full device description including OS version, firmware version, hardware model, and build date. Content '|06 09 2b 06 01 02 01 01 01 00|' is the BER-encoded OID for sysDescr. A single successful read from an external IP = CVE selection guide. Correlate with T1590.004 SNMP community string enumeration — the community string brute is the precursor.",
+        notes: "SNMP sysDescr OID (1.3.6.1.2.1.1.1.0) returns full device description including OS version, firmware version, hardware model, and build date. Content '|06 09 2b 06 01 02 01 01 01 00|' is the BER-encoded OID for sysDescr. A single successful read from an external IP = CVE selection guide. Correlate with T1590.004 SNMP community string enumeration - the community string brute is the precursor.",
         apt: [
           { name: "APT10", cls: "apt-cn", note: "Used SNMP sysDescr queries against MSP network devices to enumerate Cisco IOS and Juniper JUNOS firmware versions." },
           { name: "Dragonfly", cls: "apt-ru", note: "Performed systematic SNMP sysDescr harvesting against energy sector network equipment per CISA ICS-CERT advisories." },
@@ -1516,8 +1516,8 @@ AND destination.bytes: [1 TO 200]`,
         cite: "MITRE ATT&CK T1592.003, CISA ICS-CERT, CISA AA23-144A"
       },
       {
-        sub: "T1592.003 — Firmware",
-        indicator: "SNMP bulk walk — full MIB firmware and configuration harvest",
+        sub: "T1592.003 - Firmware",
+        indicator: "SNMP bulk walk - full MIB firmware and configuration harvest",
         arkime: `ip.src != $INTERNAL
 && port.dst == 161
 && protocols == udp
@@ -1540,17 +1540,17 @@ AND network.packets > 10`,
     count 10, seconds 30;
   classtype:attempted-recon;
   sid:9159214; rev:1;)`,
-        notes: "SNMP GetBulkRequest (PDU type 0xa5) retrieves multiple OIDs in a single request. A full MIB walk returns sysDescr, interfaces, ARP tables, routing tables, CDP neighbor data, and proprietary MIBs containing running config hashes and boot image names — a complete device profile. High packet count + large payload from external IP to UDP/161 = active bulk walk.",
+        notes: "SNMP GetBulkRequest (PDU type 0xa5) retrieves multiple OIDs in a single request. A full MIB walk returns sysDescr, interfaces, ARP tables, routing tables, CDP neighbor data, and proprietary MIBs containing running config hashes and boot image names - a complete device profile. High packet count + large payload from external IP to UDP/161 = active bulk walk.",
         apt: [
           { name: "Dragonfly", cls: "apt-ru", note: "Performed full SNMP MIB walks against energy sector network devices, harvesting complete device profiles including firmware versions and running config hashes." },
           { name: "APT10", cls: "apt-cn", note: "Conducted bulk SNMP walks against MSP-managed network devices to extract full device profiles for customer environments." },
-          { name: "Multi", cls: "apt-mul", note: "Documented in CISA ICS-CERT advisories — a single successful community string enables complete device state visibility." },
+          { name: "Multi", cls: "apt-mul", note: "Documented in CISA ICS-CERT advisories - a single successful community string enables complete device state visibility." },
         ],
         cite: "MITRE ATT&CK T1592.003, CISA ICS-CERT advisories, industry reporting"
       },
       {
-        sub: "T1592.003 — Firmware",
-        indicator: "Network device HTTP management interface — firmware version page probing",
+        sub: "T1592.003 - Firmware",
+        indicator: "Network device HTTP management interface - firmware version page probing",
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.method == GET
@@ -1591,7 +1591,7 @@ AND NOT url.domain: $KNOWN_GOOD`,
   http.uri;
   classtype:attempted-recon;
   sid:9159215; rev:1;)`,
-        notes: "Network devices expose firmware version information on management web interface pages — often without authentication on the version/status/about page. Path signatures: /cgi-bin/luci = OpenWRT/LEDE, /webui/login = UTM appliances, /api/v1/system/info = Ubiquiti/Aruba/Ruckus. A 200 response disclosing a firmware version = immediate patch status check. Cross-reference response body against CVE database.",
+        notes: "Network devices expose firmware version information on management web interface pages - often without authentication on the version/status/about page. Path signatures: /cgi-bin/luci = OpenWRT/LEDE, /webui/login = UTM appliances, /api/v1/system/info = Ubiquiti/Aruba/Ruckus. A 200 response disclosing a firmware version = immediate patch status check. Cross-reference response body against CVE database.",
         apt: [
           { name: "Volt Typhoon", cls: "apt-cn", note: "Probed network device HTTP management interfaces to enumerate firmware versions on SOHO routers and enterprise network equipment per CISA AA23-144A." },
           { name: "APT33", cls: "apt-ir", note: "Queried HTTP management interfaces of network appliances in energy sector environments." },
@@ -1600,8 +1600,8 @@ AND NOT url.domain: $KNOWN_GOOD`,
         cite: "MITRE ATT&CK T1592.003, CISA AA23-144A, industry reporting"
       },
       {
-        sub: "T1592.003 — Firmware",
-        indicator: "TFTP read request — firmware image or config file retrieval attempt",
+        sub: "T1592.003 - Firmware",
+        indicator: "TFTP read request - firmware image or config file retrieval attempt",
         arkime: `ip.src != $INTERNAL
 && port.dst == 69
 && protocols == udp
@@ -1617,7 +1617,7 @@ AND destination.bytes > 0`,
   content:"|00 01|"; depth:2;
   classtype:attempted-recon;
   sid:9159216; rev:1;)`,
-        notes: "TFTP (UDP/69) used by network devices for firmware updates and config backup — an exposed TFTP server may serve firmware images and running configs without any authentication. Content '|00 01|' is the TFTP Read Request opcode. External UDP/69 reaching your network = critical misconfiguration. Cisco devices historically stored running-config via TFTP. Zeek tftp.log captures filenames requested.",
+        notes: "TFTP (UDP/69) used by network devices for firmware updates and config backup - an exposed TFTP server may serve firmware images and running configs without any authentication. Content '|00 01|' is the TFTP Read Request opcode. External UDP/69 reaching your network = critical misconfiguration. Cisco devices historically stored running-config via TFTP. Zeek tftp.log captures filenames requested.",
         apt: [
           { name: "APT10", cls: "apt-cn", note: "Exploited exposed TFTP servers in MSP environments to retrieve Cisco running configurations and firmware images without authentication." },
           { name: "Dragonfly", cls: "apt-ru", note: "Targeted TFTP servers on energy sector networks to retrieve network device configurations and firmware images per CISA ICS-CERT advisories." },
@@ -1626,8 +1626,8 @@ AND destination.bytes > 0`,
         cite: "MITRE ATT&CK T1592.003, CISA ICS-CERT, NSA hardening guides"
       },
       {
-        sub: "T1592.003 — Firmware",
-        indicator: "TLS certificate CN / SAN — device firmware version and model disclosure",
+        sub: "T1592.003 - Firmware",
+        indicator: "TLS certificate CN / SAN - device firmware version and model disclosure",
         arkime: `ip.src != $INTERNAL
 && protocols == tls
 && tls.cert-cn == [
@@ -1660,17 +1660,17 @@ AND tls.server.x509.subject.common_name: (
     router|firewall)/ix";
   classtype:policy-violation;
   sid:9159217; rev:1;)`,
-        notes: "Network devices generating self-signed TLS certs often include device model, hostname, and sometimes firmware version in the CN or SAN fields. A FortiGate self-signed cert with CN=FortiGate-100F reveals exact hardware model — adversaries correlate with Shodan to track firmware update history. Remediate: replace self-signed certs with CA-issued certs with generic CNs.",
+        notes: "Network devices generating self-signed TLS certs often include device model, hostname, and sometimes firmware version in the CN or SAN fields. A FortiGate self-signed cert with CN=FortiGate-100F reveals exact hardware model - adversaries correlate with Shodan to track firmware update history. Remediate: replace self-signed certs with CA-issued certs with generic CNs.",
         apt: [
           { name: "APT33", cls: "apt-ir", note: "Collects TLS certificate CN/SAN data from network device management interfaces to identify device models and correlate with Shodan data." },
           { name: "Volt Typhoon", cls: "apt-cn", note: "Harvests TLS certificate metadata from network device management interfaces to identify hardware models and correlate against CVE-vulnerable firmware versions." },
-          { name: "Multi", cls: "apt-mul", note: "Passive intelligence source — adversaries collect from Shodan indexed scans without generating probe traffic." },
+          { name: "Multi", cls: "apt-mul", note: "Passive intelligence source - adversaries collect from Shodan indexed scans without generating probe traffic." },
         ],
         cite: "MITRE ATT&CK T1592.003, industry reporting"
       },
       {
-        sub: "T1592.004 — Client Configurations",
-        indicator: "JA3 / JA4 known scanner TLS fingerprint — tool identification via ClientHello",
+        sub: "T1592.004 - Client Configurations",
+        indicator: "JA3 / JA4 known scanner TLS fingerprint - tool identification via ClientHello",
         arkime: `ip.src != $INTERNAL
 && protocols == tls
 && tls.ja3 == [
@@ -1696,16 +1696,16 @@ AND tls.client.ja3: (
   content:"e7d705a3286e19ea42f587b344ee6865";
   classtype:attempted-recon;
   sid:9159218; rev:1;)`,
-        notes: "Known scanner JA3 hashes (maintain a current blocklist — these rotate with tool updates): e7d705a3 = Metasploit, 6734f374 = zgrab2 default, 4d7a28d6 = Nmap SSL probe, b386946a = Masscan TLS, a0e9f5d6 = curl/7 default. Evasion: cipher reordering changes the hash. Pair with JA4 (more stable) and behavioral heuristics. Maintain a living blocklist from SSLBL (abuse.ch).",
+        notes: "Known scanner JA3 hashes (maintain a current blocklist - these rotate with tool updates): e7d705a3 = Metasploit, 6734f374 = zgrab2 default, 4d7a28d6 = Nmap SSL probe, b386946a = Masscan TLS, a0e9f5d6 = curl/7 default. Evasion: cipher reordering changes the hash. Pair with JA4 (more stable) and behavioral heuristics. Maintain a living blocklist from SSLBL (abuse.ch).",
         apt: [
-          { name: "Multi", cls: "apt-mul", note: "JA3 scanner fingerprint matches primarily catch unsophisticated actors and automated tooling — nation-state actors rotate TLS parameters to evade JA3." },
+          { name: "Multi", cls: "apt-mul", note: "JA3 scanner fingerprint matches primarily catch unsophisticated actors and automated tooling - nation-state actors rotate TLS parameters to evade JA3." },
           { name: "IAB", cls: "apt-mul", note: "Initial access brokers running bulk scanning frequently use default tool configurations generating known JA3 hashes." },
         ],
         cite: "MITRE ATT&CK T1592.004, abuse.ch SSLBL, industry reporting"
       },
       {
-        sub: "T1592.004 — Client Configurations",
-        indicator: "JA4 fingerprint anomaly — tool TLS stack versus claimed browser UA mismatch",
+        sub: "T1592.004 - Client Configurations",
+        indicator: "JA4 fingerprint anomaly - tool TLS stack versus claimed browser UA mismatch",
         arkime: `ip.src != $INTERNAL
 && protocols == tls
 && tls.ja4 != $BROWSER_JA4_BASELINE
@@ -1732,17 +1732,17 @@ AND user_agent.original: (
   ja3.hash; content:!"";
   classtype:attempted-recon;
   sid:9159219; rev:1;)`,
-        notes: "A tool claiming to be Chrome but generating a non-Chrome JA4 hash is spoofing its UA — the TLS ClientHello doesn't lie. Chrome, Firefox, and Edge have stable, well-documented JA4 fingerprints. Build a baseline of expected JA4 values and alert on deviations paired with browser UA strings. This catches adversaries who rotate UA strings but don't implement browser-accurate TLS stacks. Requires Zeek JA4 package.",
+        notes: "A tool claiming to be Chrome but generating a non-Chrome JA4 hash is spoofing its UA - the TLS ClientHello doesn't lie. Chrome, Firefox, and Edge have stable, well-documented JA4 fingerprints. Build a baseline of expected JA4 values and alert on deviations paired with browser UA strings. This catches adversaries who rotate UA strings but don't implement browser-accurate TLS stacks. Requires Zeek JA4 package.",
         apt: [
-          { name: "Midnight Blizzard", cls: "apt-ru", note: "Uses custom tooling with spoofed browser UA strings that generate non-browser JA4 fingerprints — mismatch detectable via JA4 analysis." },
-          { name: "Charming Kitten", cls: "apt-ir", note: "Deploys credential harvesting infrastructure with browser-mimicking UA strings but Python/Go TLS stacks — JA4 catches the mismatch." },
+          { name: "Midnight Blizzard", cls: "apt-ru", note: "Uses custom tooling with spoofed browser UA strings that generate non-browser JA4 fingerprints - mismatch detectable via JA4 analysis." },
+          { name: "Charming Kitten", cls: "apt-ir", note: "Deploys credential harvesting infrastructure with browser-mimicking UA strings but Python/Go TLS stacks - JA4 catches the mismatch." },
           { name: "Scattered Spider", cls: "apt-mul", note: "Uses browser-mimicking UA strings but non-browser TLS stacks in AiTM phishing infrastructure." },
         ],
         cite: "MITRE ATT&CK T1592.004, industry reporting"
       },
       {
-        sub: "T1592.004 — Client Configurations",
-        indicator: "JA4S — server TLS response fingerprinting for rogue/AiTM infrastructure detection",
+        sub: "T1592.004 - Client Configurations",
+        indicator: "JA4S - server TLS response fingerprinting for rogue/AiTM infrastructure detection",
         arkime: `ip.dst == $INTERNAL
 && protocols == tls
 && tls.ja3s != $KNOWN_GOOD_SERVERS
@@ -1760,7 +1760,7 @@ AND tls.server.not_before:
   ja3.hash; content:!"";
   classtype:policy-violation;
   sid:9159220; rev:1;)`,
-        notes: "JA4S fingerprints the server-side TLS response (ServerHello). Known-good server JA4S values are stable for your infrastructure — a newly appearing JA4S that doesn't match any known server = rogue service or adversary infrastructure. AiTM proxies have characteristic JA4S values distinct from legitimate IdP servers (Okta, Azure AD, Google). Build a JA4S allowlist for your servers and alert on deviations.",
+        notes: "JA4S fingerprints the server-side TLS response (ServerHello). Known-good server JA4S values are stable for your infrastructure - a newly appearing JA4S that doesn't match any known server = rogue service or adversary infrastructure. AiTM proxies have characteristic JA4S values distinct from legitimate IdP servers (Okta, Azure AD, Google). Build a JA4S allowlist for your servers and alert on deviations.",
         apt: [
           { name: "Midnight Blizzard", cls: "apt-ru", note: "AiTM infrastructure generates JA4S values distinct from legitimate Microsoft and Okta TLS server responses." },
           { name: "Scattered Spider", cls: "apt-mul", note: "AiTM proxy infrastructure has documented JA4S values differing from legitimate IdP servers." },
@@ -1769,8 +1769,8 @@ AND tls.server.not_before:
         cite: "MITRE ATT&CK T1592.004, T1598, industry reporting"
       },
       {
-        sub: "T1592.004 — Client Configurations",
-        indicator: "Passive OS fingerprinting — TCP stack anomaly indicating scanner or non-standard OS",
+        sub: "T1592.004 - Client Configurations",
+        indicator: "Passive OS fingerprinting - TCP stack anomaly indicating scanner or non-standard OS",
         arkime: `ip.src != $INTERNAL
 && protocols == tcp
 && tcpflags.syn == 1
@@ -1795,15 +1795,15 @@ AND network.transport: tcp`,
   sid:9159221; rev:1;)`,
         notes: "TCP SYN packets contain OS fingerprinting data in IP TTL, TCP window size, MSS, and options order. Baseline values: Linux = TTL 64, window ~29200; Windows = TTL 128, window 65535; Cisco IOS = TTL 255, window 4128; Masscan = TTL 255, window 1024; Zmap = TTL 255, window 65535. Integrate p0f or Zeek OS fingerprinting for passive identification. Arkime community fingerprint plugin surfaces p0f data in session records.",
         apt: [
-          { name: "APT40", cls: "apt-cn", note: "Uses Masscan-equivalent tooling with characteristic TCP stack (TTL=255, window=1024) for large-scale port sweeps — passive TCP fingerprinting identifies this even when UAs are customized." },
+          { name: "APT40", cls: "apt-cn", note: "Uses Masscan-equivalent tooling with characteristic TCP stack (TTL=255, window=1024) for large-scale port sweeps - passive TCP fingerprinting identifies this even when UAs are customized." },
           { name: "APT28", cls: "apt-ru", note: "Network scanning tooling generates distinctive TCP stack signatures detectable via passive OS fingerprinting per NSA/CISA AA20-296A." },
-          { name: "Multi", cls: "apt-mul", note: "Most evasion-resistant scanning detection method — TCP stack parameters require OS-level changes to spoof convincingly." },
+          { name: "Multi", cls: "apt-mul", note: "Most evasion-resistant scanning detection method - TCP stack parameters require OS-level changes to spoof convincingly." },
         ],
         cite: "MITRE ATT&CK T1592.004, NSA/CISA AA20-296A, industry reporting"
       },
       {
-        sub: "T1592.004 — Client Configurations",
-        indicator: "JA4H mismatch — HTTP header order inconsistent with claimed browser",
+        sub: "T1592.004 - Client Configurations",
+        indicator: "JA4H mismatch - HTTP header order inconsistent with claimed browser",
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.user-agent == [
@@ -1835,13 +1835,13 @@ AND NOT http.request.headers.order:
         apt: [
           { name: "Charming Kitten", cls: "apt-ir", note: "Uses browser-mimicking UA strings but Python-requests or Go http.Client header orders detectable via JA4H analysis." },
           { name: "Kimsuky", cls: "apt-kp", note: "Automated reconnaissance tooling with spoofed browser UAs but scripting library header orders, detectable via JA4H." },
-          { name: "Multi", cls: "apt-mul", note: "Particularly effective against phishing kits — kits written in PHP/Python/Go rarely implement accurate browser header ordering." },
+          { name: "Multi", cls: "apt-mul", note: "Particularly effective against phishing kits - kits written in PHP/Python/Go rarely implement accurate browser header ordering." },
         ],
         cite: "MITRE ATT&CK T1592.004, industry reporting"
       },
       {
-        sub: "T1592.004 — Client Configurations",
-        indicator: "WPAD / PAC file request — network proxy configuration disclosure",
+        sub: "T1592.004 - Client Configurations",
+        indicator: "WPAD / PAC file request - network proxy configuration disclosure",
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.method == GET
@@ -1869,7 +1869,7 @@ AND url.path: (
   http.uri;
   classtype:attempted-recon;
   sid:9159223; rev:1;)`,
-        notes: "WPAD requests reveal that the client uses automatic proxy detection — and if your PAC file is served, it discloses internal proxy hostnames, IP ranges, and bypass lists. External requests for wpad.dat should never reach your web servers. WPAD poisoning via Responder is a documented credential harvesting technique — internal clients broadcasting WPAD requests are vulnerable. Disable WPAD on all clients or configure proxy settings explicitly.",
+        notes: "WPAD requests reveal that the client uses automatic proxy detection - and if your PAC file is served, it discloses internal proxy hostnames, IP ranges, and bypass lists. External requests for wpad.dat should never reach your web servers. WPAD poisoning via Responder is a documented credential harvesting technique - internal clients broadcasting WPAD requests are vulnerable. Disable WPAD on all clients or configure proxy settings explicitly.",
         apt: [
           { name: "APT28", cls: "apt-ru", note: "Exploited WPAD broadcast requests using Responder-equivalent tooling to serve malicious PAC files, redirecting traffic through adversary-controlled proxies." },
           { name: "Multi", cls: "apt-mul", note: "WPAD poisoning via NBNS/mDNS is documented in multiple penetration testing frameworks and commonly observed in post-compromise lateral movement." },
@@ -1884,7 +1884,7 @@ AND url.path: (
     desc: ".001 Social Media · .002 Search Engines · .003 Code Repositories",
     rows: [
       {
-        sub: "T1593.001 — Social Media",
+        sub: "T1593.001 - Social Media",
         indicator: "LinkedIn bulk profile / company scraping from internal host",
         arkime: `ip.src == $INTERNAL
 && http.host == *linkedin.com*
@@ -1923,7 +1923,7 @@ AND http.response.bytes > 20000`,
     count 20, seconds 60;
   classtype:policy-violation;
   sid:9159301; rev:1;)`,
-        notes: "High-volume LinkedIn profile and company page fetches from single internal host = automated scraping. Legitimate LinkedIn use is interactive — 20+ profile GETs in 60 seconds from one endpoint is anomalous. LinkedIn rate limiting generates 429 responses visible in proxy logs — a 429 from LinkedIn is itself an indicator. Baseline sales/recruiting team use first.",
+        notes: "High-volume LinkedIn profile and company page fetches from single internal host = automated scraping. Legitimate LinkedIn use is interactive - 20+ profile GETs in 60 seconds from one endpoint is anomalous. LinkedIn rate limiting generates 429 responses visible in proxy logs - a 429 from LinkedIn is itself an indicator. Baseline sales/recruiting team use first.",
         apt: [
           { name: "Charming Kitten", cls: "apt-ir", note: "Uses LinkedIn profile scraping to identify high-value targets at academic, NGO, and government organizations before spearphishing." },
           { name: "Kimsuky", cls: "apt-kp", note: "Scrapes LinkedIn profiles of South Korean government and US policy organization staff to identify personnel with access to target information." },
@@ -1932,7 +1932,7 @@ AND http.response.bytes > 20000`,
         cite: "MITRE ATT&CK T1593.001, T1589.003, industry reporting"
       },
       {
-        sub: "T1593.001 — Social Media",
+        sub: "T1593.001 - Social Media",
         indicator: "Social platform bulk org mention queries from internal host",
         arkime: `ip.src == $INTERNAL
 && http.host == [
@@ -1985,7 +1985,7 @@ AND http.response.bytes > 10000`,
         cite: "MITRE ATT&CK T1593.001, industry reporting"
       },
       {
-        sub: "T1593.002 — Search Engines",
+        sub: "T1593.002 - Search Engines",
         indicator: "Google / Bing dork queries targeting your own domain from internal host",
         arkime: `ip.src == $INTERNAL
 && http.host == [
@@ -2027,7 +2027,7 @@ AND url.query: (
   http.uri;
   classtype:policy-violation;
   sid:9159303; rev:1;)`,
-        notes: "Google dork operators (site:, inurl:, filetype:, intitle:) allow targeted searches for exposed files and sensitive content. An internal host running dork queries against your own domain is either red team activity (document it) or a compromised host performing pre-exfil intelligence gathering. URL-encoded operators (%3A = :) used by automated tools — the Suricata PCRE matches both encoded and decoded forms.",
+        notes: "Google dork operators (site:, inurl:, filetype:, intitle:) allow targeted searches for exposed files and sensitive content. An internal host running dork queries against your own domain is either red team activity (document it) or a compromised host performing pre-exfil intelligence gathering. URL-encoded operators (%3A = :) used by automated tools - the Suricata PCRE matches both encoded and decoded forms.",
         apt: [
           { name: "APT28", cls: "apt-ru", note: "Used Google dorking to identify exposed files, login pages, and sensitive content on target organization websites." },
           { name: "Charming Kitten", cls: "apt-ir", note: "Uses targeted Google dork queries to find publicly accessible documents containing employee information and technology details on target websites." },
@@ -2036,8 +2036,8 @@ AND url.query: (
         cite: "MITRE ATT&CK T1593.002, industry reporting"
       },
       {
-        sub: "T1593.002 — Search Engines",
-        indicator: "Shodan / Censys / FOFA search API queries from internal host — own org lookup",
+        sub: "T1593.002 - Search Engines",
+        indicator: "Shodan / Censys / FOFA search API queries from internal host - own org lookup",
         arkime: `ip.src == $INTERNAL
 && http.host == [
   *shodan.io*
@@ -2075,16 +2075,16 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159304; rev:1;)`,
-        notes: "Internal hosts querying Shodan or Censys API against your own org's IP ranges = either security team exposure assessment (document and baseline) or a compromised host mapping your internet-facing attack surface. FOFA (fofa.info) and ZoomEye (zoomeye.org) are Chinese internet-wide scan databases — internal hits from non-security-team endpoints are a strong indicator of CN-attributed adversarial tooling.",
+        notes: "Internal hosts querying Shodan or Censys API against your own org's IP ranges = either security team exposure assessment (document and baseline) or a compromised host mapping your internet-facing attack surface. FOFA (fofa.info) and ZoomEye (zoomeye.org) are Chinese internet-wide scan databases - internal hits from non-security-team endpoints are a strong indicator of CN-attributed adversarial tooling.",
         apt: [
-          { name: "APT41", cls: "apt-cn", note: "Uses FOFA and ZoomEye (Chinese internet scan databases) to search for exposed services — internal hits indicate adversary tooling performing attack surface mapping." },
+          { name: "APT41", cls: "apt-cn", note: "Uses FOFA and ZoomEye (Chinese internet scan databases) to search for exposed services - internal hits indicate adversary tooling performing attack surface mapping." },
           { name: "Volt Typhoon", cls: "apt-cn", note: "Queried Shodan and Censys for exposed management interfaces on US critical infrastructure during pre-positioning operations." },
           { name: "APT33", cls: "apt-ir", note: "Used Shodan API queries to map exposed services on energy sector targets." },
         ],
         cite: "MITRE ATT&CK T1593.002, T1596.005, industry reporting"
       },
       {
-        sub: "T1593.003 — Code Repositories",
+        sub: "T1593.003 - Code Repositories",
         indicator: "GitHub API search for org secrets / internal naming from internal host",
         arkime: `ip.src == $INTERNAL
 && http.host == [
@@ -2129,7 +2129,7 @@ AND url.query: (
   http.uri;
   classtype:policy-violation;
   sid:9159305; rev:1;)`,
-        notes: "GitHub code search API queries targeting your org's domain, internal naming conventions, or credential keywords from internal hosts = security team secret scanning (document it) or compromised host hunting for accidentally committed credentials. GitHub API rate-limits at 10 req/min for authenticated users — 403 responses in proxy logs indicate automated tooling hitting rate limits.",
+        notes: "GitHub code search API queries targeting your org's domain, internal naming conventions, or credential keywords from internal hosts = security team secret scanning (document it) or compromised host hunting for accidentally committed credentials. GitHub API rate-limits at 10 req/min for authenticated users - 403 responses in proxy logs indicate automated tooling hitting rate limits.",
         apt: [
           { name: "APT41", cls: "apt-cn", note: "Searches GitHub for accidentally committed credentials, API keys, and internal configuration data from target organizations." },
           { name: "Cozy Bear", cls: "apt-ru", note: "Searched code repositories for credentials and configuration files related to target organizations." },
@@ -2138,8 +2138,8 @@ AND url.query: (
         cite: "MITRE ATT&CK T1593.003, CISA advisories, industry reporting"
       },
       {
-        sub: "T1593.003 — Code Repositories",
-        indicator: "git clone over HTTPS — bulk repository cloning from suspicious endpoint",
+        sub: "T1593.003 - Code Repositories",
+        indicator: "git clone over HTTPS - bulk repository cloning from suspicious endpoint",
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.host == [
@@ -2176,7 +2176,7 @@ AND destination.bytes > 100000`,
     count 5, seconds 300;
   classtype:policy-violation;
   sid:9159306; rev:1;)`,
-        notes: "Git clone over HTTPS generates a two-step HTTP exchange: GET /repo.git/info/refs?service=git-upload-pack (discovery) followed by POST /repo.git/git-upload-pack (pack download). User-Agent is always git/[version] — unforgeable without breaking git protocol. Bulk cloning of multiple repos from your org's namespace from an endpoint that isn't a known CI/CD system is anomalous. Large databytes.dst reflects repository size.",
+        notes: "Git clone over HTTPS generates a two-step HTTP exchange: GET /repo.git/info/refs?service=git-upload-pack (discovery) followed by POST /repo.git/git-upload-pack (pack download). User-Agent is always git/[version] - unforgeable without breaking git protocol. Bulk cloning of multiple repos from your org's namespace from an endpoint that isn't a known CI/CD system is anomalous. Large databytes.dst reflects repository size.",
         apt: [
           { name: "APT41", cls: "apt-cn", note: "Has cloned target organization code repositories to harvest credentials, API keys, and internal infrastructure details." },
           { name: "APT29", cls: "apt-ru", note: "Cloned repositories related to target organizations during pre-compromise intelligence gathering." },
@@ -2185,8 +2185,8 @@ AND destination.bytes > 100000`,
         cite: "MITRE ATT&CK T1593.003, industry reporting"
       },
       {
-        sub: "T1593.003 — Code Repositories",
-        indicator: "Self-hosted GitLab / Bitbucket SCM API enumeration — external repository listing",
+        sub: "T1593.003 - Code Repositories",
+        indicator: "Self-hosted GitLab / Bitbucket SCM API enumeration - external repository listing",
         arkime: `ip.src != $INTERNAL
 && http.host == [
   *gitlab.yourdomain.com*
@@ -2225,11 +2225,11 @@ AND url.path: (
   http.uri;
   classtype:attempted-recon;
   sid:9159307; rev:1;)`,
-        notes: "Self-hosted GitLab and Bitbucket expose REST APIs that list all repositories and users — even without authentication if misconfigured with public visibility. /api/v4/projects returns all repositories an unauthenticated user can see. External access to these endpoints from unknown IPs = repository enumeration. A 200 response with a large JSON payload from an external IP = critical misconfiguration — your repo list is public.",
+        notes: "Self-hosted GitLab and Bitbucket expose REST APIs that list all repositories and users - even without authentication if misconfigured with public visibility. /api/v4/projects returns all repositories an unauthenticated user can see. External access to these endpoints from unknown IPs = repository enumeration. A 200 response with a large JSON payload from an external IP = critical misconfiguration - your repo list is public.",
         apt: [
           { name: "APT41", cls: "apt-cn", note: "Enumerated self-hosted GitLab and Bitbucket instances via unauthenticated API endpoints per FBI and CISA advisories." },
           { name: "APT33", cls: "apt-ir", note: "Targeted self-hosted SCM instances at defense contractor and energy sector organizations to enumerate repositories." },
-          { name: "Multi", cls: "apt-mul", note: "Unauthenticated SCM API access is a critical misconfiguration — remediate before tuning detection." },
+          { name: "Multi", cls: "apt-mul", note: "Unauthenticated SCM API access is a critical misconfiguration - remediate before tuning detection." },
         ],
         cite: "MITRE ATT&CK T1593.003, FBI/CISA advisories, industry reporting"
       },
@@ -2241,8 +2241,8 @@ AND url.path: (
     desc: ".001 IP Blocks · .002 Vulnerability Scanning · .003 Wordlist Scanning",
     rows: [
       {
-        sub: "T1595.001 — Scanning IP Blocks",
-        indicator: "SYN scan pattern — single packet each direction, no data exchange",
+        sub: "T1595.001 - Scanning IP Blocks",
+        indicator: "SYN scan pattern - single packet each direction, no data exchange",
         arkime: `ip.src != $INTERNAL
 && packets.src == 1
 && packets.dst == 1
@@ -2266,7 +2266,7 @@ AND destination.bytes: 0`,
   classtype:attempted-recon;
   sid:9159501; rev:1;)`,
         notes: "flags:S,12 matches SYN only, ignoring RST/ACK/FIN. Exactly 1 pkt each direction with 0 databytes is the SYN→SYN-ACK→RST fingerprint. High count threshold avoids false positives on slow apps.",
-        ja4: `# JA4T — TCP fingerprint (TTL, window size, MSS, TCP options order)
+        ja4: `# JA4T - TCP fingerprint (TTL, window size, MSS, TCP options order)
 # Zeek (ja4 package): ja4t.log
 # Format: TTL_WindowSize_MSS_Options
 
@@ -2298,8 +2298,8 @@ ja4t: "255_0064_0000_00"
         cite: "MITRE ATT&CK T1595.001, industry reporting"
       },
       {
-        sub: "T1595.001 — Scanning IP Blocks",
-        indicator: "External hosts touching common ports — 0 payload",
+        sub: "T1595.001 - Scanning IP Blocks",
+        indicator: "External hosts touching common ports - 0 payload",
         arkime: `ip.src != $INTERNAL
 && databytes.dst == 0
 && port.dst == [21,22,23,25,53,
@@ -2328,7 +2328,7 @@ AND destination.bytes: 0`,
     count 10, seconds 30;
   classtype:attempted-recon;
   sid:9159502; rev:1;)`,
-        notes: "DB ports (1433 MSSQL, 1521 Oracle, 3306 MySQL), VNC (5900), alt-HTTP included. Zero databytes.dst confirms knock with no follow-through. Enrich with GeoIP — RDP from Eastern Europe at 03:00 UTC is a tier-1 alert.",
+        notes: "DB ports (1433 MSSQL, 1521 Oracle, 3306 MySQL), VNC (5900), alt-HTTP included. Zero databytes.dst confirms knock with no follow-through. Enrich with GeoIP - RDP from Eastern Europe at 03:00 UTC is a tier-1 alert.",
         apt: [
           { name: "APT10", cls: "apt-cn", note: "Cloud Hopper targeted RDP/SMB extensively against MSP environments." },
           { name: "Lazarus", cls: "apt-kp", note: "Probes DB/RDP ports against financial targets." },
@@ -2337,8 +2337,8 @@ AND destination.bytes: 0`,
         cite: "MITRE ATT&CK T1595.001, industry reporting"
       },
       {
-        sub: "T1595.001 — Scanning IP Blocks",
-        indicator: "ICMP ping sweep — external host sweeping your address space",
+        sub: "T1595.001 - Scanning IP Blocks",
+        indicator: "ICMP ping sweep - external host sweeping your address space",
         arkime: `ip.src != $INTERNAL
 && protocols == icmp
 && icmp.type == 8
@@ -2361,7 +2361,7 @@ AND destination.ip: $INTERNAL`,
     count 10, seconds 10;
   classtype:attempted-recon;
   sid:9159505; rev:1;)`,
-        notes: "ICMP type 8 code 0 = echo request. Burst of pings to sequential IPs from a single external source = host discovery sweep before port scanning. Check ip.dst for sequential increment pattern in Arkime. Many orgs block inbound ICMP at perimeter — adversaries fall back to TCP SYN host discovery instead.",
+        notes: "ICMP type 8 code 0 = echo request. Burst of pings to sequential IPs from a single external source = host discovery sweep before port scanning. Check ip.dst for sequential increment pattern in Arkime. Many orgs block inbound ICMP at perimeter - adversaries fall back to TCP SYN host discovery instead.",
         apt: [
           { name: "APT40", cls: "apt-cn", note: "ICMP host discovery sweeps as standard first step in network enumeration of maritime/defense/gov IP ranges." },
           { name: "Sandworm", cls: "apt-ru", note: "ICMP sweep-based host discovery against Ukrainian government and energy sector IP allocations prior to destructive operations." },
@@ -2371,8 +2371,8 @@ AND destination.ip: $INTERNAL`,
         cite: "MITRE ATT&CK T1595.001, CISA AA23-144A, industry reporting"
       },
       {
-        sub: "T1595.002 — Vulnerability Scanning",
-        indicator: "Web recon / directory enumeration — sensitive path probing",
+        sub: "T1595.002 - Vulnerability Scanning",
+        indicator: "Web recon / directory enumeration - sensitive path probing",
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.method == GET
@@ -2425,8 +2425,8 @@ AND url.path: (
         cite: "MITRE ATT&CK T1595.002, industry reporting"
       },
       {
-        sub: "T1595.002 — Vulnerability Scanning",
-        indicator: "CVE-specific exploit probe patterns — known-exploited path fingerprinting",
+        sub: "T1595.002 - Vulnerability Scanning",
+        indicator: "CVE-specific exploit probe patterns - known-exploited path fingerprinting",
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.method == GET
@@ -2473,7 +2473,7 @@ AND url.path: (
   http.uri;
   classtype:web-application-activity;
   sid:9159506; rev:1;)`,
-        notes: "CVE mapping: jndi:ldap/rmi = Log4Shell (CVE-2021-44228), /owa/auth/x.js = ProxyLogon (CVE-2021-26855), /vpns/portal/scripts/ = Citrix ADC (CVE-2019-19781), /mgmt/tm/util/bash = F5 iControl (CVE-2021-22986), /solr/admin/cores = Apache Solr RCE, /actuator/heapdump = Spring Boot. A single hit on any of these from an external IP is P1 — maintain a living list updated against CISA KEV additions.",
+        notes: "CVE mapping: jndi:ldap/rmi = Log4Shell (CVE-2021-44228), /owa/auth/x.js = ProxyLogon (CVE-2021-26855), /vpns/portal/scripts/ = Citrix ADC (CVE-2019-19781), /mgmt/tm/util/bash = F5 iControl (CVE-2021-22986), /solr/admin/cores = Apache Solr RCE, /actuator/heapdump = Spring Boot. A single hit on any of these from an external IP is P1 - maintain a living list updated against CISA KEV additions.",
         apt: [
           { name: "Volt Typhoon", cls: "apt-cn", note: "Probed F5 iControl and Citrix paths weeks before exploitation per CISA AA23-144A." },
           { name: "APT33", cls: "apt-ir", note: "Log4Shell path probing within 48 hours of public disclosure against energy/defense web infrastructure." },
@@ -2483,8 +2483,8 @@ AND url.path: (
         cite: "MITRE ATT&CK T1595.002, CISA KEV, CISA AA23-144A, industry reporting"
       },
       {
-        sub: "T1595.002 — Vulnerability Scanning",
-        indicator: "Banner grabbing — service version harvest via connect-and-RST",
+        sub: "T1595.002 - Vulnerability Scanning",
+        indicator: "Banner grabbing - service version harvest via connect-and-RST",
         arkime: `ip.src != $INTERNAL
 && port.dst == [
   21,22,23,25,110,
@@ -2529,7 +2529,7 @@ AND destination.bytes > 0`,
         cite: "MITRE ATT&CK T1595.002, T1592.002, NSA/CISA advisories, industry reporting"
       },
       {
-        sub: "T1595.002 — Vulnerability Scanning",
+        sub: "T1595.002 - Vulnerability Scanning",
         indicator: "Known scanner user-agents hitting infrastructure",
         arkime: `ip.src != $INTERNAL
 && http.user-agent == [
@@ -2572,15 +2572,15 @@ AND user_agent.original: (
   http.header;
   classtype:web-application-activity;
   sid:9159504; rev:1;)`,
-        notes: "Includes modern wordlist fuzzers (ffuf, feroxbuster, wfuzz), CMS scanners (wpscan, joomscan), commercial scanners (Acunetix, Nessus, Qualys), exploitation frameworks (Metasploit, Hydra), scripting defaults (python-requests, go-http-client, libwww-perl). Skilled adversaries spoof UAs — absence does NOT clear a session. Pair with JA3/JA4.",
+        notes: "Includes modern wordlist fuzzers (ffuf, feroxbuster, wfuzz), CMS scanners (wpscan, joomscan), commercial scanners (Acunetix, Nessus, Qualys), exploitation frameworks (Metasploit, Hydra), scripting defaults (python-requests, go-http-client, libwww-perl). Skilled adversaries spoof UAs - absence does NOT clear a session. Pair with JA3/JA4.",
         apt: [
           { name: "Multi/IAB", cls: "apt-mul", note: "Default tool UAs primarily from opportunistic actors and initial access brokers. Nation-state actors typically customize UA strings." },
         ],
         cite: "MITRE ATT&CK T1595.002, industry reporting"
       },
       {
-        sub: "T1595.003 — Wordlist Scanning",
-        indicator: "High 4xx response ratio from single external IP — wordlist exhaustion",
+        sub: "T1595.003 - Wordlist Scanning",
+        indicator: "High 4xx response ratio from single external IP - wordlist exhaustion",
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.statuscode == [
@@ -2606,12 +2606,12 @@ AND http.response.status_code: (
     count 50, seconds 60;
   classtype:web-application-activity;
   sid:9159508; rev:1;)`,
-        notes: "Wordlist scanners (gobuster, ffuf, feroxbuster) generate characteristic 404/403/400 bursts regardless of UA string. Single external IP generating 50+ 4xx responses across varied URI paths in 60 seconds = near-certain wordlist scanning. UA-spoof-resistant companion to the scanner UA row. Use bucket aggregation in Kibana (source.ip + status_code) — signal is in the volume, not individual requests.",
+        notes: "Wordlist scanners (gobuster, ffuf, feroxbuster) generate characteristic 404/403/400 bursts regardless of UA string. Single external IP generating 50+ 4xx responses across varied URI paths in 60 seconds = near-certain wordlist scanning. UA-spoof-resistant companion to the scanner UA row. Use bucket aggregation in Kibana (source.ip + status_code) - signal is in the volume, not individual requests.",
         apt: [
-          { name: "APT41", cls: "apt-cn", note: "Wordlist-based web enumeration with custom UA strings as standard pre-compromise step — 4xx ratio catches this where UA matching fails." },
+          { name: "APT41", cls: "apt-cn", note: "Wordlist-based web enumeration with custom UA strings as standard pre-compromise step - 4xx ratio catches this where UA matching fails." },
           { name: "APT33", cls: "apt-ir", note: "Directory brute-forcing with rotated UA strings against energy/defense web apps." },
           { name: "FIN7", cls: "apt-mul", note: "ffuf and feroxbuster with custom UAs in POS/hospitality sector web app recon." },
-          { name: "IAB", cls: "apt-mul", note: "Initial access brokers run ffuf/feroxbuster with spoofed UAs against bulk target lists — 4xx ratio is the only reliable indicator when UA rotation is in play." },
+          { name: "IAB", cls: "apt-mul", note: "Initial access brokers run ffuf/feroxbuster with spoofed UAs against bulk target lists - 4xx ratio is the only reliable indicator when UA rotation is in play." },
         ],
         cite: "MITRE ATT&CK T1595.003, industry reporting"
       },
@@ -2623,8 +2623,8 @@ AND http.response.status_code: (
     desc: ".001/.002 WHOIS & History · .003 Passive DNS · .004 Certificate Transparency · .005 Scan Databases",
     rows: [
       {
-        sub: "T1596.001 — WHOIS / .002 WHOIS History",
-        indicator: "RDAP / WHOIS API query — internal host querying registration data for own domain",
+        sub: "T1596.001 - WHOIS / .002 WHOIS History",
+        indicator: "RDAP / WHOIS API query - internal host querying registration data for own domain",
         arkime: `ip.src == $INTERNAL
 && http.host == [
   *rdap.arin.net*
@@ -2667,17 +2667,17 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159401; rev:1;)`,
-        notes: "Internal hosts querying RDAP or commercial WHOIS APIs against your own domain or IP ranges = NOC/security team activity (baseline and document) or a compromised host mapping registration data. Automated bulk queries from endpoints are anomalous. Port 43 TCP (legacy WHOIS) is covered in T1590.001 — this row covers the modern RDAP/HTTP equivalent.",
+        notes: "Internal hosts querying RDAP or commercial WHOIS APIs against your own domain or IP ranges = NOC/security team activity (baseline and document) or a compromised host mapping registration data. Automated bulk queries from endpoints are anomalous. Port 43 TCP (legacy WHOIS) is covered in T1590.001 - this row covers the modern RDAP/HTTP equivalent.",
         apt: [
           { name: "Volt Typhoon", cls: "apt-cn", note: "Queried RDAP and WHOIS data to map organizational relationships between target organizations and their ISPs, identifying OT-segment IP ranges." },
           { name: "APT29", cls: "apt-ru", note: "Queried domain registration and RDAP data to map subsidiary and partner relationships during pre-SolarWinds reconnaissance." },
-          { name: "Multi", cls: "apt-mul", note: "Post-compromise indicator — adversaries map your registered IP space to plan lateral movement and identify overlooked internet-exposed ranges." },
+          { name: "Multi", cls: "apt-mul", note: "Post-compromise indicator - adversaries map your registered IP space to plan lateral movement and identify overlooked internet-exposed ranges." },
         ],
         cite: "MITRE ATT&CK T1596.001, industry reporting"
       },
       {
-        sub: "T1596.001 — WHOIS / .002 WHOIS History",
-        indicator: "WHOIS history / DomainTools API — historical registration data query from internal host",
+        sub: "T1596.001 - WHOIS / .002 WHOIS History",
+        indicator: "WHOIS history / DomainTools API - historical registration data query from internal host",
         arkime: `ip.src == $INTERNAL
 && http.host == [
   *domaintools.com*
@@ -2718,7 +2718,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159402; rev:1;)`,
-        notes: "WHOIS history services reveal historical registrant data, previous name servers, past IP associations, and ownership changes. Adversaries use this to identify previously used infrastructure and overlooked decommissioned services. DomainTools reverse WHOIS (find all domains registered to the same email/org) maps your entire domain portfolio — extremely high intelligence value.",
+        notes: "WHOIS history services reveal historical registrant data, previous name servers, past IP associations, and ownership changes. Adversaries use this to identify previously used infrastructure and overlooked decommissioned services. DomainTools reverse WHOIS (find all domains registered to the same email/org) maps your entire domain portfolio - extremely high intelligence value.",
         apt: [
           { name: "APT28", cls: "apt-ru", note: "Uses WHOIS history data to map target organization domain registration history and identify the full domain portfolio." },
           { name: "APT33", cls: "apt-ir", note: "Queries WHOIS history services to identify historically registered domains associated with target organizations." },
@@ -2727,8 +2727,8 @@ AND url.path: (
         cite: "MITRE ATT&CK T1596.002, industry reporting"
       },
       {
-        sub: "T1596.003 — Passive DNS",
-        indicator: "Passive DNS database query — internal host querying pDNS for own infrastructure history",
+        sub: "T1596.003 - Passive DNS",
+        indicator: "Passive DNS database query - internal host querying pDNS for own infrastructure history",
         arkime: `ip.src == $INTERNAL
 && http.host == [
   *passivetotal.org*
@@ -2774,7 +2774,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159403; rev:1;)`,
-        notes: "Passive DNS databases record historical DNS resolutions — what IPs a hostname resolved to over time. Internal hosts querying pDNS for your own hostnames map your historical DNS footprint, potentially exposing decommissioned services still in DNS and past infrastructure still accessible. Farsight DNSDB is extremely comprehensive. These queries also create intelligence-leakage risk on top of the detection signal.",
+        notes: "Passive DNS databases record historical DNS resolutions - what IPs a hostname resolved to over time. Internal hosts querying pDNS for your own hostnames map your historical DNS footprint, potentially exposing decommissioned services still in DNS and past infrastructure still accessible. Farsight DNSDB is extremely comprehensive. These queries also create intelligence-leakage risk on top of the detection signal.",
         apt: [
           { name: "APT10", cls: "apt-cn", note: "Queried passive DNS databases to map historical DNS resolutions for MSP customer infrastructure, locating decommissioned but still-accessible services." },
           { name: "APT29", cls: "apt-ru", note: "Used passive DNS data to map infrastructure relationships between target organizations and hosting providers during pre-SolarWinds reconnaissance." },
@@ -2783,8 +2783,8 @@ AND url.path: (
         cite: "MITRE ATT&CK T1596.003, industry reporting"
       },
       {
-        sub: "T1596.004 — Certificate Transparency",
-        indicator: "Certificate Transparency log query — CT log scraping for org subdomain enumeration",
+        sub: "T1596.004 - Certificate Transparency",
+        indicator: "Certificate Transparency log query - CT log scraping for org subdomain enumeration",
         arkime: `ip.src == $INTERNAL
 && http.host == [
   *crt.sh*
@@ -2822,7 +2822,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159404; rev:1;)`,
-        notes: "Certificate Transparency logs record every TLS certificate issued for your domain — including wildcard certs revealing subdomain patterns, SAN entries listing internal hostnames, and certs for decommissioned services. A crt.sh query for %.yourdomain.com returns every cert ever issued. CT logs are public and queryable without authentication — adversaries use this as a zero-noise subdomain enumeration technique that never touches your infrastructure.",
+        notes: "Certificate Transparency logs record every TLS certificate issued for your domain - including wildcard certs revealing subdomain patterns, SAN entries listing internal hostnames, and certs for decommissioned services. A crt.sh query for %.yourdomain.com returns every cert ever issued. CT logs are public and queryable without authentication - adversaries use this as a zero-noise subdomain enumeration technique that never touches your infrastructure.",
         apt: [
           { name: "APT41", cls: "apt-cn", note: "Queries CT logs to enumerate subdomains of target organizations before active scanning, identifying dev/staging/internal services with public certs." },
           { name: "APT28", cls: "apt-ru", note: "Uses CT log queries to identify target organization subdomains and map infrastructure scope prior to exploitation." },
@@ -2831,8 +2831,8 @@ AND url.path: (
         cite: "MITRE ATT&CK T1596.004, industry reporting"
       },
       {
-        sub: "T1596.004 — Certificate Transparency",
-        indicator: "CT stream monitoring — real-time WebSocket feed for newly issued cert tracking",
+        sub: "T1596.004 - Certificate Transparency",
+        indicator: "CT stream monitoring - real-time WebSocket feed for newly issued cert tracking",
         arkime: `ip.src == $INTERNAL
 && http.host == [
   *certstream.calidog.io*
@@ -2859,15 +2859,15 @@ AND network.protocol: "websocket"`,
   http.header;
   classtype:policy-violation;
   sid:9159405; rev:1;)`,
-        notes: "CertStream provides a real-time WebSocket feed of all newly issued CT log certificates. A persistent WebSocket connection to certstream.calidog.io from an endpoint that isn't a known security monitoring system is anomalous — it's a running process. Adversaries can use this feed to monitor when you issue new certificates, revealing new services and infrastructure as they come online. Relatively niche but high-signal when it fires from unexpected endpoints.",
+        notes: "CertStream provides a real-time WebSocket feed of all newly issued CT log certificates. A persistent WebSocket connection to certstream.calidog.io from an endpoint that isn't a known security monitoring system is anomalous - it's a running process. Adversaries can use this feed to monitor when you issue new certificates, revealing new services and infrastructure as they come online. Relatively niche but high-signal when it fires from unexpected endpoints.",
         apt: [
-          { name: "Multi", cls: "apt-mul", note: "CT stream monitoring from internal hosts is primarily observed in security operations contexts — from unexpected endpoints it indicates adversary automation tracking newly issued infrastructure certificates." },
+          { name: "Multi", cls: "apt-mul", note: "CT stream monitoring from internal hosts is primarily observed in security operations contexts - from unexpected endpoints it indicates adversary automation tracking newly issued infrastructure certificates." },
         ],
         cite: "MITRE ATT&CK T1596.004, industry reporting"
       },
       {
-        sub: "T1596.005 — Scan Databases",
-        indicator: "Shodan / Censys historical host data API — own infrastructure exposure query",
+        sub: "T1596.005 - Scan Databases",
+        indicator: "Shodan / Censys historical host data API - own infrastructure exposure query",
         arkime: `ip.src == $INTERNAL
 && http.host == [
   *api.shodan.io*
@@ -2909,7 +2909,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159406; rev:1;)`,
-        notes: "Shodan and Censys host APIs return historical scan data for a specific IP — all open ports ever observed, banners captured, TLS certificates indexed. An internal host querying these APIs for your own IP ranges retrieves exactly what adversaries see when they look you up. Legitimate security team activity — document and baseline it. From unexpected endpoints = compromised host or insider reconnaissance.",
+        notes: "Shodan and Censys host APIs return historical scan data for a specific IP - all open ports ever observed, banners captured, TLS certificates indexed. An internal host querying these APIs for your own IP ranges retrieves exactly what adversaries see when they look you up. Legitimate security team activity - document and baseline it. From unexpected endpoints = compromised host or insider reconnaissance.",
         apt: [
           { name: "Volt Typhoon", cls: "apt-cn", note: "Queried Shodan and Censys host APIs for US critical infrastructure IP ranges to identify historically exposed management interfaces." },
           { name: "APT33", cls: "apt-ir", note: "Used Shodan historical host data to monitor energy sector target infrastructure for new service exposures and version changes." },
@@ -2918,8 +2918,8 @@ AND url.path: (
         cite: "MITRE ATT&CK T1596.005, CISA advisories, industry reporting"
       },
       {
-        sub: "T1596.005 — Scan Databases",
-        indicator: "VirusTotal / OTX / URLScan — own infrastructure submitted to threat intel platform",
+        sub: "T1596.005 - Scan Databases",
+        indicator: "VirusTotal / OTX / URLScan - own infrastructure submitted to threat intel platform",
         arkime: `ip.src == $INTERNAL
 && http.host == [
   *virustotal.com*
@@ -2961,7 +2961,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159407; rev:1;)`,
-        notes: "Submitting your own domain or IP to VirusTotal from an internal host leaks intelligence — VT results are visible to all paid subscribers. A compromised host checking if infrastructure is flagged = adversary verifying C2 isn't burned. URLScan.io takes public screenshots of submitted URLs — submitting an internal URL creates a permanent public screenshot of your internal web applications. Critical OPSEC failure if observed from unexpected endpoints.",
+        notes: "Submitting your own domain or IP to VirusTotal from an internal host leaks intelligence - VT results are visible to all paid subscribers. A compromised host checking if infrastructure is flagged = adversary verifying C2 isn't burned. URLScan.io takes public screenshots of submitted URLs - submitting an internal URL creates a permanent public screenshot of your internal web applications. Critical OPSEC failure if observed from unexpected endpoints.",
         apt: [
           { name: "Lazarus", cls: "apt-kp", note: "Submitted infrastructure components to threat intel platforms from compromised hosts to verify detection status before deploying additional tooling." },
           { name: "Multi", cls: "apt-mul", note: "Adversaries inside target networks have been documented submitting infrastructure to VT and OTX to verify whether C2 domains and payloads are flagged." },
@@ -2976,8 +2976,8 @@ AND url.path: (
     desc: ".001 Spearphishing Service · .002 Spearphishing Attachment · .003 Spearphishing Link",
     rows: [
       {
-        sub: "T1598.003 — Spearphishing Link",
-        indicator: "Spearphishing link — internal host clicking newly registered suspicious domain",
+        sub: "T1598.003 - Spearphishing Link",
+        indicator: "Spearphishing link - internal host clicking newly registered suspicious domain",
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.method == GET
@@ -3021,7 +3021,7 @@ AND tls.server.not_before:
         cite: "MITRE ATT&CK T1598.003, industry reporting"
       },
       {
-        sub: "T1598.003 — Spearphishing Link",
+        sub: "T1598.003 - Spearphishing Link",
         indicator: "Internal host POSTing credentials to external harvester page",
         arkime: `ip.src == $INTERNAL
 && http.method == POST
@@ -3067,8 +3067,8 @@ AND http.request.body.bytes < 500`,
         cite: "MITRE ATT&CK T1598, industry reporting"
       },
       {
-        sub: "T1598.003 — Spearphishing Link",
-        indicator: "AiTM / Evilginx proxy — session cookie harvest post-MFA",
+        sub: "T1598.003 - Spearphishing Link",
+        indicator: "AiTM / Evilginx proxy - session cookie harvest post-MFA",
         arkime: `ip.src == $INTERNAL
 && protocols == https
 && http.host != $KNOWN_GOOD
@@ -3094,7 +3094,7 @@ AND NOT url.domain: $KNOWN_GOOD`,
     seconds 10;
   classtype:social-engineering;
   sid:9159803; rev:1;)`,
-        notes: "AiTM frameworks (Evilginx2, Modlishka, Muraena) proxy the real IdP — MFA succeeds but session token is captured. Look for Secure+HttpOnly cookies set by domains NOT in your IdP list (Okta, Azure AD, Duo). Follow up in identity logs: successful MFA + new device or impossible travel = confirmed incident.",
+        notes: "AiTM frameworks (Evilginx2, Modlishka, Muraena) proxy the real IdP - MFA succeeds but session token is captured. Look for Secure+HttpOnly cookies set by domains NOT in your IdP list (Okta, Azure AD, Duo). Follow up in identity logs: successful MFA + new device or impossible travel = confirmed incident.",
         apt: [
           { name: "Midnight Blizzard", cls: "apt-ru", note: "Used AiTM phishing against Microsoft corporate and government targets 2023–2024." },
           { name: "Charming Kitten", cls: "apt-ir", note: "Deployed Evilginx2 infrastructure targeting academic and government O365 tenants." },
@@ -3103,8 +3103,8 @@ AND NOT url.domain: $KNOWN_GOOD`,
         cite: "MITRE ATT&CK T1598, industry reporting"
       },
       {
-        sub: "T1598.003 — Spearphishing Link",
-        indicator: "MFA token harvesting — rapid sequential TOTP/OTP submission",
+        sub: "T1598.003 - Spearphishing Link",
+        indicator: "MFA token harvesting - rapid sequential TOTP/OTP submission",
         arkime: `ip.src != $INTERNAL
 && http.method == POST
 && http.uri == [
@@ -3139,7 +3139,7 @@ AND http.response.status_code:
     seconds 30;
   classtype:attempted-user;
   sid:9159804; rev:1;)`,
-        notes: "Real-time kits (EvilProxy) relay OTP within the 30s TOTP window — creates a burst of POSTs to /mfa or /verify endpoints. Also watch for MFA fatigue: repeated push notifications to the same account in short window — visible in IdP logs, not network traffic.",
+        notes: "Real-time kits (EvilProxy) relay OTP within the 30s TOTP window - creates a burst of POSTs to /mfa or /verify endpoints. Also watch for MFA fatigue: repeated push notifications to the same account in short window - visible in IdP logs, not network traffic.",
         apt: [
           { name: "Scattered Spider", cls: "apt-mul", note: "Pioneered MFA fatigue (push bombing) attacks at scale." },
           { name: "Midnight Blizzard", cls: "apt-ru", note: "MFA bypass operations against Microsoft corporate using real-time relay." },
@@ -3149,8 +3149,8 @@ AND http.response.status_code:
         cite: "MITRE ATT&CK T1598, industry reporting"
       },
       {
-        sub: "T1598.002 — Spearphishing Attachment",
-        indicator: "DNS OOB callback — encoded subdomain from phishing document",
+        sub: "T1598.002 - Spearphishing Attachment",
+        indicator: "DNS OOB callback - encoded subdomain from phishing document",
         arkime: `ip.src == $INTERNAL
 && protocols == dns
 && dns.query-type == [A || AAAA || TXT]
@@ -3184,8 +3184,8 @@ AND dns.question.name: /
         cite: "MITRE ATT&CK T1598.002, industry reporting"
       },
       {
-        sub: "T1598.002 — Spearphishing Attachment",
-        indicator: "Remote template fetch — post-email open outbound connection",
+        sub: "T1598.002 - Spearphishing Attachment",
+        indicator: "Remote template fetch - post-email open outbound connection",
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.uri == [
@@ -3222,18 +3222,18 @@ AND http.request.referrer: (
   http.uri;
   classtype:social-engineering;
   sid:9159806; rev:1;)`,
-        notes: "Clean document fetches malicious template on open (T1221). Outlook/OWA referrer + .dotx from unknown external host is strong correlation. UNC path triggers (SMB to external IP) won't appear in HTTP logs — catch in Zeek conn.log. The document itself evades AV; the network fetch is the only detection opportunity.",
+        notes: "Clean document fetches malicious template on open (T1221). Outlook/OWA referrer + .dotx from unknown external host is strong correlation. UNC path triggers (SMB to external IP) won't appear in HTTP logs - catch in Zeek conn.log. The document itself evades AV; the network fetch is the only detection opportunity.",
         apt: [
           { name: "APT40", cls: "apt-cn", note: "Remote template injection in spearphishing docs targeting maritime/defense/government sectors." },
-          { name: "APT41", cls: "apt-cn", note: "Remote template injection as supply chain pre-positioning — clean doc passes email gateway scanning." },
+          { name: "APT41", cls: "apt-cn", note: "Remote template injection as supply chain pre-positioning - clean doc passes email gateway scanning." },
           { name: "APT28", cls: "apt-ru", note: "Used .dotx remote templates in election-related targeting of campaign and government staff." },
           { name: "Charming Kitten", cls: "apt-ir", note: "Remote template injection targeting academic and research institutions." },
         ],
         cite: "MITRE ATT&CK T1598.002, T1221, industry reporting"
       },
       {
-        sub: "T1598.001 — Spearphishing Service",
-        indicator: "Inbound phishing infrastructure — newly registered MX hitting mail gateway",
+        sub: "T1598.001 - Spearphishing Service",
+        indicator: "Inbound phishing infrastructure - newly registered MX hitting mail gateway",
         arkime: `ip.dst == $MAIL_SERVERS
 && port.dst == [25 || 587]
 && protocols == smtp
@@ -3257,7 +3257,7 @@ AND tls.server.not_before:
     seconds 60;
   classtype:social-engineering;
   sid:9159807; rev:1;)`,
-        notes: "Pair with SPF/DKIM/DMARC fail tags. New sending IP + DMARC fail + auth-themed subject = near-certain spearphish. Enrich against GreyNoise, Spamhaus, AbuseIPDB. Cross-reference vendor email allowlist — legitimate vendors do sometimes send from new IPs.",
+        notes: "Pair with SPF/DKIM/DMARC fail tags. New sending IP + DMARC fail + auth-themed subject = near-certain spearphish. Enrich against GreyNoise, Spamhaus, AbuseIPDB. Cross-reference vendor email allowlist - legitimate vendors do sometimes send from new IPs.",
         apt: [
           { name: "Charming Kitten", cls: "apt-ir", note: "Rotates dedicated phishing infrastructure per campaign with newly registered domains and fresh IPs." },
           { name: "Kimsuky", cls: "apt-kp", note: "Newly registered domains and fresh IPs for spearphishing against policy orgs and government contractors." },
