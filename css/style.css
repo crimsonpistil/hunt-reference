@@ -184,3 +184,32 @@ mark{background:rgba(210,153,34,.3);color:var(--text);border-radius:2px;padding:
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 @media(max-width:700px){.tech-desc,.apt-badges,.quick-tools{display:none}}
+
+/* SITE SWITCHER (network/host) */
+.site-switcher{
+  display:inline-flex;
+  align-items:center;
+  background:var(--bg);
+  border:1px solid var(--border2);
+  border-radius:5px;
+  overflow:hidden;
+  font-family:var(--mono);
+  font-size:10px;
+  font-weight:700;
+  margin:0 12px;
+  letter-spacing:.06em;
+}
+.switcher-side{
+  padding:5px 11px;
+  color:var(--text3);
+  text-decoration:none;
+  transition:all .15s;
+  border-right:1px solid var(--border2);
+}
+.switcher-side:last-child{border-right:none}
+.switcher-side:hover:not(.active){color:var(--text);background:var(--bg2)}
+.switcher-side.active{
+  background:var(--accent);
+  color:#fff;
+  cursor:default;
+}
