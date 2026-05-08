@@ -14,8 +14,10 @@ const DATA = [
 && protocols == icmp
 && icmp.type == 8
 && ip.dst == $INTERNAL
-&& unique-dst-count groupby
-  ip.src > 20 within 60s`,
+// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 20 within 60s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $INTERNAL
 AND network.protocol: icmp
@@ -48,8 +50,10 @@ AND icmp.type: 8`,
 && ip.src != $MONITORING_HOSTS
 && protocols == icmp
 && icmp.type == 8
-&& unique-subnet-count groupby
-  ip.src > 3 within 300s`,
+// THRESHOLD: aggregation (unique-subnet-count groupby ip.src > 3 within 300s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $MONITORING_HOSTS
 AND network.protocol: icmp
@@ -80,9 +84,10 @@ AND icmp.type: 8`,
         arkime: `ip.src == $INTERNAL
 && protocols == arp
 && arp.opcode == 1
-&& unique-arp-target-count
-  groupby ip.src > 50
-  within 60s`,
+// THRESHOLD: aggregation (unique-arp-target-count groupby ip.src > 50 within 60s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.mac: NOT null
 AND network.protocol: arp
 AND _exists_: arp.target_ip`,
@@ -108,9 +113,10 @@ N/A standard Suricata`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 137
 && protocols == nbns
-&& unique-nbns-target-count
-  groupby ip.src > 30
-  within 60s`,
+// THRESHOLD: aggregation (unique-nbns-target-count groupby ip.src > 30 within 60s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 137
 AND network.protocol: netbios-ns`,
@@ -142,8 +148,10 @@ AND network.protocol: netbios-ns`,
 && protocols == dns
 && dns.query.type == PTR
 && dns.host == "*.in-addr.arpa"
-&& unique-ptr-count groupby
-  ip.src > 50 within 300s`,
+// THRESHOLD: aggregation (unique-ptr-count groupby ip.src > 50 within 300s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $DNS_SERVERS
 AND dns.question.type: "PTR"
@@ -205,8 +213,10 @@ AND dns.question.type: "AXFR"`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& unique-dst-count groupby
-  ip.src > 20 within 60s
+// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 20 within 60s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.
 && ip.dst == $INTERNAL`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
@@ -277,9 +287,10 @@ AND _exists_: smb.session_setup`,
 && ip.src != $SCAN_SOURCES
 && protocols == tcp
 && tcp.flags == S
-&& unique-dst-port-count
-  groupby ip.src,ip.dst > 30
-  within 60s`,
+// THRESHOLD: aggregation (unique-dst-port-count groupby ip.src,ip.dst > 30 within 60s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $SCAN_SOURCES
 AND tcp.flags: "S"
@@ -311,9 +322,10 @@ AND NOT tcp.flags: "A"`,
 && ip.src != $SCAN_SOURCES
 && protocols == tcp
 && port.dst == [22, 445, 3389, 5985, 5986, 1433, 3306, 5432, 6379, 27017]
-&& unique-dst-count groupby
-  ip.src,port.dst > 20
-  within 60s`,
+// THRESHOLD: aggregation (unique-dst-count groupby ip.src,port.dst > 20 within 60s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $SCAN_SOURCES
 AND destination.port: (
@@ -354,9 +366,10 @@ AND destination.port: (
 && tcp.flags == S
 && dst-port-set-overlap-with
   nmap-top-1000 > 80%
-&& session-count groupby
-  ip.src,ip.dst > 100
-  within 120s`,
+// THRESHOLD: aggregation (session-count groupby ip.src,ip.dst > 100 within 120s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $SCAN_SOURCES
 AND tcp.flags: "S"`,
@@ -390,8 +403,10 @@ AND tcp.flags: "S"`,
 && protocols == ssh
 && session.length < 5
 && packets.src < 5
-&& unique-dst-count groupby
-  ip.src > 10 within 300s`,
+// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 10 within 300s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $SSH_CLIENTS
 AND destination.port: 22
@@ -426,8 +441,10 @@ AND network.packets < 5`,
 && protocols == http
 && http.method == [HEAD || OPTIONS]
 && session.length < 5
-&& unique-dst-count groupby
-  ip.src > 20 within 300s`,
+// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 20 within 300s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $WEB_CLIENTS
 AND http.request.method: (
@@ -462,8 +479,10 @@ AND event.duration < 5000000`,
 && ip.src != $SNMP_MGMT
 && protocols == snmp
 && port.dst == 161
-&& unique-dst-count groupby
-  ip.src > 10 within 60s`,
+// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 10 within 60s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $SNMP_MGMT
 AND destination.port: 161
@@ -495,8 +514,10 @@ AND network.protocol: snmp`,
 && protocols == tcp
 && tcp.flags == S
 && tcp.window-size == [1024, 0]
-&& packet-rate groupby
-  ip.src > 1000 within 10s`,
+// THRESHOLD: aggregation (packet-rate groupby ip.src > 1000 within 10s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND tcp.flags: "S"
 AND tcp.window: (1024 OR 0)`,
@@ -566,13 +587,18 @@ AND dcerpc.opnum: (15 OR 16)`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& smb.command == tree-connect
-&& unique-share-count groupby
-  ip.src,ip.dst > 5
-  within 60s`,
+// smb.command does not exist in baseline Arkime 4.3.1.
+// tree-connect command type is not expressible; use
+// smb.share-name pattern matching where a specific share
+// is known, or rely on the Suricata threshold below for
+// the burst-rate detection signal.
+// THRESHOLD: aggregation (unique-share-count groupby ip.src,ip.dst > 5 within 60s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
-AND smb.command: "tree_connect"`,
+AND zeek.smb_mapping.share_type: "DISK"`,
         suricata: `alert tcp $HOME_NET any
   -> $HOME_NET 445
   (msg:"TA0007 T1135 SMB tree
@@ -601,8 +627,10 @@ AND smb.command: "tree_connect"`,
 && port.dst == 445
 && ip.dst == $DOMAIN_CONTROLLERS
 && smb.share-name == ["*SYSVOL*", "*NETLOGON*"]
-&& session-count groupby
-  ip.src > 10 within 600s`,
+// THRESHOLD: aggregation (session-count groupby ip.src > 10 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $DOMAIN_CONTROLLERS
 AND smb.share.name: (
@@ -638,8 +666,10 @@ AND smb.share.name: (
 && protocols == smb
 && smb.share-name == IPC$
 && smb.username == ""
-&& session-count groupby
-  ip.src > 5 within 300s`,
+// THRESHOLD: aggregation (session-count groupby ip.src > 5 within 300s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND smb.share.name: "IPC$"
@@ -672,14 +702,20 @@ AND smb.user.name: ""`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& smb.command == [find-first, find-next, query-directory]
-&& unique-path-count groupby
-  ip.src > 50 within 600s`,
+// smb.command does not exist in baseline Arkime 4.3.1.
+// find-first2/find-next2/query-directory are Zeek
+// smb_cmd.log operations with no Arkime field equivalent.
+// Use high databytes.dst (enumeration data returned) +
+// session.length > 60 as a behavioral proxy, or rely on
+// the Suricata burst threshold below.
+// THRESHOLD: aggregation (unique-path-count groupby ip.src > 50 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
-AND smb.command: (
-  "find_first2" OR "find_next2"
-  OR "query_directory"
+AND zeek.smb_files.action: (
+  "SMB_FILE_OPEN" OR "SMB_FILE_READ"
 )`,
         suricata: `alert tcp $HOME_NET any
   -> $HOME_NET 445
@@ -708,12 +744,17 @@ AND smb.command: (
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& smb.command == get-dfs-referral
-&& session-count groupby
-  ip.src > 10 within 300s`,
+// smb.command does not exist in baseline Arkime 4.3.1.
+// get-dfs-referral is a Zeek smb_cmd.log operation with
+// no Arkime field equivalent. Rely on the Suricata
+// content/threshold signature below for the DFS pattern.
+// THRESHOLD: aggregation (session-count groupby ip.src > 10 within 300s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
-AND smb.command: "get_dfs_referral"`,
+AND zeek.smb_cmd.command: "get_dfs_referral"`,
         suricata: `alert tcp $HOME_NET any
   -> $HOME_NET 445
   (msg:"TA0007 T1135 DFS referral
@@ -915,9 +956,10 @@ AND dcerpc.opnum: (13 OR 14 OR 15)`,
 && protocols == kerberos
 && kerberos.msg-type == AS-REQ
 && kerberos.error-code == [KDC_ERR_C_PRINCIPAL_UNKNOWN, KDC_ERR_PREAUTH_REQUIRED]
-&& unique-username-count
-  groupby ip.src > 30
-  within 300s`,
+// THRESHOLD: aggregation (unique-username-count groupby ip.src > 30 within 300s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 88
 AND kerberos.msg_type: "AS-REQ"
@@ -1058,9 +1100,10 @@ AND dcerpc.opnum: (11 OR 7 OR 25)`,
 && port.dst == 445
 && protocols == dcerpc
 && dcerpc.interface == [samr, lsarpc]
-&& session-count groupby
-  ip.src,ip.dst > 5
-  within 60s`,
+// THRESHOLD: aggregation (session-count groupby ip.src,ip.dst > 5 within 60s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: (
@@ -1266,8 +1309,10 @@ AND ldap.attributes: (
 && dns.query.type == SRV
 && dns.host == "_ldap._tcp.*"
 && dns.host != $LOCAL_DOMAIN_SRV
-&& session-count groupby
-  ip.src > 5 within 600s`,
+// THRESHOLD: aggregation (session-count groupby ip.src > 5 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.type: "SRV"
 AND dns.question.name: *_ldap._tcp.*
@@ -1307,14 +1352,21 @@ AND NOT dns.question.name: *.$LOCAL_DOMAIN`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& smb.command == query-directory
-&& smb.tree-disconnect-rate
-  groupby ip.src < 0.05
+// smb.command does not exist in baseline Arkime 4.3.1.
+// query-directory is a Zeek smb_cmd.log operation.
+// smb.tree-disconnect-rate is also not a baseline field.
+// Use session.length + databytes.dst as behavioral proxies:
+// long sessions (>5min) returning large volumes of data are
+// the signature of recursive directory walks.
+// THRESHOLD: aggregation (groupby ip.src < 0.05) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.
 && session.length > 300
 && databytes.dst > 100000`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
-AND smb.command: "query_directory"
+AND zeek.smb_files.action: "SMB_FILE_OPEN"
 AND event.duration > 300000000
 AND destination.bytes > 100000`,
         suricata: `alert tcp $HOME_NET any
@@ -1430,8 +1482,10 @@ AND network.protocol: http`,
 && dcerpc.interface ==
   367abb81-9844-35f1-ad32-98f038001003
 && dcerpc.opnum == [14 || 15 || 27]
-&& session-count groupby
-  ip.src > 5 within 60s`,
+// THRESHOLD: aggregation (session-count groupby ip.src > 5 within 60s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "367abb81-9844-35f1-ad32-98f038001003"
@@ -1471,8 +1525,10 @@ AND dcerpc.opnum: (14 OR 15 OR 27)`,
 && dcerpc.interface ==
   12345778-1234-abcd-ef00-0123456789ab
 && dcerpc.opnum == [15 || 76]
-&& session-count groupby
-  ip.src > 10 within 60s`,
+// THRESHOLD: aggregation (session-count groupby ip.src > 10 within 60s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "12345778-1234-abcd-ef00-0123456789ab"

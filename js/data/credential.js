@@ -83,8 +83,10 @@ AND ldap.scope: "subtree"`,
 && port.dst == 88
 && protocols == kerberos
 && kerberos.msg-type == 12
-&& unique-sname-count groupby
-  ip.src > 5 within 60s`,
+// THRESHOLD: aggregation (unique-sname-count groupby ip.src > 5 within 60s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 88
 AND kerberos.msg_type: "tgs-req"`,
@@ -271,8 +273,10 @@ AND dcerpc.opnum: 3`,
 && port.dst == 88
 && protocols == kerberos
 && kerberos.msg-type == 10
-&& unique-cname-count groupby
-  ip.src > 10 within 300s`,
+// THRESHOLD: aggregation (unique-cname-count groupby ip.src > 10 within 300s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 88
 AND kerberos.msg_type: "as-req"`,
@@ -304,8 +308,10 @@ AND kerberos.msg_type: "as-req"`,
         arkime: `ip.src == $INTERNAL
 && port.dst == [445 || 80 || 443]
 && ntlm.username != null
-&& unique-username-count groupby
-  ip.src > 10 within 300s`,
+// THRESHOLD: aggregation (unique-username-count groupby ip.src > 10 within 300s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (445 OR 80 OR 443)
 AND _exists_: ntlm.username`,
@@ -595,8 +601,10 @@ N/A pure Suricata`,
   || */signin*
   || */owa*
 ]
-&& unique-username-count groupby
-  ip.src > 20 within 600s`,
+// THRESHOLD: aggregation (unique-username-count groupby ip.src > 20 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: NOT $INTERNAL
 AND destination.port: (443 OR 80)
 AND url.path: (*login* OR *auth* OR *signin* OR *owa*)`,
@@ -679,7 +687,9 @@ AND file.name: (id_rsa* OR id_dsa* OR id_ecdsa* OR id_ed25519* OR *.pem OR *.key
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& smb.command == write
+&& databytes.src > 0
+// smb.command does not exist in baseline Arkime 4.3.1.
+// write proxied by databytes.src > 0 (data flows src→dst).
 && smb.filename == [
   *lsass*.dmp
   || *.dmp
@@ -688,7 +698,7 @@ AND file.name: (id_rsa* OR id_dsa* OR id_ecdsa* OR id_ed25519* OR *.pem OR *.key
 && smb.filesize > 10485760`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
-AND smb.command: "write"
+AND zeek.smb_files.action: "SMB_FILE_WRITE"
 AND file.name: (*lsass*.dmp* OR *.dmp OR *memory.dmp)
 AND file.size > 10485760`,
         suricata: `alert tcp $HOME_NET any

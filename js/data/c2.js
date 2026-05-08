@@ -16,9 +16,10 @@ const DATA = [
 && http.uri == ["*/ca", "*/dpixel", "*/fwlink", "*/pixel", "*/__utm.gif", "*/jquery-3.3.1.min.js", "*/load", "*/api/x"]
 && session.length > 60
 && packets.src < 50
-&& session-count groupby
-  ip.src,ip.dst > 5
-  within 3600s`,
+// THRESHOLD: aggregation (session-count groupby ip.src,ip.dst > 5 within 3600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET
 AND url.path: (
@@ -65,9 +66,10 @@ AND network.packets < 50`,
 && databytes.dst < 1000
 && http.uri == ["*/submit.php", "*/api/v1/upload", "*/upload/file", "*/push", "*/report"]
 && ip.dst != $KNOWN_GOOD
-&& session-count groupby
-  ip.src,ip.dst > 3
-  within 1800s`,
+// THRESHOLD: aggregation (session-count groupby ip.src,ip.dst > 3 within 1800s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: POST
 AND http.request.body.bytes < 5000
@@ -112,9 +114,10 @@ AND NOT destination.ip: $KNOWN_GOOD`,
 && packets.dst < 30
 && databytes.src < 10000
 && session.length < 5
-&& session-count groupby
-  ip.src,ip.dst > 10
-  within 3600s
+// THRESHOLD: aggregation (session-count groupby ip.src,ip.dst > 10 within 3600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.
 && ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
@@ -288,8 +291,10 @@ AND NOT destination.ip: $KNOWN_MAIL_PROVIDERS`,
         indicator: "DNS tunneling - high volume of long subdomain queries to single domain",
         arkime: `ip.src == $INTERNAL
 && protocols == dns
-&& dns.query-count groupby
-  dns.host > 50 within 600s
+// THRESHOLD: aggregation (dns.query-count groupby dns.host > 50 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.
 && dns.host != $KNOWN_GOOD
 // Long-subdomain detection requires regex - not
 // expressible in pure Arkime. See Suricata pcre column
@@ -326,8 +331,10 @@ AND dns.question.name: /[a-zA-Z0-9]{30,}\\..+/`,
 && protocols == dns
 && dns.query.type == TXT
 && dns.host != ["*_dmarc*", "*_spf*", "*_acme-challenge*", "*_domainkey*"]
-&& dns.query-count groupby
-  ip.src > 20 within 600s`,
+// THRESHOLD: aggregation (dns.query-count groupby ip.src > 20 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.type: "TXT"
 AND NOT dns.question.name: (
@@ -364,8 +371,10 @@ AND NOT dns.question.name: (
 && dns.query.type == [NULL, CNAME, PTR, MX]
 && dns.host != $KNOWN_GOOD_DOMAINS
 && dns.response-size > 200
-&& dns.query-count groupby
-  ip.src > 30 within 600s`,
+// THRESHOLD: aggregation (dns.query-count groupby ip.src > 30 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.type: (
   "NULL" OR "CNAME"
@@ -401,9 +410,14 @@ AND dns.answer.bytes > 200`,
         arkime: `ip.src == $INTERNAL
 && protocols == dns
 && dns.host != $KNOWN_GOOD
-&& dns.host-age < 7d
-&& dns.query-count groupby
-  dns.host > 5 within 3600s`,
+// Domain-age filtering (dns.host-age < 7d) is not
+// available in baseline Arkime 4.3.1. Pair with
+// external NRD feeds (DomainTools, Whoisxml,
+// SecurityTrails) for the <7d signal.
+// THRESHOLD: aggregation (dns.query-count groupby
+// dns.host > 5 within 3600s) is not part of the
+// Arkime expression grammar; aggregate via SPI panel
+// or apply in SIEM after filtering on $NRD_FEED.`,
         kibana: `source.ip: $INTERNAL
 AND network.protocol: dns
 AND dns.question.name:
@@ -440,8 +454,10 @@ AND dns.question.name:
 && protocols == dns
 && dns.response-code == NXDOMAIN
 && dns.host != $KNOWN_GOOD
-&& dns.query-count groupby
-  ip.dst > 30 within 600s`,
+// THRESHOLD: aggregation (dns.query-count groupby ip.dst > 30 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `destination.ip: $INTERNAL
 AND network.protocol: dns
 AND dns.response_code: "NXDOMAIN"
@@ -510,8 +526,10 @@ AND NOT dns.question.name: $KNOWN_GOOD`,
         arkime: `ip.dst == $INTERNAL
 && protocols == dns
 && dns.response-code == NXDOMAIN
-&& session-count groupby
-  ip.dst > 10 within 60s
+// THRESHOLD: aggregation (session-count groupby ip.dst > 10 within 60s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.
 && subsequent.dns.response-code
   == NOERROR
 // DGA round-success detection requires regex on the
@@ -551,10 +569,14 @@ AND ((dns.response_code: "NXDOMAIN" AND _exists_: dns.question.name)
         arkime: `protocols == dns
 && dns.response-code == NOERROR
 && dns.host != $KNOWN_CDNS
-&& unique-ip-count groupby
-  dns.host > 10 within 3600s
-&& unique-asn-count groupby
-  dns.host > 5 within 3600s`,
+// THRESHOLD: aggregation (unique-ip-count groupby dns.host > 10 within 3600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.
+// THRESHOLD: aggregation (unique-asn-count groupby dns.host > 5 within 3600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `network.protocol: dns
 AND dns.response_code: "NOERROR"
 AND NOT dns.question.name: $KNOWN_CDNS`,
@@ -618,8 +640,10 @@ AND NOT dns.answers.name: (
         arkime: `protocols == dns
 && dns.query.type == NS
 && dns.host != $KNOWN_GOOD
-&& unique-ns-count groupby
-  dns.host > 5 within 86400s`,
+// THRESHOLD: aggregation (unique-ns-count groupby dns.host > 5 within 86400s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `network.protocol: dns
 AND dns.question.type: "NS"
 AND NOT dns.question.name: $KNOWN_GOOD`,
@@ -1325,9 +1349,10 @@ AND event.duration > 60000000`,
 && protocols == icmp
 && icmp.type == 8
 && packet.size > 100
-&& packet-count groupby
-  ip.src,ip.dst > 50
-  within 600s`,
+// THRESHOLD: aggregation (packet-count groupby ip.src,ip.dst > 50 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND network.protocol: icmp
 AND icmp.type: 8
@@ -1386,9 +1411,10 @@ AND payload.entropy: [6.5 TO 8.0]`,
         arkime: `ip.src == $INTERNAL
 && protocols == icmp
 && icmp.type == 8
-&& packet-count groupby
-  ip.src,ip.dst > 100
-  within 1800s
+// THRESHOLD: aggregation (packet-count groupby ip.src,ip.dst > 100 within 1800s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.
 && ip.dst != $INTERNAL
 && ip.dst != $MONITORING_TARGETS`,
         kibana: `source.ip: $INTERNAL
@@ -1490,9 +1516,10 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         arkime: `ip.src == $INTERNAL
 && protocols == udp
 && port.dst != [53, 123, 161, 162, 500, 514, 1812, 1813, 4500, 51820, 5353, 67, 68]
-&& packet-count groupby
-  ip.src,ip.dst > 20
-  within 600s
+// THRESHOLD: aggregation (packet-count groupby ip.src,ip.dst > 20 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.
 && ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND network.transport: udp
@@ -1591,8 +1618,10 @@ AND tcp.flags: (
         arkime: `ip.dst == $INTERNAL
 && ip.src == $INTERNAL
 && port.dst == [443, 80, 8080, 22, 3128, 1080, 8443, 4444]
-&& unique-src-count groupby
-  ip.dst > 5 within 3600s`,
+// THRESHOLD: aggregation (unique-src-count groupby ip.dst > 5 within 3600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $INTERNAL
 AND destination.port: (
@@ -2272,8 +2301,7 @@ AND NOT destination.ip: $WINDOWS_UPDATE_INFRA`,
         indicator: "PowerShell HTTP download - Invoke-WebRequest / DownloadString outbound fetch",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& http.user-agent == ["*WindowsPowerShell*", "*PowerShell*", "*Mozilla/5.0 (Windows NT*
-    *WindowsPowerShell*"]
+&& http.user-agent == ["*WindowsPowerShell*", "*PowerShell*", "*Mozilla/5.0 (Windows NT WindowsPowerShell*"]
 && ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND user_agent.original: (
@@ -2357,7 +2385,10 @@ AND NOT destination.ip: $KNOWN_GOOD`,
 && protocols == http
 && http.uri == ["*.exe", "*.dll", "*.ps1", "*.vbs", "*.hta", "*.bat", "*.scr"]
 && dns.host == ["*.xyz", "*.top", "*.club", "*.online", "*.site", "*.live", "*.fun", "*.pw", "*.cc", "*.tk", "*.ml", "*.ga", "*.cf"]
-|| dns.host-age < 14d`,
+// Domain-age filtering (|| dns.host-age < 14d) is not
+// available in baseline Arkime 4.3.1. Pair the TLD
+// match above with an external NRD feed (DomainTools,
+// Whoisxml, SecurityTrails) for the <14d signal.`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET
 AND url.path: (

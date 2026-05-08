@@ -14,9 +14,7 @@ const DATA = [
 && protocols == http
 && http.method == POST
 && http.uri == ["*/login*", "*/auth*", "*/cgi-bin/luci*", "*/api/v1/auth*", "*/admin*"]
-&& http.post-body == ["*admin=admin*", "*username=admin
-    &password=admin*", "*user=admin&pass=admin*", "*username=root
-    &password=root*", "*password=1234*", "*password=default*", "*password=password*"]`,
+&& http.post-body == ["*admin=admin*", "*username=admin&password=admin*", "*user=admin&pass=admin*", "*username=root&password=root*", "*password=1234*", "*password=default*", "*password=password*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method: POST
 AND url.path: (
@@ -129,8 +127,11 @@ AND destination.port: (
 && http.method == POST
 && http.host == ["*login.microsoftonline.com*", "*accounts.google.com*", "*okta.com*", $OWA_SERVER, $ADFS_SERVER]
 && http.statuscode == [401, 403]
-&& ip.src groupby count > 5
-  within 300s`,
+// THRESHOLD: aggregation (groupby ip.src count > 5
+// within 300s) is not part of the Arkime expression
+// grammar. Use the Suricata threshold below for the
+// rate logic, or aggregate via the Arkime SPI panel
+// after applying this base filter.`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.response.status_code: (
   401 OR 403
@@ -259,9 +260,7 @@ AND http.request.body: (
         arkime: `ip.src != $INTERNAL
 && protocols == https
 && http.method == POST
-&& http.post-body == ["*SAMLResponse=*", "*grant_type=
-    urn:ietf:params:oauth:
-    grant-type:saml2-bearer*"]
+&& http.post-body == ["*SAMLResponse=*", "*grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer*"]
 && http.host != $KNOWN_IDPS
 && databytes.src > 500`,
         kibana: `NOT source.ip: $INTERNAL
@@ -304,8 +303,11 @@ AND source.bytes > 500`,
 && packets.src > 5
 && packets.src < 50
 && session.length > 60
-&& starttime - usb_event.time
-  < 300s`,
+// USB event correlation is not a network signal -
+// requires SIEM join with EDR/Sysmon Event 9
+// (RawAccessRead on USB) or Windows Event 6416
+// (USB device insertion). The <300s post-insertion
+// window must be applied at SIEM correlation time.`,
         kibana: `source.ip: $INTERNAL
 AND NOT destination.ip: $KNOWN_GOOD
 AND destination.port: (
@@ -342,13 +344,15 @@ AND event.duration > 60000000`,
 && protocols == smb
 && ip.dst == $INTERNAL
 && packets.src > 0
-&& session-count groupby ip.src
-  > 10 within 60s`,
+// THRESHOLD: aggregation (session-count groupby
+// ip.src > 10 within 60s) is not part of the Arkime
+// expression grammar. The Suricata threshold below
+// applies the rate logic; or aggregate via SPI panel
+// after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $INTERNAL
 AND destination.port: 445
-AND network.transport: tcp
-AND _exists_: smb.command`,
+AND network.transport: tcp`,
         suricata: `alert tcp $HOME_NET any
   -> $HOME_NET 445
   (msg:"TA0001 T1091 SMB connection
@@ -376,7 +380,12 @@ AND _exists_: smb.command`,
 && port.dst == 445
 && protocols == smb
 && smb.share == ["*ADMIN$*", "*C$*", "*IPC$*"]
-&& smb.command == [WRITE, CREATE]
+&& databytes.src > 0
+// smb.command does not exist in baseline Arkime 4.3.1.
+// Write/create operations are proxied by databytes.src > 0
+// (data flowing src→dst = upload/write). For definitive
+// command-type filtering, use Zeek smb_files.log action
+// field (SMB_FILE_WRITE) via SIEM.
 && ip.dst == $INTERNAL`,
         kibana: `source.ip: $USER_VLAN
 AND destination.ip: $INTERNAL
@@ -384,7 +393,7 @@ AND destination.port: 445
 AND smb.share: (
   *ADMIN$* OR *C$* OR *IPC$*
 )
-AND smb.command: ("WRITE" OR "CREATE")`,
+AND zeek.smb_files.action: ("SMB_FILE_WRITE" OR "SMB_FILE_OPEN")`,
         suricata: `alert tcp $USER_VLAN any
   -> $HOME_NET 445
   (msg:"TA0001 T1091 SMB write to
@@ -439,9 +448,12 @@ AND source.bytes > 0`,
 && http.method == GET
 && http.uri == ["*.bin", "*.dat", "*.exe", "*.dll", "*.ps1", "*.scr"]
 && ip.dst != $KNOWN_GOOD
-&& dns.host-age < 30d
-&& starttime - usb_event.time
-  < 60s`,
+// Domain-age filtering and USB event correlation are
+// not available in baseline Arkime 4.3.1. Pair this
+// query with external domain-age enrichment for the
+// <30d signal, and join with EDR/Sysmon Event 9
+// (RawAccessRead on USB) or Windows Event 6416 in
+// the SIEM for the <60s post-USB-insertion correlation.`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET
 AND url.path: (
@@ -523,18 +535,26 @@ AND source.bytes > 0`,
 && protocols == tls
 && port.dst == [443, 4433, 8443]
 && ip.src != $KNOWN_VPN_IPS
-&& hour > 22 || hour < 6
 && databytes.src > 1000
-&& databytes.dst > 1000`,
+&& databytes.dst > 1000
+// Time-of-day filtering (hour > 22 || hour < 6) is
+// not expressible in the Arkime query language. Use
+// the Arkime UI timeframe selector for off-hours
+// windows, or apply the time filter at SIEM
+// correlation time. Suricata threshold below catches
+// the new-source-IP burst regardless of hour.`,
         kibana: `destination.ip: $VPN_SERVERS
 AND destination.port: (
   443 OR 4433 OR 8443
 )
 AND NOT source.ip: $KNOWN_VPN_IPS
-AND @timestamp: {
-  "hour_of_day": [22 TO 6]
-}
-AND source.bytes > 1000`,
+AND source.bytes > 1000
+// KQL has no native time-of-day filter. To filter
+// to 22:00-06:00 local, define an Elasticsearch
+// runtime field that derives hour_of_day from
+// @timestamp, then use AND hour_of_day >= 22 OR
+// hour_of_day < 6, OR apply via Lens/dashboard
+// time-bucket filtering.`,
         suricata: `alert tcp $EXTERNAL_NET any
   -> $HOME_NET [443,4433,8443]
   (msg:"TA0001 T1133 VPN auth
@@ -599,8 +619,10 @@ AND destination.bytes > 0`,
 && packets.src > 5
 && packets.dst > 5
 && databytes.dst < 5000
-&& ip.src groupby count > 10
-  within 60s`,
+// THRESHOLD: aggregation (groupby ip.src count > 10
+// within 60s) is not part of the Arkime expression
+// grammar. The Suricata threshold below applies the
+// rate logic.`,
         kibana: `NOT source.ip: $INTERNAL
 AND destination.port: 3389
 AND network.transport: tcp
@@ -634,8 +656,10 @@ AND network.packets > 5`,
 && packets.src > 3
 && packets.dst > 3
 && databytes.dst < 3000
-&& ip.src groupby count > 5
-  within 30s`,
+// THRESHOLD: aggregation (groupby ip.src count > 5
+// within 30s) is not part of the Arkime expression
+// grammar. The Suricata threshold below applies the
+// rate logic.`,
         kibana: `NOT source.ip: $INTERNAL
 AND destination.port: 22
 AND network.transport: tcp
@@ -836,8 +860,11 @@ AND NOT destination.ip:
 && http.statuscode == [301, 302]
 && http.redirect-location ==
   *http://*
-&& dns.host-age < 14d
-&& ip.dst != $KNOWN_GOOD`,
+&& ip.dst != $KNOWN_GOOD
+// Domain-age filtering is not available in baseline
+// Arkime 4.3.1. Pair this query with external domain-age
+// enrichment (PassiveTotal, DomainTools, RiskIQ) or
+// filter on results manually for domains <14 days old.`,
         kibana: `source.ip: $INTERNAL
 AND http.response.status_code:
   (301 OR 302)
@@ -1533,9 +1560,15 @@ AND NOT destination.ip: $INTERNAL_REGISTRY`,
 && protocols != [http, https, dns]
 && ip.dst != $VENDOR_UPDATE_INFRA
 && port.dst == [443, 80, 8080, 8443]
-&& process == ["*update*", "*agent*", "*service*", "*daemon*"]
 && databytes.src > 0
-&& databytes.dst > 0`,
+&& databytes.dst > 0
+// Process-name correlation is not available in baseline
+// Arkime 4.3.1 - it sees only network sessions, not the
+// process making the connection. The network-only signal
+// here is anomalous outbound + non-vendor destination;
+// pair with EDR/Sysmon Event 3 in the SIEM to filter
+// to updater processes (*update*, *agent*, *service*,
+// *daemon*) for high confidence.`,
         kibana: `source.ip: $INTERNAL
 AND NOT destination.ip:
   $VENDOR_UPDATE_INFRA
@@ -1574,7 +1607,9 @@ AND process.name: (
 && protocols == dns
 && dns.query.type == [A || AAAA]
 && dns.host == ["*avsvmcloud.com*", "*.appsync-api.*", $KNOWN_C2_DOMAINS]
-&& process == ["*update*", "*agent*"]
+// Process-name correlation is not available in baseline
+// Arkime - pair with EDR/Sysmon Event 3 in the SIEM to
+// filter to updater processes (*update*, *agent*).
 // DGA detection requires regex - not expressible
 // in pure Arkime. See Suricata pcre column or use
 // Kibana KQL regex syntax for runtime matching.
@@ -1613,10 +1648,13 @@ AND dns.question.name: (
 && protocols == tls
 && tls.ja3 != $KNOWN_GOOD_CLIENTS
 && tls.ja3 != $BROWSER_JA3
-&& process == ["*update*", "*agent*", "*service*", "*.exe*"]
 && port.dst == 443
 && packets.src > 5
 && packets.src < 50
+// Process-name correlation is not available in baseline
+// Arkime - pair with EDR/Sysmon Event 3 in the SIEM to
+// filter to suspect processes (*update*, *agent*,
+// *service*, *.exe).
 // JA4 not available in Arkime 4.3.1 (Arkime 5+ only).
 // Falls back to JA3 - lower entropy but still useful
 // for catching tool-vs-browser supply-chain implants.
@@ -1696,8 +1734,14 @@ AND destination.port: (
         arkime: `ip.src == 0.0.0.0
 && protocols == dhcp
 && port.dst == 67
-&& dhcp.message-type == [DISCOVER, REQUEST]
-&& mac.src.oui != $KNOWN_OUIS`,
+&& dhcp.type == [DISCOVER, REQUEST]
+// OUI extraction is not available as a separate field
+// in baseline Arkime 4.3.1 - only mac.src exists. To
+// filter on OUI, either match mac.src against a list
+// of known-good prefix patterns (mac.src == ["*aa:bb:
+// cc*", ...]) or perform OUI lookup externally via
+// Wireshark manuf file or IEEE OUI database after
+// pulling sessions matching DHCP DISCOVER/REQUEST.`,
         kibana: `network.protocol: dhcp
 AND destination.port: 67
 AND dhcp.op: 1
@@ -1724,9 +1768,15 @@ AND NOT source.mac:
         sub: "T1200 - Switch Port Anomalies",
         indicator: "Multiple MACs from same switch port - rogue switch or hub introduced",
         arkime: `protocols == arp
-&& mac.src groupby count > 3
-  per-switchport
-&& timeframe == 60s`,
+// Per-switchport MAC tracking is not available in
+// baseline Arkime - switch CAM table data is not
+// captured in network packet streams. THRESHOLD:
+// aggregation (mac.src groupby count > 3 per
+// switchport within 60s) and the timeframe operator
+// are not part of the Arkime expression grammar.
+// Implement via switch SNMP polling (BRIDGE-MIB
+// dot1dTpFdbTable), 802.1X port security violation
+// SNMP traps, or NetFlow with switch metadata.`,
         kibana: `network.protocol: arp
 AND switch.port: *
 AND _exists_: source.mac`,
@@ -1792,10 +1842,18 @@ AND event.duration > 300000000`,
         indicator: "USB-connected network adapter / Bash Bunny - host generating DHCP from new MAC immediately after USB event",
         arkime: `ip.src == 0.0.0.0
 && protocols == dhcp
-&& dhcp.message-type == DISCOVER
-&& mac.src != $REGISTERED_HOST_MAC
-&& mac.src.oui == ["*Realtek*", "*Microchip*", "*ASIX*"]
-&& source-host == $KNOWN_HOST`,
+&& dhcp.type == DISCOVER
+// OUI extraction (mac.src.oui), per-host MAC tracking
+// (source-host == $KNOWN_HOST), and matching against
+// $REGISTERED_HOST_MAC are not available as fields in
+// baseline Arkime 4.3.1. Logical spec: detect a host
+// generating DHCP DISCOVER from a NEW MAC address
+// while the host's primary MAC is still active, where
+// the new MAC OUI matches a USB-Ethernet chipset
+// (Realtek RTL8152, ASIX AX88179, Microchip LAN9512).
+// Implement via SIEM correlation of DHCP logs +
+// switch CAM table data + USB device telemetry from
+// EDR or Windows Event 6416.`,
         kibana: `network.protocol: dhcp
 AND dhcp.op: 1
 AND source.mac.vendor: (
@@ -1851,8 +1909,15 @@ AND NOT wireless.bssid:
         indicator: "LLDP advertisement from unauthorized device - implant or unauthorized switch announcing presence",
         arkime: `protocols == lldp
 && mac.dst == 01:80:c2:00:00:0e
-&& mac.src.oui != $KNOWN_NETWORK_GEAR_OUIS
-&& lldp.system-name != $KNOWN_DEVICES`,
+// OUI extraction (mac.src.oui) and per-device naming
+// (lldp.system-name) are not available as fields in
+// baseline Arkime 4.3.1. Logical spec: filter to
+// LLDP frames (mac.dst is the standard LLDP multicast
+// MAC) where the source MAC OUI is NOT in your
+// $KNOWN_NETWORK_GEAR_OUIS list (Cisco, Juniper,
+// Aruba, etc.) and the system-name does not match
+// your inventory. Implement via Zeek lldp.log or
+// SIEM correlation against switch SNMP data.`,
         kibana: `network.protocol: "lldp"
 AND destination.mac: "01:80:c2:00:00:0e"
 AND NOT source.mac.vendor: $APPROVED_NETWORK_VENDORS`,
@@ -1995,8 +2060,11 @@ AND NOT destination.ip: $KNOWN_GOOD`,
 && http.method == GET
 && http.referer == *mail*
 && ip.dst != $KNOWN_GOOD
-&& dns.host-age < 30d
-&& http.user-agent == ["*Outlook*", "*Thunderbird*", "*Mail*", "*Chrome*", "*Firefox*"]`,
+&& http.user-agent == ["*Outlook*", "*Thunderbird*", "*Mail*", "*Chrome*", "*Firefox*"]
+// Domain-age filtering is not available in baseline
+// Arkime 4.3.1. Pair this query with external domain-age
+// enrichment (PassiveTotal, DomainTools, RiskIQ) or
+// filter on results manually for domains <30 days old.`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET
 AND http.request.headers.referer: *mail*

@@ -44,8 +44,10 @@ Use Zeek + SIEM for ratio detection.`,
 && port.dst == 443
 && http.method == POST
 && http.request-body-size > 1048576
-&& count groupby [ip.src, ip.dst]
-   > 50 within 600s`,
+// THRESHOLD: aggregation (count groupby [ip.src, ip.dst] > 50 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND http.request.method: "POST"
@@ -78,9 +80,10 @@ AND http.request.body.bytes > 1048576`,
 && port.dst == 53
 && protocols == dns
 && dns.query-length > 50
-&& unique-subdomain-count groupby
-  [ip.src, dns.parent-domain]
-   > 100 within 600s`,
+// THRESHOLD: aggregation (unique-subdomain-count groupby [ip.src, dns.parent-domain] > 100 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 53
 AND dns.question.name.length > 50`,
@@ -516,10 +519,14 @@ SIEM-side detection`,
 && ip.dst == $EXTERNAL
 && port.dst == 443
 && bytes-src in [524288..10485760]
-&& flow-count groupby [ip.src, ip.dst]
-   > 100 within 3600s
-&& sum(bytes-src) groupby [ip.src, ip.dst]
-   > 524288000`,
+// THRESHOLD: aggregation (flow-count groupby [ip.src, ip.dst] > 100 within 3600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.
+// THRESHOLD: aggregation (sum(bytes-src) groupby [ip.src, ip.dst] > 524288000) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: NOT $INTERNAL
 AND destination.port: 443
@@ -556,10 +563,14 @@ SIEM-side aggregation`,
         indicator: "Highly-regular periodic outbound flows - automation timing fingerprint",
         arkime: `ip.src == $INTERNAL
 && ip.dst == $EXTERNAL
-&& flow-interval-stddev groupby
-   [ip.src, ip.dst] < 5s
-&& flow-count groupby [ip.src, ip.dst]
-   > 20 within 3600s`,
+// THRESHOLD: aggregation (flow-interval-stddev groupby [ip.src, ip.dst] < 5s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.
+// THRESHOLD: aggregation (flow-count groupby [ip.src, ip.dst] > 20 within 3600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: NOT $INTERNAL
 [Beacon timing analysis - typically requires Zeek + RITA, or commercial NDR with beacon detection]`,
