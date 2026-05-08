@@ -96,7 +96,7 @@ header{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 
 .tech-id{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);background:rgba(31,111,235,.15);border:1px solid rgba(88,166,255,.2);border-radius:4px;padding:2px 7px}
 .tech-name{font-size:13px;font-weight:600}
 .tech-count{font-family:var(--mono);font-size:10px;color:var(--text3);background:var(--bg4);border-radius:10px;padding:1px 7px}
-.tech-desc{font-size:11px;color:var(--text3);margin-left:auto;max-width:400px;text-align:right}
+.tech-desc{font-size:11px;color:var(--text3);margin-left:auto;max-width:600px;text-align:right}
 .tech-toggle{color:var(--text3);font-size:14px;margin-left:8px;transition:transform .2s;flex-shrink:0}
 .technique-section.collapsed .tech-toggle{transform:rotate(-90deg)}
 .technique-section.collapsed .rows-wrap{display:none}
