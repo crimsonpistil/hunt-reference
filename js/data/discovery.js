@@ -140,7 +140,7 @@ AND network.protocol: netbios-ns`,
         arkime: `ip.src == $INTERNAL
 && ip.src != $DNS_SERVERS
 && protocols == dns
-&& dns.query-type == PTR
+&& dns.query.type == PTR
 && dns.host == "*.in-addr.arpa"
 && unique-ptr-count groupby
   ip.src > 50 within 300s`,
@@ -176,7 +176,7 @@ AND dns.question.name: *in-addr.arpa`,
         arkime: `ip.src == $INTERNAL
 && ip.src != $DNS_SERVERS
 && protocols == dns
-&& dns.query-type == AXFR
+&& dns.query.type == AXFR
 && port.dst == 53`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $DNS_SERVERS
@@ -310,11 +310,7 @@ AND NOT tcp.flags: "A"`,
         arkime: `ip.src == $INTERNAL
 && ip.src != $SCAN_SOURCES
 && protocols == tcp
-&& port.dst == [
-  22 || 445 || 3389 || 5985
-  || 5986 || 1433 || 3306
-  || 5432 || 6379 || 27017
-]
+&& port.dst == [22, 445, 3389, 5985, 5986, 1433, 3306, 5432, 6379, 27017]
 && unique-dst-count groupby
   ip.src,port.dst > 20
   within 60s`,
@@ -392,7 +388,7 @@ AND tcp.flags: "S"`,
 && ip.src != $SSH_CLIENTS
 && port.dst == 22
 && protocols == ssh
-&& session.duration < 5
+&& session.length < 5
 && packets.src < 5
 && unique-dst-count groupby
   ip.src > 10 within 300s`,
@@ -429,7 +425,7 @@ AND network.packets < 5`,
 && ip.src != $WEB_CLIENTS
 && protocols == http
 && http.method == [HEAD || OPTIONS]
-&& session.duration < 5
+&& session.length < 5
 && unique-dst-count groupby
   ip.src > 20 within 300s`,
         kibana: `source.ip: $INTERNAL
@@ -498,9 +494,7 @@ AND network.protocol: snmp`,
         arkime: `ip.src == $INTERNAL
 && protocols == tcp
 && tcp.flags == S
-&& tcp.window-size == [
-  1024 || 0
-]
+&& tcp.window-size == [1024, 0]
 && packet-rate groupby
   ip.src > 1000 within 10s`,
         kibana: `source.ip: $INTERNAL
@@ -606,9 +600,7 @@ AND smb.command: "tree_connect"`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && ip.dst == $DOMAIN_CONTROLLERS
-&& smb.share-name == [
-  *SYSVOL* || *NETLOGON*
-]
+&& smb.share-name == ["*SYSVOL*", "*NETLOGON*"]
 && session-count groupby
   ip.src > 10 within 600s`,
         kibana: `source.ip: $INTERNAL
@@ -680,10 +672,7 @@ AND smb.user.name: ""`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& smb.command == [
-  find-first || find-next
-  || query-directory
-]
+&& smb.command == [find-first, find-next, query-directory]
 && unique-path-count groupby
   ip.src > 50 within 600s`,
         kibana: `source.ip: $INTERNAL
@@ -759,11 +748,7 @@ AND smb.command: "get_dfs_referral"`,
 && ip.src != $LDAP_CLIENTS
 && port.dst == [389 || 636]
 && protocols == ldap
-&& ldap.filter == [
-  *(objectClass=user)*
-  || *(objectCategory=person)*
-  || *(samAccountType=805306368)*
-]
+&& ldap.filter == ["*(objectClass=user)*", "*(objectCategory=person)*", "*(samAccountType=805306368)*"]
 && ldap.scope == subtree`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $LDAP_CLIENTS
@@ -798,14 +783,7 @@ AND ldap.filter: (
         arkime: `ip.src == $INTERNAL
 && port.dst == [389 || 636]
 && protocols == ldap
-&& ldap.filter == [
-  *samAccountType=805306368*
-  || *samAccountType=805306369*
-  || *samAccountType=536870912*
-  || *samAccountType=536870913*
-  || *objectCategory=group*
-  || *objectCategory=organizationalUnit*
-]
+&& ldap.filter == ["*samAccountType=805306368*", "*samAccountType=805306369*", "*samAccountType=536870912*", "*samAccountType=536870913*", "*objectCategory=group*", "*objectCategory=organizationalUnit*"]
 && ldap.attributes-count > 20
 // BloodHound's signature is a deeply-nested OR filter
 // querying for many object types in one request. The
@@ -845,10 +823,7 @@ AND ldap.filter: *objectCategory=group*`,
         arkime: `ip.src == $INTERNAL
 && port.dst == [389 || 636]
 && protocols == ldap
-&& ldap.filter == [
-  *(servicePrincipalName=*)*
-  || *servicePrincipalName*
-]
+&& ldap.filter == ["*(servicePrincipalName=*)*", "*servicePrincipalName*"]
 && ldap.scope == subtree`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
@@ -939,10 +914,7 @@ AND dcerpc.opnum: (13 OR 14 OR 15)`,
 && port.dst == 88
 && protocols == kerberos
 && kerberos.msg-type == AS-REQ
-&& kerberos.error-code == [
-  KDC_ERR_C_PRINCIPAL_UNKNOWN
-  || KDC_ERR_PREAUTH_REQUIRED
-]
+&& kerberos.error-code == [KDC_ERR_C_PRINCIPAL_UNKNOWN, KDC_ERR_PREAUTH_REQUIRED]
 && unique-username-count
   groupby ip.src > 30
   within 300s`,
@@ -987,12 +959,7 @@ AND kerberos.error_code: (
         arkime: `ip.src == $INTERNAL
 && port.dst == [389 || 636]
 && protocols == ldap
-&& ldap.filter == [
-  *CN=Domain Admins*
-  || *CN=Enterprise Admins*
-  || *CN=Schema Admins*
-  || *adminCount=1*
-]`,
+&& ldap.filter == ["*CN=Domain Admins*", "*CN=Enterprise Admins*", "*CN=Schema Admins*", "*adminCount=1*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: (
@@ -1090,9 +1057,7 @@ AND dcerpc.opnum: (11 OR 7 OR 25)`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == dcerpc
-&& dcerpc.interface == [
-  samr || lsarpc
-]
+&& dcerpc.interface == [samr, lsarpc]
 && session-count groupby
   ip.src,ip.dst > 5
   within 60s`,
@@ -1129,10 +1094,7 @@ AND dcerpc.interface_uuid: (
         arkime: `ip.src == $INTERNAL
 && port.dst == [389 || 636]
 && protocols == ldap
-&& ldap.filter == [
-  *(objectClass=msDS-GroupManagedServiceAccount)*
-  || *(samAccountType=536870913)*
-]`,
+&& ldap.filter == ["*(objectClass=msDS-GroupManagedServiceAccount)*", "*(samAccountType=536870913)*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: (
@@ -1170,10 +1132,7 @@ AND ldap.filter: (
         arkime: `ip.src == $INTERNAL
 && port.dst == [389 || 636]
 && protocols == ldap
-&& ldap.filter == [
-  *(objectClass=trustedDomain)*
-  || *(objectCategory=trustedDomain)*
-]`,
+&& ldap.filter == ["*(objectClass=trustedDomain)*", "*(objectCategory=trustedDomain)*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: (
@@ -1208,9 +1167,7 @@ AND ldap.filter: (
 && protocols == dcerpc
 && dcerpc.interface ==
   12345778-1234-abcd-ef00-0123456789ab
-&& dcerpc.opnum == [
-  13 || 47 || 48 || 64
-]`,
+&& dcerpc.opnum == [13, 47, 48, 64]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "12345778-1234-abcd-ef00-0123456789ab"
@@ -1272,13 +1229,7 @@ AND dcerpc.opnum: (40 OR 27)`,
 && protocols == ldap
 && ldap.scope == base
 && ldap.dn == ""
-&& ldap.attributes == [
-  *namingContexts*
-  || *configurationNamingContext*
-  || *rootDomainNamingContext*
-  || *forestFunctionality*
-  || *domainFunctionality*
-]`,
+&& ldap.attributes == ["*namingContexts*", "*configurationNamingContext*", "*rootDomainNamingContext*", "*forestFunctionality*", "*domainFunctionality*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.scope: "base"
@@ -1312,7 +1263,7 @@ AND ldap.attributes: (
         indicator: "Cross-trust DNS query - SRV record lookup for foreign domain DC discovery",
         arkime: `ip.src == $INTERNAL
 && protocols == dns
-&& dns.query-type == SRV
+&& dns.query.type == SRV
 && dns.host == "_ldap._tcp.*"
 && dns.host != $LOCAL_DOMAIN_SRV
 && session-count groupby
@@ -1359,7 +1310,7 @@ AND NOT dns.question.name: *.$LOCAL_DOMAIN`,
 && smb.command == query-directory
 && smb.tree-disconnect-rate
   groupby ip.src < 0.05
-&& session.duration > 300
+&& session.length > 300
 && databytes.dst > 100000`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
@@ -1399,19 +1350,8 @@ AND destination.bytes > 100000`,
         indicator: "External IP lookup from non-browser process - adversary self-IP discovery",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == [
-  *icanhazip.com*
-  || *ifconfig.me*
-  || *api.ipify.org*
-  || *checkip.amazonaws.com*
-  || *ipinfo.io*
-  || *ip-api.com*
-  || *whatismyip.com*
-]
-&& process != [
-  *chrome* || *firefox*
-  || *edge* || *safari*
-]`,
+&& http.host == ["*icanhazip.com*", "*ifconfig.me*", "*api.ipify.org*", "*checkip.amazonaws.com*", "*ipinfo.io*", "*ip-api.com*", "*whatismyip.com*"]
+&& process != ["*chrome*", "*firefox*", "*edge*", "*safari*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   *icanhazip.com*
@@ -1448,15 +1388,9 @@ AND url.domain: (
         sub: "T1016 - Cloud Metadata Service",
         indicator: "Public cloud metadata service query - IMDS access from compromised cloud workload",
         arkime: `ip.src == $INTERNAL
-&& ip.dst == [
-  169.254.169.254
-  || fd00:ec2::254
-]
+&& ip.dst == [169.254.169.254, fd00:ec2::254]
 && protocols == http
-&& process != [
-  *cloud-init* || *aws-*
-  || *azure-* || *gcp-*
-]`,
+&& process != ["*cloud-init*", "*aws-*", "*azure-*", "*gcp-*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: (
   "169.254.169.254"

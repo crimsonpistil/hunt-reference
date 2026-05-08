@@ -13,14 +13,8 @@ const DATA = [
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.method == GET
-&& http.uri == [
-  */ca || */dpixel
-  || */fwlink || */pixel
-  || */__utm.gif
-  || */jquery-3.3.1.min.js
-  || */load || */api/x
-]
-&& session.duration > 60
+&& http.uri == ["*/ca", "*/dpixel", "*/fwlink", "*/pixel", "*/__utm.gif", "*/jquery-3.3.1.min.js", "*/load", "*/api/x"]
+&& session.length > 60
 && packets.src < 50
 && session-count groupby
   ip.src,ip.dst > 5
@@ -69,12 +63,7 @@ AND network.packets < 50`,
 && http.method == POST
 && databytes.src < 5000
 && databytes.dst < 1000
-&& http.uri == [
-  */submit.php
-  || */api/v1/upload
-  || */upload/file
-  || */push || */report
-]
+&& http.uri == ["*/submit.php", "*/api/v1/upload", "*/upload/file", "*/push", "*/report"]
 && ip.dst != $KNOWN_GOOD
 && session-count groupby
   ip.src,ip.dst > 3
@@ -122,7 +111,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
 && packets.src < 30
 && packets.dst < 30
 && databytes.src < 10000
-&& session.duration < 5
+&& session.length < 5
 && session-count groupby
   ip.src,ip.dst > 10
   within 3600s
@@ -161,15 +150,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         indicator: "HTTP User-Agent anomaly - non-browser UA on browser-like traffic, missing UA, or known-malicious UA",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& http.user-agent == [
-  *python-requests*
-  || *Go-http-client*
-  || *curl/* || *Wget/*
-  || *PowerShell*
-  || *Microsoft BITS*
-  || *WinHTTP*
-  || *Mozilla/4.0*
-]
+&& http.user-agent == ["*python-requests*", "*Go-http-client*", "*curl/*", "*Wget/*", "*PowerShell*", "*Microsoft BITS*", "*WinHTTP*", "*Mozilla/4.0*"]
 && ip.dst != $KNOWN_GOOD
 && port.dst == [80 || 443]`,
         kibana: `source.ip: $INTERNAL
@@ -217,7 +198,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
 && protocols == ftp
 && port.dst == 21
 && ip.dst != $KNOWN_GOOD
-&& session.duration > 30`,
+&& session.length > 30`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $FILE_SERVERS
 AND destination.port: 21
@@ -343,12 +324,8 @@ AND dns.question.name: /[a-zA-Z0-9]{30,}\\..+/`,
         indicator: "DNS TXT record query volume - TXT-based C2 channel",
         arkime: `ip.src == $INTERNAL
 && protocols == dns
-&& dns.query-type == TXT
-&& dns.host != [
-  *_dmarc* || *_spf*
-  || *_acme-challenge*
-  || *_domainkey*
-]
+&& dns.query.type == TXT
+&& dns.host != ["*_dmarc*", "*_spf*", "*_acme-challenge*", "*_domainkey*"]
 && dns.query-count groupby
   ip.src > 20 within 600s`,
         kibana: `source.ip: $INTERNAL
@@ -384,10 +361,7 @@ AND NOT dns.question.name: (
         indicator: "DNS NULL / CNAME chain abuse - non-standard record type C2",
         arkime: `ip.src == $INTERNAL
 && protocols == dns
-&& dns.query-type == [
-  NULL || CNAME
-  || PTR || MX
-]
+&& dns.query.type == [NULL, CNAME, PTR, MX]
 && dns.host != $KNOWN_GOOD_DOMAINS
 && dns.response-size > 200
 && dns.query-count groupby
@@ -642,7 +616,7 @@ AND NOT dns.answers.name: (
         sub: "T1568.001 - Fast Flux DNS",
         indicator: "NS records changing frequently for same domain - double-flux infrastructure",
         arkime: `protocols == dns
-&& dns.query-type == NS
+&& dns.query.type == NS
 && dns.host != $KNOWN_GOOD
 && unique-ns-count groupby
   dns.host > 5 within 86400s`,
@@ -671,16 +645,7 @@ AND NOT dns.question.name: $KNOWN_GOOD`,
         indicator: "Internal host querying legitimate service for IP/port calculation seed - DNS calculation precursor",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == [
-  *icanhazip.com*
-  || *ifconfig.me*
-  || *api.ipify.org*
-  || *checkip.amazonaws.com*
-  || *ipinfo.io*
-  || *iplogger.org*
-  || *worldtimeapi.org*
-  || *time.is*
-]
+&& http.host == ["*icanhazip.com*", "*ifconfig.me*", "*api.ipify.org*", "*checkip.amazonaws.com*", "*ipinfo.io*", "*iplogger.org*", "*worldtimeapi.org*", "*time.is*"]
 && process != $KNOWN_GOOD_PROCS`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
@@ -732,25 +697,10 @@ AND url.domain: (
         indicator: "Internal host fetching paste from Pastebin / Ghostbin / Hastebin / Rentry - dead drop C2 endpoint resolution",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == [
-  *pastebin.com*
-  || *paste.ee*
-  || *hastebin.com*
-  || *ghostbin.com*
-  || *rentry.co*
-  || *ix.io*
-  || *0bin.net*
-  || *privatebin.info*
-]
+&& http.host == ["*pastebin.com*", "*paste.ee*", "*hastebin.com*", "*ghostbin.com*", "*rentry.co*", "*ix.io*", "*0bin.net*", "*privatebin.info*"]
 && http.method == GET
-&& http.uri == [
-  */raw/* || */paste/*
-  || *.txt
-]
-&& process != [
-  *chrome* || *firefox*
-  || *edge* || *safari*
-]`,
+&& http.uri == ["*/raw/*", "*/paste/*", "*.txt"]
+&& process != ["*chrome*", "*firefox*", "*edge*", "*safari*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   *pastebin.com*
@@ -793,18 +743,9 @@ AND url.path: (
         indicator: "GitHub Gist or raw repository content fetch from non-developer host - dead drop via GitHub",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == [
-  *gist.githubusercontent.com*
-  || *raw.githubusercontent.com*
-  || *gist.github.com*
-]
+&& http.host == ["*gist.githubusercontent.com*", "*raw.githubusercontent.com*", "*gist.github.com*"]
 && http.method == GET
-&& process != [
-  *git* || *code* || *idea*
-  || *vscode* || *chrome*
-  || *firefox* || *npm*
-  || *pip* || *brew*
-]`,
+&& process != ["*git*", "*code*", "*idea*", "*vscode*", "*chrome*", "*firefox*", "*npm*", "*pip*", "*brew*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   *gist.githubusercontent.com*
@@ -837,18 +778,9 @@ AND http.request.method: GET`,
         indicator: "Twitter/X profile or post fetch from non-browser process - social media dead drop",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == [
-  *twitter.com*
-  || *x.com*
-  || *api.twitter.com*
-  || *nitter.net*
-]
+&& http.host == ["*twitter.com*", "*x.com*", "*api.twitter.com*", "*nitter.net*"]
 && http.method == GET
-&& process != [
-  *chrome* || *firefox*
-  || *edge* || *safari*
-  || *teams* || *outlook*
-]`,
+&& process != ["*chrome*", "*firefox*", "*edge*", "*safari*", "*teams*", "*outlook*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   *twitter.com*
@@ -883,19 +815,10 @@ AND http.request.method: GET`,
         indicator: "Discord webhook POST from non-Discord-client process - Discord-based C2 channel",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == [
-  *discord.com*
-  || *discordapp.com*
-]
+&& http.host == ["*discord.com*", "*discordapp.com*"]
 && http.method == POST
-&& http.uri == [
-  */api/webhooks/*
-  || */api/v*/channels/*/messages*
-]
-&& process != [
-  *Discord* || *chrome*
-  || *firefox*
-]`,
+&& http.uri == ["*/api/webhooks/*", "*/api/v*/channels/*/messages*"]
+&& process != ["*Discord*", "*chrome*", "*firefox*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   *discord.com*
@@ -933,19 +856,10 @@ AND url.path: (
         indicator: "Telegram Bot API POST from non-Telegram-client process - Telegram-based C2 channel",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == [
-  *api.telegram.org*
-]
+&& http.host == ["*api.telegram.org*"]
 && http.method == [POST || GET]
-&& http.uri == [
-  */bot*/sendMessage*
-  || */bot*/sendDocument*
-  || */bot*/getUpdates*
-  || */bot*/sendPhoto*
-]
-&& process != [
-  *Telegram* || *chrome*
-]`,
+&& http.uri == ["*/bot*/sendMessage*", "*/bot*/sendDocument*", "*/bot*/getUpdates*", "*/bot*/sendPhoto*"]
+&& process != ["*Telegram*", "*chrome*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: *api.telegram.org*
 AND url.path: (
@@ -981,20 +895,10 @@ AND url.path: (
         indicator: "Slack webhook POST from non-Slack-client process - corporate Slack abuse for C2",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == [
-  *hooks.slack.com*
-  || *slack.com*
-]
+&& http.host == ["*hooks.slack.com*", "*slack.com*"]
 && http.method == POST
-&& http.uri == [
-  */services/T*/B*/*
-  || */api/chat.postMessage*
-  || */api/files.upload*
-]
-&& process != [
-  *Slack* || *chrome*
-  || *firefox*
-]`,
+&& http.uri == ["*/services/T*/B*/*", "*/api/chat.postMessage*", "*/api/files.upload*"]
+&& process != ["*Slack*", "*chrome*", "*firefox*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   *hooks.slack.com*
@@ -1035,20 +939,9 @@ AND url.path: (
         indicator: "Cloud storage POST/PUT from non-storage-client process - exfil to Dropbox / OneDrive / Google Drive / Mega",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == [
-  *content.dropboxapi.com*
-  || *graph.microsoft.com*
-  || *graph.live.com*
-  || *www.googleapis.com*
-  || *uploads.mega.nz*
-  || *api.box.com*
-]
+&& http.host == ["*content.dropboxapi.com*", "*graph.microsoft.com*", "*graph.live.com*", "*www.googleapis.com*", "*uploads.mega.nz*", "*api.box.com*"]
 && http.method == [POST || PUT]
-&& process != [
-  *Dropbox* || *OneDrive*
-  || *Google Drive* || *MEGA*
-  || *Box* || *chrome*
-]
+&& process != ["*Dropbox*", "*OneDrive*", "*Google Drive*", "*MEGA*", "*Box*", "*chrome*"]
 && databytes.src > 100000`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
@@ -1088,20 +981,9 @@ AND source.bytes > 100000`,
         indicator: "Google Docs / Drive API POST from non-Google-client process - document-based C2 or exfil",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == [
-  *docs.google.com*
-  || *drive.google.com*
-  || *www.googleapis.com*
-]
-&& http.uri == [
-  */drive/v*/files*
-  || */upload/drive/v*/files*
-  || */feeds/*
-]
-&& process != [
-  *Drive* || *chrome*
-  || *firefox* || *Backup*
-]`,
+&& http.host == ["*docs.google.com*", "*drive.google.com*", "*www.googleapis.com*"]
+&& http.uri == ["*/drive/v*/files*", "*/upload/drive/v*/files*", "*/feeds/*"]
+&& process != ["*Drive*", "*chrome*", "*firefox*", "*Backup*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   *docs.google.com*
@@ -1149,7 +1031,11 @@ AND url.path: (
         arkime: `ip.src == $INTERNAL
 && protocols == tls
 && tls.ja3 == $MALICIOUS_JA3
-|| tls.ja4 == $MALICIOUS_JA4`,
+// JA4 client fingerprinting is not available in
+// Arkime 4.3.1 (Arkime 5+ only, accessible as
+// http.ja4). JA3 alone covers most known-malicious
+// implant fingerprints. See Suricata column for
+// JA4 if your sensor supports it.`,
         kibana: `source.ip: $INTERNAL
 AND (tls.client.ja3: $MALICIOUS_JA3
   OR tls.client.ja4: $MALICIOUS_JA4)`,
@@ -1176,8 +1062,13 @@ AND (tls.client.ja3: $MALICIOUS_JA3
         indicator: "JA4 fingerprint anomaly - client fingerprint never seen on this host or VLAN before",
         arkime: `ip.src == $INTERNAL
 && protocols == tls
-&& tls.ja4 != $BASELINE_JA4_BY_HOST
-&& session.duration > 30`,
+&& tls.ja3 != $BASELINE_JA3_BY_HOST
+&& session.length > 30
+// JA4 not available in Arkime 4.3.1 - falls back to
+// JA3. JA3 has lower entropy than JA4 (TLS 1.3 client-hello
+// fingerprinting collapses many JA3 hashes), so expect
+// higher false-positive rate vs. JA4. See Suricata
+// column for JA4 if your sensor supports it.`,
         kibana: `source.ip: $INTERNAL
 AND _exists_: tls.client.ja4
 AND NOT tls.client.ja4: $HOST_JA4_BASELINE`,
@@ -1205,7 +1096,12 @@ AND NOT tls.client.ja4: $HOST_JA4_BASELINE`,
         arkime: `ip.src == $INTERNAL
 && protocols == [tls && http]
 && http.user-agent == "*Mozilla*"
-&& tls.ja4 != $BROWSER_JA4_RANGE`,
+&& tls.ja3 != $BROWSER_JA3_RANGE
+// JA4 not available in Arkime 4.3.1 - falls back to
+// JA3. Browser-vs-tool TLS stack mismatch detection
+// still works at JA3 level for catching common
+// scripted clients (Python requests, curl, Go).
+// See Suricata column for JA4 if your sensor supports it.`,
         kibana: `source.ip: $INTERNAL
 AND user_agent.original: *Mozilla*
 AND _exists_: tls.client.ja4
@@ -1232,11 +1128,12 @@ AND NOT tls.client.ja4: $BROWSER_JA4_RANGE`,
         indicator: "Cobalt Strike team server JA3S / JA4S - server-side TLS fingerprint match",
         arkime: `ip.dst == $INTERNAL
 && protocols == tls
-&& tls.ja3s == [
-  ec74a5c51106f0419184d0dd08fb05bc
-  || 4d2bd7c1c1c1f3e3a6e4dc1b9a8c1234
-]
-|| tls.ja4s == $CS_JA4S_HASHES`,
+&& tls.ja3s == [ec74a5c51106f0419184d0dd08fb05bc, 4d2bd7c1c1c1f3e3a6e4dc1b9a8c1234]
+// JA4S server fingerprinting not available in Arkime
+// 4.3.1. JA3S alone covers many CS profiles but newer
+// Cobalt Strike operators rotate Malleable C2 profiles
+// frequently - pair with periodic JA3S list updates
+// from public CS-tracker feeds.`,
         kibana: `_exists_: tls.server.ja3s
 AND tls.server.ja3s: (
   "ec74a5c51106f0419184d0dd08fb05bc"
@@ -1319,13 +1216,7 @@ AND NOT destination.ip: $INTERNAL`,
         indicator: "TLS certificate with default framework subject - Cobalt Strike 'Major Cobalt Strike' or other default cert subjects",
         arkime: `ip.src == $INTERNAL
 && protocols == tls
-&& tls.cert-subject == [
-  *Major Cobalt Strike*
-  || *cobaltstrike.com*
-  || *MetaSploit*
-  || *Burp Suite*
-  || *empire-server*
-]`,
+&& tls.cert-subject == ["*Major Cobalt Strike*", "*cobaltstrike.com*", "*MetaSploit*", "*Burp Suite*", "*empire-server*"]`,
         kibana: `_exists_: tls.server.x509.subject.common_name
 AND tls.server.x509.subject.common_name: (
   *Major Cobalt Strike*
@@ -1359,9 +1250,7 @@ AND tls.server.x509.subject.common_name: (
         indicator: "Recently-issued Let's Encrypt certificate on connection to first-seen destination",
         arkime: `ip.src == $INTERNAL
 && protocols == tls
-&& tls.cert-issuer == [
-  *Let's Encrypt*
-]
+&& tls.cert-issuer == ["*Let's Encrypt*"]
 && tls.cert-age < 7d
 && ip.dst != $KNOWN_GOOD
 && tls.sni-first-seen == true`,
@@ -1395,7 +1284,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
 && protocols == [tcp || udp]
 && port.dst != [443 || 22 || 8443]
 && payload-entropy > 7.5
-&& session.duration > 60
+&& session.length > 60
 && ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND NOT destination.port: (
@@ -1528,13 +1417,8 @@ AND NOT destination.ip: ($INTERNAL OR $MONITORING_TARGETS)`,
         sub: "T1095 - Raw TCP / UDP Shells",
         indicator: "Outbound connection to known offensive tooling default ports - netcat, msfvenom listener defaults",
         arkime: `ip.src == $INTERNAL
-&& port.dst == [
-  4444 || 4443 || 1337
-  || 31337 || 5555 || 6666
-  || 7777 || 8888 || 9999
-  || 4242 || 1234 || 12345
-]
-&& session.duration > 30
+&& port.dst == [4444, 4443, 1337, 31337, 5555, 6666, 7777, 8888, 9999, 4242, 1234, 12345]
+&& session.length > 30
 && ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (
@@ -1569,7 +1453,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         arkime: `ip.src == $INTERNAL
 && port.dst == [80 || 443 || 8080 || 8443]
 && protocols != [http || tls]
-&& session.duration > 60
+&& session.length > 60
 && packets.src > 10
 && ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
@@ -1605,12 +1489,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         indicator: "Raw UDP outbound on non-standard port - UDP-based C2 channel",
         arkime: `ip.src == $INTERNAL
 && protocols == udp
-&& port.dst != [
-  53 || 123 || 161 || 162
-  || 500 || 514 || 1812
-  || 1813 || 4500 || 51820
-  || 5353 || 67 || 68
-]
+&& port.dst != [53, 123, 161, 162, 500, 514, 1812, 1813, 4500, 51820, 5353, 67, 68]
 && packet-count groupby
   ip.src,ip.dst > 20
   within 600s
@@ -1648,9 +1527,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         indicator: "GRE / SCTP / AH / ESP outbound from non-router host - L3 protocol abuse",
         arkime: `ip.src == $INTERNAL
 && ip.src != $ROUTERS
-&& ip.protocol == [
-  47 || 132 || 50 || 51
-]
+&& ip.protocol == [47, 132, 50, 51]
 && ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $ROUTERS
@@ -1678,11 +1555,7 @@ AND network.iana_number: (
         indicator: "Anomalous TCP flag combinations - covert channels in TCP header fields",
         arkime: `ip.src == $INTERNAL
 && protocols == tcp
-&& tcp.flags == [
-  *FIN+URG+PSH*
-  || *NULL* || *XMAS*
-  || *FIN-only*
-]
+&& tcp.flags == ["*FIN+URG+PSH*", "*NULL*", "*XMAS*", "*FIN-only*"]
 && ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND tcp.flags: (
@@ -1717,11 +1590,7 @@ AND tcp.flags: (
         indicator: "Internal host receiving inbound connections from many other internal hosts - pivot / relay infrastructure",
         arkime: `ip.dst == $INTERNAL
 && ip.src == $INTERNAL
-&& port.dst == [
-  443 || 80 || 8080
-  || 22 || 3128 || 1080
-  || 8443 || 4444
-]
+&& port.dst == [443, 80, 8080, 22, 3128, 1080, 8443, 4444]
 && unique-src-count groupby
   ip.dst > 5 within 3600s`,
         kibana: `source.ip: $INTERNAL
@@ -1760,12 +1629,7 @@ AND destination.port: (
 && ip.dst == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& smb.pipe-name == [
-  *MSSE-* || *postex_*
-  || *status_* || *msagent_*
-  || *paw_* || *DserNamePipe*
-  || *ntsvcs_* || *scerpc_*
-]`,
+&& smb.pipe-name == ["*MSSE-*", "*postex_*", "*status_*", "*msagent_*", "*paw_*", "*DserNamePipe*", "*ntsvcs_*", "*scerpc_*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $INTERNAL
 AND destination.port: 445
@@ -1802,11 +1666,8 @@ AND smb.named_pipe: (
         indicator: "Outbound connection to known commercial proxy / VPS provider - adversary infrastructure rental",
         arkime: `ip.src == $INTERNAL
 && ip.dst == $KNOWN_VPS_RANGES
-&& port.dst == [
-  443 || 80 || 8080 || 22
-  || 1080 || 3128 || 4444
-]
-&& session.duration > 300
+&& port.dst == [443, 80, 8080, 22, 1080, 3128, 4444]
+&& session.length > 300
 && databytes.src > 10000
 && process != $KNOWN_GOOD_PROCS`,
         kibana: `source.ip: $INTERNAL
@@ -1873,11 +1734,8 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         indicator: "Outbound connection to Tor entry node - first hop into Tor network",
         arkime: `ip.src == $INTERNAL
 && ip.dst == $TOR_NODES
-&& port.dst == [
-  9001 || 9030 || 9050
-  || 9051 || 443 || 80
-]
-&& session.duration > 30`,
+&& port.dst == [9001, 9030, 9050, 9051, 443, 80]
+&& session.length > 30`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $TOR_NODES
 AND destination.port: (
@@ -1907,10 +1765,7 @@ AND destination.port: (
         indicator: "obfs4 / meek bridge traffic - Tor obfuscation pluggable transport",
         arkime: `ip.src == $INTERNAL
 && protocols == tls
-&& tls.ja3 == [
-  e7d705a3286e19ea42f587b344ee6865
-  || 7dd50e112cd23734a310b90f6f44a7cd
-]
+&& tls.ja3 == [e7d705a3286e19ea42f587b344ee6865, 7dd50e112cd23734a310b90f6f44a7cd]
 && port.dst == [443 || 80]
 // Random-CN cert detection requires regex - not
 // expressible in pure Arkime. See Suricata pcre column.
@@ -1943,11 +1798,8 @@ AND tls.client.ja3: (
         indicator: "Residential proxy network endpoint - connection to known consumer-IP proxy services",
         arkime: `ip.src == $INTERNAL
 && ip.dst == $RESIDENTIAL_PROXY_RANGES
-&& port.dst == [
-  443 || 80 || 8080
-  || 1080 || 3128
-]
-&& session.duration > 60`,
+&& port.dst == [443, 80, 8080, 1080, 3128]
+&& session.length > 60`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $RESIDENTIAL_PROXY_RANGES
 AND destination.port: (
@@ -1979,13 +1831,7 @@ AND destination.port: (
 && protocols == [tls && http]
 && tls.sni != http.host
 && port.dst == 443
-&& tls.sni == [
-  *cloudfront.net*
-  || *azureedge.net*
-  || *fastly.net*
-  || *akamaihd.net*
-  || *appspot.com*
-]`,
+&& tls.sni == ["*cloudfront.net*", "*azureedge.net*", "*fastly.net*", "*akamaihd.net*", "*appspot.com*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND _exists_: tls.client.server_name
@@ -2016,17 +1862,10 @@ AND tls.client.server_name: NOT http.request.headers.host`,
         indicator: "Outbound TLS to high-volume CDN domain on first contact - possible domain fronting endpoint",
         arkime: `ip.src == $INTERNAL
 && protocols == tls
-&& tls.sni == [
-  *cloudfront.net*
-  || *azureedge.net*
-  || *fastly.net*
-  || *akamaihd.net*
-  || *appspot.com*
-  || *cloudfunctions.net*
-]
+&& tls.sni == ["*cloudfront.net*", "*azureedge.net*", "*fastly.net*", "*akamaihd.net*", "*appspot.com*", "*cloudfunctions.net*"]
 && tls.sni.first-seen-by-host
   == true
-&& session.duration > 60`,
+&& session.length > 60`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND tls.client.server_name: (
@@ -2076,7 +1915,7 @@ AND event.duration > 60000000`,
 && protocols == ssh
 && ip.dst != $INTERNAL
 && ip.dst != $KNOWN_GOOD
-&& session.duration > 60`,
+&& session.length > 60`,
         kibana: `source.ip: $USER_VLAN
 AND NOT source.ip: $ADMIN_HOSTS
 AND destination.port: (22 OR 2222)
@@ -2109,7 +1948,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         sub: "T1572 - SSH Tunneling",
         indicator: "SSH session with sustained bidirectional data - long-lived tunnel rather than interactive shell",
         arkime: `protocols == ssh
-&& session.duration > 1800
+&& session.length > 1800
 && databytes.src > 100000
 && databytes.dst > 100000
 && ip.src == $INTERNAL`,
@@ -2144,12 +1983,7 @@ AND source.ip: $INTERNAL`,
         sub: "T1572 - SSH Tunneling",
         indicator: "SSH client banner anomaly - non-OpenSSH client or modified version string",
         arkime: `protocols == ssh
-&& ssh.client-banner != [
-  *OpenSSH_*
-  || *PuTTY_*
-  || *libssh*
-  || *Cisco-* || *dropbear*
-]
+&& ssh.client-banner != ["*OpenSSH_*", "*PuTTY_*", "*libssh*", "*Cisco-*", "*dropbear*"]
 && ip.src == $INTERNAL`,
         kibana: `network.protocol: ssh
 AND source.ip: $INTERNAL
@@ -2185,7 +2019,7 @@ AND ssh.client: NOT (
 && http.method == CONNECT
 && ip.dst != $CORPORATE_PROXIES
 && ip.dst != $KNOWN_GOOD
-&& session.duration > 60`,
+&& session.length > 60`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: CONNECT
 AND NOT destination.ip: $CORPORATE_PROXIES
@@ -2213,11 +2047,8 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         indicator: "WebSocket upgrade on HTTP - long-lived bidirectional channel inside HTTP/HTTPS",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& http.request-header == [
-  *Upgrade: websocket*
-  || *Connection: Upgrade*
-]
-&& session.duration > 600
+&& http.request-header == ["*Upgrade: websocket*", "*Connection: Upgrade*"]
+&& session.length > 600
 && ip.dst != $KNOWN_GOOD
 && process != $KNOWN_GOOD_PROCS`,
         kibana: `source.ip: $INTERNAL
@@ -2252,7 +2083,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         arkime: `ip.src == $INTERNAL
 && protocols == tls
 && port.dst == 443
-&& session.duration > 1800
+&& session.length > 1800
 && databytes.src > 500000
 && databytes.dst > 500000
 && packets.src > 500
@@ -2290,18 +2121,9 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         indicator: "DNS-over-HTTPS (DoH) endpoint - bypass of on-network DNS inspection",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == [
-  *cloudflare-dns.com*
-  || *dns.google*
-  || *dns.quad9.net*
-  || *doh.opendns.com*
-  || *dns.adguard.com*
-  || *mozilla.cloudflare-dns.com*
-]
+&& http.host == ["*cloudflare-dns.com*", "*dns.google*", "*dns.quad9.net*", "*doh.opendns.com*", "*dns.adguard.com*", "*mozilla.cloudflare-dns.com*"]
 && port.dst == 443
-&& process != [
-  *firefox* || *chrome*
-]`,
+&& process != ["*firefox*", "*chrome*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   *cloudflare-dns.com*
@@ -2339,16 +2161,10 @@ AND destination.port: 443`,
         indicator: "Wireguard / OpenVPN UDP traffic from non-VPN-client host - VPN protocol as covert tunnel",
         arkime: `ip.src == $INTERNAL
 && protocols == udp
-&& port.dst == [
-  51820 || 1194 || 4500
-  || 500
-]
+&& port.dst == [51820, 1194, 4500, 500]
 && ip.dst != $CORPORATE_VPN
 && ip.dst != $KNOWN_GOOD
-&& process != [
-  *VPN* || *OpenVPN*
-  || *Wireguard* || *Tunnelblick*
-]`,
+&& process != ["*VPN*", "*OpenVPN*", "*Wireguard*", "*Tunnelblick*"]`,
         kibana: `source.ip: $INTERNAL
 AND network.transport: udp
 AND destination.port: (
@@ -2389,10 +2205,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         indicator: "certutil.exe outbound HTTP - Windows certificate utility used as downloader",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& http.user-agent == [
-  *CertUtil*
-  || *Microsoft-CryptoAPI*
-]
+&& http.user-agent == ["*CertUtil*", "*Microsoft-CryptoAPI*"]
 && ip.dst != $WINDOWS_UPDATE_INFRA
 && ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
@@ -2428,9 +2241,7 @@ AND NOT destination.ip: $WINDOWS_UPDATE_INFRA`,
         indicator: "bitsadmin.exe / BITS service download - background transfer service abuse",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& http.user-agent == [
-  *Microsoft BITS*
-]
+&& http.user-agent == ["*Microsoft BITS*"]
 && ip.dst != $WINDOWS_UPDATE_INFRA
 && ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
@@ -2461,12 +2272,8 @@ AND NOT destination.ip: $WINDOWS_UPDATE_INFRA`,
         indicator: "PowerShell HTTP download - Invoke-WebRequest / DownloadString outbound fetch",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& http.user-agent == [
-  *WindowsPowerShell*
-  || *PowerShell*
-  || *Mozilla/5.0 (Windows NT*
-    *WindowsPowerShell*
-]
+&& http.user-agent == ["*WindowsPowerShell*", "*PowerShell*", "*Mozilla/5.0 (Windows NT*
+    *WindowsPowerShell*"]
 && ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND user_agent.original: (
@@ -2501,18 +2308,8 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         indicator: "WinHTTP / wininet / curl / wget User-Agent - non-browser HTTP libraries downloading executables",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& http.user-agent == [
-  *WinHttp* || *Wininet*
-  || *curl/* || *Wget/*
-  || *python-requests*
-  || *Go-http-client*
-]
-&& http.uri == [
-  *.exe || *.dll || *.ps1
-  || *.vbs || *.bat
-  || *.hta || *.scr
-  || *.bin || *.dat
-]
+&& http.user-agent == ["*WinHttp*", "*Wininet*", "*curl/*", "*Wget/*", "*python-requests*", "*Go-http-client*"]
+&& http.uri == ["*.exe", "*.dll", "*.ps1", "*.vbs", "*.bat", "*.hta", "*.scr", "*.bin", "*.dat"]
 && ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND user_agent.original: (
@@ -2558,17 +2355,8 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         indicator: "Executable download from low-reputation TLD or newly registered domain",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& http.uri == [
-  *.exe || *.dll || *.ps1
-  || *.vbs || *.hta
-  || *.bat || *.scr
-]
-&& dns.host == [
-  *.xyz || *.top || *.club
-  || *.online || *.site || *.live
-  || *.fun || *.pw || *.cc
-  || *.tk || *.ml || *.ga || *.cf
-]
+&& http.uri == ["*.exe", "*.dll", "*.ps1", "*.vbs", "*.hta", "*.bat", "*.scr"]
+&& dns.host == ["*.xyz", "*.top", "*.club", "*.online", "*.site", "*.live", "*.fun", "*.pw", "*.cc", "*.tk", "*.ml", "*.ga", "*.cf"]
 || dns.host-age < 14d`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET
@@ -2608,11 +2396,7 @@ AND url.domain: /.+\\.(xyz|top|club|online|site|tk|ml|ga|cf)$/`,
         indicator: "Executable downloaded from IP address rather than domain - direct-IP fetch bypassing DNS reputation",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& http.uri == [
-  *.exe || *.dll || *.ps1
-  || *.vbs || *.hta
-  || *.bat || *.scr
-]
+&& http.uri == ["*.exe", "*.dll", "*.ps1", "*.vbs", "*.hta", "*.bat", "*.scr"]
 && ip.dst != $KNOWN_GOOD
 // Direct-IP host detection requires regex - not
 // expressible in pure Arkime (http.host is a string,
@@ -2697,15 +2481,9 @@ AND http.response.body: (
         indicator: "TLS handshake on non-standard port - HTTPS-style traffic on port other than 443/8443",
         arkime: `ip.src == $INTERNAL
 && protocols == tls
-&& port.dst != [
-  443 || 8443 || 4443
-  || 465 || 587 || 636
-  || 853 || 989 || 990
-  || 993 || 995 || 8883
-  || 6697 || 5223
-]
+&& port.dst != [443, 8443, 4443, 465, 587, 636, 853, 989, 990, 993, 995, 8883, 6697, 5223]
 && ip.dst != $INTERNAL
-&& session.duration > 60`,
+&& session.length > 60`,
         kibana: `source.ip: $INTERNAL
 AND network.protocol: tls
 AND NOT destination.port: (
@@ -2741,7 +2519,7 @@ AND NOT destination.ip: $INTERNAL`,
 && zeek.detected-proto !=
   service-by-port(port.dst)
 && ip.src == $INTERNAL
-&& session.duration > 30`,
+&& session.length > 30`,
         kibana: `source.ip: $INTERNAL
 AND _exists_: zeek.dpd
 AND zeek.dpd.protocol: NOT zeek.dpd.expected_protocol`,
@@ -2767,15 +2545,10 @@ AND zeek.dpd.protocol: NOT zeek.dpd.expected_protocol`,
         indicator: "Outbound to high random port - sustained connection to port above 10000 not in known-app range",
         arkime: `ip.src == $INTERNAL
 && port.dst > 10000
-&& port.dst != [
-  10050 || 10051 || 11211
-  || 27017 || 27018 || 27019
-  || 50000 || 50443 || 51820
-  || 6443
-]
+&& port.dst != [10050, 10051, 11211, 27017, 27018, 27019, 50000, 50443, 51820, 6443]
 && ip.dst != $KNOWN_GOOD
 && ip.dst != $INTERNAL
-&& session.duration > 60
+&& session.length > 60
 && databytes.src > 5000`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: [10000 TO 65535]
@@ -2817,10 +2590,7 @@ AND NOT destination.ip: ($KNOWN_GOOD OR $INTERNAL)`,
         indicator: "TeamViewer connection - host connecting to TeamViewer infrastructure",
         arkime: `ip.src == $INTERNAL
 && protocols == [tls || tcp]
-&& tls.sni == [
-  *teamviewer.com*
-  || *.teamviewer.com*
-]
+&& tls.sni == ["*teamviewer.com*", "*.teamviewer.com*"]
 || port.dst == [5938 || 5939]
 || ip.dst == $TEAMVIEWER_RANGES`,
         kibana: `source.ip: $INTERNAL
@@ -2852,11 +2622,7 @@ OR destination.ip: $TEAMVIEWER_RANGES)`,
         indicator: "AnyDesk connection - host connecting to AnyDesk infrastructure",
         arkime: `ip.src == $INTERNAL
 && protocols == [tls || tcp]
-&& tls.sni == [
-  *anydesk.com*
-  || *.anydesk.com*
-  || *.net.anydesk.com*
-]
+&& tls.sni == ["*anydesk.com*", "*.anydesk.com*", "*.net.anydesk.com*"]
 || port.dst == [6568 || 7070]
 || ip.dst == $ANYDESK_RANGES`,
         kibana: `source.ip: $INTERNAL
@@ -2889,16 +2655,7 @@ OR destination.ip: $ANYDESK_RANGES)`,
         indicator: "ConnectWise ScreenConnect / NinjaRMM / Atera / Splashtop - RMM platform connections",
         arkime: `ip.src == $INTERNAL
 && protocols == [tls || tcp]
-&& tls.sni == [
-  *.screenconnect.com*
-  || *.ninjarmm.com*
-  || *.atera.com*
-  || *.splashtop.com*
-  || *.logmein.com*
-  || *.rustdesk.com*
-  || *.netsupportsoftware.com*
-  || *.parsecgaming.com*
-]`,
+&& tls.sni == ["*.screenconnect.com*", "*.ninjarmm.com*", "*.atera.com*", "*.splashtop.com*", "*.logmein.com*", "*.rustdesk.com*", "*.netsupportsoftware.com*", "*.parsecgaming.com*"]`,
         kibana: `source.ip: $INTERNAL
 AND tls.client.server_name: (
   *.screenconnect.com*
@@ -2939,15 +2696,7 @@ AND tls.client.server_name: (
         indicator: "Tunneling tool infrastructure - ngrok, Cloudflare Tunnel, FRP, Chisel endpoints",
         arkime: `ip.src == $INTERNAL
 && protocols == tls
-&& tls.sni == [
-  *.ngrok.io*
-  || *.ngrok-free.app*
-  || *.argotunnel.com*
-  || *.cloudflareaccess.com*
-  || *.try.cloudflare.com*
-  || *.tailscale.com*
-  || *.zerotier.com*
-]
+&& tls.sni == ["*.ngrok.io*", "*.ngrok-free.app*", "*.argotunnel.com*", "*.cloudflareaccess.com*", "*.try.cloudflare.com*", "*.tailscale.com*", "*.zerotier.com*"]
 && process != $KNOWN_GOOD_PROCS`,
         kibana: `source.ip: $INTERNAL
 AND tls.client.server_name: (

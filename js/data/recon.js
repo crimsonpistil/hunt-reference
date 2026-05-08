@@ -46,16 +46,8 @@ AND http.request.method: POST`,
         indicator: "O365 Autodiscover username validation",
         arkime: `ip.src != $INTERNAL
 && http.method == [GET || POST]
-&& http.host == [
-  *autodiscover*
-  || *outlook.office365.com*
-]
-&& http.uri == [
-  */autodiscover.xml*
-  || */autodiscover.json*
-  || */mapi/emsmdb*
-  || */mapi/nspi*
-]`,
+&& http.host == ["*autodiscover*", "*outlook.office365.com*"]
+&& http.uri == ["*/autodiscover.xml*", "*/autodiscover.json*", "*/mapi/emsmdb*", "*/mapi/nspi*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND url.domain: (
   *autodiscover*
@@ -95,17 +87,9 @@ AND url.path: (
         indicator: "OWA / EWS user enumeration via timed response differential",
         arkime: `ip.src != $INTERNAL
 && http.method == POST
-&& http.host == [
-  *owa* || *webmail*
-  || *exchange*
-]
-&& http.uri == [
-  */owa/auth.owa*
-  || */EWS/Exchange.asmx*
-]
-&& http.statuscode == [
-  401 || 403 || 200
-]
+&& http.host == ["*owa*", "*webmail*", "*exchange*"]
+&& http.uri == ["*/owa/auth.owa*", "*/EWS/Exchange.asmx*"]
+&& http.statuscode == [401, 403, 200]
 && packets.src > 10`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method: POST
@@ -144,14 +128,7 @@ AND http.response.status_code:
         sub: "T1589.001 - Credentials",
         indicator: "Credential validation against breach / leak check APIs - internal host",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *haveibeenpwned.com*
-  || *dehashed.com*
-  || *leakcheck.io*
-  || *snusbase.com*
-  || *intelx.io*
-  || *breachdirectory.org*
-]
+&& http.host == ["*haveibeenpwned.com*", "*dehashed.com*", "*leakcheck.io*", "*snusbase.com*", "*intelx.io*", "*breachdirectory.org*"]
 && http.method == [GET || POST]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
@@ -249,15 +226,8 @@ AND network.packets > 40`,
         indicator: "O365 / Google Workspace email format validation via login page",
         arkime: `ip.src != $INTERNAL
 && http.method == POST
-&& http.host == [
-  *login.microsoftonline.com*
-  || *accounts.google.com*
-]
-&& http.uri == [
-  */common/GetCredentialType*
-  || */_/signin/sl/lookup*
-  || */signin/v2/challenge*
-]
+&& http.host == ["*login.microsoftonline.com*", "*accounts.google.com*"]
+&& http.uri == ["*/common/GetCredentialType*", "*/_/signin/sl/lookup*", "*/signin/v2/challenge*"]
 && packets.src > 10`,
         kibana: `NOT source.ip: $INTERNAL
 AND url.domain: (
@@ -299,13 +269,7 @@ AND http.request.method: POST`,
         indicator: "Web scraping of staff directory / contact pages for email harvesting",
         arkime: `ip.src != $INTERNAL
 && http.method == GET
-&& http.uri == [
-  */staff* || */team*
-  || */people* || */directory*
-  || */contact* || */about*
-  || */leadership* || */board*
-  || */faculty* || */experts*
-]
+&& http.uri == ["*/staff*", "*/team*", "*/people*", "*/directory*", "*/contact*", "*/about*", "*/leadership*", "*/board*", "*/faculty*", "*/experts*"]
 && databytes.src > 50000
 && packets.src > 40`,
         kibana: `NOT source.ip: $INTERNAL
@@ -347,20 +311,8 @@ AND http.response.bytes > 50000`,
         sub: "T1589.003 - Employee Names",
         indicator: "LinkedIn / OSINT enrichment API queries from internal hosts",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *linkedin.com*
-  || *hunter.io*
-  || *rocketreach.co*
-  || *clearbit.com*
-  || *apollo.io*
-  || *zoominfo.com*
-]
-&& http.uri == [
-  */search/results*
-  || */company/*
-  || */v2/people*
-  || */prospector*
-]`,
+&& http.host == ["*linkedin.com*", "*hunter.io*", "*rocketreach.co*", "*clearbit.com*", "*apollo.io*", "*zoominfo.com*"]
+&& http.uri == ["*/search/results*", "*/company/*", "*/v2/people*", "*/prospector*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   "linkedin.com"
@@ -400,9 +352,7 @@ AND url.path: (
         sub: "T1589.003 - Employee Names",
         indicator: "LDAP / LDAPS external anonymous bind or unauthenticated enumeration",
         arkime: `ip.src != $INTERNAL
-&& port.dst == [
-  389 || 636 || 3268 || 3269
-]
+&& port.dst == [389, 636, 3268, 3269]
 && protocols == [ldap || ldaps]
 && databytes.src > 0`,
         kibana: `NOT source.ip: $INTERNAL
@@ -467,12 +417,7 @@ AND network.transport: (
 && http.method == GET
 && http.host ==
   *login.microsoftonline.com*
-&& http.uri == [
-  */.well-known/openid-config*
-  || */federationmetadata/*
-  || */v2.0/.well-known*
-  || */discovery/keys*
-]`,
+&& http.uri == ["*/.well-known/openid-config*", "*/federationmetadata/*", "*/v2.0/.well-known*", "*/discovery/keys*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND url.domain:
   "login.microsoftonline.com"
@@ -543,7 +488,7 @@ AND network.transport: tcp`,
         indicator: "DNS zone transfer attempt - AXFR / IXFR",
         arkime: `ip.src != $INTERNAL
 && protocols == dns
-&& dns.query-type == [AXFR || IXFR]
+&& dns.query.type == [AXFR || IXFR]
 && port.dst == 53`,
         kibana: `NOT source.ip: $INTERNAL
 AND dns.question.type: (
@@ -572,10 +517,9 @@ AND destination.port: 53`,
         indicator: "Bulk subdomain brute-force / DNS enumeration",
         arkime: `ip.src != $INTERNAL
 && protocols == dns
-&& dns.query-type == A
-&& dns.host == *.yourdomain.com
-&& packets.src > 50
-&& node:*`,
+&& dns.query.type == A
+&& dns.host == "*.yourdomain.com"
+&& packets.src > 50`,
         kibana: `NOT source.ip: $INTERNAL
 AND dns.question.type: "A"
 AND dns.question.name:
@@ -606,11 +550,13 @@ AND NOT dns.resolved_ip: *`,
         sub: "T1590.003 - Network Trust Dependencies",
         indicator: "CDP / LLDP passive topology leakage",
         arkime: `ip.src == $INTERNAL
-&& protocols == [cdp || lldp]
-&& ip.dst == [
-  01:00:0C:CC:CC:CC
-  || 01:80:C2:00:00:0E
-]`,
+&& protocols == [cdp, lldp]
+// L2 destination MAC matching is not available in
+// baseline Arkime 4.3.1. Requires either ECS-mapped
+// Beats (see Kibana column) or Suricata (see pcre column).
+// Logical spec: dst MAC matches
+//   01:00:0C:CC:CC:CC (CDP) or
+//   01:80:C2:00:00:0E (LLDP)`,
         kibana: `source.ip: $INTERNAL
 AND network.protocol: (
   "cdp" OR "lldp"
@@ -727,7 +673,7 @@ AND network.transport: udp`,
         indicator: "Reverse DNS / PTR walking of your IP ranges",
         arkime: `ip.src != $INTERNAL
 && protocols == dns
-&& dns.query-type == PTR
+&& dns.query.type == PTR
 && dns.host == *.in-addr.arpa
 && packets.src > 30`,
         kibana: `NOT source.ip: $INTERNAL
@@ -757,14 +703,7 @@ AND dns.question.name:
         sub: "T1590.005 - IP Addresses",
         indicator: "ASN / BGP enumeration via external looking glass - from internal host",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *bgp.he.net*
-  || *stat.ripe.net*
-  || *bgpview.io*
-  || *ipinfo.io*
-  || *ipwhois.io*
-  || *team-cymru.com*
-]`,
+&& http.host == ["*bgp.he.net*", "*stat.ripe.net*", "*bgpview.io*", "*ipinfo.io*", "*ipwhois.io*", "*team-cymru.com*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   "bgp.he.net"
@@ -799,14 +738,7 @@ AND url.domain: (
       {
         sub: "T1590.005 - IP Addresses",
         indicator: "Shodan / Censys / BinaryEdge crawler IPs probing perimeter",
-        arkime: `ip.src == [
-  66.240.192.0/19
-  || 198.20.69.0/24
-  || 162.142.125.0/24
-  || 71.6.135.0/24
-  || 45.33.32.0/24
-  || 93.120.27.62
-]
+        arkime: `ip.src == ["66.240.192.0/19", "198.20.69.0/24", "162.142.125.0/24", "71.6.135.0/24", "45.33.32.0/24", 93.120.27.62]
 && port.dst != [80 || 443]`,
         kibana: `source.ip: (
   "66.240.0.0/14"
@@ -871,15 +803,7 @@ AND destination.bytes: [28 TO 500]`,
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.method == GET
-&& http.uri == [
-  */dana-na/auth/*
-  || */remote/logincheck*
-  || */+CSCOE+/logon.html*
-  || */global-protect/*
-  || */sslvpn/Login/*
-  || */my.policy*
-  || */php/login.php*
-]`,
+&& http.uri == ["*/dana-na/auth/*", "*/remote/logincheck*", "*/+CSCOE+/logon.html*", "*/global-protect/*", "*/sslvpn/Login/*", "*/my.policy*", "*/php/login.php*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method: GET
 AND url.path: (
@@ -920,13 +844,12 @@ AND url.path: (
         indicator: "Security appliance vendor banner in HTTP response headers",
         arkime: `ip.src != $INTERNAL
 && protocols == http
-&& http.statuscode == [403 || 400 || 407]
-&& http.response-header == [
-  *Fortinet* || *PAN-OS*
-  || *Cisco* || *Check Point*
-  || *F5* || *Juniper*
-  || *SonicWall*
-]`,
+&& http.statuscode == [403, 400, 407]
+// Response-header inspection (Server, X-Powered-By,
+// vendor banners) is not available in baseline Arkime
+// 4.3.1 - http.response-header field does not exist.
+// See Suricata pcre column or use Zeek with
+// extended HTTP logging for full coverage.`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.response.status_code:
   (400 OR 403 OR 407)
@@ -967,11 +890,7 @@ AND http.response.headers.server: (
         sub: "T1591.001 - Physical Locations",
         indicator: "HR scraper bots hitting career / about / team pages",
         arkime: `ip.src != $INTERNAL
-&& http.uri == [
-  *careers* || *recruit*
-  || *apply* || *about*
-  || *team* || *join*
-]
+&& http.uri == ["*careers*", "*recruit*", "*apply*", "*about*", "*team*", "*join*"]
 && databytes.src > 50000
 && packets.src > 30`,
         kibana: `NOT source.ip: $INTERNAL
@@ -1007,7 +926,7 @@ AND http.response.bytes > 50000`,
         indicator: "Bulk subsidiary / affiliate DNS enumeration",
         arkime: `ip.src != $INTERNAL
 && protocols == dns
-&& dns.query-type == A
+&& dns.query.type == A
 && dns.host == *.corp.*
 && packets.src > 50`,
         kibana: `NOT source.ip: $INTERNAL
@@ -1065,19 +984,8 @@ AND network.transport: tcp`,
         sub: "T1591.002 - Business Relationships",
         indicator: "Business relationship / third-party vendor enumeration via OSINT",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *zoominfo.com*
-  || *dnb.com*
-  || *opencorporates.com*
-  || *crunchbase.com*
-  || *pitchbook.com*
-  || *sec.gov*
-]
-&& http.uri == [
-  */company/* || */search*
-  || */v2/organizations*
-  || */filings*
-]`,
+&& http.host == ["*zoominfo.com*", "*dnb.com*", "*opencorporates.com*", "*crunchbase.com*", "*pitchbook.com*", "*sec.gov*"]
+&& http.uri == ["*/company/*", "*/search*", "*/v2/organizations*", "*/filings*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   "zoominfo.com"
@@ -1210,13 +1118,7 @@ AND network.transport: udp`,
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.method == GET
-&& http.uri == [
-  */rootDesc.xml*
-  || */upnp/desc*
-  || */device.xml*
-  || */DeviceDescription*
-  || */igd.xml*
-]`,
+&& http.uri == ["*/rootDesc.xml*", "*/upnp/desc*", "*/device.xml*", "*/DeviceDescription*", "*/igd.xml*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method: GET
 AND url.path: (
@@ -1284,8 +1186,7 @@ AND destination.bytes > 0`,
         indicator: "MAC address OUI harvesting via ARP sweep - hardware vendor identification",
         arkime: `ip.src == $INTERNAL
 && protocols == arp
-&& packets.src > 30
-&& node:*`,
+&& packets.src > 30`,
         kibana: `source.ip: $INTERNAL
 AND network.type: "ipv4"
 AND network.transport: "arp"`,
@@ -1341,17 +1242,11 @@ AND destination.ip: "224.0.0.251"`,
         indicator: "HTTP Server header software version disclosure in egress responses",
         arkime: `ip.src != $INTERNAL
 && protocols == http
-&& http.statuscode == [
-  200 || 301 || 302
-  || 400 || 403 || 404
-]
-&& http.response-header == [
-  *Apache/* || *nginx/*
-  || *Microsoft-IIS/*
-  || *PHP/* || *Tomcat/*
-  || *Jetty/* || *Werkzeug/*
-  || *OpenSSL/*
-]`,
+&& http.statuscode == [200, 301, 302, 400, 403, 404]
+// Server / X-Powered-By header inspection is not
+// available in baseline Arkime 4.3.1 - http.response-header
+// field does not exist. See Suricata pcre column for
+// content-based matching against response banners.`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.response.status_code: (
   200 OR 301 OR 302
@@ -1391,13 +1286,11 @@ AND http.response.headers.server: (
         indicator: "X-Powered-By / X-Generator header - CMS and framework version disclosure",
         arkime: `ip.src != $INTERNAL
 && protocols == http
-&& http.response-header == [
-  *X-Powered-By*
-  || *X-Generator*
-  || *X-AspNet-Version*
-  || *X-AspNetMvc-Version*
-  || *X-Drupal-Cache*
-]`,
+// Response-header inspection (X-Powered-By,
+// X-Generator, X-AspNet-Version, X-Drupal-Cache)
+// is not available in baseline Arkime 4.3.1.
+// See Suricata pcre column for response-body
+// content matching.`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.response.headers: (
   *X-Powered-By*
@@ -1554,15 +1447,7 @@ AND network.packets > 10`,
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.method == GET
-&& http.uri == [
-  */firmware* || */version*
-  || */cgi-bin/luci*
-  || */webui/login*
-  || */admin/status.php*
-  || */system/device-info*
-  || */api/v1/system/info*
-  || */rest/system/info*
-]
+&& http.uri == ["*/firmware*", "*/version*", "*/cgi-bin/luci*", "*/webui/login*", "*/admin/status.php*", "*/system/device-info*", "*/api/v1/system/info*", "*/rest/system/info*"]
 && http.host != $KNOWN_GOOD`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method: GET
@@ -1630,14 +1515,10 @@ AND destination.bytes > 0`,
         indicator: "TLS certificate CN / SAN - device firmware version and model disclosure",
         arkime: `ip.src != $INTERNAL
 && protocols == tls
-&& tls.cert-cn == [
-  *FortiGate* || *SonicWall*
-  || *pfSense* || *OPNsense*
-  || *Cisco* || *Juniper*
-  || *Ubiquiti* || *MikroTik*
-  || *Synology* || *QNAP*
-  || *router* || *firewall*
-]`,
+// Certificate CN/SAN inspection is not available
+// in baseline Arkime 4.3.1 - tls.cert-cn field does
+// not exist. See Suricata tls.subject column or
+// use Zeek x509.log for full certificate parsing.`,
         kibana: `NOT source.ip: $INTERNAL
 AND tls.server.x509.subject.common_name: (
   *FortiGate* OR *SonicWall*
@@ -1673,13 +1554,7 @@ AND tls.server.x509.subject.common_name: (
         indicator: "JA3 / JA4 known scanner TLS fingerprint - tool identification via ClientHello",
         arkime: `ip.src != $INTERNAL
 && protocols == tls
-&& tls.ja3 == [
-  "e7d705a3286e19ea42f587b344ee6865"
-  || "6734f37431670b3ab4292b8f60f29984"
-  || "4d7a28d6f2263ed61de88ca66eb011e3"
-  || "b386946a5a44d1ddcc843bc75336dfce"
-  || "a0e9f5d64349fb13191bc781f81f42e1"
-]`,
+&& tls.ja3 == ["e7d705a3286e19ea42f587b344ee6865", "6734f37431670b3ab4292b8f60f29984", "4d7a28d6f2263ed61de88ca66eb011e3", "b386946a5a44d1ddcc843bc75336dfce", "a0e9f5d64349fb13191bc781f81f42e1"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND tls.client.ja3: (
   "e7d705a3286e19ea42f587b344ee6865"
@@ -1708,12 +1583,13 @@ AND tls.client.ja3: (
         indicator: "JA4 fingerprint anomaly - tool TLS stack versus claimed browser UA mismatch",
         arkime: `ip.src != $INTERNAL
 && protocols == tls
-&& tls.ja4 != $BROWSER_JA4_BASELINE
-&& http.user-agent == [
-  *Mozilla* || *Chrome*
-  || *Firefox* || *Safari*
-  || *Edge*
-]`,
+&& tls.ja3 != $BROWSER_JA3_BASELINE
+&& http.user-agent == ["*Mozilla*", "*Chrome*", "*Firefox*", "*Safari*", "*Edge*"]
+// JA4 is not available in Arkime 4.3.1 (Arkime 5+
+// only, accessible as http.ja4). This rule falls
+// back to JA3 - lower entropy than JA4 but still
+// useful for catching tool-vs-browser mismatches.
+// See Suricata column for JA4 if your sensor supports it.`,
         kibana: `NOT source.ip: $INTERNAL
 AND tls.client.ja4: *
 AND NOT tls.client.ja4:
@@ -1746,7 +1622,10 @@ AND user_agent.original: (
         arkime: `ip.dst == $INTERNAL
 && protocols == tls
 && tls.ja3s != $KNOWN_GOOD_SERVERS
-&& tls.cert-notbefore >= now-14d`,
+// Certificate validity-date inspection is not available
+// in baseline Arkime 4.3.1 - tls.cert-notbefore field
+// does not exist. JA3S alone gives partial coverage;
+// see Suricata + Zeek x509.log for full visibility.`,
         kibana: `destination.ip: $INTERNAL
 AND NOT tls.server.ja3s:
   $KNOWN_GOOD_SERVERS
@@ -1775,10 +1654,11 @@ AND tls.server.not_before:
 && protocols == tcp
 && tcpflags.syn == 1
 && tcpflags.ack == 0
-&& ip.ttl == [255 || 64 || 128]
-&& tcp.window-size == [
-  1024 || 2048 || 65535 || 0
-]`,
+&& tcp.window-size == [1024, 2048, 65535, 0]
+// TTL-based OS fingerprinting requires the ip.ttl
+// custom field which is not part of baseline Arkime
+// 4.3.1. Run p0f against pcap exports or use Zeek's
+// software detection framework for OS inference.`,
         kibana: `NOT source.ip: $INTERNAL
 AND tcp.flags: "S"
 AND NOT tcp.flags: "A"
@@ -1806,11 +1686,11 @@ AND network.transport: tcp`,
         indicator: "JA4H mismatch - HTTP header order inconsistent with claimed browser",
         arkime: `ip.src != $INTERNAL
 && protocols == http
-&& http.user-agent == [
-  *Chrome* || *Firefox*
-  || *Safari* || *Edge*
-]
-&& http.header-order != $BROWSER_HEADER_BASELINE`,
+&& http.user-agent == ["*Chrome*", "*Firefox*", "*Safari*", "*Edge*"]
+// HTTP header-order inspection is not available in
+// baseline Arkime 4.3.1 - http.header-order field
+// does not exist. See Suricata for header-order
+// matching, or use Zeek http.log custom scripts.`,
         kibana: `NOT source.ip: $INTERNAL
 AND user_agent.original: (
   *Chrome* OR *Firefox*
@@ -1845,11 +1725,7 @@ AND NOT http.request.headers.order:
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.method == GET
-&& http.uri == [
-  */wpad.dat*
-  || */proxy.pac*
-  || */wpad/wpad.dat*
-]`,
+&& http.uri == ["*/wpad.dat*", "*/proxy.pac*", "*/wpad/wpad.dat*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method: GET
 AND url.path: (
@@ -1889,12 +1765,7 @@ AND url.path: (
         arkime: `ip.src == $INTERNAL
 && http.host == *linkedin.com*
 && http.method == GET
-&& http.uri == [
-  */search/results/people*
-  || */company/*
-  || */in/*
-  || */posts/*
-]
+&& http.uri == ["*/search/results/people*", "*/company/*", "*/in/*", "*/posts/*"]
 && databytes.src > 20000
 && packets.src > 20`,
         kibana: `source.ip: $INTERNAL
@@ -1935,17 +1806,8 @@ AND http.response.bytes > 20000`,
         sub: "T1593.001 - Social Media",
         indicator: "Social platform bulk org mention queries from internal host",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *twitter.com* || *x.com*
-  || *reddit.com*
-  || *glassdoor.com*
-  || *facebook.com*
-]
-&& http.uri == [
-  */search* || */query*
-  || */api/search*
-  || */graphql*
-]
+&& http.host == ["*twitter.com*", "*x.com*", "*reddit.com*", "*glassdoor.com*", "*facebook.com*"]
+&& http.uri == ["*/search*", "*/query*", "*/api/search*", "*/graphql*"]
 && databytes.src > 10000
 && packets.src > 15`,
         kibana: `source.ip: $INTERNAL
@@ -1988,18 +1850,8 @@ AND http.response.bytes > 10000`,
         sub: "T1593.002 - Search Engines",
         indicator: "Google / Bing dork queries targeting your own domain from internal host",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *google.com*
-  || *bing.com*
-  || *duckduckgo.com*
-]
-&& http.uri == [
-  *site:yourdomain.com*
-  || *inurl:yourdomain*
-  || *filetype:*
-  || *intitle:index.of*
-  || *"internal use only"*
-]`,
+&& http.host == ["*google.com*", "*bing.com*", "*duckduckgo.com*"]
+&& http.uri == ["*site:yourdomain.com*", "*inurl:yourdomain*", "*filetype:*", "*intitle:index.of*", "*"internal use only"*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   "google.com" OR "bing.com"
@@ -2039,18 +1891,8 @@ AND url.query: (
         sub: "T1593.002 - Search Engines",
         indicator: "Shodan / Censys / FOFA search API queries from internal host - own org lookup",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *shodan.io*
-  || *censys.io*
-  || *zoomeye.org*
-  || *fofa.info*
-  || *binaryedge.io*
-]
-&& http.uri == [
-  */shodan/host/search*
-  || */api/v2/hosts/search*
-  || */search*
-]
+&& http.host == ["*shodan.io*", "*censys.io*", "*zoomeye.org*", "*fofa.info*", "*binaryedge.io*"]
+&& http.uri == ["*/shodan/host/search*", "*/api/v2/hosts/search*", "*/search*"]
 && http.method == GET`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
@@ -2087,19 +1929,9 @@ AND url.path: (
         sub: "T1593.003 - Code Repositories",
         indicator: "GitHub API search for org secrets / internal naming from internal host",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *github.com*
-  || *api.github.com*
-]
-&& http.uri == [
-  */search/code*
-  || */search?q=*
-]
-&& http.uri == [
-  *password* || *secret*
-  || *api_key* || *token*
-  || *yourdomain* || *internal*
-]`,
+&& http.host == ["*github.com*", "*api.github.com*"]
+&& http.uri == ["*/search/code*", "*/search?q=*"]
+&& http.uri == ["*password*", "*secret*", "*api_key*", "*token*", "*yourdomain*", "*internal*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   "github.com"
@@ -2142,16 +1974,9 @@ AND url.query: (
         indicator: "git clone over HTTPS - bulk repository cloning from suspicious endpoint",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& http.host == [
-  *github.com*
-  || *gitlab.com*
-  || *bitbucket.org*
-]
+&& http.host == ["*github.com*", "*gitlab.com*", "*bitbucket.org*"]
 && http.user-agent == *git/*
-&& http.uri == [
-  */info/refs*
-  || */git-upload-pack*
-]
+&& http.uri == ["*/info/refs*", "*/git-upload-pack*"]
 && databytes.dst > 100000`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
@@ -2188,18 +2013,9 @@ AND destination.bytes > 100000`,
         sub: "T1593.003 - Code Repositories",
         indicator: "Self-hosted GitLab / Bitbucket SCM API enumeration - external repository listing",
         arkime: `ip.src != $INTERNAL
-&& http.host == [
-  *gitlab.yourdomain.com*
-  || *bitbucket.yourdomain.com*
-  || *git.yourdomain.com*
-]
+&& http.host == ["*gitlab.yourdomain.com*", "*bitbucket.yourdomain.com*", "*git.yourdomain.com*"]
 && http.method == GET
-&& http.uri == [
-  */api/v4/projects*
-  || */rest/api/1.0/repos*
-  || */explore/repos*
-  || */api/v4/users*
-]`,
+&& http.uri == ["*/api/v4/projects*", "*/rest/api/1.0/repos*", "*/explore/repos*", "*/api/v4/users*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND url.domain: (
   *gitlab.yourdomain*
@@ -2344,8 +2160,7 @@ AND destination.bytes: 0`,
 && icmp.type == 8
 && icmp.code == 0
 && ip.dst == $INTERNAL
-&& packets.src > 10
-&& node:*`,
+&& packets.src > 10`,
         kibana: `NOT source.ip: $INTERNAL
 AND network.transport: icmp
 AND icmp.type: 8
@@ -2376,17 +2191,7 @@ AND destination.ip: $INTERNAL`,
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.method == GET
-&& http.uri == [
-  *robots.txt* || *sitemap*
-  || *.env* || */.git/*
-  || */.svn/* || */wp-config*
-  || */config.php* || */web.config*
-  || */phpinfo* || */server-status*
-  || */admin/* || */actuator/*
-  || */swagger* || */api-docs*
-  || */.aws/credentials*
-  || */backup* || */.htpasswd*
-]`,
+&& http.uri == ["*robots.txt*", "*sitemap*", "*.env*", "*/.git/*", "*/.svn/*", "*/wp-config*", "*/config.php*", "*/web.config*", "*/phpinfo*", "*/server-status*", "*/admin/*", "*/actuator/*", "*/swagger*", "*/api-docs*", "*/.aws/credentials*", "*/backup*", "*/.htpasswd*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method: GET
 AND url.path: (
@@ -2430,19 +2235,7 @@ AND url.path: (
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.method == GET
-&& http.uri == [
-  *jndi:ldap* || *jndi:rmi*
-  || */owa/auth/x.js*
-  || */vpns/portal/scripts/*
-  || */mgmt/tm/util/bash*
-  || */mgmt/tm/sys/config*
-  || */solr/admin/cores*
-  || */actuator/heapdump*
-  || */actuator/env*
-  || */wp-json/wp/v2/users*
-  || */telescope/requests*
-  || */dana-na/auth/saml-sso*
-]`,
+&& http.uri == ["*jndi:ldap*", "*jndi:rmi*", "*/owa/auth/x.js*", "*/vpns/portal/scripts/*", "*/mgmt/tm/util/bash*", "*/mgmt/tm/sys/config*", "*/solr/admin/cores*", "*/actuator/heapdump*", "*/actuator/env*", "*/wp-json/wp/v2/users*", "*/telescope/requests*", "*/dana-na/auth/saml-sso*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method: GET
 AND url.path: (
@@ -2486,11 +2279,9 @@ AND url.path: (
         sub: "T1595.002 - Vulnerability Scanning",
         indicator: "Banner grabbing - service version harvest via connect-and-RST",
         arkime: `ip.src != $INTERNAL
-&& port.dst == [
-  21,22,23,25,110,
+&& port.dst == [21,22,23,25,110,
   143,389,445,3306,
-  3389,5432,5900,8080
-]
+  3389,5432,5900,8080]
 && packets.src == 1
 && packets.dst >= 1
 && databytes.src == 0
@@ -2532,18 +2323,7 @@ AND destination.bytes > 0`,
         sub: "T1595.002 - Vulnerability Scanning",
         indicator: "Known scanner user-agents hitting infrastructure",
         arkime: `ip.src != $INTERNAL
-&& http.user-agent == [
-  *nmap* || *nikto*
-  || *masscan* || *zgrab*
-  || *gobuster* || *nuclei*
-  || *sqlmap* || *ffuf*
-  || *feroxbuster* || *wpscan*
-  || *acunetix* || *nessus*
-  || *metasploit* || *hydra*
-  || *python-requests*
-  || *go-http-client*
-  || *libwww-perl*
-]`,
+&& http.user-agent == ["*nmap*", "*nikto*", "*masscan*", "*zgrab*", "*gobuster*", "*nuclei*", "*sqlmap*", "*ffuf*", "*feroxbuster*", "*wpscan*", "*acunetix*", "*nessus*", "*metasploit*", "*hydra*", "*python-requests*", "*go-http-client*", "*libwww-perl*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND user_agent.original: (
   *nmap* OR *nikto*
@@ -2583,9 +2363,7 @@ AND user_agent.original: (
         indicator: "High 4xx response ratio from single external IP - wordlist exhaustion",
         arkime: `ip.src != $INTERNAL
 && protocols == http
-&& http.statuscode == [
-  400 || 403 || 404 || 405
-]
+&& http.statuscode == [400, 403, 404, 405]
 && packets.src > 50`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.response.status_code: (
@@ -2626,19 +2404,9 @@ AND http.response.status_code: (
         sub: "T1596.001 - WHOIS / .002 WHOIS History",
         indicator: "RDAP / WHOIS API query - internal host querying registration data for own domain",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *rdap.arin.net*
-  || *rdap.ripe.net*
-  || *rdap.apnic.net*
-  || *whois.domaintools.com*
-  || *whoisxmlapi.com*
-  || *whoisfreaks.com*
-]
+&& http.host == ["*rdap.arin.net*", "*rdap.ripe.net*", "*rdap.apnic.net*", "*whois.domaintools.com*", "*whoisxmlapi.com*", "*whoisfreaks.com*"]
 && http.method == GET
-&& http.uri == [
-  */ip/* || */domain/*
-  || */autnum/*
-]`,
+&& http.uri == ["*/ip/*", "*/domain/*", "*/autnum/*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   "rdap.arin.net"
@@ -2679,19 +2447,9 @@ AND url.path: (
         sub: "T1596.001 - WHOIS / .002 WHOIS History",
         indicator: "WHOIS history / DomainTools API - historical registration data query from internal host",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *domaintools.com*
-  || *whoisology.com*
-  || *whoxy.com*
-  || *whoishistory.com*
-  || *completedns.com*
-]
+&& http.host == ["*domaintools.com*", "*whoisology.com*", "*whoxy.com*", "*whoishistory.com*", "*completedns.com*"]
 && http.method == GET
-&& http.uri == [
-  */history/* || */reverse/*
-  || */hosting-history/*
-  || */whois-history/*
-]`,
+&& http.uri == ["*/history/*", "*/reverse/*", "*/hosting-history/*", "*/whois-history/*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   "domaintools.com"
@@ -2730,21 +2488,9 @@ AND url.path: (
         sub: "T1596.003 - Passive DNS",
         indicator: "Passive DNS database query - internal host querying pDNS for own infrastructure history",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *passivetotal.org*
-  || *api.passivetotal.org*
-  || *virustotal.com*
-  || *robtex.com*
-  || *dnsdb.info*
-  || *farsightsecurity.com*
-  || *community.riskiq.com*
-]
+&& http.host == ["*passivetotal.org*", "*api.passivetotal.org*", "*virustotal.com*", "*robtex.com*", "*dnsdb.info*", "*farsightsecurity.com*", "*community.riskiq.com*"]
 && http.method == GET
-&& http.uri == [
-  */dns/passive*
-  || */resolutions*
-  || */pdns*
-]`,
+&& http.uri == ["*/dns/passive*", "*/resolutions*", "*/pdns*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   "passivetotal.org"
@@ -2786,18 +2532,9 @@ AND url.path: (
         sub: "T1596.004 - Certificate Transparency",
         indicator: "Certificate Transparency log query - CT log scraping for org subdomain enumeration",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *crt.sh*
-  || *certspotter.com*
-  || *sslmate.com*
-  || *transparencyreport.google.com*
-  || *censys.io*
-]
+&& http.host == ["*crt.sh*", "*certspotter.com*", "*sslmate.com*", "*transparencyreport.google.com*", "*censys.io*"]
 && http.method == GET
-&& http.uri == [
-  */?q=* || */search*
-  || */api/v1/certs*
-]`,
+&& http.uri == ["*/?q=*", "*/search*", "*/api/v1/certs*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   "crt.sh" OR "certspotter.com"
@@ -2834,11 +2571,7 @@ AND url.path: (
         sub: "T1596.004 - Certificate Transparency",
         indicator: "CT stream monitoring - real-time WebSocket feed for newly issued cert tracking",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *certstream.calidog.io*
-  || *ct.cloudflare.com*
-  || *mammoth.ct.comodo.com*
-]
+&& http.host == ["*certstream.calidog.io*", "*ct.cloudflare.com*", "*mammoth.ct.comodo.com*"]
 && protocols == wss
 && databytes.dst > 0`,
         kibana: `source.ip: $INTERNAL
@@ -2869,19 +2602,9 @@ AND network.protocol: "websocket"`,
         sub: "T1596.005 - Scan Databases",
         indicator: "Shodan / Censys historical host data API - own infrastructure exposure query",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *api.shodan.io*
-  || *search.censys.io*
-  || *api.censys.io*
-  || *app.binaryedge.io*
-]
+&& http.host == ["*api.shodan.io*", "*search.censys.io*", "*api.censys.io*", "*app.binaryedge.io*"]
 && http.method == GET
-&& http.uri == [
-  */shodan/host/*
-  || */v2/hosts/*
-  || */api/v2/hosts/search*
-  || */v1/query/ip*
-]`,
+&& http.uri == ["*/shodan/host/*", "*/v2/hosts/*", "*/api/v2/hosts/search*", "*/v1/query/ip*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   "api.shodan.io"
@@ -2921,19 +2644,9 @@ AND url.path: (
         sub: "T1596.005 - Scan Databases",
         indicator: "VirusTotal / OTX / URLScan - own infrastructure submitted to threat intel platform",
         arkime: `ip.src == $INTERNAL
-&& http.host == [
-  *virustotal.com*
-  || *otx.alienvault.com*
-  || *urlscan.io*
-  || *urlvoid.com*
-]
+&& http.host == ["*virustotal.com*", "*otx.alienvault.com*", "*urlscan.io*", "*urlvoid.com*"]
 && http.method == [GET || POST]
-&& http.uri == [
-  */api/v3/domains/*
-  || */api/v3/ip_addresses/*
-  || */api/v1/indicators/*
-  || */result/* || */scan*
-]`,
+&& http.uri == ["*/api/v3/domains/*", "*/api/v3/ip_addresses/*", "*/api/v1/indicators/*", "*/result/*", "*/scan*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   "virustotal.com"
@@ -2981,14 +2694,12 @@ AND url.path: (
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.method == GET
-&& tls.cert-notbefore >= now-30d
 && http.host != $KNOWN_GOOD
-&& http.host == [
-  *login* || *verify*
-  || *secure* || *account*
-  || *signin* || *auth*
-  || *microsoft* || *office365*
-]`,
+&& http.host == ["*login*", "*verify*", "*secure*", "*account*", "*signin*", "*auth*", "*microsoft*", "*office365*"]
+// Domain-age filtering via tls.cert-notbefore is not
+// available in baseline Arkime 4.3.1. Pair this query
+// with external domain-age enrichment (PassiveTotal,
+// DomainTools, RiskIQ) or filter on results manually.`,
         kibana: `source.ip: $INTERNAL
 AND NOT url.domain: $KNOWN_GOOD
 AND url.path: (
@@ -3026,11 +2737,7 @@ AND tls.server.not_before:
         arkime: `ip.src == $INTERNAL
 && http.method == POST
 && http.host != $KNOWN_GOOD
-&& http.uri == [
-  *login* || *signin*
-  || *verify* || *auth*
-  || *password* || *credential*
-]
+&& http.uri == ["*login*", "*signin*", "*verify*", "*auth*", "*password*", "*credential*"]
 && databytes.src > 50
 && databytes.src < 500`,
         kibana: `source.ip: $INTERNAL
@@ -3072,9 +2779,12 @@ AND http.request.body.bytes < 500`,
         arkime: `ip.src == $INTERNAL
 && protocols == https
 && http.host != $KNOWN_GOOD
-&& http.response-header.set-cookie == *
-&& tls.cert-cn != $KNOWN_GOOD
-&& tls.cert-notbefore >= now-14d`,
+// Set-Cookie header inspection (http.response-header)
+// and certificate inspection (tls.cert-cn,
+// tls.cert-notbefore) are not available in baseline
+// Arkime 4.3.1. AiTM/Evilginx detection requires
+// either Zeek HTTP+x509 logs or Suricata with
+// cookie-content rules. See Suricata pcre column.`,
         kibana: `source.ip: $INTERNAL
 AND NOT tls.server.name: $KNOWN_GOOD
 AND http.response.headers.set_cookie: *
@@ -3107,15 +2817,9 @@ AND NOT url.domain: $KNOWN_GOOD`,
         indicator: "MFA token harvesting - rapid sequential TOTP/OTP submission",
         arkime: `ip.src != $INTERNAL
 && http.method == POST
-&& http.uri == [
-  *mfa* || *otp* || *totp*
-  || *2fa* || *verify*
-  || *code* || *challenge*
-]
+&& http.uri == ["*mfa*", "*otp*", "*totp*", "*2fa*", "*verify*", "*code*", "*challenge*"]
 && packets.src > 5
-&& http.statuscode == [
-  200 || 302 || 401
-]`,
+&& http.statuscode == [200, 302, 401]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method: POST
 AND url.path: (
@@ -3153,10 +2857,14 @@ AND http.response.status_code:
         indicator: "DNS OOB callback - encoded subdomain from phishing document",
         arkime: `ip.src == $INTERNAL
 && protocols == dns
-&& dns.query-type == [A || AAAA || TXT]
+&& dns.query.type == [A, AAAA, TXT]
 && dns.host != $KNOWN_GOOD
-&& dns.host == /[0-9a-f]{8,}\\./
-|| dns.host == /[A-Za-z0-9+]{16,}\\./`,
+// Encoded-subdomain detection (long hex or base64
+// strings) requires regex - not expressible in pure
+// Arkime. See Suricata pcre column or use Kibana KQL
+// regex syntax for runtime matching.
+// Logical spec: dns.host matches
+//   /[0-9a-f]{8,}\\./ or /[A-Za-z0-9+]{16,}\\./`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.type: (
   "A" OR "AAAA" OR "TXT"
@@ -3188,17 +2896,9 @@ AND dns.question.name: /
         indicator: "Remote template fetch - post-email open outbound connection",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& http.uri == [
-  *.dotx* || *.dot*
-  || *.xltx* || *.potx*
-  || *.sct* || *.hta*
-  || *.wsdl*
-]
+&& http.uri == ["*.dotx*", "*.dot*", "*.xltx*", "*.potx*", "*.sct*", "*.hta*", "*.wsdl*"]
 && http.host != $KNOWN_GOOD
-&& http.referrer == [
-  *outlook* || *mail*
-  || *webmail* || *owa*
-]`,
+&& http.referrer == ["*outlook*", "*mail*", "*webmail*", "*owa*"]`,
         kibana: `source.ip: $INTERNAL
 AND NOT url.domain: $KNOWN_GOOD
 AND url.path: (
@@ -3235,11 +2935,14 @@ AND http.request.referrer: (
         sub: "T1598.001 - Spearphishing Service",
         indicator: "Inbound phishing infrastructure - newly registered MX hitting mail gateway",
         arkime: `ip.dst == $MAIL_SERVERS
-&& port.dst == [25 || 587]
+&& port.dst == [25, 587]
 && protocols == smtp
 && ip.src != $KNOWN_MX
 && ip.src != $KNOWN_GOOD
-&& tls.cert-notbefore >= now-30d`,
+// Sender-domain age filtering via tls.cert-notbefore
+// is not available in baseline Arkime 4.3.1. Pair this
+// query with external domain-age enrichment or with
+// SMTP-banner content rules in Suricata.`,
         kibana: `destination.ip: $MAIL_SERVERS
 AND destination.port: (25 OR 587)
 AND NOT source.ip: $KNOWN_MX

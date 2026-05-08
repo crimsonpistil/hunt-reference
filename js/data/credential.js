@@ -476,7 +476,7 @@ AND _exists_: dns.answers`,
 && ip.dst != $SERVERS
 && port.dst == [445 || 80 || 443]
 && ntlm.challenge != null
-&& session.duration < 10`,
+&& session.length < 10`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $INTERNAL
 AND NOT destination.ip: $SERVERS

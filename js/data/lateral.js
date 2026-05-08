@@ -77,7 +77,7 @@ AND network.protocol: rdp`,
 && port.dst == 3389
 && protocols == rdp
 && ip.dst == $INTERNAL
-&& session.duration > 30`,
+&& session.length > 30`,
         kibana: `source.ip: NOT $INTERNAL
 AND NOT source.ip: $RDP_GATEWAY_ALLOWLIST
 AND destination.port: 3389
@@ -207,7 +207,7 @@ AND rdp.channel: "MS_T120"`,
 && protocols == [tls && rdp]
 && ip.dst != $RDP_GATEWAYS
 && tls.sni != $LEGITIMATE_RDP_SNI
-&& session.duration > 60`,
+&& session.length > 60`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND _exists_: rdp.connect_request
@@ -619,7 +619,7 @@ AND dcerpc.activation_clsid: (
 && ip.dst == $INTERNAL
 && port.dst == 22
 && protocols == ssh
-&& session.duration > 30`,
+&& session.length > 30`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $SSH_ADMINS
 AND destination.ip: $INTERNAL
@@ -684,7 +684,7 @@ AND network.protocol: ssh`,
 && protocols == ssh
 && ssh.auth-method == publickey
 && ssh.agent-forwarding == true
-&& session.duration > 60`,
+&& session.length > 60`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 22
 AND ssh.auth_method: "publickey"
@@ -710,7 +710,7 @@ N/A pure Suricata`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 22
 && protocols == ssh
-&& session.duration < 5
+&& session.length < 5
 && packets.src < 20
 && unique-dst-count groupby
   ip.src > 10 within 300s`,
@@ -754,7 +754,7 @@ AND network.packets < 20`,
 && ip.src != $WINRM_ADMINS
 && port.dst == [5985 || 5986]
 && protocols == http
-&& session.duration > 5`,
+&& session.length > 5`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $WINRM_ADMINS
 AND destination.port: (5985 OR 5986)`,
@@ -884,7 +884,7 @@ AND url.path: */wsman*`,
         indicator: "Sustained WinRM session - long-lived PSSession indicating interactive access",
         arkime: `ip.src == $INTERNAL
 && port.dst == [5985 || 5986]
-&& session.duration > 1800
+&& session.length > 1800
 && databytes.src > 50000
 && databytes.dst > 50000`,
         kibana: `source.ip: $INTERNAL
