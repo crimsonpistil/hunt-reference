@@ -550,13 +550,7 @@ AND NOT dns.resolved_ip: *`,
         sub: "T1590.003 - Network Trust Dependencies",
         indicator: "CDP / LLDP passive topology leakage",
         arkime: `ip.src == $INTERNAL
-&& protocols == [cdp, lldp]
-// L2 destination MAC matching is not available in
-// baseline Arkime. Requires either ECS-mapped
-// Beats (see Kibana column) or Suricata (see pcre column).
-// Logical spec: dst MAC matches
-//   01:00:0C:CC:CC:CC (CDP) or
-//   01:80:C2:00:00:0E (LLDP)`,
+&& protocols == [cdp, lldp]`,
         kibana: `source.ip: $INTERNAL
 AND network.protocol: (
   "cdp" OR "lldp"
@@ -844,11 +838,7 @@ AND url.path: (
         indicator: "Security appliance vendor banner in HTTP response headers",
         arkime: `ip.src != $INTERNAL
 && protocols == http
-&& http.statuscode == [403, 400, 407]
-// Response-header inspection (Server, X-Powered-By,
-// vendor banners) is not available in baseline Arkime.
-// See Suricata pcre column or use Zeek with
-// extended HTTP logging for full coverage.`,
+&& http.statuscode == [403, 400, 407]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.response.status_code:
   (400 OR 403 OR 407)
@@ -1152,8 +1142,8 @@ AND url.path: (
         sub: "T1592.001 - Hardware",
         indicator: "WMI remote queries - external or lateral WMI hardware enumeration (DCOM/RPC)",
         arkime: `ip.src != $INTERNAL
-&& port.dst == [135 || 445]
-&& protocols == [dce-rpc || smb]
+&& port.dst == [135, 445]
+&& protocols == [dce-rpc, smb]
 && databytes.src > 0
 && databytes.dst > 0`,
         kibana: `NOT source.ip: $INTERNAL
@@ -1241,11 +1231,7 @@ AND destination.ip: "224.0.0.251"`,
         indicator: "HTTP Server header software version disclosure in egress responses",
         arkime: `ip.src != $INTERNAL
 && protocols == http
-&& http.statuscode == [200, 301, 302, 400, 403, 404]
-// Server / X-Powered-By header inspection is not
-// available in baseline Arkime 4.3.1 - http.response-header
-// field does not exist. See Suricata pcre column for
-// content-based matching against response banners.`,
+&& http.statuscode == [200, 301, 302, 400, 403, 404]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.response.status_code: (
   200 OR 301 OR 302
@@ -1284,12 +1270,7 @@ AND http.response.headers.server: (
         sub: "T1592.002 - Software",
         indicator: "X-Powered-By / X-Generator header - CMS and framework version disclosure",
         arkime: `ip.src != $INTERNAL
-&& protocols == http
-// Response-header inspection (X-Powered-By,
-// X-Generator, X-AspNet-Version, X-Drupal-Cache)
-// is not available in baseline Arkime.
-// See Suricata pcre column for response-body
-// content matching.`,
+&& protocols == http`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.response.headers: (
   *X-Powered-By*
@@ -1513,10 +1494,7 @@ AND destination.bytes > 0`,
         sub: "T1592.003 - Firmware",
         indicator: "TLS certificate CN / SAN - device firmware version and model disclosure",
         arkime: `ip.src != $INTERNAL
-&& protocols == tls
-// Certificate CN/SAN inspection is not available
-// in baseline Arkime. See Suricata tls.subject 
-// column or use Zeek x509.log for full certificate parsing.`,
+&& protocols == tls`,
         kibana: `NOT source.ip: $INTERNAL
 AND tls.server.x509.subject.common_name: (
   *FortiGate* OR *SonicWall*
@@ -1619,10 +1597,7 @@ AND user_agent.original: (
         indicator: "JA4S - server TLS response fingerprinting for rogue/AiTM infrastructure detection",
         arkime: `ip.dst == $INTERNAL
 && protocols == tls
-&& tls.ja3s != $KNOWN_GOOD_SERVERS
-// Certificate validity-date inspection is not available
-// in baseline Arkime. JA3S alone gives partial coverage;
-// see Suricata + Zeek x509.log for full visibility.`,
+&& tls.ja3s != $KNOWN_GOOD_SERVERS`,
         kibana: `destination.ip: $INTERNAL
 AND NOT tls.server.ja3s:
   $KNOWN_GOOD_SERVERS
@@ -1651,11 +1626,7 @@ AND tls.server.not_before:
 && protocols == tcp
 && tcpflags.syn == 1
 && tcpflags.ack == 0
-&& tcp.window-size == [1024, 2048, 65535, 0]
-// TTL-based OS fingerprinting requires the ip.ttl
-// custom field which is not part of baseline Arkime
-// 4.3.1. Run p0f against pcap exports or use Zeek's
-// software detection framework for OS inference.`,
+&& tcp.window-size == [1024, 2048, 65535, 0]`,
         kibana: `NOT source.ip: $INTERNAL
 AND tcp.flags: "S"
 AND NOT tcp.flags: "A"
@@ -1683,10 +1654,7 @@ AND network.transport: tcp`,
         indicator: "JA4H mismatch - HTTP header order inconsistent with claimed browser",
         arkime: `ip.src != $INTERNAL
 && protocols == http
-&& http.user-agent == ["*Chrome*", "*Firefox*", "*Safari*", "*Edge*"]
-// HTTP header-order inspection is not available in
-// baseline Arkime. See Suricata for header-order
-// matching, or use Zeek http.log custom scripts.`,
+&& http.user-agent == ["*Chrome*", "*Firefox*", "*Safari*", "*Edge*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND user_agent.original: (
   *Chrome* OR *Firefox*
@@ -2691,11 +2659,7 @@ AND url.path: (
 && protocols == http
 && http.method == GET
 && http.host != $KNOWN_GOOD
-&& http.host == ["*login*", "*verify*", "*secure*", "*account*", "*signin*", "*auth*", "*microsoft*", "*office365*"]
-// Domain-age filtering is not available 
-// in baseline Arkime. Pair this query with 
-// external domain-age enrichment (PassiveTotal,
-// DomainTools, RiskIQ) or filter on results manually.`,
+&& http.host == ["*login*", "*verify*", "*secure*", "*account*", "*signin*", "*auth*", "*microsoft*", "*office365*"]`,
         kibana: `source.ip: $INTERNAL
 AND NOT url.domain: $KNOWN_GOOD
 AND url.path: (
@@ -2774,10 +2738,7 @@ AND http.request.body.bytes < 500`,
         indicator: "AiTM / Evilginx proxy - session cookie harvest post-MFA",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host != $KNOWN_GOOD
-// AiTM/Evilginx detection requires
-// either Zeek HTTP+x509 logs or Suricata with
-// cookie-content rules. See Suricata pcre column.`,
+&& http.host != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND NOT tls.server.name: $KNOWN_GOOD
 AND http.response.headers.set_cookie: *
@@ -2853,10 +2814,8 @@ AND http.response.status_code:
 && dns.query.type == [A, AAAA, TXT]
 && dns.host != $KNOWN_GOOD
 // Encoded-subdomain detection (long hex or base64
-// strings) requires regex - not expressible in pure
-// Arkime. See Suricata pcre column or use Kibana KQL
-// regex syntax for runtime matching.
-// Logical spec: dns.host matches
+// strings) requires regex. See Suricata pcre 
+// column or use Kibana KQL regex syntax for runtime matching.
 //   /[0-9a-f]{8,}\\./ or /[A-Za-z0-9+]{16,}\\./`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.type: (
@@ -2931,11 +2890,7 @@ AND http.request.referrer: (
 && port.dst == [25, 587]
 && protocols == smtp
 && ip.src != $KNOWN_MX
-&& ip.src != $KNOWN_GOOD
-// Sender-domain age filtering is not available
-// in baseline Arkime. Pair this query with 
-/ external domain-age enrichment or with
-// SMTP-banner content rules in Suricata.`,
+&& ip.src != $KNOWN_GOOD`,
         kibana: `destination.ip: $MAIL_SERVERS
 AND destination.port: (25 OR 587)
 AND NOT source.ip: $KNOWN_MX

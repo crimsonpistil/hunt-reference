@@ -42,11 +42,7 @@ AND NOT source.ip: $RDP_JUMP_HOSTS`,
         indicator: "RDP fan-out from single source - one host RDP'ing to many destinations",
         arkime: `ip.src == $INTERNAL
 && port.dst == 3389
-&& protocols == rdp
-// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 5 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& protocols == rdp`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 3389
 AND network.protocol: rdp`,
@@ -107,11 +103,7 @@ AND destination.ip: $INTERNAL`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 3389
 && protocols == rdp
-&& rdp.result == failed
-// THRESHOLD: aggregation (session-count groupby ip.src > 10 within 300s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& rdp.result == failed`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 3389
 AND network.protocol: rdp
@@ -177,7 +169,7 @@ AND rdp.security_protocol: "standard"`,
 && payload == "*MS_T120*"
 // BlueKeep's full byte signature (TPKT header +
 // MS_T120 channel reference) requires regex on
-// binary payload - not expressible in pure Arkime.
+// binary payload - difficult in base Arkime.
 // See Suricata pcre column for full byte-pattern match.
 // Logical spec: payload matches
 //   /\\x03\\x00.{2}\\x02\\xf0\\x80.*MS_T120/`,
@@ -248,10 +240,7 @@ AND NOT destination.ip: $RDP_GATEWAYS`,
 && ip.src != $ADMIN_HOSTS
 && port.dst == 445
 && protocols == smb
-&& smb.share-name == ADMIN$
-// smb.command does not exist in baseline Arkime 4.3.1.
-// tree-connect is implied by smb.share-name matching;
-// no additional command filter is needed here.`,
+&& smb.share-name == ADMIN$`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $ADMIN_HOSTS
 AND destination.port: 445
@@ -285,13 +274,7 @@ AND smb.share.name: "ADMIN$"`,
 && protocols == smb
 && smb.share-name == [
   C$ || D$ || ADMIN$ || IPC$
-]
-// smb.command does not exist in baseline Arkime 4.3.1.
-// tree-connect is implied by smb.share-name matching.
-// THRESHOLD: aggregation (unique-share-count groupby ip.src,ip.dst > 2 within 60s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+]`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $ADMIN_HOSTS
 AND destination.port: 445
@@ -328,9 +311,7 @@ AND smb.share.name: (
 && port.dst == 445
 && protocols == smb
 && databytes.src > 0
-// smb.command does not exist in baseline Arkime 4.3.1.
-// write/create proxied by databytes.src > 0 (upload).
-// For definitive action filtering use Zeek smb_files.log
+// For definitive action// filtering use Zeek smb_files.log
 // action (SMB_FILE_WRITE) via SIEM.
 && smb.share-name == ADMIN$
 && smb.filename == [
@@ -445,17 +426,7 @@ AND smb.named_pipe: (
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& databytes.dst > 0
-// smb.command does not exist in baseline Arkime 4.3.1.
-// read proxied by databytes.dst > 0 (data flows dst→src).
-// For definitive action filtering use Zeek smb_files.log
-// action (SMB_FILE_READ) via SIEM.
-&& smb.share-name == ADMIN$
-// Impacket wmiexec.py writes output files named
-// __<timestamp>.<microseconds> - filename pattern
-// requires regex, not expressible in pure Arkime.
-// See Suricata pcre column.
-// Logical spec: smb.filename matches /__\\d+\\.\\d+/`,
+&& databytes.dst > 0`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND smb.share.name: "ADMIN$"
@@ -666,10 +637,7 @@ AND network.protocol: ssh`,
 && ip.src != $AUTOMATION_HOSTS
 && port.dst == 22
 && protocols == ssh
-// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 5 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $AUTOMATION_HOSTS
 AND destination.port: 22
@@ -729,11 +697,7 @@ N/A pure Suricata`,
 && port.dst == 22
 && protocols == ssh
 && session.length < 5
-&& packets.src < 20
-// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 10 within 300s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& packets.src < 20`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 22
 AND network.protocol: ssh
@@ -801,10 +765,7 @@ AND destination.port: (5985 OR 5986)`,
         indicator: "WinRM fan-out from single source - one host running PSSession to many destinations",
         arkime: `ip.src == $INTERNAL
 && port.dst == [5985 || 5986]
-// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 5 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (5985 OR 5986)`,
         suricata: `alert tcp $HOME_NET any
@@ -948,23 +909,7 @@ AND destination.bytes > 50000`,
 && ip.src != $FILE_SERVERS
 && port.dst == 445
 && protocols == smb
-&& databytes.src > 0
-// smb.command does not exist in baseline Arkime 4.3.1.
-// write proxied by databytes.src > 0 (data flows src→dst).
-&& smb.filename == [
-  *.exe
-  || *.dll
-  || *.bat
-  || *.ps1
-  || *.vbs
-  || *.7z
-  || *.zip
-  || *.rar
-]
-// THRESHOLD: aggregation (session-count groupby ip.src > 10 within 300s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& databytes.src > 0`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $FILE_SERVERS
 AND destination.port: 445
@@ -1008,23 +953,10 @@ AND file.name: /.+\\.(exe|dll|bat|ps1|vbs|7z|zip|rar)$/`,
 && protocols == smb
 && smb.dialect == [
   NT LM 0.12 || PC NETWORK PROGRAM 1.0
-]
-// smb.command does not exist in baseline Arkime 4.3.1.
-// trans2/nt_trans are Zeek smb_cmd.log operations with no
-// Arkime equivalent. The smb.dialect filter above pins to
-// SMB1 sessions; rely on Suricata byte signature below for
-// the trans2 exploit pattern.
-// EternalBlue's SMB header byte signature
-// (\\xff\\x53\\x4d\\x42\\x32 = "\\xffSMB2") requires
-// regex on binary payload - not expressible in
-// pure Arkime. See Suricata pcre column.
-// Logical spec: payload matches /\\xff\\x53\\x4d\\x42\\x32/`,
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
-AND smb.dialect: ("NT LM 0.12" OR "PC NETWORK PROGRAM 1.0")
-// smb.command is not a standard ECS field; trans2/nt_trans
-// command filtering requires Zeek smb_cmd.log ingestion.
-// Rely on smb.dialect + Suricata alert correlation.`,
+AND smb.dialect: ("NT LM 0.12" OR "PC NETWORK PROGRAM 1.0")`,
         suricata: `alert tcp $HOME_NET any
   -> $HOME_NET 445
   (msg:"TA0008 T1210 EternalBlue
@@ -1057,7 +989,7 @@ AND smb.dialect: ("NT LM 0.12" OR "PC NETWORK PROGRAM 1.0")
   12345678-1234-abcd-ef00-01234567cffb
 && dcerpc.opnum == 26
 // ZeroLogon all-zero credential signature requires
-// regex on binary payload - not expressible in pure
+// regex on binary payload - not expressible in base
 // Arkime. See Suricata pcre column.
 // Logical spec: payload matches /\\x00{16}/`,
         kibana: `source.ip: $INTERNAL
