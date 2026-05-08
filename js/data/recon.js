@@ -552,7 +552,7 @@ AND NOT dns.resolved_ip: *`,
         arkime: `ip.src == $INTERNAL
 && protocols == [cdp, lldp]
 // L2 destination MAC matching is not available in
-// baseline Arkime 4.3.1. Requires either ECS-mapped
+// baseline Arkime. Requires either ECS-mapped
 // Beats (see Kibana column) or Suricata (see pcre column).
 // Logical spec: dst MAC matches
 //   01:00:0C:CC:CC:CC (CDP) or
@@ -846,8 +846,7 @@ AND url.path: (
 && protocols == http
 && http.statuscode == [403, 400, 407]
 // Response-header inspection (Server, X-Powered-By,
-// vendor banners) is not available in baseline Arkime
-// 4.3.1 - http.response-header field does not exist.
+// vendor banners) is not available in baseline Arkime.
 // See Suricata pcre column or use Zeek with
 // extended HTTP logging for full coverage.`,
         kibana: `NOT source.ip: $INTERNAL
@@ -1288,7 +1287,7 @@ AND http.response.headers.server: (
 && protocols == http
 // Response-header inspection (X-Powered-By,
 // X-Generator, X-AspNet-Version, X-Drupal-Cache)
-// is not available in baseline Arkime 4.3.1.
+// is not available in baseline Arkime.
 // See Suricata pcre column for response-body
 // content matching.`,
         kibana: `NOT source.ip: $INTERNAL
@@ -1516,9 +1515,8 @@ AND destination.bytes > 0`,
         arkime: `ip.src != $INTERNAL
 && protocols == tls
 // Certificate CN/SAN inspection is not available
-// in baseline Arkime 4.3.1 - tls.cert-cn field does
-// not exist. See Suricata tls.subject column or
-// use Zeek x509.log for full certificate parsing.`,
+// in baseline Arkime. See Suricata tls.subject 
+// column or use Zeek x509.log for full certificate parsing.`,
         kibana: `NOT source.ip: $INTERNAL
 AND tls.server.x509.subject.common_name: (
   *FortiGate* OR *SonicWall*
@@ -1585,7 +1583,7 @@ AND tls.client.ja3: (
 && protocols == tls
 && tls.ja3 != $BROWSER_JA3_BASELINE
 && http.user-agent == ["*Mozilla*", "*Chrome*", "*Firefox*", "*Safari*", "*Edge*"]
-// JA4 is not available in Arkime 4.3.1 (Arkime 5+
+// JA4 is not available in Arkime 4.X (Arkime 5+
 // only, accessible as http.ja4). This rule falls
 // back to JA3 - lower entropy than JA4 but still
 // useful for catching tool-vs-browser mismatches.
@@ -1623,8 +1621,7 @@ AND user_agent.original: (
 && protocols == tls
 && tls.ja3s != $KNOWN_GOOD_SERVERS
 // Certificate validity-date inspection is not available
-// in baseline Arkime 4.3.1 - tls.cert-notbefore field
-// does not exist. JA3S alone gives partial coverage;
+// in baseline Arkime. JA3S alone gives partial coverage;
 // see Suricata + Zeek x509.log for full visibility.`,
         kibana: `destination.ip: $INTERNAL
 AND NOT tls.server.ja3s:
@@ -1688,8 +1685,7 @@ AND network.transport: tcp`,
 && protocols == http
 && http.user-agent == ["*Chrome*", "*Firefox*", "*Safari*", "*Edge*"]
 // HTTP header-order inspection is not available in
-// baseline Arkime 4.3.1 - http.header-order field
-// does not exist. See Suricata for header-order
+// baseline Arkime. See Suricata for header-order
 // matching, or use Zeek http.log custom scripts.`,
         kibana: `NOT source.ip: $INTERNAL
 AND user_agent.original: (
@@ -2696,9 +2692,9 @@ AND url.path: (
 && http.method == GET
 && http.host != $KNOWN_GOOD
 && http.host == ["*login*", "*verify*", "*secure*", "*account*", "*signin*", "*auth*", "*microsoft*", "*office365*"]
-// Domain-age filtering via tls.cert-notbefore is not
-// available in baseline Arkime 4.3.1. Pair this query
-// with external domain-age enrichment (PassiveTotal,
+// Domain-age filtering is not available 
+// in baseline Arkime. Pair this query with 
+// external domain-age enrichment (PassiveTotal,
 // DomainTools, RiskIQ) or filter on results manually.`,
         kibana: `source.ip: $INTERNAL
 AND NOT url.domain: $KNOWN_GOOD
@@ -2779,10 +2775,7 @@ AND http.request.body.bytes < 500`,
         arkime: `ip.src == $INTERNAL
 && protocols == https
 && http.host != $KNOWN_GOOD
-// Set-Cookie header inspection (http.response-header)
-// and certificate inspection (tls.cert-cn,
-// tls.cert-notbefore) are not available in baseline
-// Arkime 4.3.1. AiTM/Evilginx detection requires
+// AiTM/Evilginx detection requires
 // either Zeek HTTP+x509 logs or Suricata with
 // cookie-content rules. See Suricata pcre column.`,
         kibana: `source.ip: $INTERNAL
@@ -2939,9 +2932,9 @@ AND http.request.referrer: (
 && protocols == smtp
 && ip.src != $KNOWN_MX
 && ip.src != $KNOWN_GOOD
-// Sender-domain age filtering via tls.cert-notbefore
-// is not available in baseline Arkime 4.3.1. Pair this
-// query with external domain-age enrichment or with
+// Sender-domain age filtering is not available
+// in baseline Arkime. Pair this query with 
+/ external domain-age enrichment or with
 // SMTP-banner content rules in Suricata.`,
         kibana: `destination.ip: $MAIL_SERVERS
 AND destination.port: (25 OR 587)
