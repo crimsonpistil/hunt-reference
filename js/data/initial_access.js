@@ -14,7 +14,7 @@ const DATA = [
 && protocols == http
 && http.method == POST
 && http.uri == ["*/login*", "*/auth*", "*/cgi-bin/luci*", "*/api/v1/auth*", "*/admin*"]
-&& http.post-body == ["*admin=admin*", "*username=admin&password=admin*", "*user=admin&pass=admin*", "*username=root&password=root*", "*password=1234*", "*password=default*", "*password=password*"]`,
+&& http.reqbody == ["*admin=admin*", "*username=admin&password=admin*", "*user=admin&pass=admin*", "*username=root&password=root*", "*password=1234*", "*password=default*", "*password=password*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method: POST
 AND url.path: (
@@ -87,12 +87,6 @@ AND source.bytes > 0`,
       {
         sub: "T1078.002 - Domain Accounts",
         indicator: "NTLM authentication relay - NTLMv1/v2 challenge-response from unexpected external source",
-        arkime: `ip.src != $INTERNAL
-&& protocols == [smb || http]
-&& http.request-header == ["*NTLM *", "*Negotiate TlRM*"]
-|| smb.ntlm-auth == true
-&& ip.src != $KNOWN_PARTNERS
-&& port.dst == [445 || 80 || 443]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.headers.authorization: (
   *NTLM* OR *Negotiate TlRM*
@@ -125,7 +119,7 @@ AND destination.port: (
         arkime: `ip.src != $INTERNAL
 && protocols == https
 && http.method == POST
-&& http.host == ["*login.microsoftonline.com*", "*accounts.google.com*", "*okta.com*", $OWA_SERVER, $ADFS_SERVER]
+&& host.http == ["*login.microsoftonline.com*", "*accounts.google.com*", "*okta.com*", $OWA_SERVER, $ADFS_SERVER]
 && http.statuscode == [401, 403]
 // THRESHOLD: aggregation (groupby ip.src count > 5
 // within 300s) is not part of the Arkime expression
@@ -209,9 +203,9 @@ AND destination.bytes > 0`,
         arkime: `ip.src != $INTERNAL
 && ip.src != $KNOWN_CI_CD_IPS
 && protocols == https
-&& http.host == ["*sts.amazonaws.com*", "*oauth2.googleapis.com*", "*login.microsoftonline.com*", "*iam.amazonaws.com*"]
+&& host.http == ["*sts.amazonaws.com*", "*oauth2.googleapis.com*", "*login.microsoftonline.com*", "*iam.amazonaws.com*"]
 && http.method == POST
-&& http.post-body == ["*grant_type=client_credentials*", "*grant_type=urn:ietf:params*", "*Action=AssumeRole*", "*Action=GetSessionToken*"]
+&& http.reqbody == ["*grant_type=client_credentials*", "*grant_type=urn:ietf:params*", "*Action=AssumeRole*", "*Action=GetSessionToken*"]
 && ip.src != $KNOWN_GOOD`,
         kibana: `NOT source.ip: $INTERNAL
 AND NOT source.ip: $KNOWN_CI_CD_IPS
@@ -260,8 +254,8 @@ AND http.request.body: (
         arkime: `ip.src != $INTERNAL
 && protocols == https
 && http.method == POST
-&& http.post-body == ["*SAMLResponse=*", "*grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer*"]
-&& http.host != $KNOWN_IDPS
+&& http.reqbody == ["*SAMLResponse=*", "*grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer*"]
+&& host.http != $KNOWN_IDPS
 && databytes.src > 500`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method: POST
@@ -722,7 +716,7 @@ AND destination.bytes > 1000`,
         arkime: `ip.src != $INTERNAL
 && ip.src != $ALLOWED_CITRIX_IPS
 && protocols == https
-&& http.host == ["*citrix*", "*netscaler*", "*storefront*", "*rdweb*", "*rdgateway*", "*horizon*", "*workspaceone*"]
+&& host.http == ["*citrix*", "*netscaler*", "*storefront*", "*rdweb*", "*rdgateway*", "*horizon*", "*workspaceone*"]
 && http.method == POST
 && http.uri == ["*/cgi/login*", "*/vpn/index*", "*/logon/LogonPoint*", "*/RDWeb/Pages/en-US/login*", "*/portal/webclient*"]
 && databytes.src > 500`,
@@ -767,7 +761,7 @@ AND url.path: (
         arkime: `ip.src != $INTERNAL
 && ip.src != $KNOWN_ADMIN_IPS
 && protocols == https
-&& http.host == ["*console.aws.amazon.com*", "*portal.azure.com*", "*console.cloud.google.com*", "*management.azure.com*", "*ec2.amazonaws.com*"]
+&& host.http == ["*console.aws.amazon.com*", "*portal.azure.com*", "*console.cloud.google.com*", "*management.azure.com*", "*ec2.amazonaws.com*"]
 && http.method == POST
 && http.uri == ["*/oauth/token*", "*/signin/oauth*", "*/login*"]`,
         kibana: `NOT source.ip: $INTERNAL
@@ -815,14 +809,6 @@ AND url.path: (
       {
         sub: "T1189 - Watering Hole Redirect Chains",
         indicator: "Multi-hop HTTP redirect chain - exploit kit gate / traffic distribution system",
-        arkime: `ip.src == $INTERNAL
-&& protocols == http
-&& http.statuscode == [301, 302, 303, 307, 308]
-&& http.redirect-location ==
-  *http://*
-&& packets.src > 3
-&& databytes.src < 500
-&& ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND http.response.status_code: (
   301 OR 302 OR 303
@@ -855,16 +841,6 @@ AND NOT destination.ip:
       {
         sub: "T1189 - Watering Hole Redirect Chains",
         indicator: "Newly registered domain in HTTP redirect destination - drive-by staging infrastructure",
-        arkime: `ip.src == $INTERNAL
-&& protocols == http
-&& http.statuscode == [301, 302]
-&& http.redirect-location ==
-  *http://*
-&& ip.dst != $KNOWN_GOOD
-// Domain-age filtering is not available in baseline
-// Arkime 4.3.1. Pair this query with external domain-age
-// enrichment (PassiveTotal, DomainTools, RiskIQ) or
-// filter on results manually for domains <14 days old.`,
         kibana: `source.ip: $INTERNAL
 AND http.response.status_code:
   (301 OR 302)
@@ -987,7 +963,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         indicator: "Internal user requesting known compromised / categorized malicious domain",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& http.host == $THREAT_INTEL_DOMAINS
+&& host.http == $THREAT_INTEL_DOMAINS
 && http.method == GET
 && databytes.src > 0`,
         kibana: `source.ip: $INTERNAL
@@ -1237,11 +1213,6 @@ AND url.path: (
       {
         sub: "T1190 - Deserialization / RCE",
         indicator: "Java deserialization exploit - ysoserial / gadget chain payload in HTTP body or header",
-        arkime: `ip.src != $INTERNAL
-&& protocols == http
-&& http.method == [POST || GET]
-&& http.post-body == ["*%ac%ed%00%05*", "*rO0AB*", "*KztAAU*"]
-|| http.request-header == ["*%ac%ed*", "*rO0AB*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.body: (
   *%ac%ed%00%05*
@@ -1268,9 +1239,6 @@ AND http.request.body: (
       {
         sub: "T1190 - Deserialization / RCE",
         indicator: "Log4Shell (CVE-2021-44228) - JNDI lookup injection in HTTP headers",
-        arkime: `ip.src != $INTERNAL
-&& protocols == http
-&& http.request-header == ["*\${jndi:*", "*\${j:*", "*%24%7Bjndi%3A*", "*\${\${::-j}*", "*jndi%3aldap*", "*jndi%3armi*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.headers: (
   *\${jndi:* OR *jndi%3a*
@@ -1486,7 +1454,7 @@ AND source.bytes > 0`,
         indicator: "Typosquatting package fetch - internal host downloading from known typosquat namespace",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == ["*registry.npmjs.org*", "*pypi.org*", "*files.pythonhosted.org*", "*rubygems.org*", "*crates.io*"]
+&& host.http == ["*registry.npmjs.org*", "*pypi.org*", "*files.pythonhosted.org*", "*rubygems.org*", "*crates.io*"]
 && http.uri == ["*@*/-/*", "*/packages/*", "*/simple/*", "*/gems/*"]
 && http.uri == $KNOWN_TYPOSQUAT_PACKAGES`,
         kibana: `source.ip: $INTERNAL
@@ -1525,7 +1493,7 @@ AND url.path: $KNOWN_TYPOSQUAT_PACKAGES`,
         indicator: "Dependency confusion - internal package name fetched from public registry",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == ["*registry.npmjs.org*", "*pypi.org*"]
+&& host.http == ["*registry.npmjs.org*", "*pypi.org*"]
 && http.uri == $INTERNAL_PACKAGE_NAMES
 && ip.dst != $INTERNAL_REGISTRY`,
         kibana: `source.ip: $INTERNAL
@@ -1606,14 +1574,14 @@ AND process.name: (
         arkime: `ip.src == $INTERNAL
 && protocols == dns
 && dns.query.type == [A || AAAA]
-&& dns.host == ["*avsvmcloud.com*", "*.appsync-api.*", $KNOWN_C2_DOMAINS]
+&& host.dns == ["*avsvmcloud.com*", "*.appsync-api.*", $KNOWN_C2_DOMAINS]
 // Process-name correlation is not available in baseline
 // Arkime - pair with EDR/Sysmon Event 3 in the SIEM to
 // filter to updater processes (*update*, *agent*).
 // DGA detection requires regex - not expressible
 // in pure Arkime. See Suricata pcre column or use
 // Kibana KQL regex syntax for runtime matching.
-// Logical spec: dns.host matches
+// Logical spec: host.dns matches
 //   /^[a-z0-9]{16,}\\.(com|net|org|info)$/`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.type:
@@ -1880,10 +1848,6 @@ AND host.name: $KNOWN_HOSTS`,
       {
         sub: "T1200 - Rogue Wi-Fi",
         indicator: "Rogue access point - beaconing SSID matching corporate name from unauthorized BSSID",
-        arkime: `protocols == 802.11
-&& wifi.frame-type == BEACON
-&& wifi.ssid == $CORP_SSIDS
-&& wifi.bssid != $AUTHORIZED_BSSIDS`,
         kibana: `network.protocol: "802.11"
 AND wireless.ssid: $CORP_SSIDS
 AND NOT wireless.bssid:
@@ -1946,11 +1910,6 @@ AND NOT source.mac.vendor: $APPROVED_NETWORK_VENDORS`,
       {
         sub: "T1566.001 - Spearphishing Attachment",
         indicator: "Inbound SMTP - password-protected archive or document from newly registered sending domain",
-        arkime: `ip.dst == $INTERNAL
-&& protocols == smtp
-&& smtp.from-domain != $KNOWN_GOOD
-&& smtp.attachment-name == ["*.zip", "*.rar", "*.7z", "*.iso", "*.img", "*.doc", "*.docx", "*.xls", "*.xlsm", "*.pdf", "*.lnk", "*.chm"]
-&& databytes.src > 50000`,
         kibana: `destination.ip: $INTERNAL
 AND network.protocol: smtp
 AND NOT source.ip: $KNOWN_MX
@@ -1984,10 +1943,6 @@ AND email.attachments.file.extension: (
       {
         sub: "T1566.001 - Spearphishing Attachment",
         indicator: "SMTP attachment with double extension or RTLO character - filename spoofing",
-        arkime: `ip.dst == $INTERNAL
-&& protocols == smtp
-&& smtp.attachment-name == ["*.pdf.exe", "*.doc.exe", "*.xlsx.exe", "*.jpg.exe", "*\\u202e*"]
-&& ip.src != $KNOWN_MX`,
         kibana: `destination.ip: $INTERNAL
 AND network.protocol: smtp
 AND email.attachments.file.name: (
@@ -2058,7 +2013,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.method == GET
-&& http.referer == *mail*
+&& http.hasheader.src.value == *mail*
 && ip.dst != $KNOWN_GOOD
 && http.user-agent == ["*Outlook*", "*Thunderbird*", "*Mail*", "*Chrome*", "*Firefox*"]
 // Domain-age filtering is not available in baseline
@@ -2097,7 +2052,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
 && protocols == http
 && http.method == POST
 && ip.dst != $KNOWN_GOOD
-&& http.post-body == ["*password=*", "*passwd=*", "*pass=*", "*pwd=*", "*credential*", "*login*"]
+&& http.reqbody == ["*password=*", "*passwd=*", "*pass=*", "*pwd=*", "*credential*", "*login*"]
 && databytes.src > 100
 && databytes.src < 2000`,
         kibana: `source.ip: $INTERNAL
@@ -2178,8 +2133,8 @@ AND tls.server.not_before:
         arkime: `ip.src == $INTERNAL
 && protocols == https
 && http.method == POST
-&& http.host == ["*login.microsoftonline.com*", "*accounts.google.com*", "*okta.com*", "*duo.com*"]
-&& http.post-body == ["*otc=*", "*otp=*", "*token=*", "*code=*", "*mfa=*", "*totp=*"]
+&& host.http == ["*login.microsoftonline.com*", "*accounts.google.com*", "*okta.com*", "*duo.com*"]
+&& http.reqbody == ["*otc=*", "*otp=*", "*token=*", "*code=*", "*mfa=*", "*totp=*"]
 && starttime - prev.starttime
   < 60s`,
         kibana: `source.ip: $INTERNAL
@@ -2222,7 +2177,7 @@ AND http.request.body: (
         indicator: "Internal host connecting to social platform / messaging API immediately after receiving DM",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == ["*linkedin.com*", "*twitter.com*", "*x.com*", "*discord.com*", "*slack.com*", "*teams.microsoft.com*", "*telegram.org*", "*whatsapp.com*"]
+&& host.http == ["*linkedin.com*", "*twitter.com*", "*x.com*", "*discord.com*", "*slack.com*", "*teams.microsoft.com*", "*telegram.org*", "*whatsapp.com*"]
 && http.method == GET
 && http.uri == ["*/redirect*", "*/url*", "*/link*", "*/click*", "*/track*"]`,
         kibana: `source.ip: $INTERNAL
@@ -2272,17 +2227,6 @@ AND url.path: (
       {
         sub: "T1659 - HTTP Response Injection - Drive-by",
         indicator: "Injected JavaScript in HTTP response from legitimate site - on-path content modification",
-        arkime: `ip.dst == $INTERNAL
-&& protocols == http
-&& http.statuscode == 200
-&& http.response-body == ["*<script*src=*//*.tk*", "*<script*src=*//*.xyz*", "*<script*src=*//*newdomain*", "*eval(atob(*", "*document.write**unescape*"]
-&& ip.src == $KNOWN_GOOD
-// Content-Type response-header filtering is not
-// available in baseline Arkime 4.3.1. Body-content
-// matching alone produces some false positives from
-// legitimate JSON / JS responses; tune the
-// $KNOWN_GOOD scope tightly. For MIME-aware
-// filtering see Suricata file_data rules.`,
         kibana: `destination.ip: $INTERNAL
 AND http.response.status_code: 200
 AND http.response.headers.content-type: (
@@ -2322,19 +2266,6 @@ AND source.ip: $KNOWN_GOOD`,
       {
         sub: "T1659 - HTTP Response Injection - Drive-by",
         indicator: "HTTP Content-Length mismatch - injected payload exceeds declared length",
-        arkime: `protocols == http
-&& http.method == GET
-&& http.statuscode == 200
-&& http.response-body == ["*<script*src=*//*.tk*", "*<script*src=*//*.xyz*", "*eval(atob(*", "*<iframe*src=*//*"]
-&& ip.src == $KNOWN_GOOD
-// Content-Length mismatch detection (declared length
-// vs. actual response body length) requires both
-// http.content-length and session.databytes - neither
-// is available in baseline Arkime 4.3.1. The query
-// above falls back to body-pattern matching for the
-// most common in-the-wild payloads. For true length
-// mismatch detection see Suricata flow.bytes_toclient
-// vs. http.content_length keyword pairing.`,
         kibana: `network.protocol: http
 AND _exists_:
   http.response.headers.content_length
@@ -2362,15 +2293,6 @@ AND http.response.body.bytes != http.response.headers.content_length`,
       {
         sub: "T1659 - HTTP Response Injection - Collection / C2",
         indicator: "Internal HTTP JavaScript beacon - east-west response injection for credential or data collection",
-        arkime: `ip.src == $INTERNAL
-&& ip.dst == $INTERNAL
-&& protocols == http
-&& http.response-body == ["*new Image()**.src=*location*", "*XMLHttpRequest**POST*", "*fetch(**credentials*", "*navigator.sendBeacon*"]
-// Content-Type response-header filtering (text/html)
-// is not available in baseline Arkime 4.3.1. Body-only
-// matching may catch JSON API responses with similar
-// strings; tune $INTERNAL_WEB_APPS scope. For MIME-aware
-// filtering see Suricata file_data rules.`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $INTERNAL
 AND network.protocol: http
@@ -2404,16 +2326,6 @@ AND http.response.body: (
       {
         sub: "T1659 - HTTP Response Injection - Collection / C2",
         indicator: "Third-party script tag from new / unauthorized source on internal application",
-        arkime: `ip.src == $INTERNAL_WEB_APPS
-&& protocols == http
-&& http.response-body == "*<script*src=*//*"
-&& http.response-body != $APPROVED_SCRIPT_SOURCES
-// Content-Type response-header filtering (text/html)
-// is not available in baseline Arkime 4.3.1. The body
-// pattern alone catches most cases; expect some false
-// positives from JSON responses that happen to
-// include the script-tag substring. For MIME-aware
-// filtering see Suricata file_data rules.`,
         kibana: `source.ip: $INTERNAL_WEB_APPS
 AND http.response.headers.content-type:
   *text/html*
@@ -2445,10 +2357,6 @@ AND NOT http.response.body:
       {
         sub: "T1659 - DNS Response Injection",
         indicator: "DNS response with TTL=0 or anomalously low TTL - possible response injection",
-        arkime: `protocols == dns
-&& dns.response == true
-&& dns.ttl < 30
-&& dns.host != ["*cdn*", "*akamai*", "*cloudflare*", "*fastly*", "*amazonaws*"]`,
         kibana: `network.protocol: dns
 AND dns.type: response
 AND dns.answers.ttl: [0 TO 30]
@@ -2479,14 +2387,6 @@ AND NOT dns.answers.name: (
       {
         sub: "T1659 - DNS Response Injection",
         indicator: "Duplicate DNS responses - race condition between legitimate and injected response",
-        arkime: `protocols == dns
-&& dns.response == true
-&& dns.transaction-id ==
-  prev.dns.transaction-id
-&& dns.host == prev.dns.host
-&& dns.answer != prev.dns.answer
-&& starttime - prev.starttime
-  < 1s`,
         kibana: `network.protocol: dns
 AND dns.type: response
 AND _exists_: dns.id`,
@@ -2513,11 +2413,6 @@ AND _exists_: dns.id`,
       {
         sub: "T1659 - BGP Hijacking",
         indicator: "BGP UPDATE from unexpected peer - route hijack attempt",
-        arkime: `protocols == bgp
-&& port.dst == 179
-&& bgp.message-type == UPDATE
-&& bgp.peer-as != $KNOWN_PEER_ASNS
-&& bgp.nlri-prefix == $YOUR_PREFIXES`,
         kibana: `network.protocol: bgp
 AND destination.port: 179
 AND bgp.message_type: "UPDATE"
@@ -2584,7 +2479,7 @@ AND NOT destination.ip:
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.method == GET
-&& http.host == $HSTS_PRELOAD_DOMAINS
+&& host.http == $HSTS_PRELOAD_DOMAINS
 && port.dst == 80`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET

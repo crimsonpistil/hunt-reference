@@ -207,7 +207,7 @@ function buildRow(row, techId, rowId) {
     <span class="ind-name">${esc(row.indicator)}</span>
     <div class="apt-badges">${aptBadges}</div>
     <div class="quick-tools">
-      <button class="qtool qt-a" title="Copy Arkime">ARK</button>
+      ${row.arkime ? '<button class="qtool qt-a" title="Copy Arkime">ARK</button>' : ''}
       <button class="qtool qt-k" title="Copy Kibana">KQL</button>
       <button class="qtool qt-s" title="Copy Suricata">SUR</button>
     </div>
@@ -221,10 +221,12 @@ function buildRow(row, techId, rowId) {
     e.stopPropagation();
     toggleHuntItem(rowId, e.target);
   });
-  bar.querySelector('.qt-a').addEventListener('click', e => {
-    e.stopPropagation();
-    copyText(row.arkime, e.target);
-  });
+  if (row.arkime) {
+    bar.querySelector('.qt-a').addEventListener('click', e => {
+      e.stopPropagation();
+      copyText(row.arkime, e.target);
+    });
+  }
   bar.querySelector('.qt-k').addEventListener('click', e => {
     e.stopPropagation();
     copyText(row.kibana, e.target);
@@ -239,23 +241,27 @@ function buildRow(row, techId, rowId) {
   const detail = document.createElement('div');
   detail.className = 'ind-detail';
 
-  // tab bar
+  // tab bar — Arkime tab only shown when row has an arkime query
   const tabs = [
-    ['t-ark', 'Arkime'],
-    ['t-kib', 'Kibana'],
-    ['t-sur', 'Suricata'],
-    ['t-not', 'Notes'],
-    ['t-apt', 'APT'],
-    ['t-cms', 'CMS Template'],
+    ['t-ark', 'Arkime',       !!row.arkime],
+    ['t-kib', 'Kibana',       true],
+    ['t-sur', 'Suricata',     true],
+    ['t-not', 'Notes',        true],
+    ['t-apt', 'APT',          true],
+    ['t-cms', 'CMS Template', true],
   ];
   const tabBar = document.createElement('div');
   tabBar.className = 'tab-bar';
-  tabs.forEach(([cls, label], i) => {
+  let firstBtn = null;
+  tabs.forEach(([cls, label, show]) => {
+    if (!show) return;
     const btn = document.createElement('button');
-    btn.className = 'dtab ' + cls + (i === 0 ? ' active' : '');
+    btn.className = 'dtab ' + cls;
+    btn.dataset.key = cls.replace('t-', '');
     btn.textContent = label;
-    btn.addEventListener('click', () => switchTab(detail, btn, cls));
+    btn.addEventListener('click', () => switchTab(detail, btn));
     tabBar.appendChild(btn);
+    if (!firstBtn) { btn.classList.add('active'); firstBtn = btn; }
   });
   detail.appendChild(tabBar);
 
@@ -276,9 +282,9 @@ function buildRow(row, techId, rowId) {
     return wrap;
   }
 
-  // panels
+  // panels — only build ark panel if row has an arkime query
   const panels = {
-    'ark': codePanel('l-ark', 'Arkime SPI/Search', row.arkime),
+    ...(row.arkime ? { 'ark': codePanel('l-ark', 'Arkime SPI/Search', row.arkime) } : {}),
     'kib': codePanel('l-kib', 'Kibana KQL',        row.kibana),
     'sur': codePanel('l-sur', 'Suricata Rule',     row.suricata),
     'not': (() => { const d = document.createElement('div'); d.className = 'notes-body'; d.textContent = row.notes; return d; })(),
@@ -334,8 +340,11 @@ function buildRow(row, techId, rowId) {
 
   const panelKeys = ['ark','kib','sur','not','apt','cms'];
   panelKeys.forEach((key, i) => {
+    if (!panels[key]) return;
     const wrap = document.createElement('div');
-    wrap.className = 'tab-panel' + (i === 0 ? ' active' : '');
+    wrap.className = 'tab-panel';
+    wrap.dataset.key = key;
+    if (key === (row.arkime ? 'ark' : 'kib')) wrap.classList.add('active');
     wrap.appendChild(panels[key]);
     detail.appendChild(wrap);
   });
@@ -346,13 +355,13 @@ function buildRow(row, techId, rowId) {
   return el;
 }
 
-function switchTab(detail, activeBtn, activeCls) {
+function switchTab(detail, activeBtn) {
   detail.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
   detail.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   activeBtn.classList.add('active');
-  const idx = ['ark','kib','sur','not','apt','cms'].indexOf(activeCls.replace('t-',''));
-  const panels = detail.querySelectorAll('.tab-panel');
-  if (panels[idx]) panels[idx].classList.add('active');
+  const key = activeBtn.dataset.key;
+  const panel = detail.querySelector(`.tab-panel[data-key="${key}"]`);
+  if (panel) panel.classList.add('active');
 }
 
 // ── RENDER ──
@@ -433,7 +442,7 @@ function exportSelected() {
     const entry = rowRegistry[rowId];
     if (!entry) return;
     const { row, techId } = entry;
-    out += `[${techId}] ${row.indicator}\n${'-'.repeat(50)}\nARKIME:\n${row.arkime}\n\nKIBANA:\n${row.kibana}\n\nSURICATA:\n${row.suricata}\n\nNOTES:\n${row.notes}\n\n${'='.repeat(60)}\n\n`;
+    out += `[${techId}] ${row.indicator}\n${'-'.repeat(50)}\n${row.arkime ? `ARKIME:\n${row.arkime}\n\n` : ''}KIBANA:\n${row.kibana}\n\nSURICATA:\n${row.suricata}\n\nNOTES:\n${row.notes}\n\n${'='.repeat(60)}\n\n`;
   });
   download(out, 'selected_indicators.txt', 'text/plain');
 }
@@ -575,7 +584,7 @@ function exportHunt(fmt) {
       const r = getRow(rowId);
       if (!r) return;
       const ts = item.addedAt ? new Date(item.addedAt).toLocaleString() : 'unknown';
-      out += `[${i+1}] [${item.severity.toUpperCase()}] ${item.techId} — ${r.indicator}\nAdded: ${ts}\n${'-'.repeat(50)}\nARKIME:\n${r.arkime}\n\nKIBANA:\n${r.kibana}\n\nSURICATA:\n${r.suricata}\n\nNOTES:\n${r.notes}\n\n${'='.repeat(60)}\n\n`;
+      out += `[${i+1}] [${item.severity.toUpperCase()}] ${item.techId} — ${r.indicator}\nAdded: ${ts}\n${'-'.repeat(50)}\n${r.arkime ? `ARKIME:\n${r.arkime}\n\n` : ''}KIBANA:\n${r.kibana}\n\nSURICATA:\n${r.suricata}\n\nNOTES:\n${r.notes}\n\n${'='.repeat(60)}\n\n`;
     });
     download(out, 'hunt_package.txt', 'text/plain');
   }

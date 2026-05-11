@@ -291,15 +291,15 @@ AND NOT destination.ip: $KNOWN_MAIL_PROVIDERS`,
         indicator: "DNS tunneling - high volume of long subdomain queries to single domain",
         arkime: `ip.src == $INTERNAL
 && protocols == dns
-// THRESHOLD: aggregation (dns.query-count groupby dns.host > 50 within 600s) is not part
+// THRESHOLD: aggregation (dns.query-count groupby host.dns > 50 within 600s) is not part
 // of the Arkime expression grammar. The Suricata threshold
 // below applies the rate logic; or aggregate via the SPI
 // panel after applying this base filter.
-&& dns.host != $KNOWN_GOOD
+&& host.dns != $KNOWN_GOOD
 // Long-subdomain detection requires regex - not
 // expressible in pure Arkime. See Suricata pcre column
 // or use Kibana KQL regex syntax for runtime matching.
-// Logical spec: dns.host matches /^[a-zA-Z0-9]{30,}\\..+/`,
+// Logical spec: host.dns matches /^[a-zA-Z0-9]{30,}\\..+/`,
         kibana: `source.ip: $INTERNAL
 AND network.protocol: dns
 AND dns.question.name: /[a-zA-Z0-9]{30,}\\..+/`,
@@ -330,7 +330,7 @@ AND dns.question.name: /[a-zA-Z0-9]{30,}\\..+/`,
         arkime: `ip.src == $INTERNAL
 && protocols == dns
 && dns.query.type == TXT
-&& dns.host != ["*_dmarc*", "*_spf*", "*_acme-challenge*", "*_domainkey*"]
+&& host.dns != ["*_dmarc*", "*_spf*", "*_acme-challenge*", "*_domainkey*"]
 // THRESHOLD: aggregation (dns.query-count groupby ip.src > 20 within 600s) is not part
 // of the Arkime expression grammar. The Suricata threshold
 // below applies the rate logic; or aggregate via the SPI
@@ -366,15 +366,6 @@ AND NOT dns.question.name: (
       {
         sub: "T1071.004 - DNS",
         indicator: "DNS NULL / CNAME chain abuse - non-standard record type C2",
-        arkime: `ip.src == $INTERNAL
-&& protocols == dns
-&& dns.query.type == [NULL, CNAME, PTR, MX]
-&& dns.host != $KNOWN_GOOD_DOMAINS
-&& dns.response-size > 200
-// THRESHOLD: aggregation (dns.query-count groupby ip.src > 30 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.type: (
   "NULL" OR "CNAME"
@@ -409,13 +400,13 @@ AND dns.answer.bytes > 200`,
         indicator: "DNS query to newly registered or low-reputation domain - first-seen C2 lookup",
         arkime: `ip.src == $INTERNAL
 && protocols == dns
-&& dns.host != $KNOWN_GOOD
-// Domain-age filtering (dns.host-age < 7d) is not
+&& host.dns != $KNOWN_GOOD
+// Domain-age filtering (host.dns-age < 7d) is not
 // available in baseline Arkime 4.3.1. Pair with
 // external NRD feeds (DomainTools, Whoisxml,
 // SecurityTrails) for the <7d signal.
 // THRESHOLD: aggregation (dns.query-count groupby
-// dns.host > 5 within 3600s) is not part of the
+// host.dns > 5 within 3600s) is not part of the
 // Arkime expression grammar; aggregate via SPI panel
 // or apply in SIEM after filtering on $NRD_FEED.`,
         kibana: `source.ip: $INTERNAL
@@ -450,14 +441,6 @@ AND dns.question.name:
       {
         sub: "T1568.002 - Domain Generation Algorithms",
         indicator: "High NXDOMAIN response rate from single internal host - DGA cycling through generated domains",
-        arkime: `ip.dst == $INTERNAL
-&& protocols == dns
-&& dns.response-code == NXDOMAIN
-&& dns.host != $KNOWN_GOOD
-// THRESHOLD: aggregation (dns.query-count groupby ip.dst > 30 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `destination.ip: $INTERNAL
 AND network.protocol: dns
 AND dns.response_code: "NXDOMAIN"
@@ -489,11 +472,11 @@ AND NOT dns.question.name: $KNOWN_GOOD`,
         indicator: "High-entropy domain queries - algorithmically generated subdomain or domain string",
         arkime: `ip.src == $INTERNAL
 && protocols == dns
-&& dns.host != $KNOWN_GOOD
+&& host.dns != $KNOWN_GOOD
 // DGA / high-entropy detection requires regex - not
 // expressible in pure Arkime. See Suricata pcre column
 // or use Kibana KQL regex syntax for runtime matching.
-// Logical spec: dns.host matches
+// Logical spec: host.dns matches
 //   /^[a-z0-9]{12,30}\\.(com|net|org|info|biz|us|ru|cn|tk|ml|ga|cf|xyz|top|online|site)$/`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.name: /[a-z0-9]{12,30}\\.(com|net|org|info|biz|tk|ml|xyz|top)/
@@ -523,20 +506,6 @@ AND NOT dns.question.name: $KNOWN_GOOD`,
       {
         sub: "T1568.002 - Domain Generation Algorithms",
         indicator: "Sequential failed DNS lookups followed by single successful query - DGA round successful resolution",
-        arkime: `ip.dst == $INTERNAL
-&& protocols == dns
-&& dns.response-code == NXDOMAIN
-// THRESHOLD: aggregation (session-count groupby ip.dst > 10 within 60s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.
-&& subsequent.dns.response-code
-  == NOERROR
-// DGA round-success detection requires regex on the
-// subsequent successful host - not expressible in
-// pure Arkime. See Suricata pcre column.
-// Logical spec: subsequent.dns.host matches
-//   /^[a-z0-9]{10,}\\..+/`,
         kibana: `destination.ip: $INTERNAL
 AND network.protocol: dns
 AND ((dns.response_code: "NXDOMAIN" AND _exists_: dns.question.name)
@@ -566,17 +535,6 @@ AND ((dns.response_code: "NXDOMAIN" AND _exists_: dns.question.name)
       {
         sub: "T1568.001 - Fast Flux DNS",
         indicator: "Single domain resolving to many IPs across many ASNs in short time - fast flux infrastructure",
-        arkime: `protocols == dns
-&& dns.response-code == NOERROR
-&& dns.host != $KNOWN_CDNS
-// THRESHOLD: aggregation (unique-ip-count groupby dns.host > 10 within 3600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.
-// THRESHOLD: aggregation (unique-asn-count groupby dns.host > 5 within 3600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `network.protocol: dns
 AND dns.response_code: "NOERROR"
 AND NOT dns.question.name: $KNOWN_CDNS`,
@@ -604,11 +562,6 @@ AND NOT dns.question.name: $KNOWN_CDNS`,
       {
         sub: "T1568.001 - Fast Flux DNS",
         indicator: "Anomalously low DNS TTL on non-CDN domain - fast flux indicator",
-        arkime: `protocols == dns
-&& dns.response == true
-&& dns.ttl < 300
-&& dns.host != $KNOWN_CDNS
-&& dns.host != $KNOWN_LB`,
         kibana: `network.protocol: dns
 AND dns.type: response
 AND dns.answers.ttl: [0 TO 300]
@@ -639,8 +592,8 @@ AND NOT dns.answers.name: (
         indicator: "NS records changing frequently for same domain - double-flux infrastructure",
         arkime: `protocols == dns
 && dns.query.type == NS
-&& dns.host != $KNOWN_GOOD
-// THRESHOLD: aggregation (unique-ns-count groupby dns.host > 5 within 86400s) is not part
+&& host.dns != $KNOWN_GOOD
+// THRESHOLD: aggregation (unique-ns-count groupby host.dns > 5 within 86400s) is not part
 // of the Arkime expression grammar. The Suricata threshold
 // below applies the rate logic; or aggregate via the SPI
 // panel after applying this base filter.`,
@@ -669,7 +622,7 @@ AND NOT dns.question.name: $KNOWN_GOOD`,
         indicator: "Internal host querying legitimate service for IP/port calculation seed - DNS calculation precursor",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == ["*icanhazip.com*", "*ifconfig.me*", "*api.ipify.org*", "*checkip.amazonaws.com*", "*ipinfo.io*", "*iplogger.org*", "*worldtimeapi.org*", "*time.is*"]
+&& host.http == ["*icanhazip.com*", "*ifconfig.me*", "*api.ipify.org*", "*checkip.amazonaws.com*", "*ipinfo.io*", "*iplogger.org*", "*worldtimeapi.org*", "*time.is*"]
 && process != $KNOWN_GOOD_PROCS`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
@@ -721,7 +674,7 @@ AND url.domain: (
         indicator: "Internal host fetching paste from Pastebin / Ghostbin / Hastebin / Rentry - dead drop C2 endpoint resolution",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == ["*pastebin.com*", "*paste.ee*", "*hastebin.com*", "*ghostbin.com*", "*rentry.co*", "*ix.io*", "*0bin.net*", "*privatebin.info*"]
+&& host.http == ["*pastebin.com*", "*paste.ee*", "*hastebin.com*", "*ghostbin.com*", "*rentry.co*", "*ix.io*", "*0bin.net*", "*privatebin.info*"]
 && http.method == GET
 && http.uri == ["*/raw/*", "*/paste/*", "*.txt"]
 && process != ["*chrome*", "*firefox*", "*edge*", "*safari*"]`,
@@ -767,7 +720,7 @@ AND url.path: (
         indicator: "GitHub Gist or raw repository content fetch from non-developer host - dead drop via GitHub",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == ["*gist.githubusercontent.com*", "*raw.githubusercontent.com*", "*gist.github.com*"]
+&& host.http == ["*gist.githubusercontent.com*", "*raw.githubusercontent.com*", "*gist.github.com*"]
 && http.method == GET
 && process != ["*git*", "*code*", "*idea*", "*vscode*", "*chrome*", "*firefox*", "*npm*", "*pip*", "*brew*"]`,
         kibana: `source.ip: $INTERNAL
@@ -802,7 +755,7 @@ AND http.request.method: GET`,
         indicator: "Twitter/X profile or post fetch from non-browser process - social media dead drop",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == ["*twitter.com*", "*x.com*", "*api.twitter.com*", "*nitter.net*"]
+&& host.http == ["*twitter.com*", "*x.com*", "*api.twitter.com*", "*nitter.net*"]
 && http.method == GET
 && process != ["*chrome*", "*firefox*", "*edge*", "*safari*", "*teams*", "*outlook*"]`,
         kibana: `source.ip: $INTERNAL
@@ -839,7 +792,7 @@ AND http.request.method: GET`,
         indicator: "Discord webhook POST from non-Discord-client process - Discord-based C2 channel",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == ["*discord.com*", "*discordapp.com*"]
+&& host.http == ["*discord.com*", "*discordapp.com*"]
 && http.method == POST
 && http.uri == ["*/api/webhooks/*", "*/api/v*/channels/*/messages*"]
 && process != ["*Discord*", "*chrome*", "*firefox*"]`,
@@ -880,7 +833,7 @@ AND url.path: (
         indicator: "Telegram Bot API POST from non-Telegram-client process - Telegram-based C2 channel",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == ["*api.telegram.org*"]
+&& host.http == ["*api.telegram.org*"]
 && http.method == [POST || GET]
 && http.uri == ["*/bot*/sendMessage*", "*/bot*/sendDocument*", "*/bot*/getUpdates*", "*/bot*/sendPhoto*"]
 && process != ["*Telegram*", "*chrome*"]`,
@@ -919,7 +872,7 @@ AND url.path: (
         indicator: "Slack webhook POST from non-Slack-client process - corporate Slack abuse for C2",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == ["*hooks.slack.com*", "*slack.com*"]
+&& host.http == ["*hooks.slack.com*", "*slack.com*"]
 && http.method == POST
 && http.uri == ["*/services/T*/B*/*", "*/api/chat.postMessage*", "*/api/files.upload*"]
 && process != ["*Slack*", "*chrome*", "*firefox*"]`,
@@ -963,7 +916,7 @@ AND url.path: (
         indicator: "Cloud storage POST/PUT from non-storage-client process - exfil to Dropbox / OneDrive / Google Drive / Mega",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == ["*content.dropboxapi.com*", "*graph.microsoft.com*", "*graph.live.com*", "*www.googleapis.com*", "*uploads.mega.nz*", "*api.box.com*"]
+&& host.http == ["*content.dropboxapi.com*", "*graph.microsoft.com*", "*graph.live.com*", "*www.googleapis.com*", "*uploads.mega.nz*", "*api.box.com*"]
 && http.method == [POST || PUT]
 && process != ["*Dropbox*", "*OneDrive*", "*Google Drive*", "*MEGA*", "*Box*", "*chrome*"]
 && databytes.src > 100000`,
@@ -1005,7 +958,7 @@ AND source.bytes > 100000`,
         indicator: "Google Docs / Drive API POST from non-Google-client process - document-based C2 or exfil",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == ["*docs.google.com*", "*drive.google.com*", "*www.googleapis.com*"]
+&& host.http == ["*docs.google.com*", "*drive.google.com*", "*www.googleapis.com*"]
 && http.uri == ["*/drive/v*/files*", "*/upload/drive/v*/files*", "*/feeds/*"]
 && process != ["*Drive*", "*chrome*", "*firefox*", "*Backup*"]`,
         kibana: `source.ip: $INTERNAL
@@ -1209,7 +1162,7 @@ identified by other detections]`,
         indicator: "Self-signed TLS certificate on connection to external host - implant team server",
         arkime: `ip.src == $INTERNAL
 && protocols == tls
-&& tls.cert-issuer == tls.cert-subject
+&& cert.issuer.cn == cert.subject.cn
 && port.dst == 443
 && ip.dst != $INTERNAL`,
         kibana: `source.ip: $INTERNAL
@@ -1240,7 +1193,7 @@ AND NOT destination.ip: $INTERNAL`,
         indicator: "TLS certificate with default framework subject - Cobalt Strike 'Major Cobalt Strike' or other default cert subjects",
         arkime: `ip.src == $INTERNAL
 && protocols == tls
-&& tls.cert-subject == ["*Major Cobalt Strike*", "*cobaltstrike.com*", "*MetaSploit*", "*Burp Suite*", "*empire-server*"]`,
+&& cert.subject.cn == ["*Major Cobalt Strike*", "*cobaltstrike.com*", "*MetaSploit*", "*Burp Suite*", "*empire-server*"]`,
         kibana: `_exists_: tls.server.x509.subject.common_name
 AND tls.server.x509.subject.common_name: (
   *Major Cobalt Strike*
@@ -1272,12 +1225,6 @@ AND tls.server.x509.subject.common_name: (
       {
         sub: "T1573 - Certificate Anomalies",
         indicator: "Recently-issued Let's Encrypt certificate on connection to first-seen destination",
-        arkime: `ip.src == $INTERNAL
-&& protocols == tls
-&& tls.cert-issuer == ["*Let's Encrypt*"]
-&& tls.cert-age < 7d
-&& ip.dst != $KNOWN_GOOD
-&& tls.sni-first-seen == true`,
         kibana: `source.ip: $INTERNAL
 AND tls.server.x509.issuer.common_name: *Let's Encrypt*
 AND tls.server.x509.not_before: [now-7d TO now]
@@ -1304,12 +1251,6 @@ AND NOT destination.ip: $KNOWN_GOOD`,
       {
         sub: "T1573 - Custom Cryptography",
         indicator: "High-entropy payload in cleartext protocol - non-TLS encrypted C2 channel",
-        arkime: `ip.src == $INTERNAL
-&& protocols == [tcp || udp]
-&& port.dst != [443 || 22 || 8443]
-&& payload-entropy > 7.5
-&& session.length > 60
-&& ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND NOT destination.port: (
   443 OR 22 OR 8443
@@ -1345,14 +1286,6 @@ AND event.duration > 60000000`,
       {
         sub: "T1095 - ICMP Tunneling",
         indicator: "ICMP echo with anomalously large payload - tunneled data in ping packets",
-        arkime: `ip.src == $INTERNAL
-&& protocols == icmp
-&& icmp.type == 8
-&& packet.size > 100
-// THRESHOLD: aggregation (packet-count groupby ip.src,ip.dst > 50 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND network.protocol: icmp
 AND icmp.type: 8
@@ -1379,11 +1312,6 @@ AND network.bytes > 100`,
       {
         sub: "T1095 - ICMP Tunneling",
         indicator: "ICMP echo with high-entropy payload - encrypted data in ping",
-        arkime: `ip.src == $INTERNAL
-&& protocols == icmp
-&& icmp.type == 8
-&& payload-entropy > 6.5
-&& packet.size > 60`,
         kibana: `source.ip: $INTERNAL
 AND network.protocol: icmp
 AND icmp.type: 8
@@ -1580,10 +1508,6 @@ AND network.iana_number: (
       {
         sub: "T1095 - L3/L4 Protocol Abuse",
         indicator: "Anomalous TCP flag combinations - covert channels in TCP header fields",
-        arkime: `ip.src == $INTERNAL
-&& protocols == tcp
-&& tcp.flags == ["*FIN+URG+PSH*", "*NULL*", "*XMAS*", "*FIN-only*"]
-&& ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND tcp.flags: (
   "FIN+URG+PSH"
@@ -1654,11 +1578,6 @@ AND destination.port: (
       {
         sub: "T1090.001 - Internal Proxy",
         indicator: "SMB named pipe traffic between internal hosts on non-standard pipe names - Cobalt Strike SMB beacon",
-        arkime: `ip.src == $INTERNAL
-&& ip.dst == $INTERNAL
-&& port.dst == 445
-&& protocols == smb
-&& smb.pipe-name == ["*MSSE-*", "*postex_*", "*status_*", "*msagent_*", "*paw_*", "*DserNamePipe*", "*ntsvcs_*", "*scerpc_*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $INTERNAL
 AND destination.port: 445
@@ -1798,7 +1717,7 @@ AND destination.port: (
 && port.dst == [443 || 80]
 // Random-CN cert detection requires regex - not
 // expressible in pure Arkime. See Suricata pcre column.
-// Logical spec: tls.cert-subject matches
+// Logical spec: cert.subject.cn matches
 //   /CN=[a-f0-9]{16,}/`,
         kibana: `source.ip: $INTERNAL
 AND tls.client.ja3: (
@@ -1856,11 +1775,6 @@ AND destination.port: (
       {
         sub: "T1090.004 - Domain Fronting",
         indicator: "SNI / Host header mismatch on HTTPS connection - canonical domain fronting signature",
-        arkime: `ip.src == $INTERNAL
-&& protocols == [tls && http]
-&& tls.sni != http.host
-&& port.dst == 443
-&& tls.sni == ["*cloudfront.net*", "*azureedge.net*", "*fastly.net*", "*akamaihd.net*", "*appspot.com*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND _exists_: tls.client.server_name
@@ -1889,12 +1803,6 @@ AND tls.client.server_name: NOT http.request.headers.host`,
       {
         sub: "T1090.004 - Domain Fronting",
         indicator: "Outbound TLS to high-volume CDN domain on first contact - possible domain fronting endpoint",
-        arkime: `ip.src == $INTERNAL
-&& protocols == tls
-&& tls.sni == ["*cloudfront.net*", "*azureedge.net*", "*fastly.net*", "*akamaihd.net*", "*appspot.com*", "*cloudfunctions.net*"]
-&& tls.sni.first-seen-by-host
-  == true
-&& session.length > 60`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND tls.client.server_name: (
@@ -2011,9 +1919,6 @@ AND source.ip: $INTERNAL`,
       {
         sub: "T1572 - SSH Tunneling",
         indicator: "SSH client banner anomaly - non-OpenSSH client or modified version string",
-        arkime: `protocols == ssh
-&& ssh.client-banner != ["*OpenSSH_*", "*PuTTY_*", "*libssh*", "*Cisco-*", "*dropbear*"]
-&& ip.src == $INTERNAL`,
         kibana: `network.protocol: ssh
 AND source.ip: $INTERNAL
 AND ssh.client: NOT (
@@ -2074,12 +1979,6 @@ AND NOT destination.ip: $KNOWN_GOOD`,
       {
         sub: "T1572 - HTTPS Tunneling / WebSocket",
         indicator: "WebSocket upgrade on HTTP - long-lived bidirectional channel inside HTTP/HTTPS",
-        arkime: `ip.src == $INTERNAL
-&& protocols == http
-&& http.request-header == ["*Upgrade: websocket*", "*Connection: Upgrade*"]
-&& session.length > 600
-&& ip.dst != $KNOWN_GOOD
-&& process != $KNOWN_GOOD_PROCS`,
         kibana: `source.ip: $INTERNAL
 AND http.request.headers.upgrade: "websocket"
 AND http.request.headers.connection: *Upgrade*
@@ -2150,7 +2049,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         indicator: "DNS-over-HTTPS (DoH) endpoint - bypass of on-network DNS inspection",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == ["*cloudflare-dns.com*", "*dns.google*", "*dns.quad9.net*", "*doh.opendns.com*", "*dns.adguard.com*", "*mozilla.cloudflare-dns.com*"]
+&& host.http == ["*cloudflare-dns.com*", "*dns.google*", "*dns.quad9.net*", "*doh.opendns.com*", "*dns.adguard.com*", "*mozilla.cloudflare-dns.com*"]
 && port.dst == 443
 && process != ["*firefox*", "*chrome*"]`,
         kibana: `source.ip: $INTERNAL
@@ -2301,7 +2200,7 @@ AND NOT destination.ip: $WINDOWS_UPDATE_INFRA`,
         indicator: "PowerShell HTTP download - Invoke-WebRequest / DownloadString outbound fetch",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& http.user-agent == ["*WindowsPowerShell*", "*PowerShell*", "*Mozilla/5.0 (Windows NT WindowsPowerShell*"]
+&& http.user-agent == ["*WindowsPowerShell*", "*PowerShell*", "*Mozilla/5.0 (Windows NT**WindowsPowerShell*"]
 && ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND user_agent.original: (
@@ -2384,11 +2283,13 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.uri == ["*.exe", "*.dll", "*.ps1", "*.vbs", "*.hta", "*.bat", "*.scr"]
-&& dns.host == ["*.xyz", "*.top", "*.club", "*.online", "*.site", "*.live", "*.fun", "*.pw", "*.cc", "*.tk", "*.ml", "*.ga", "*.cf"]
-// Domain-age filtering (|| dns.host-age < 14d) is not
+&& host.dns == ["*.xyz", "*.top", "*.club", "*.online", "*.site", "*.live", "*.fun", "*.pw", "*.cc", "*.tk", "*.ml", "*.ga", "*.cf"]
+// Domain-age filtering (|| host.dns-age < 14d) is not
 // available in baseline Arkime 4.3.1. Pair the TLD
 // match above with an external NRD feed (DomainTools,
-// Whoisxml, SecurityTrails) for the <14d signal.`,
+// Whoisxml, SecurityTrails) for the <14d signal -
+// the union of low-reputation TLD OR newly-registered
+// domain is the high-confidence indicator.`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET
 AND url.path: (
@@ -2430,9 +2331,9 @@ AND url.domain: /.+\\.(xyz|top|club|online|site|tk|ml|ga|cf)$/`,
 && http.uri == ["*.exe", "*.dll", "*.ps1", "*.vbs", "*.hta", "*.bat", "*.scr"]
 && ip.dst != $KNOWN_GOOD
 // Direct-IP host detection requires regex - not
-// expressible in pure Arkime (http.host is a string,
+// expressible in pure Arkime (host.http is a string,
 // no IP-shape match operator). See Suricata pcre column.
-// Logical spec: http.host matches
+// Logical spec: host.http matches
 //   /^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$/`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: /^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$/
@@ -2468,11 +2369,6 @@ AND url.path: (
       {
         sub: "T1105 - Payload Source Anomalies",
         indicator: "Encoded payload in HTTP response - base64 or hex-encoded executable in plain HTTP body",
-        arkime: `ip.dst == $INTERNAL
-&& protocols == http
-&& http.statuscode == 200
-&& (http.response-body == "*TVqQAAMAAAAEAAAA*"
-    || http.response-body == "*4d5a900003000000*")`,
         kibana: `destination.ip: $INTERNAL
 AND http.response.status_code: 200
 AND http.response.body: (
@@ -2546,11 +2442,6 @@ AND NOT destination.ip: $INTERNAL`,
       {
         sub: "T1571 - Port-Protocol Mismatch",
         indicator: "Protocol-port mismatch - Zeek-detected protocol differs from port's standard assignment",
-        arkime: `protocols == zeek-dpd
-&& zeek.detected-proto !=
-  service-by-port(port.dst)
-&& ip.src == $INTERNAL
-&& session.length > 30`,
         kibana: `source.ip: $INTERNAL
 AND _exists_: zeek.dpd
 AND zeek.dpd.protocol: NOT zeek.dpd.expected_protocol`,
@@ -2619,11 +2510,6 @@ AND NOT destination.ip: ($KNOWN_GOOD OR $INTERNAL)`,
       {
         sub: "T1219 - TeamViewer",
         indicator: "TeamViewer connection - host connecting to TeamViewer infrastructure",
-        arkime: `ip.src == $INTERNAL
-&& protocols == [tls || tcp]
-&& tls.sni == ["*teamviewer.com*", "*.teamviewer.com*"]
-|| port.dst == [5938 || 5939]
-|| ip.dst == $TEAMVIEWER_RANGES`,
         kibana: `source.ip: $INTERNAL
 AND (tls.client.server_name: (
   *teamviewer.com*
@@ -2651,11 +2537,6 @@ OR destination.ip: $TEAMVIEWER_RANGES)`,
       {
         sub: "T1219 - AnyDesk",
         indicator: "AnyDesk connection - host connecting to AnyDesk infrastructure",
-        arkime: `ip.src == $INTERNAL
-&& protocols == [tls || tcp]
-&& tls.sni == ["*anydesk.com*", "*.anydesk.com*", "*.net.anydesk.com*"]
-|| port.dst == [6568 || 7070]
-|| ip.dst == $ANYDESK_RANGES`,
         kibana: `source.ip: $INTERNAL
 AND (tls.client.server_name: (
   *anydesk.com*
@@ -2684,9 +2565,6 @@ OR destination.ip: $ANYDESK_RANGES)`,
       {
         sub: "T1219 - RMM Platforms",
         indicator: "ConnectWise ScreenConnect / NinjaRMM / Atera / Splashtop - RMM platform connections",
-        arkime: `ip.src == $INTERNAL
-&& protocols == [tls || tcp]
-&& tls.sni == ["*.screenconnect.com*", "*.ninjarmm.com*", "*.atera.com*", "*.splashtop.com*", "*.logmein.com*", "*.rustdesk.com*", "*.netsupportsoftware.com*", "*.parsecgaming.com*"]`,
         kibana: `source.ip: $INTERNAL
 AND tls.client.server_name: (
   *.screenconnect.com*
@@ -2725,10 +2603,6 @@ AND tls.client.server_name: (
       {
         sub: "T1219 - Tunneling Tools",
         indicator: "Tunneling tool infrastructure - ngrok, Cloudflare Tunnel, FRP, Chisel endpoints",
-        arkime: `ip.src == $INTERNAL
-&& protocols == tls
-&& tls.sni == ["*.ngrok.io*", "*.ngrok-free.app*", "*.argotunnel.com*", "*.cloudflareaccess.com*", "*.try.cloudflare.com*", "*.tailscale.com*", "*.zerotier.com*"]
-&& process != $KNOWN_GOOD_PROCS`,
         kibana: `source.ip: $INTERNAL
 AND tls.client.server_name: (
   *.ngrok.io*

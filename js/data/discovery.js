@@ -81,13 +81,6 @@ AND icmp.type: 8`,
       {
         sub: "T1018 - ARP & NetBIOS Discovery",
         indicator: "ARP scan - high rate of ARP requests from single source covering address range",
-        arkime: `ip.src == $INTERNAL
-&& protocols == arp
-&& arp.opcode == 1
-// THRESHOLD: aggregation (unique-arp-target-count groupby ip.src > 50 within 60s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.mac: NOT null
 AND network.protocol: arp
 AND _exists_: arp.target_ip`,
@@ -147,7 +140,7 @@ AND network.protocol: netbios-ns`,
 && ip.src != $DNS_SERVERS
 && protocols == dns
 && dns.query.type == PTR
-&& dns.host == "*.in-addr.arpa"
+&& host.dns == "*.in-addr.arpa"
 // THRESHOLD: aggregation (unique-ptr-count groupby ip.src > 50 within 300s) is not part
 // of the Arkime expression grammar. The Suricata threshold
 // below applies the rate logic; or aggregate via the SPI
@@ -245,11 +238,6 @@ AND destination.ip: $INTERNAL`,
       {
         sub: "T1018 - SMB-Based Discovery",
         indicator: "SMB null session probe - anonymous SMB connection for host info gathering",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == smb
-&& smb.username == ""
-&& smb.session-setup == true`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND smb.user.name: ""
@@ -283,14 +271,6 @@ AND _exists_: smb.session_setup`,
       {
         sub: "T1046 - TCP Port Scans",
         indicator: "TCP SYN scan - half-open probes to many ports on single target",
-        arkime: `ip.src == $INTERNAL
-&& ip.src != $SCAN_SOURCES
-&& protocols == tcp
-&& tcp.flags == S
-// THRESHOLD: aggregation (unique-dst-port-count groupby ip.src,ip.dst > 30 within 60s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $SCAN_SOURCES
 AND tcp.flags: "S"
@@ -360,16 +340,6 @@ AND destination.port: (
       {
         sub: "T1046 - TCP Port Scans",
         indicator: "Common-port-set probe - nmap default top-1000-ports scan signature",
-        arkime: `ip.src == $INTERNAL
-&& ip.src != $SCAN_SOURCES
-&& protocols == tcp
-&& tcp.flags == S
-&& dst-port-set-overlap-with
-  nmap-top-1000 > 80%
-// THRESHOLD: aggregation (session-count groupby ip.src,ip.dst > 100 within 120s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $SCAN_SOURCES
 AND tcp.flags: "S"`,
@@ -510,14 +480,6 @@ AND network.protocol: snmp`,
       {
         sub: "T1046 - Scanner Tool Fingerprints",
         indicator: "Masscan / zmap fingerprint - extremely high-rate SYN scan with characteristic packet structure",
-        arkime: `ip.src == $INTERNAL
-&& protocols == tcp
-&& tcp.flags == S
-&& tcp.window-size == [1024, 0]
-// THRESHOLD: aggregation (packet-rate groupby ip.src > 1000 within 10s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND tcp.flags: "S"
 AND tcp.window: (1024 OR 0)`,
@@ -552,12 +514,6 @@ AND tcp.window: (1024 OR 0)`,
       {
         sub: "T1135 - srvsvc Share Enumeration",
         indicator: "srvsvc NetShareEnum DCERPC call - canonical share enumeration primitive",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  4b324fc8-1670-01d3-1278-5a47bf6ee188
-&& dcerpc.opnum == [15 || 16]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "4b324fc8-1670-01d3-1278-5a47bf6ee188"
@@ -589,7 +545,7 @@ AND dcerpc.opnum: (15 OR 16)`,
 && protocols == smb
 // smb.command does not exist in baseline Arkime 4.3.1.
 // tree-connect command type is not expressible; use
-// smb.share-name pattern matching where a specific share
+// smb.share pattern matching where a specific share
 // is known, or rely on the Suricata threshold below for
 // the burst-rate detection signal.
 // THRESHOLD: aggregation (unique-share-count groupby ip.src,ip.dst > 5 within 60s) is not part
@@ -626,7 +582,7 @@ AND zeek.smb_mapping.share_type: "DISK"`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && ip.dst == $DOMAIN_CONTROLLERS
-&& smb.share-name == ["*SYSVOL*", "*NETLOGON*"]
+&& smb.share == ["*SYSVOL*", "*NETLOGON*"]
 // THRESHOLD: aggregation (session-count groupby ip.src > 10 within 600s) is not part
 // of the Arkime expression grammar. The Suricata threshold
 // below applies the rate logic; or aggregate via the SPI
@@ -664,8 +620,8 @@ AND smb.share.name: (
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& smb.share-name == IPC$
-&& smb.username == ""
+&& smb.share == IPC$
+&& smb.user == ""
 // THRESHOLD: aggregation (session-count groupby ip.src > 5 within 300s) is not part
 // of the Arkime expression grammar. The Suricata threshold
 // below applies the rate logic; or aggregate via the SPI
@@ -785,12 +741,6 @@ AND zeek.smb_cmd.command: "get_dfs_referral"`,
       {
         sub: "T1087.002 - Domain Account Discovery (LDAP)",
         indicator: "LDAP user enumeration query - search filter for all user objects",
-        arkime: `ip.src == $INTERNAL
-&& ip.src != $LDAP_CLIENTS
-&& port.dst == [389 || 636]
-&& protocols == ldap
-&& ldap.filter == ["*(objectClass=user)*", "*(objectCategory=person)*", "*(samAccountType=805306368)*"]
-&& ldap.scope == subtree`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $LDAP_CLIENTS
 AND destination.port: (389 OR 636)
@@ -821,15 +771,6 @@ AND ldap.filter: (
       {
         sub: "T1087.002 - BloodHound Signatures",
         indicator: "BloodHound SharpHound LDAP query signature - complex nested filter pattern",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == [389 || 636]
-&& protocols == ldap
-&& ldap.filter == ["*samAccountType=805306368*", "*samAccountType=805306369*", "*samAccountType=536870912*", "*samAccountType=536870913*", "*objectCategory=group*", "*objectCategory=organizationalUnit*"]
-&& ldap.attributes-count > 20
-// BloodHound's signature is a deeply-nested OR filter
-// querying for many object types in one request. The
-// list above catches the components; the full nested
-// pattern is in the Suricata pcre column.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: *samAccountType=805306368*
@@ -861,11 +802,6 @@ AND ldap.filter: *objectCategory=group*`,
       {
         sub: "T1087.002 - Kerberoasting Precursors",
         indicator: "LDAP query for service accounts - servicePrincipalName filter (Kerberoasting precursor)",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == [389 || 636]
-&& protocols == ldap
-&& ldap.filter == ["*(servicePrincipalName=*)*", "*servicePrincipalName*"]
-&& ldap.scope == subtree`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: *servicePrincipalName*`,
@@ -891,10 +827,6 @@ AND ldap.filter: *servicePrincipalName*`,
       {
         sub: "T1087.002 - ASREProasting Precursors",
         indicator: "LDAP query for accounts with PreAuth disabled - ASREProasting precursor",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == [389 || 636]
-&& protocols == ldap
-&& ldap.filter == "*userAccountControl:1.2.840.113556.1.4.803:=4194304*"`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: *4194304*`,
@@ -921,12 +853,6 @@ AND ldap.filter: *4194304*`,
       {
         sub: "T1087.002 - SAMR RPC Enumeration",
         indicator: "SAMR EnumDomainUsers RPC call - RPC-based user enumeration",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  12345778-1234-abcd-ef00-0123456789ac
-&& dcerpc.opnum == [13 || 14 || 15]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "12345778-1234-abcd-ef00-0123456789ac"
@@ -951,15 +877,6 @@ AND dcerpc.opnum: (13 OR 14 OR 15)`,
       {
         sub: "T1087.002 - Kerberos Username Enumeration",
         indicator: "Kerberos pre-authentication probing - username enumeration via AS-REQ responses",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 88
-&& protocols == kerberos
-&& kerberos.msg-type == AS-REQ
-&& kerberos.error-code == [KDC_ERR_C_PRINCIPAL_UNKNOWN, KDC_ERR_PREAUTH_REQUIRED]
-// THRESHOLD: aggregation (unique-username-count groupby ip.src > 30 within 300s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 88
 AND kerberos.msg_type: "AS-REQ"
@@ -998,10 +915,6 @@ AND kerberos.error_code: (
       {
         sub: "T1069.002 - Privileged Group Enumeration",
         indicator: "LDAP query for privileged groups - Domain Admins / Enterprise Admins / Schema Admins membership",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == [389 || 636]
-&& protocols == ldap
-&& ldap.filter == ["*CN=Domain Admins*", "*CN=Enterprise Admins*", "*CN=Schema Admins*", "*adminCount=1*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: (
@@ -1035,11 +948,6 @@ AND ldap.filter: (
       {
         sub: "T1069.002 - BloodHound Recursive Queries",
         indicator: "LDAP query for group memberOf chains - recursive group membership analysis",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == [389 || 636]
-&& protocols == ldap
-&& ldap.filter == "*memberOf:1.2.840.113556.1.4.1941:=*"
-&& ldap.scope == subtree`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: *1.2.840.113556.1.4.1941*`,
@@ -1066,12 +974,6 @@ AND ldap.filter: *1.2.840.113556.1.4.1941*`,
       {
         sub: "T1069.002 - SAMR Group Enumeration",
         indicator: "SAMR EnumDomainGroups RPC call - RPC-based group enumeration",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  12345778-1234-abcd-ef00-0123456789ac
-&& dcerpc.opnum == [11 || 7 || 25]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "12345778-1234-abcd-ef00-0123456789ac"
@@ -1096,14 +998,6 @@ AND dcerpc.opnum: (11 OR 7 OR 25)`,
       {
         sub: "T1069 - net.exe RPC Bursts",
         indicator: "net group / net localgroup execution - host-side enumeration with network-visible RPC traffic",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == dcerpc
-&& dcerpc.interface == [samr, lsarpc]
-// THRESHOLD: aggregation (session-count groupby ip.src,ip.dst > 5 within 60s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: (
@@ -1134,10 +1028,6 @@ AND dcerpc.interface_uuid: (
       {
         sub: "T1069.002 - gMSA Enumeration",
         indicator: "LDAP query for group-managed service accounts (gMSA) - privileged service account enumeration",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == [389 || 636]
-&& protocols == ldap
-&& ldap.filter == ["*(objectClass=msDS-GroupManagedServiceAccount)*", "*(samAccountType=536870913)*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: (
@@ -1172,10 +1062,6 @@ AND ldap.filter: (
       {
         sub: "T1482 - LDAP Trust Enumeration",
         indicator: "LDAP query for trustedDomain objects - direct trust relationship enumeration",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == [389 || 636]
-&& protocols == ldap
-&& ldap.filter == ["*(objectClass=trustedDomain)*", "*(objectCategory=trustedDomain)*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.filter: (
@@ -1205,12 +1091,6 @@ AND ldap.filter: (
       {
         sub: "T1482 - LSARPC Trust Calls",
         indicator: "LSARPC trust enumeration - LsaEnumerateTrustedDomains / LsaQueryTrustedDomainInfo RPC calls",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  12345778-1234-abcd-ef00-0123456789ab
-&& dcerpc.opnum == [13, 47, 48, 64]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "12345778-1234-abcd-ef00-0123456789ab"
@@ -1235,12 +1115,6 @@ AND dcerpc.opnum: (13 OR 47 OR 48 OR 64)`,
       {
         sub: "T1482 - nltest Signatures",
         indicator: "nltest /domain_trusts execution - characteristic netlogon RPC pattern",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  12345678-1234-abcd-ef00-01234567cffb
-&& dcerpc.opnum == [40 || 27]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "12345678-1234-abcd-ef00-01234567cffb"
@@ -1267,12 +1141,6 @@ AND dcerpc.opnum: (40 OR 27)`,
       {
         sub: "T1482 - RootDSE Queries",
         indicator: "RootDSE attribute query - Forest / Domain configuration discovery",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == [389 || 636]
-&& protocols == ldap
-&& ldap.scope == base
-&& ldap.dn == ""
-&& ldap.attributes == ["*namingContexts*", "*configurationNamingContext*", "*rootDomainNamingContext*", "*forestFunctionality*", "*domainFunctionality*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (389 OR 636)
 AND ldap.scope: "base"
@@ -1307,8 +1175,8 @@ AND ldap.attributes: (
         arkime: `ip.src == $INTERNAL
 && protocols == dns
 && dns.query.type == SRV
-&& dns.host == "_ldap._tcp.*"
-&& dns.host != $LOCAL_DOMAIN_SRV
+&& host.dns == "_ldap._tcp.*"
+&& host.dns != $LOCAL_DOMAIN_SRV
 // THRESHOLD: aggregation (session-count groupby ip.src > 5 within 600s) is not part
 // of the Arkime expression grammar. The Suricata threshold
 // below applies the rate logic; or aggregate via the SPI
@@ -1402,7 +1270,7 @@ AND destination.bytes > 100000`,
         indicator: "External IP lookup from non-browser process - adversary self-IP discovery",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& http.host == ["*icanhazip.com*", "*ifconfig.me*", "*api.ipify.org*", "*checkip.amazonaws.com*", "*ipinfo.io*", "*ip-api.com*", "*whatismyip.com*"]
+&& host.http == ["*icanhazip.com*", "*ifconfig.me*", "*api.ipify.org*", "*checkip.amazonaws.com*", "*ipinfo.io*", "*ip-api.com*", "*whatismyip.com*"]
 && process != ["*chrome*", "*firefox*", "*edge*", "*safari*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
@@ -1476,16 +1344,6 @@ AND network.protocol: http`,
       {
         sub: "T1049 - svcctl Service Enumeration",
         indicator: "Bulk Windows Service Control Manager queries - service enumeration via svcctl RPC",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  367abb81-9844-35f1-ad32-98f038001003
-&& dcerpc.opnum == [14 || 15 || 27]
-// THRESHOLD: aggregation (session-count groupby ip.src > 5 within 60s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "367abb81-9844-35f1-ad32-98f038001003"
@@ -1519,16 +1377,6 @@ AND dcerpc.opnum: (14 OR 15 OR 27)`,
       {
         sub: "T1033 - LSARPC SID Lookups",
         indicator: "LSARPC LsaLookupSids burst - SID-to-username resolution for many SIDs",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  12345778-1234-abcd-ef00-0123456789ab
-&& dcerpc.opnum == [15 || 76]
-// THRESHOLD: aggregation (session-count groupby ip.src > 10 within 60s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "12345778-1234-abcd-ef00-0123456789ab"

@@ -42,7 +42,11 @@ AND NOT source.ip: $RDP_JUMP_HOSTS`,
         indicator: "RDP fan-out from single source - one host RDP'ing to many destinations",
         arkime: `ip.src == $INTERNAL
 && port.dst == 3389
-&& protocols == rdp`,
+&& protocols == rdp
+// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 5 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 3389
 AND network.protocol: rdp`,
@@ -100,10 +104,6 @@ AND destination.ip: $INTERNAL`,
       {
         sub: "T1021.001 - Authentication Patterns",
         indicator: "Multiple RDP credential failures from single source - credential brute force or spray",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 3389
-&& protocols == rdp
-&& rdp.result == failed`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 3389
 AND network.protocol: rdp
@@ -131,13 +131,6 @@ AND rdp.auth_result: "failure"`,
       {
         sub: "T1021.001 - Authentication Patterns",
         indicator: "RDP NLA negotiation downgrade - CredSSP downgrade attempt",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 3389
-&& protocols == rdp
-&& rdp.cookie == "*Cookie: mstshash=*"
-&& rdp.security-protocol ==
-  Standard
-&& ip.src != $LEGACY_RDP_CLIENTS`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 3389
 AND rdp.cookie: *mstshash*
@@ -169,7 +162,7 @@ AND rdp.security_protocol: "standard"`,
 && payload == "*MS_T120*"
 // BlueKeep's full byte signature (TPKT header +
 // MS_T120 channel reference) requires regex on
-// binary payload - difficult in base Arkime.
+// binary payload - not expressible in pure Arkime.
 // See Suricata pcre column for full byte-pattern match.
 // Logical spec: payload matches
 //   /\\x03\\x00.{2}\\x02\\xf0\\x80.*MS_T120/`,
@@ -198,12 +191,6 @@ AND rdp.channel: "MS_T120"`,
       {
         sub: "T1021.001 - Tunneled RDP",
         indicator: "RDP-over-HTTPS / Gateway abuse - RDP traffic to non-gateway destination on TCP/443",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 443
-&& protocols == [tls && rdp]
-&& ip.dst != $RDP_GATEWAYS
-&& tls.sni != $LEGITIMATE_RDP_SNI
-&& session.length > 60`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND _exists_: rdp.connect_request
@@ -240,7 +227,10 @@ AND NOT destination.ip: $RDP_GATEWAYS`,
 && ip.src != $ADMIN_HOSTS
 && port.dst == 445
 && protocols == smb
-&& smb.share-name == ADMIN$`,
+&& smb.share == ADMIN$
+// smb.command does not exist in baseline Arkime 4.3.1.
+// tree-connect is implied by smb.share matching;
+// no additional command filter is needed here.`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $ADMIN_HOSTS
 AND destination.port: 445
@@ -272,9 +262,15 @@ AND smb.share.name: "ADMIN$"`,
 && ip.src != $ADMIN_HOSTS
 && port.dst == 445
 && protocols == smb
-&& smb.share-name == [
+&& smb.share == [
   C$ || D$ || ADMIN$ || IPC$
-]`,
+]
+// smb.command does not exist in baseline Arkime 4.3.1.
+// tree-connect is implied by smb.share matching.
+// THRESHOLD: aggregation (unique-share-count groupby ip.src,ip.dst > 2 within 60s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $ADMIN_HOSTS
 AND destination.port: 445
@@ -311,10 +307,12 @@ AND smb.share.name: (
 && port.dst == 445
 && protocols == smb
 && databytes.src > 0
-// For definitive action// filtering use Zeek smb_files.log
+// smb.command does not exist in baseline Arkime 4.3.1.
+// write/create proxied by databytes.src > 0 (upload).
+// For definitive action filtering use Zeek smb_files.log
 // action (SMB_FILE_WRITE) via SIEM.
-&& smb.share-name == ADMIN$
-&& smb.filename == [
+&& smb.share == ADMIN$
+&& smb.fn == [
   *.exe
   || *.dll
   || *.bat
@@ -349,14 +347,6 @@ AND file.name: /.+\\.(exe|dll|bat|ps1|vbs)$/`,
       {
         sub: "T1021.002 - Service Creation",
         indicator: "svcctl service creation following ADMIN$ access - PsExec service registration",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  367abb81-9844-35f1-ad32-98f038001003
-&& dcerpc.opnum == [12 || 24 || 31]
-&& session-after-share-access
-  ADMIN$ within 60s`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "367abb81-9844-35f1-ad32-98f038001003"
@@ -383,16 +373,6 @@ AND dcerpc.opnum: (12 OR 24 OR 31)`,
       {
         sub: "T1021.002 - Named Pipe Execution",
         indicator: "PsExec named pipe - \\\\.\\pipe\\psexesvc execution channel",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == smb
-&& smb.pipe-name == [
-  *psexesvc*
-  || *paexec*
-  || *remcom*
-  || *csexec*
-  || *impacket-*
-]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND smb.named_pipe: (
@@ -426,7 +406,17 @@ AND smb.named_pipe: (
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& databytes.dst > 0`,
+&& databytes.dst > 0
+// smb.command does not exist in baseline Arkime 4.3.1.
+// read proxied by databytes.dst > 0 (data flows dst→src).
+// For definitive action filtering use Zeek smb_files.log
+// action (SMB_FILE_READ) via SIEM.
+&& smb.share == ADMIN$
+// Impacket wmiexec.py writes output files named
+// __<timestamp>.<microseconds> - filename pattern
+// requires regex, not expressible in pure Arkime.
+// See Suricata pcre column.
+// Logical spec: smb.fn matches /__\\d+\\.\\d+/`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND smb.share.name: "ADMIN$"
@@ -461,12 +451,6 @@ AND file.name: /__\\d+\\.\\d+/`,
       {
         sub: "T1021.003 - DCOM Activation",
         indicator: "IRemoteSCMActivator RPC bind - DCOM remote activation interface",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 135
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  000001a0-0000-0000-c000-000000000046
-&& dcerpc.opnum == [3 || 4]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 135
 AND dcerpc.interface_uuid: "000001a0-0000-0000-c000-000000000046"
@@ -637,7 +621,10 @@ AND network.protocol: ssh`,
 && ip.src != $AUTOMATION_HOSTS
 && port.dst == 22
 && protocols == ssh
-`,
+// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 5 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $AUTOMATION_HOSTS
 AND destination.port: 22
@@ -665,12 +652,6 @@ AND network.protocol: ssh`,
       {
         sub: "T1021.004 - Agent Forwarding",
         indicator: "SSH agent forwarding session - chained SSH access via forwarded credentials",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 22
-&& protocols == ssh
-&& ssh.auth-method == publickey
-&& ssh.agent-forwarding == true
-&& session.length > 60`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 22
 AND ssh.auth_method: "publickey"
@@ -697,7 +678,11 @@ N/A pure Suricata`,
 && port.dst == 22
 && protocols == ssh
 && session.length < 5
-&& packets.src < 20`,
+&& packets.src < 20
+// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 10 within 300s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 22
 AND network.protocol: ssh
@@ -765,7 +750,10 @@ AND destination.port: (5985 OR 5986)`,
         indicator: "WinRM fan-out from single source - one host running PSSession to many destinations",
         arkime: `ip.src == $INTERNAL
 && port.dst == [5985 || 5986]
-`,
+// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 5 within 600s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (5985 OR 5986)`,
         suricata: `alert tcp $HOME_NET any
@@ -909,7 +897,23 @@ AND destination.bytes > 50000`,
 && ip.src != $FILE_SERVERS
 && port.dst == 445
 && protocols == smb
-&& databytes.src > 0`,
+&& databytes.src > 0
+// smb.command does not exist in baseline Arkime 4.3.1.
+// write proxied by databytes.src > 0 (data flows src→dst).
+&& smb.fn == [
+  *.exe
+  || *.dll
+  || *.bat
+  || *.ps1
+  || *.vbs
+  || *.7z
+  || *.zip
+  || *.rar
+]
+// THRESHOLD: aggregation (session-count groupby ip.src > 10 within 300s) is not part
+// of the Arkime expression grammar. The Suricata threshold
+// below applies the rate logic; or aggregate via the SPI
+// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $FILE_SERVERS
 AND destination.port: 445
@@ -948,15 +952,12 @@ AND file.name: /.+\\.(exe|dll|bat|ps1|vbs|7z|zip|rar)$/`,
       {
         sub: "T1210 - EternalBlue",
         indicator: "EternalBlue / SMB1 exploit pattern - MS17-010 trans2 abuse",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == smb
-&& smb.dialect == [
-  NT LM 0.12 || PC NETWORK PROGRAM 1.0
-]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
-AND smb.dialect: ("NT LM 0.12" OR "PC NETWORK PROGRAM 1.0")`,
+AND smb.dialect: ("NT LM 0.12" OR "PC NETWORK PROGRAM 1.0")
+// smb.command is not a standard ECS field; trans2/nt_trans
+// command filtering requires Zeek smb_cmd.log ingestion.
+// Rely on smb.dialect + Suricata alert correlation.`,
         suricata: `alert tcp $HOME_NET any
   -> $HOME_NET 445
   (msg:"TA0008 T1210 EternalBlue
@@ -982,16 +983,6 @@ AND smb.dialect: ("NT LM 0.12" OR "PC NETWORK PROGRAM 1.0")`,
       {
         sub: "T1210 - ZeroLogon",
         indicator: "ZeroLogon exploit - MS-NRPC NetrServerAuthenticate3 with all-zero client credential",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  12345678-1234-abcd-ef00-01234567cffb
-&& dcerpc.opnum == 26
-// ZeroLogon all-zero credential signature requires
-// regex on binary payload - not expressible in base
-// Arkime. See Suricata pcre column.
-// Logical spec: payload matches /\\x00{16}/`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "12345678-1234-abcd-ef00-01234567cffb"
@@ -1021,19 +1012,6 @@ AND dcerpc.opnum: 26`,
       {
         sub: "T1210 - PrintNightmare",
         indicator: "PrintNightmare exploit - RpcAddPrinterDriverEx with malicious driver path",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  12345678-1234-abcd-ef00-0123456789ab
-&& dcerpc.opnum == 89
-&& payload == [
-  *\\??\\UNC\\*
-  || *.dll*
-]
-// Full UNC-path-with-DLL signature requires regex - the
-// list above catches the components. See Suricata pcre column.
-// Logical spec: payload matches /\\\\\\?\\?\\\\UNC\\\\|\\\\\\\\.+\\\\.+\\.dll/`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "12345678-1234-abcd-ef00-0123456789ab"

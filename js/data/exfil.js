@@ -13,8 +13,8 @@ const DATA = [
         arkime: `ip.src == $INTERNAL
 && ip.dst == $EXTERNAL
 && port.dst == 443
-&& bytes-src > 104857600
-&& bytes-src / bytes-dst > 50`,
+&& databytes.src > 104857600
+&& databytes.src / databytes.dst > 50`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: NOT $INTERNAL
 AND destination.port: 443
@@ -40,14 +40,6 @@ Use Zeek + SIEM for ratio detection.`,
       {
         sub: "T1041 - HTTPS POST Burst",
         indicator: "HTTPS POST volume burst - sustained large POST requests to single destination",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 443
-&& http.method == POST
-&& http.request-body-size > 1048576
-// THRESHOLD: aggregation (count groupby [ip.src, ip.dst] > 50 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND http.request.method: "POST"
@@ -76,14 +68,6 @@ AND http.request.body.bytes > 1048576`,
       {
         sub: "T1041 - DNS Tunneling Exfil",
         indicator: "DNS tunneling exfiltration - high-volume TXT/A query patterns to single domain",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 53
-&& protocols == dns
-&& dns.query-length > 50
-// THRESHOLD: aggregation (unique-subdomain-count groupby [ip.src, dns.parent-domain] > 100 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 53
 AND dns.question.name.length > 50`,
@@ -122,7 +106,7 @@ AND dns.question.name.length > 50`,
 && ip.dst == $EXTERNAL
 && port.dst == 22
 && ip.dst != $SANCTIONED_SSH_DESTS
-&& bytes-src > 52428800`,
+&& databytes.src > 52428800`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: NOT $INTERNAL
 AND destination.port: 22
@@ -156,11 +140,6 @@ AND source.bytes > 52428800`,
       {
         sub: "T1048.003 - FTP STOR Upload",
         indicator: "Outbound FTP / FTPS data transfer - STOR commands with large file sizes",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == [21 || 990]
-&& protocols == ftp
-&& ftp.command == STOR
-&& ftp.bytes-transferred > 10485760`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (21 OR 990)
 AND ftp.command: "STOR"
@@ -221,11 +200,6 @@ AND destination.port: 445`,
       {
         sub: "T1048.001 - Custom Encryption",
         indicator: "High-entropy outbound payloads on non-TLS port - custom encryption signature",
-        arkime: `ip.src == $INTERNAL
-&& ip.dst == $EXTERNAL
-&& port.dst != [443 || 22 || 8443]
-&& bytes-src > 10485760
-&& payload-entropy > 7.5`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: NOT $INTERNAL
 AND NOT destination.port: (443 OR 22 OR 8443)
@@ -262,19 +236,6 @@ N/A pure Suricata`,
       {
         sub: "T1567.002 - Exfil-Friendly Cloud Storage",
         indicator: "Outbound TLS to known exfil-friendly cloud storage - Mega, Anonfiles, Bunkr, etc.",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 443
-&& tls.sni == [
-  *mega.nz*
-  || *mega.io*
-  || *anonfiles.com*
-  || *bunkr.*
-  || *gofile.io*
-  || *filebin.net*
-  || *catbox.moe*
-  || *1fichier.com*
-  || *file.io*
-]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND tls.client.server_name: (*mega.nz OR *mega.io OR *anonfiles* OR *bunkr* OR *gofile* OR *filebin* OR *catbox* OR *1fichier* OR *file.io)`,
@@ -303,18 +264,6 @@ AND tls.client.server_name: (*mega.nz OR *mega.io OR *anonfiles* OR *bunkr* OR *
       {
         sub: "T1567.002 - Mainstream Cloud Volume Anomaly",
         indicator: "Outbound TLS to mainstream cloud storage with high upload volume",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 443
-&& tls.sni == [
-  *.dropbox.com
-  || *.dropboxusercontent.com
-  || *onedrive.live.com*
-  || *files.1drv.com*
-  || *drive.google.com*
-  || *docs.google.com*
-]
-&& bytes-src > 1073741824
-&& bytes-src / bytes-dst > 50`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND tls.client.server_name: (*dropbox* OR *onedrive* OR *1drv* OR *drive.google* OR *docs.google*)
@@ -348,17 +297,6 @@ SNI match only via Suricata`,
       {
         sub: "T1567.001 - Code Repo Exfil",
         indicator: "Outbound TLS to GitHub/GitLab/Bitbucket - anomalous high upload volume from non-developer source",
-        arkime: `ip.src == $INTERNAL
-&& ip.src != $DEVELOPER_HOSTS
-&& port.dst == 443
-&& tls.sni == [
-  *github.com*
-  || *gitlab.com*
-  || *bitbucket.org*
-  || *gitea.*
-  || *codeberg.org*
-]
-&& bytes-src > 52428800`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $DEVELOPER_HOSTS
 AND destination.port: 443
@@ -394,19 +332,6 @@ AND source.bytes > 52428800`,
       {
         sub: "T1567.003 - Paste Site Exfil",
         indicator: "Outbound TLS to paste / temporary file sites - Pastebin, transfer.sh, ix.io, etc.",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 443
-&& tls.sni == [
-  *pastebin.com*
-  || *paste.ee*
-  || *transfer.sh*
-  || *ix.io*
-  || *dpaste.com*
-  || *hastebin.com*
-  || *ghostbin.*
-  || *0bin.net*
-  || *privatebin.*
-]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND tls.client.server_name: (*pastebin* OR *paste.ee OR *transfer.sh OR *ix.io OR *dpaste* OR *hastebin* OR *ghostbin* OR *0bin* OR *privatebin*)`,
@@ -441,10 +366,9 @@ AND tls.client.server_name: (*pastebin* OR *paste.ee OR *transfer.sh OR *ix.io O
         indicator: "Outbound TLS to Discord webhook endpoint - POST to /api/webhooks/",
         arkime: `ip.src == $INTERNAL
 && port.dst == 443
-&& (tls.sni == [*discord.com*, *discordapp.com*]
-    || (http.host == "*discord*"
-        && http.uri == "*/api/webhooks/*"
-        && http.method == POST))`,
+&& host.http == "*discord*"
+&& http.uri == "*/api/webhooks/*"
+&& http.method == POST`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND tls.client.server_name: (*discord.com OR *discordapp.com)
@@ -479,11 +403,6 @@ AND url.path: */api/webhooks/*`,
       {
         sub: "T1029 - Off-Hours Workstation Exfil",
         indicator: "Outbound large transfer at off-hours from workstation source",
-        arkime: `ip.src == $WORKSTATIONS
-&& ip.dst == $EXTERNAL
-&& bytes-src > 104857600
-&& time-of-day == [00:00..06:00 || 22:00..23:59]
-&& day-of-week != [saturday || sunday]`,
         kibana: `source.ip: $WORKSTATIONS
 AND destination.ip: NOT $INTERNAL
 AND source.bytes > 104857600
@@ -518,12 +437,12 @@ SIEM-side detection`,
         arkime: `ip.src == $INTERNAL
 && ip.dst == $EXTERNAL
 && port.dst == 443
-&& bytes-src in [524288..10485760]
+&& databytes.src in [524288..10485760]
 // THRESHOLD: aggregation (flow-count groupby [ip.src, ip.dst] > 100 within 3600s) is not part
 // of the Arkime expression grammar. The Suricata threshold
 // below applies the rate logic; or aggregate via the SPI
 // panel after applying this base filter.
-// THRESHOLD: aggregation (sum(bytes-src) groupby [ip.src, ip.dst] > 524288000) is not part
+// THRESHOLD: aggregation (sum(databytes.src) groupby [ip.src, ip.dst] > 524288000) is not part
 // of the Arkime expression grammar. The Suricata threshold
 // below applies the rate logic; or aggregate via the SPI
 // panel after applying this base filter.`,

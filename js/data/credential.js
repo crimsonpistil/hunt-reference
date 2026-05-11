@@ -10,12 +10,6 @@ const DATA = [
       {
         sub: "T1558.003 - RC4 Ticket Requests",
         indicator: "Kerberos TGS-REQ with RC4-HMAC etype - Kerberoasting signature",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 88
-&& protocols == kerberos
-&& kerberos.msg-type == 12
-&& kerberos.cipher == rc4-hmac
-&& kerberos.sname != krbtgt`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 88
 AND kerberos.msg_type: "tgs-req"
@@ -45,12 +39,6 @@ AND NOT kerberos.cname: krbtgt`,
       {
         sub: "T1558.003 - Pre-Roast Enumeration",
         indicator: "Bulk SPN enumeration via LDAP preceding Kerberoasting - service account discovery",
-        arkime: `ip.src == $INTERNAL
-&& ip.src != $LDAP_ADMINS
-&& port.dst == 389
-&& protocols == ldap
-&& ldap.filter == "*servicePrincipalName=*"
-&& ldap.scope == subtree`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $LDAP_ADMINS
 AND destination.port: 389
@@ -79,14 +67,6 @@ AND ldap.scope: "subtree"`,
       {
         sub: "T1558.003 - Bulk Roasting",
         indicator: "TGS-REQ burst from single source - bulk roasting across multiple SPNs",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 88
-&& protocols == kerberos
-&& kerberos.msg-type == 12
-// THRESHOLD: aggregation (unique-sname-count groupby ip.src > 5 within 60s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 88
 AND kerberos.msg_type: "tgs-req"`,
@@ -121,11 +101,6 @@ AND kerberos.msg_type: "tgs-req"`,
       {
         sub: "T1558.004 - Target Enumeration",
         indicator: "LDAP query for UF_DONT_REQUIRE_PREAUTH - AS-REProast target enumeration",
-        arkime: `ip.src == $INTERNAL
-&& ip.src != $LDAP_ADMINS
-&& port.dst == 389
-&& protocols == ldap
-&& ldap.filter == "*userAccountControl:1.2.840.113556.1.4.803:=4194304*"`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $LDAP_ADMINS
 AND destination.port: 389
@@ -152,12 +127,6 @@ AND ldap.filter: *userAccountControl*4194304*`,
       {
         sub: "T1558.004 - AS-REQ Without Preauth",
         indicator: "Kerberos AS-REQ without preauth - AS-REProast ticket request",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 88
-&& protocols == kerberos
-&& kerberos.msg-type == 10
-&& kerberos.padata-type != 2
-&& kerberos.cipher == rc4-hmac`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 88
 AND kerberos.msg_type: "as-req"
@@ -192,13 +161,6 @@ AND kerberos.cipher: "rc4-hmac"`,
       {
         sub: "T1003.006 - DRSUAPI Bind",
         indicator: "DRSUAPI bind from non-DC source - DCSync interface activation",
-        arkime: `ip.src == $INTERNAL
-&& ip.src != $DOMAIN_CONTROLLERS
-&& port.dst == 135
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  e3514235-4b06-11d1-ab04-00c04fc2dcd2
-&& dcerpc.opnum == [0 || 3]`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $DOMAIN_CONTROLLERS
 AND destination.port: 135
@@ -227,13 +189,6 @@ AND dcerpc.interface_uuid: "e3514235-4b06-11d1-ab04-00c04fc2dcd2"`,
       {
         sub: "T1003.006 - Replication Call",
         indicator: "DsGetNCChanges call - actual replication / hash retrieval request",
-        arkime: `ip.src == $INTERNAL
-&& ip.src != $DOMAIN_CONTROLLERS
-&& port.dst == 135
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  e3514235-4b06-11d1-ab04-00c04fc2dcd2
-&& dcerpc.opnum == 3`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $DOMAIN_CONTROLLERS
 AND destination.port: 135
@@ -269,14 +224,6 @@ AND dcerpc.opnum: 3`,
       {
         sub: "T1110.003 - Kerberos Spray",
         indicator: "Kerberos AS-REQ burst with many distinct CNAMEs - Kerberos password spray",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 88
-&& protocols == kerberos
-&& kerberos.msg-type == 10
-// THRESHOLD: aggregation (unique-cname-count groupby ip.src > 10 within 300s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 88
 AND kerberos.msg_type: "as-req"`,
@@ -305,13 +252,6 @@ AND kerberos.msg_type: "as-req"`,
       {
         sub: "T1110.003 - NTLM Spray",
         indicator: "NTLM authentication burst with many usernames - SMB / HTTP password spray",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == [445 || 80 || 443]
-&& ntlm.username != null
-// THRESHOLD: aggregation (unique-username-count groupby ip.src > 10 within 300s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (445 OR 80 OR 443)
 AND _exists_: ntlm.username`,
@@ -348,12 +288,6 @@ AND _exists_: ntlm.username`,
       {
         sub: "T1187 - PetitPotam",
         indicator: "PetitPotam - MS-EFSRPC EfsRpcOpenFileRaw / OpenSecuredFile call",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  c681d488-d850-11d0-8c52-00c04fd90f7e
-&& dcerpc.opnum == [0 || 4 || 5 || 7 || 9 || 10 || 11 || 12 || 13 || 15]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "c681d488-d850-11d0-8c52-00c04fd90f7e"
@@ -380,12 +314,6 @@ AND dcerpc.opnum: (0 OR 4 OR 5 OR 7 OR 9 OR 10 OR 11 OR 12 OR 13 OR 15)`,
       {
         sub: "T1187 - PrinterBug",
         indicator: "PrinterBug - MS-RPRN RpcRemoteFindFirstPrinterChangeNotificationEx",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  12345678-1234-abcd-ef00-0123456789ab
-&& dcerpc.opnum == 65`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "12345678-1234-abcd-ef00-0123456789ab"
@@ -411,12 +339,6 @@ AND dcerpc.opnum: 65`,
       {
         sub: "T1187 - DFSCoerce",
         indicator: "DFSCoerce - MS-DFSNM coercion call",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == dcerpc
-&& dcerpc.interface ==
-  4fc742e0-4a10-11cf-8273-00aa004ae673
-&& dcerpc.opnum == [12 || 13]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND dcerpc.interface_uuid: "4fc742e0-4a10-11cf-8273-00aa004ae673"
@@ -447,11 +369,6 @@ AND dcerpc.opnum: (12 OR 13)`,
       {
         sub: "T1557.001 - Responder Activity",
         indicator: "Responder fingerprint - answers to LLMNR/NBT-NS from non-DNS source",
-        arkime: `ip.dst == $INTERNAL
-&& port.src == [5355 || 137]
-&& ip.src != $DNS_SERVERS
-&& protocols == [llmnr || nbns]
-&& dns.answer-count > 0`,
         kibana: `destination.ip: $INTERNAL
 AND source.port: (5355 OR 137)
 AND NOT source.ip: $DNS_SERVERS
@@ -477,12 +394,6 @@ AND _exists_: dns.answers`,
       {
         sub: "T1557.001 - NTLM Relay",
         indicator: "NTLM authentication to non-server destination - relayed/captured authentication",
-        arkime: `ip.src == $INTERNAL
-&& ip.dst == $INTERNAL
-&& ip.dst != $SERVERS
-&& port.dst == [445 || 80 || 443]
-&& ntlm.challenge != null
-&& session.length < 10`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $INTERNAL
 AND NOT destination.ip: $SERVERS
@@ -516,12 +427,6 @@ AND _exists_: ntlm.challenge`,
       {
         sub: "T1558.001 - Forged TGT Use",
         indicator: "Kerberos TGS-REQ from session lacking AS-REQ predecessor - forged TGT use",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 88
-&& protocols == kerberos
-&& kerberos.msg-type == 12
-&& no-prior-as-req-from-src
-  within 600s`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 88
 AND kerberos.msg_type: "tgs-req"
@@ -557,12 +462,6 @@ N/A pure Suricata`,
       {
         sub: "T1558.002 - Forged Service Ticket",
         indicator: "Kerberos AP-REQ for service without preceding TGS-REQ - forged service ticket",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == [445 || 80 || 88]
-&& protocols == kerberos
-&& kerberos.msg-type == 14
-&& no-prior-tgs-req-from-src
-  for-sname within 60s`,
         kibana: `source.ip: $INTERNAL
 AND _exists_: kerberos.ap_req
 AND NOT _exists_: previous_tgs_req_correlation`,
@@ -641,7 +540,7 @@ AND url.path: (*login* OR *auth* OR *signin* OR *owa*)`,
         indicator: "SMB / SCP file access for SSH private keys - id_rsa exfiltration pattern",
         arkime: `ip.src == $INTERNAL
 && port.dst == [445 || 22]
-&& smb.filename == [
+&& smb.fn == [
   *id_rsa*
   || *id_dsa*
   || *id_ecdsa*
@@ -684,18 +583,6 @@ AND file.name: (id_rsa* OR id_dsa* OR id_ecdsa* OR id_ed25519* OR *.pem OR *.key
       {
         sub: "T1003.001 - LSASS Dump Exfiltration",
         indicator: "SMB write of memory dump files - exfiltrating LSASS dumps",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == smb
-&& databytes.src > 0
-// smb.command does not exist in baseline Arkime 4.3.1.
-// write proxied by databytes.src > 0 (data flows src→dst).
-&& smb.filename == [
-  *lsass*.dmp
-  || *.dmp
-  || *memory*.dmp
-]
-&& smb.filesize > 10485760`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND zeek.smb_files.action: "SMB_FILE_WRITE"

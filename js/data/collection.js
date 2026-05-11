@@ -54,19 +54,6 @@ AND _exists_: file.path`,
       {
         sub: "T1039 - Admin Share Access",
         indicator: "SMB tree connect to administrative or hidden shares from non-admin source - share enumeration",
-        arkime: `ip.src == $INTERNAL
-&& ip.src != $ADMIN_HOSTS
-&& port.dst == 445
-&& protocols == smb
-&& smb.tree == [
-  *\\\\C$
-  || *\\\\ADMIN$
-  || *\\\\IPC$
-]
-// Generic admin/hidden-share detection (any *$ share)
-// requires regex - not expressible in pure Arkime.
-// See Suricata pcre column for full coverage.
-// Logical spec: smb.tree matches /\\\\\\\\.+\\\\.+\\$/`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $ADMIN_HOSTS
 AND destination.port: 445
@@ -96,7 +83,7 @@ AND smb.tree: (*$\\C$ OR *$\\ADMIN$ OR *\\*$)`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& smb.filename == [
+&& smb.fn == [
   *password*
   || *passwd*
   || *secret*
@@ -278,17 +265,6 @@ AND url.path: */info/refs?service=git-upload-pack*`,
       {
         sub: "T1114.001 - PST/OST Exfiltration",
         indicator: "SMB read of .pst / .ost / .nst files - Outlook offline storage exfiltration",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == smb
-&& smb.filename == [
-  *.pst
-  || *.ost
-  || *.nst
-  || *archive.pst*
-  || *backup.pst*
-]
-&& smb.filesize > 52428800`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND file.name: (*.pst OR *.ost OR *.nst)
@@ -321,19 +297,6 @@ AND file.size > 52428800`,
       {
         sub: "T1114.002 - EWS Bulk Enumeration",
         indicator: "EWS FindItem / GetItem burst - bulk email enumeration via Exchange Web Services",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 443
-&& http.uri == "*/EWS/Exchange.asmx*"
-&& http.method == POST
-&& http.body == [
-  *FindItem*
-  || *GetItem*
-  || *ExportItems*
-]
-// THRESHOLD: aggregation (count groupby ip.src > 100 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND url.path: */EWS/Exchange.asmx*
@@ -373,20 +336,6 @@ AND http.request.body: (*FindItem* OR *GetItem* OR *ExportItems*)`,
       {
         sub: "T1114.003 - Forwarding Rule Creation",
         indicator: "EWS UpdateInboxRules / Set-InboxRule - forwarding rule creation pattern",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 443
-&& http.uri == [
-  */EWS/Exchange.asmx*
-  || */PowerShell*
-  || */v1.0/me/mailFolders*
-]
-&& http.body == [
-  *UpdateInboxRules*
-  || *Set-InboxRule*
-  || *ForwardAsAttachmentToRecipients*
-  || *ForwardToRecipients*
-  || *forwardingSmtpAddress*
-]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND url.path: (*/EWS/Exchange.asmx* OR */PowerShell* OR */v1.0/me/mailFolders*)
@@ -422,18 +371,6 @@ AND http.request.body: (*UpdateInboxRules* OR *Set-InboxRule* OR *ForwardToRecip
       {
         sub: "T1530 - Cloud Storage Bulk Download",
         indicator: "S3 ListObjects / GetObject burst - bulk bucket enumeration and download",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 443
-&& host.dst == [
-  *.s3*.amazonaws.com
-  || *.blob.core.windows.net
-  || *storage.googleapis.com*
-]
-&& http.method == GET
-// THRESHOLD: aggregation (count groupby ip.src > 200 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND destination.domain: (*.s3*.amazonaws.com OR *.blob.core.windows.net OR storage.googleapis.com)`,
@@ -470,14 +407,6 @@ AND destination.domain: (*.s3*.amazonaws.com OR *.blob.core.windows.net OR stora
       {
         sub: "T1602.002 - SNMP Config Walk",
         indicator: "SNMP bulk walk of CISCO-CONFIG-COPY-MIB - config dump via SNMP",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 161
-&& protocols == snmp
-&& snmp.oid == [
-  *1.3.6.1.4.1.9.9.96*
-  || *1.3.6.1.4.1.9.2.1.55*
-]
-&& snmp.command == [getbulk || getnext]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 161
 AND snmp.oid: (1.3.6.1.4.1.9.9.96.* OR 1.3.6.1.4.1.9.2.1.55.*)`,
@@ -502,17 +431,6 @@ AND snmp.oid: (1.3.6.1.4.1.9.9.96.* OR 1.3.6.1.4.1.9.2.1.55.*)`,
       {
         sub: "T1602.002 - Config File Transfer",
         indicator: "TFTP / SCP transfer of config-shaped files from network device",
-        arkime: `ip.src == $NETWORK_DEVICES
-&& port.dst == [69 || 22]
-&& (protocols == tftp
-    || (protocols == ssh && bytes-out > 5000))
-&& filename == [
-  *running-config*
-  || *startup-config*
-  || *.cfg
-  || *.conf
-  || *config.txt*
-]`,
         kibana: `source.ip: $NETWORK_DEVICES
 AND destination.port: (69 OR 22)
 AND file.name: (running-config* OR startup-config* OR *.cfg OR *.conf)`,
@@ -545,20 +463,6 @@ AND file.name: (running-config* OR startup-config* OR *.cfg OR *.conf)`,
       {
         sub: "T1074.001 - Local Staging Directories",
         indicator: "SMB write to staging directory patterns - Recycle Bin, ProgramData, temp paths",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == smb
-&& databytes.src > 0
-// smb.command does not exist in baseline Arkime 4.3.1.
-// write proxied by databytes.src > 0 (data flows src→dst).
-&& smb.path == [
-  *$Recycle.Bin*
-  || *\\Windows\\Temp*
-  || *\\ProgramData*
-  || *\\Users\\Public*
-  || *PerfLogs*
-  || *Intel\\Logs*
-]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND zeek.smb_files.action: "SMB_FILE_WRITE"
@@ -594,17 +498,6 @@ AND file.path: (*$Recycle.Bin* OR *Windows\\Temp* OR *ProgramData* OR *Users\\Pu
       {
         sub: "T1074.002 - Remote Staging Aggregation",
         indicator: "SMB write to internal staging share - large file collection at central host",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == smb
-&& databytes.src > 0
-// smb.command does not exist in baseline Arkime 4.3.1.
-// write proxied by databytes.src > 0 (data flows src→dst).
-&& smb.filesize > 104857600
-// THRESHOLD: aggregation (destination-ip-write-volume groupby ip.dst > 1073741824 within 3600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND zeek.smb_files.action: "SMB_FILE_WRITE"
@@ -636,21 +529,6 @@ AND file.size > 104857600`,
       {
         sub: "T1560.001 - Archive Files",
         indicator: "SMB write of archive files with adversary-typical naming - .zip/.rar/.7z bursts",
-        arkime: `ip.src == $INTERNAL
-&& port.dst == 445
-&& protocols == smb
-&& databytes.src > 0
-// smb.command does not exist in baseline Arkime 4.3.1.
-// write proxied by databytes.src > 0 (data flows src→dst).
-&& smb.filename == [
-  *.zip
-  || *.rar
-  || *.7z
-  || *.tar.gz
-  || *.tgz
-  || *.tar
-]
-&& smb.filesize > 10485760`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND zeek.smb_files.action: "SMB_FILE_WRITE"
@@ -685,7 +563,7 @@ AND file.size > 10485760`,
 && databytes.src > 0
 // smb.command does not exist in baseline Arkime 4.3.1.
 // write proxied by databytes.src > 0 (data flows src→dst).
-&& smb.filename == [
+&& smb.fn == [
   *.zip
   || *.rar
   || *.7z
