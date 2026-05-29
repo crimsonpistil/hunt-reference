@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[6B74] Net Threat Hunt Reference</title>
+<title>MITRE ATT&CK Network Analyst Reference</title>
 <meta name="description" content="MITRE ATT&CK network-based detection reference. Kibana, Arkime, Suricata filters/queries. APT Correlation. OSINT Notes.">
 <link rel="stylesheet" href="css/style.css">
 <style>
@@ -53,12 +53,8 @@
     <span class="switcher-side active">NETWORK</span>
     <a href="https://host.6b74.dev" class="switcher-side">HOST</a>
   </div>
-  <div class="index-title">MITRE ATT&amp;CK // Net Analyst Reference</div>
+  <div class="index-title">MITRE ATT&amp;CK Network Analyst Reference</div>
   <div class="index-sub">Network analyst threat hunting: indicators, detection syntax, and APT attribution across the attack lifecycle</div>
-  <div class="index-search-wrap">
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
-    <input id="tactic-search" type="text" placeholder="Filter tactics..." autocomplete="off">
-  </div>
 </div>
 
 <span class="section-label">Tactics</span>
@@ -81,7 +77,7 @@
     <div class="card-id" style="color:#bc8cff">TA0011</div>
     <span class="card-pill" style="background:rgba(188,140,255,.12);color:#bc8cff">74 indicators · 10 techniques</span>
     <div class="card-name">Command &amp; Control</div>
-    <div class="card-desc">Adversary communications - application layer protocols, DGA / fast flux, web service abuse, encrypted channels (JA3/JA4), ICMP/raw TCP, proxies, domain fronting, tunneling, ingress tool transfer, RMM tool abuse.</div>
+    <div class="card-desc">Adversary communications - application layer protocols, DGA / fast flux, web service abuse, encrypted channels (JA3/JA3s), ICMP/raw TCP, proxies, domain fronting, tunneling, ingress tool transfer, RMM tool abuse.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
   <a href="discovery.html" class="tactic-card" data-tags="discovery ta0007 enumeration host port share ldap samr kerberos bloodhound trust gmsa adminsdholder">
@@ -132,7 +128,6 @@
     <div class="info-card">
       <h3>What this is</h3>
       <p>A network threat hunting reference covering eight MITRE ATT&amp;CK tactics across the intrusion lifecycle. Every indicator includes paste-ready query syntax for <strong>Arkime</strong>, <strong>Kibana (KQL)</strong>, and <strong>Suricata</strong>, plus operational notes and APT attribution context.</p>
-      <p>Built for SOC analysts and threat hunters working in environments where pulling docs from the internet isn't an option. Single-page, fully offline, no telemetry.</p>
     </div>
 
     <div class="info-card">
@@ -145,34 +140,25 @@
         <li>Open <strong>My Hunts</strong> from the header to review and export your hunt as TXT or CSV with a CMS-ready template</li>
       </ul>
       <div class="info-callout">
-        Variables like <code>$INTERNAL</code>, <code>$DOMAIN_CONTROLLERS</code>, and <code>$ADMIN_HOSTS</code> in queries are placeholders: replace them with values from your environment before running.
+        <b>Pls Note:</b> <br> Variables like <code>$INTERNAL</code>, <code>$DOMAIN_CONTROLLERS</code>, and <code>$ADMIN_HOSTS</code> in queries are placeholders: replace them with values from your environment before actually running.
       </div>
     </div>
 
     <div class="info-card">
       <h3>About hunts</h3>
-      <p>Starred indicators persist across browser restarts and sync across open tabs in real-time. Hunts are stored in <code>localStorage</code> under the key <code>hunt_reference_hunts_v1</code> - nothing leaves the browser.</p>
-      <p>Each export comes pre-formatted as a CMS-ready hunt package with timestamps, technique IDs, query syntax, and notes. Ordering is chronological so the export reads as a hunt timeline.</p>
+      <p>Starred indicators persist across browser restarts and sync across open tabs in real-time. Hunts are stored in <code>localStorage</code> under the key <code>hunt_reference_hunts_v1</code>; nothing leaves the browser.</p>
+      <p>Each export comes pre-formatted as a CMS-ready hunt package with timestamps, technique IDs, query syntax, and notes for easy import into TheHive. Ordering is chronological so the export reads as a hunt timeline.</p>
     </div>
 
   </div>
 </section>
 
 <footer class="site-footer">
-  <p>Built on the MITRE ATT&amp;CK<sup>&reg;</sup> framework. ATT&amp;CK is a registered trademark of The MITRE Corporation.</p>
-  <p><code>~/hunt-reference</code> &middot; offline-first network threat hunting reference</p>
+  <p>built on the mitre att&amp;ck<sup>&reg;</sup> framework. att&amp;ck is a registered trademark of the mitre corporation.</p>
   <br>
   <p>built by <a href="https://6b74.dev" style="color:var(--accent)">tonk</a></p>
 </footer>
 
-<script>
-document.getElementById('tactic-search').addEventListener('input', function() {
-  const q = this.value.toLowerCase().trim();
-  document.querySelectorAll('.tactic-card').forEach(card => {
-    const text = (card.textContent + ' ' + (card.dataset.tags || '')).toLowerCase();
-    card.style.display = !q || text.includes(q) ? '' : 'none';
-  });
-});
-</script>
+<script src="js/index.js"></script>
 </body>
 </html>

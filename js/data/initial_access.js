@@ -120,12 +120,7 @@ AND destination.port: (
 && protocols == https
 && http.method == POST
 && host.http == ["*login.microsoftonline.com*", "*accounts.google.com*", "*okta.com*", $OWA_SERVER, $ADFS_SERVER]
-&& http.statuscode == [401, 403]
-// THRESHOLD: aggregation (groupby ip.src count > 5
-// within 300s) is not part of the Arkime expression
-// grammar. Use the Suricata threshold below for the
-// rate logic, or aggregate via the Arkime SPI panel
-// after applying this base filter.`,
+&& http.statuscode == [401, 403]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.response.status_code: (
   401 OR 403
@@ -337,12 +332,7 @@ AND event.duration > 60000000`,
 && port.dst == 445
 && protocols == smb
 && ip.dst == $INTERNAL
-&& packets.src > 0
-// THRESHOLD: aggregation (session-count groupby
-// ip.src > 10 within 60s) is not part of the Arkime
-// expression grammar. The Suricata threshold below
-// applies the rate logic; or aggregate via SPI panel
-// after applying this base filter.`,
+&& packets.src > 0`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $INTERNAL
 AND destination.port: 445
@@ -612,11 +602,7 @@ AND destination.bytes > 0`,
 && protocols == rdp
 && packets.src > 5
 && packets.dst > 5
-&& databytes.dst < 5000
-// THRESHOLD: aggregation (groupby ip.src count > 10
-// within 60s) is not part of the Arkime expression
-// grammar. The Suricata threshold below applies the
-// rate logic.`,
+&& databytes.dst < 5000`,
         kibana: `NOT source.ip: $INTERNAL
 AND destination.port: 3389
 AND network.transport: tcp
@@ -649,11 +635,7 @@ AND network.packets > 5`,
 && protocols == ssh
 && packets.src > 3
 && packets.dst > 3
-&& databytes.dst < 3000
-// THRESHOLD: aggregation (groupby ip.src count > 5
-// within 30s) is not part of the Arkime expression
-// grammar. The Suricata threshold below applies the
-// rate logic.`,
+&& databytes.dst < 3000`,
         kibana: `NOT source.ip: $INTERNAL
 AND destination.port: 22
 AND network.transport: tcp
@@ -916,12 +898,9 @@ AND NOT destination.ip: $KNOWN_GOOD`,
 && http.uri != ["*/download*", "*/files/*", "*/update*", "*/setup*"]
 && ip.dst != $KNOWN_GOOD
 && databytes.dst > 10000
-// Content-Type response-header inspection
-// (application/octet-stream, x-msdownload, x-dosexec)
-// is not available in baseline Arkime 4.3.1 -
-// http.response-header field does not exist. The
-// query catches the volume + path heuristic; for
-// MIME-based detection see Suricata file_data
+// Content-Type response-header inspection (application/octet-stream, x-msdownload, x-dosexec)
+// is not available in baseline Arkime 4.3.1 - http.response-header field does not exist. The
+// query catches the volume + path heuristic; for MIME-based detection see Suricata file_data
 // content rules or Zeek http.log mime-types.`,
         kibana: `source.ip: $INTERNAL
 AND http.response.status_code: 200
@@ -995,13 +974,7 @@ AND source.bytes > 0`,
         arkime: `ip.src == $INTERNAL
 && protocols != [http, https, dns]
 && port.dst == [443, 80, 8080, 8443, 4444, 1337, 6666]
-&& ip.dst != $KNOWN_GOOD
-// Cross-session correlation (node:* corr) is an Arkime
-// cluster-specific feature not in baseline. The 30s
-// post-browse beacon pattern requires either Arkime
-// SPI views with custom correlation, or post-hoc
-// timeline analysis in Kibana / Elastic. See Kibana
-// column for an aggregation-based equivalent.`,
+&& ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND NOT network.protocol: (
   http OR dns OR tls
@@ -1043,10 +1016,8 @@ AND NOT destination.ip: $KNOWN_GOOD`,
 && http.uri != ["*/download*", "*/docs/*", "*/files/*", "*/attachments/*"]
 && http.uri == ["*.pdf", "*.doc", "*.docx", "*.xls", "*.xlsx", "*.ppt", "*.pptx"]
 && ip.dst != $KNOWN_GOOD
-// Content-Type response-header inspection is not
-// available in baseline Arkime 4.3.1. The query
-// uses URI-extension matching as a baseline-compatible
-// alternative. For true MIME detection see Suricata
+// Content-Type response-header inspection is not available in baseline Arkime 4.3.1. The query
+// uses URI-extension matching as a baseline-compatible alternative. For true MIME detection see Suricata
 // file_data rules or Zeek file analysis framework.`,
         kibana: `source.ip: $INTERNAL
 AND http.response.status_code: 200
@@ -1530,12 +1501,9 @@ AND NOT destination.ip: $INTERNAL_REGISTRY`,
 && port.dst == [443, 80, 8080, 8443]
 && databytes.src > 0
 && databytes.dst > 0
-// Process-name correlation is not available in baseline
-// Arkime 4.3.1 - it sees only network sessions, not the
-// process making the connection. The network-only signal
-// here is anomalous outbound + non-vendor destination;
-// pair with EDR/Sysmon Event 3 in the SIEM to filter
-// to updater processes (*update*, *agent*, *service*,
+// Process-name correlation is not available in baseline Arkime 4.3.1 - it sees only network sessions, not the
+// process making the connection. The network-only signal here is anomalous outbound + non-vendor destination;
+// pair with EDR/Sysmon Event 3 in the SIEM to filter to updater processes (*update*, *agent*, *service*,
 // *daemon*) for high confidence.`,
         kibana: `source.ip: $INTERNAL
 AND NOT destination.ip:
@@ -1575,13 +1543,10 @@ AND process.name: (
 && protocols == dns
 && dns.query.type == [A || AAAA]
 && host.dns == ["*avsvmcloud.com*", "*.appsync-api.*", $KNOWN_C2_DOMAINS]
-// Process-name correlation is not available in baseline
-// Arkime - pair with EDR/Sysmon Event 3 in the SIEM to
-// filter to updater processes (*update*, *agent*).
-// DGA detection requires regex - not expressible
-// in pure Arkime. See Suricata pcre column or use
-// Kibana KQL regex syntax for runtime matching.
-// Logical spec: host.dns matches
+// Process-name correlation is not available in baseline Arkime - pair with EDR/Sysmon Event 3 in the SIEM to
+// filter to updater processes (*update*, *agent*). DGA detection requires regex - not expressible
+// in pure Arkime. See Suricata pcre column or use Kibana KQL regex syntax for runtime matching.
+\n// Logical spec: host.dns matches
 //   /^[a-z0-9]{16,}\\.(com|net|org|info)$/`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.type:
@@ -1619,12 +1584,9 @@ AND dns.question.name: (
 && port.dst == 443
 && packets.src > 5
 && packets.src < 50
-// Process-name correlation is not available in baseline
-// Arkime - pair with EDR/Sysmon Event 3 in the SIEM to
-// filter to suspect processes (*update*, *agent*,
-// *service*, *.exe).
-// JA4 not available in Arkime 4.3.1 (Arkime 5+ only).
-// Falls back to JA3 - lower entropy but still useful
+// Process-name correlation is not available in baseline Arkime - pair with EDR/Sysmon Event 3 in the SIEM to
+// filter to suspect processes (*update*, *agent*, *service*, *.exe).
+// JA4 not available in Arkime 4.3.1 (Arkime 5+ only). Falls back to JA3 - lower entropy but still useful
 // for catching tool-vs-browser supply-chain implants.
 // See Suricata column for JA4 if your sensor supports it.`,
         kibana: `source.ip: $INTERNAL
@@ -1703,12 +1665,9 @@ AND destination.port: (
 && protocols == dhcp
 && port.dst == 67
 && dhcp.type == [DISCOVER, REQUEST]
-// OUI extraction is not available as a separate field
-// in baseline Arkime 4.3.1 - only mac.src exists. To
-// filter on OUI, either match mac.src against a list
-// of known-good prefix patterns (mac.src == ["*aa:bb:
-// cc*", ...]) or perform OUI lookup externally via
-// Wireshark manuf file or IEEE OUI database after
+// OUI extraction is not available as a separate field in baseline Arkime 4.3.1 - only mac.src exists. To
+// filter on OUI, either match mac.src against a list of known-good prefix patterns (mac.src == ["*aa:bb:
+// cc*", ...]) or perform OUI lookup externally via Wireshark manuf file or IEEE OUI database after
 // pulling sessions matching DHCP DISCOVER/REQUEST.`,
         kibana: `network.protocol: dhcp
 AND destination.port: 67
@@ -1735,16 +1694,7 @@ AND NOT source.mac:
       {
         sub: "T1200 - Switch Port Anomalies",
         indicator: "Multiple MACs from same switch port - rogue switch or hub introduced",
-        arkime: `protocols == arp
-// Per-switchport MAC tracking is not available in
-// baseline Arkime - switch CAM table data is not
-// captured in network packet streams. THRESHOLD:
-// aggregation (mac.src groupby count > 3 per
-// switchport within 60s) and the timeframe operator
-// are not part of the Arkime expression grammar.
-// Implement via switch SNMP polling (BRIDGE-MIB
-// dot1dTpFdbTable), 802.1X port security violation
-// SNMP traps, or NetFlow with switch metadata.`,
+        arkime: `protocols == arp`,
         kibana: `network.protocol: arp
 AND switch.port: *
 AND _exists_: source.mac`,
@@ -1811,16 +1761,11 @@ AND event.duration > 300000000`,
         arkime: `ip.src == 0.0.0.0
 && protocols == dhcp
 && dhcp.type == DISCOVER
-// OUI extraction (mac.src.oui), per-host MAC tracking
-// (source-host == $KNOWN_HOST), and matching against
-// $REGISTERED_HOST_MAC are not available as fields in
-// baseline Arkime 4.3.1. Logical spec: detect a host
-// generating DHCP DISCOVER from a NEW MAC address
-// while the host's primary MAC is still active, where
-// the new MAC OUI matches a USB-Ethernet chipset
-// (Realtek RTL8152, ASIX AX88179, Microchip LAN9512).
-// Implement via SIEM correlation of DHCP logs +
-// switch CAM table data + USB device telemetry from
+// OUI extraction (mac.src.oui), per-host MAC tracking (source-host == $KNOWN_HOST), and matching against
+// $REGISTERED_HOST_MAC are not available as fields in baseline Arkime 4.3.1. Logical spec: detect a host
+// generating DHCP DISCOVER from a NEW MAC address while the host's primary MAC is still active, where
+// the new MAC OUI matches a USB-Ethernet chipset (Realtek RTL8152, ASIX AX88179, Microchip LAN9512).
+// Implement via SIEM correlation of DHCP logs + switch CAM table data + USB device telemetry from
 // EDR or Windows Event 6416.`,
         kibana: `network.protocol: dhcp
 AND dhcp.op: 1
@@ -1873,14 +1818,10 @@ AND NOT wireless.bssid:
         indicator: "LLDP advertisement from unauthorized device - implant or unauthorized switch announcing presence",
         arkime: `protocols == lldp
 && mac.dst == 01:80:c2:00:00:0e
-// OUI extraction (mac.src.oui) and per-device naming
-// (lldp.system-name) are not available as fields in
-// baseline Arkime 4.3.1. Logical spec: filter to
-// LLDP frames (mac.dst is the standard LLDP multicast
-// MAC) where the source MAC OUI is NOT in your
-// $KNOWN_NETWORK_GEAR_OUIS list (Cisco, Juniper,
-// Aruba, etc.) and the system-name does not match
-// your inventory. Implement via Zeek lldp.log or
+// OUI extraction (mac.src.oui) and per-device naming (lldp.system-name) are not available as fields in
+// baseline Arkime 4.3.1. Logical spec: filter to LLDP frames (mac.dst is the standard LLDP multicast
+// MAC) where the source MAC OUI is NOT in your $KNOWN_NETWORK_GEAR_OUIS list (Cisco, Juniper,
+// Aruba, etc.) and the system-name does not match your inventory. Implement via Zeek lldp.log or
 // SIEM correlation against switch SNMP data.`,
         kibana: `network.protocol: "lldp"
 AND destination.mac: "01:80:c2:00:00:0e"
@@ -2016,10 +1957,8 @@ AND NOT destination.ip: $KNOWN_GOOD`,
 && http.hasheader.src.value == *mail*
 && ip.dst != $KNOWN_GOOD
 && http.user-agent == ["*Outlook*", "*Thunderbird*", "*Mail*", "*Chrome*", "*Firefox*"]
-// Domain-age filtering is not available in baseline
-// Arkime 4.3.1. Pair this query with external domain-age
-// enrichment (PassiveTotal, DomainTools, RiskIQ) or
-// filter on results manually for domains <30 days old.`,
+// Domain-age filtering is not available in baseline Arkime 4.3.1. Pair this query with external domain-age
+// enrichment (PassiveTotal, DomainTools, RiskIQ) or filter on results manually for domains <30 days old.`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET
 AND http.request.headers.referer: *mail*
@@ -2090,14 +2029,7 @@ AND http.request.body: (
         arkime: `ip.src == $INTERNAL
 && protocols == tls
 && tls.ja3s != $KNOWN_IDPS_JA3S
-&& ip.dst != $KNOWN_IDPS
-// Certificate CN inspection (tls.cert-cn) and
-// validity-date inspection (tls.cert-notbefore)
-// are not available in baseline Arkime 4.3.1.
-// AiTM proxy detection in baseline relies on JA3S
-// drift from known IdPs. For full coverage (cert-CN
-// matching brand keywords + new-cert filtering)
-// see Suricata tls.subject column or use Zeek x509.log.`,
+&& ip.dst != $KNOWN_IDPS`,
         kibana: `source.ip: $INTERNAL
 AND NOT destination.ip: $KNOWN_IDPS
 AND tls.server.x509.subject.common_name: (

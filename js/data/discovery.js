@@ -13,11 +13,7 @@ const DATA = [
         arkime: `ip.src == $INTERNAL
 && protocols == icmp
 && icmp.type == 8
-&& ip.dst == $INTERNAL
-// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 20 within 60s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& ip.dst == $INTERNAL`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $INTERNAL
 AND network.protocol: icmp
@@ -49,11 +45,7 @@ AND icmp.type: 8`,
         arkime: `ip.src == $INTERNAL
 && ip.src != $MONITORING_HOSTS
 && protocols == icmp
-&& icmp.type == 8
-// THRESHOLD: aggregation (unique-subnet-count groupby ip.src > 3 within 300s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& icmp.type == 8`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $MONITORING_HOSTS
 AND network.protocol: icmp
@@ -105,11 +97,7 @@ N/A standard Suricata`,
         indicator: "NetBIOS Name Service queries - broadcast NBNS scanning for hostname enumeration",
         arkime: `ip.src == $INTERNAL
 && port.dst == 137
-&& protocols == nbns
-// THRESHOLD: aggregation (unique-nbns-target-count groupby ip.src > 30 within 60s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& protocols == nbns`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 137
 AND network.protocol: netbios-ns`,
@@ -140,11 +128,7 @@ AND network.protocol: netbios-ns`,
 && ip.src != $DNS_SERVERS
 && protocols == dns
 && dns.query.type == PTR
-&& host.dns == "*.in-addr.arpa"
-// THRESHOLD: aggregation (unique-ptr-count groupby ip.src > 50 within 300s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& host.dns == "*.in-addr.arpa"`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $DNS_SERVERS
 AND dns.question.type: "PTR"
@@ -205,12 +189,7 @@ AND dns.question.type: "AXFR"`,
         indicator: "SMB connection burst from single source - host enumeration via SMB probes",
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
-&& protocols == smb
-// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 20 within 60s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.
-&& ip.dst == $INTERNAL`,
+&& protocols == smb`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND destination.ip: $INTERNAL`,
@@ -301,11 +280,7 @@ AND NOT tcp.flags: "A"`,
         arkime: `ip.src == $INTERNAL
 && ip.src != $SCAN_SOURCES
 && protocols == tcp
-&& port.dst == [22, 445, 3389, 5985, 5986, 1433, 3306, 5432, 6379, 27017]
-// THRESHOLD: aggregation (unique-dst-count groupby ip.src,port.dst > 20 within 60s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& port.dst == [22, 445, 3389, 5985, 5986, 1433, 3306, 5432, 6379, 27017]`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $SCAN_SOURCES
 AND destination.port: (
@@ -372,11 +347,7 @@ AND tcp.flags: "S"`,
 && port.dst == 22
 && protocols == ssh
 && session.length < 5
-&& packets.src < 5
-// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 10 within 300s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& packets.src < 5`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $SSH_CLIENTS
 AND destination.port: 22
@@ -410,11 +381,7 @@ AND network.packets < 5`,
 && ip.src != $WEB_CLIENTS
 && protocols == http
 && http.method == [HEAD || OPTIONS]
-&& session.length < 5
-// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 20 within 300s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& session.length < 5`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $WEB_CLIENTS
 AND http.request.method: (
@@ -448,11 +415,7 @@ AND event.duration < 5000000`,
         arkime: `ip.src == $INTERNAL
 && ip.src != $SNMP_MGMT
 && protocols == snmp
-&& port.dst == 161
-// THRESHOLD: aggregation (unique-dst-count groupby ip.src > 10 within 60s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& port.dst == 161`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $SNMP_MGMT
 AND destination.port: 161
@@ -542,16 +505,7 @@ AND dcerpc.opnum: (15 OR 16)`,
         indicator: "SMB tree connect to many distinct share names - share enumeration via tree connect attempts",
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
-&& protocols == smb
-// smb.command does not exist in baseline Arkime 4.3.1.
-// tree-connect command type is not expressible; use
-// smb.share pattern matching where a specific share
-// is known, or rely on the Suricata threshold below for
-// the burst-rate detection signal.
-// THRESHOLD: aggregation (unique-share-count groupby ip.src,ip.dst > 5 within 60s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& protocols == smb`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND zeek.smb_mapping.share_type: "DISK"`,
@@ -583,10 +537,7 @@ AND zeek.smb_mapping.share_type: "DISK"`,
 && port.dst == 445
 && ip.dst == $DOMAIN_CONTROLLERS
 && smb.share == ["*SYSVOL*", "*NETLOGON*"]
-// THRESHOLD: aggregation (session-count groupby ip.src > 10 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $DOMAIN_CONTROLLERS
 AND smb.share.name: (
@@ -621,11 +572,7 @@ AND smb.share.name: (
 && port.dst == 445
 && protocols == smb
 && smb.share == IPC$
-&& smb.user == ""
-// THRESHOLD: aggregation (session-count groupby ip.src > 5 within 300s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& smb.user == ""`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND smb.share.name: "IPC$"
@@ -657,17 +604,7 @@ AND smb.user.name: ""`,
         indicator: "Bulk file share index access - File explorer-style directory enumeration across many shares",
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
-&& protocols == smb
-// smb.command does not exist in baseline Arkime 4.3.1.
-// find-first2/find-next2/query-directory are Zeek
-// smb_cmd.log operations with no Arkime field equivalent.
-// Use high databytes.dst (enumeration data returned) +
-// session.length > 60 as a behavioral proxy, or rely on
-// the Suricata burst threshold below.
-// THRESHOLD: aggregation (unique-path-count groupby ip.src > 50 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& protocols == smb`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND zeek.smb_files.action: (
@@ -699,15 +636,7 @@ AND zeek.smb_files.action: (
         indicator: "DFS namespace enumeration - DFS referral query patterns",
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
-&& protocols == smb
-// smb.command does not exist in baseline Arkime 4.3.1.
-// get-dfs-referral is a Zeek smb_cmd.log operation with
-// no Arkime field equivalent. Rely on the Suricata
-// content/threshold signature below for the DFS pattern.
-// THRESHOLD: aggregation (session-count groupby ip.src > 10 within 300s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& protocols == smb`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND zeek.smb_cmd.command: "get_dfs_referral"`,
@@ -1176,11 +1105,7 @@ AND ldap.attributes: (
 && protocols == dns
 && dns.query.type == SRV
 && host.dns == "_ldap._tcp.*"
-&& host.dns != $LOCAL_DOMAIN_SRV
-// THRESHOLD: aggregation (session-count groupby ip.src > 5 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& host.dns != $LOCAL_DOMAIN_SRV`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.type: "SRV"
 AND dns.question.name: *_ldap._tcp.*
@@ -1219,19 +1144,7 @@ AND NOT dns.question.name: *.$LOCAL_DOMAIN`,
         indicator: "Recursive SMB directory enumeration - Get-ChildItem -Recurse pattern across remote shares",
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
-&& protocols == smb
-// smb.command does not exist in baseline Arkime 4.3.1.
-// query-directory is a Zeek smb_cmd.log operation.
-// smb.tree-disconnect-rate is also not a baseline field.
-// Use session.length + databytes.dst as behavioral proxies:
-// long sessions (>5min) returning large volumes of data are
-// the signature of recursive directory walks.
-// THRESHOLD: aggregation (groupby ip.src < 0.05) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.
-&& session.length > 300
-&& databytes.dst > 100000`,
+&& protocols == smb`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND zeek.smb_files.action: "SMB_FILE_OPEN"

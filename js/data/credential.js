@@ -499,11 +499,7 @@ N/A pure Suricata`,
   || */auth*
   || */signin*
   || */owa*
-]
-// THRESHOLD: aggregation (unique-username-count groupby ip.src > 20 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+]`,
         kibana: `source.ip: NOT $INTERNAL
 AND destination.port: (443 OR 80)
 AND url.path: (*login* OR *auth* OR *signin* OR *owa*)`,

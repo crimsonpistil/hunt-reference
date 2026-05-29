@@ -13,17 +13,7 @@ const DATA = [
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& databytes.dst > 0
-// smb.command does not exist in baseline Arkime 4.3.1.
-// read proxied by databytes.dst > 0 (data flows dst→src).
-// THRESHOLD: aggregation (unique-path-count groupby ip.src > 50 within 300s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.
-// THRESHOLD: aggregation (unique-directory-count > 10) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& databytes.dst > 0`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND zeek.smb_files.action: "SMB_FILE_READ"
@@ -133,11 +123,7 @@ AND file.name: (*password* OR *passwd* OR *secret* OR *credential* OR *confident
         indicator: "Confluence REST API search burst - single user, many distinct queries",
         arkime: `ip.src == $INTERNAL
 && port.dst == [80 || 443 || 8090]
-&& http.uri == "*/rest/api/content/search*"
-// THRESHOLD: aggregation (unique-query-count groupby ip.src > 20 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& http.uri == "*/rest/api/content/search*"`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (80 OR 443 OR 8090)
 AND url.path: */rest/api/content/search*`,
@@ -179,11 +165,7 @@ AND url.path: */rest/api/content/search*`,
   */_api/search/query*
   || */_api/web/lists*
   || */_vti_bin/search.asmx*
-]
-// THRESHOLD: aggregation (unique-uri-count groupby ip.src > 30 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (80 OR 443)
 AND url.path: (*/_api/search/query* OR */_api/web/lists* OR */_vti_bin/search*)`,
@@ -224,11 +206,7 @@ AND url.path: (*/_api/search/query* OR */_api/web/lists* OR */_vti_bin/search*)`
         arkime: `ip.src == $INTERNAL
 && port.dst == [22 || 80 || 443 || 9418]
 && (http.uri == "*/info/refs?service=git-upload-pack*"
-    || protocols == ssh)
-// THRESHOLD: aggregation (unique-repo-count groupby ip.src > 5 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+    || protocols == ssh)`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (22 OR 80 OR 443 OR 9418)
 AND url.path: */info/refs?service=git-upload-pack*`,
@@ -561,16 +539,12 @@ AND file.size > 10485760`,
 && port.dst == 445
 && protocols == smb
 && databytes.src > 0
-// smb.command does not exist in baseline Arkime 4.3.1.
-// write proxied by databytes.src > 0 (data flows src→dst).
 && smb.fn == [
   *.zip
   || *.rar
   || *.7z
 ]
-// file-content-bytes-1to8 does not exist in baseline
-// Arkime 4.3.1. Magic-byte / encryption-flag detection
-// requires Zeek's file analyzer (files.log + file_state).
+// Magic-byte / encryption-flag detection requires Zeek's file analyzer (files.log + file_state).
 // See Suricata content signatures below for byte matching.
 // Logical spec: file content bytes 1-8 match one of:
 //   PK\x03\x04 + general-purpose-bit-flag bit 0 set (ZIP encrypted)

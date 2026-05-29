@@ -15,11 +15,7 @@ const DATA = [
 && http.method == GET
 && http.uri == ["*/ca", "*/dpixel", "*/fwlink", "*/pixel", "*/__utm.gif", "*/jquery-3.3.1.min.js", "*/load", "*/api/x"]
 && session.length > 60
-&& packets.src < 50
-// THRESHOLD: aggregation (session-count groupby ip.src,ip.dst > 5 within 3600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& packets.src < 50`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET
 AND url.path: (
@@ -65,11 +61,7 @@ AND network.packets < 50`,
 && databytes.src < 5000
 && databytes.dst < 1000
 && http.uri == ["*/submit.php", "*/api/v1/upload", "*/upload/file", "*/push", "*/report"]
-&& ip.dst != $KNOWN_GOOD
-// THRESHOLD: aggregation (session-count groupby ip.src,ip.dst > 3 within 1800s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& ip.dst != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: POST
 AND http.request.body.bytes < 5000
@@ -113,12 +105,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
 && packets.src < 30
 && packets.dst < 30
 && databytes.src < 10000
-&& session.length < 5
-// THRESHOLD: aggregation (session-count groupby ip.src,ip.dst > 10 within 3600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.
-&& ip.dst != $KNOWN_GOOD`,
+&& session.length < 5`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND network.transport: tcp
@@ -138,7 +125,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
     count 10, seconds 3600;
   classtype:trojan-activity;
   sid:9107103; rev:1;)`,
-        notes: "HTTPS beacons are the dominant modern C2 channel. The signal isn't in the encrypted payload - it's in the connection metadata: short sessions (under 5s), low packet count (under 30 each way), small data volume (under 10KB), regular timing to same destination. Build a beacon detection model on flow records: same src-dst pair, sessions within 10% of a fixed interval, low data volumes, sustained over 1+ hour. Open-source: RITA (Real Intelligence Threat Analytics) and AC-Hunter implement this analysis on Zeek conn.log. False positives: software update checks, telemetry, push notification keepalives - baseline these with allowlist and high-volume known endpoints first.",
+        notes: "HTTPS beacons are the dominant modern C2 channel., but the signal isn't in the encrypted payload, it's in the connection metadata. Look for short sessions (under 5s), low packet count (under 30 each way), small data volume (under 10KB), regular timing to same destination. Build a beacon detection model on flow records: same src-dst pair, sessions within 10% of a fixed interval, low data volumes, sustained over 1+ hour. \n\n Open-source: RITA (Real Intelligence Threat Analytics) and AC-Hunter implement this analysis on Zeek conn.log. False positives: software update checks, telemetry, push notification keepalives - baseline these with allowlist and high-volume known endpoints first.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Uses HTTPS C2 with Cobalt Strike, BEACON, and custom .NET implants." },
           { cls: "apt-cn", name: "APT41", note: "Uses HTTPS C2 with Cobalt Strike and custom implants." },
@@ -291,13 +278,8 @@ AND NOT destination.ip: $KNOWN_MAIL_PROVIDERS`,
         indicator: "DNS tunneling - high volume of long subdomain queries to single domain",
         arkime: `ip.src == $INTERNAL
 && protocols == dns
-// THRESHOLD: aggregation (dns.query-count groupby host.dns > 50 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.
-&& host.dns != $KNOWN_GOOD
-// Long-subdomain detection requires regex - not
-// expressible in pure Arkime. See Suricata pcre column
+\n
+// Long-subdomain detection requires regex - doesn't always play well in Arkime. See Suricata pcre column
 // or use Kibana KQL regex syntax for runtime matching.
 // Logical spec: host.dns matches /^[a-zA-Z0-9]{30,}\\..+/`,
         kibana: `source.ip: $INTERNAL
@@ -331,10 +313,7 @@ AND dns.question.name: /[a-zA-Z0-9]{30,}\\..+/`,
 && protocols == dns
 && dns.query.type == TXT
 && host.dns != ["*_dmarc*", "*_spf*", "*_acme-challenge*", "*_domainkey*"]
-// THRESHOLD: aggregation (dns.query-count groupby ip.src > 20 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.type: "TXT"
 AND NOT dns.question.name: (
@@ -400,15 +379,7 @@ AND dns.answer.bytes > 200`,
         indicator: "DNS query to newly registered or low-reputation domain - first-seen C2 lookup",
         arkime: `ip.src == $INTERNAL
 && protocols == dns
-&& host.dns != $KNOWN_GOOD
-// Domain-age filtering (host.dns-age < 7d) is not
-// available in baseline Arkime 4.3.1. Pair with
-// external NRD feeds (DomainTools, Whoisxml,
-// SecurityTrails) for the <7d signal.
-// THRESHOLD: aggregation (dns.query-count groupby
-// host.dns > 5 within 3600s) is not part of the
-// Arkime expression grammar; aggregate via SPI panel
-// or apply in SIEM after filtering on $NRD_FEED.`,
+&& host.dns != $KNOWN_GOOD`,
         kibana: `source.ip: $INTERNAL
 AND network.protocol: dns
 AND dns.question.name:
@@ -473,10 +444,9 @@ AND NOT dns.question.name: $KNOWN_GOOD`,
         arkime: `ip.src == $INTERNAL
 && protocols == dns
 && host.dns != $KNOWN_GOOD
-// DGA / high-entropy detection requires regex - not
-// expressible in pure Arkime. See Suricata pcre column
-// or use Kibana KQL regex syntax for runtime matching.
-// Logical spec: host.dns matches
+// DGA / high-entropy detection requires regex - does not always play well in Arkime. 
+// See Suricata pcre column or use Kibana KQL regex syntax for runtime matching.
+\n// Logical spec: host.dns matches
 //   /^[a-z0-9]{12,30}\\.(com|net|org|info|biz|us|ru|cn|tk|ml|ga|cf|xyz|top|online|site)$/`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.name: /[a-z0-9]{12,30}\\.(com|net|org|info|biz|tk|ml|xyz|top)/
@@ -592,11 +562,7 @@ AND NOT dns.answers.name: (
         indicator: "NS records changing frequently for same domain - double-flux infrastructure",
         arkime: `protocols == dns
 && dns.query.type == NS
-&& host.dns != $KNOWN_GOOD
-// THRESHOLD: aggregation (unique-ns-count groupby host.dns > 5 within 86400s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& host.dns != $KNOWN_GOOD`,
         kibana: `network.protocol: dns
 AND dns.question.type: "NS"
 AND NOT dns.question.name: $KNOWN_GOOD`,
@@ -1008,10 +974,7 @@ AND url.path: (
         arkime: `ip.src == $INTERNAL
 && protocols == tls
 && tls.ja3 == $MALICIOUS_JA3
-// JA4 client fingerprinting is not available in
-// Arkime 4.3.1 (Arkime 5+ only, accessible as
-// http.ja4). JA3 alone covers most known-malicious
-// implant fingerprints. See Suricata column for
+// JA3 covers most known-malicious implant fingerprints. See Suricata column for
 // JA4 if your sensor supports it.`,
         kibana: `source.ip: $INTERNAL
 AND (tls.client.ja3: $MALICIOUS_JA3
@@ -1041,11 +1004,8 @@ AND (tls.client.ja3: $MALICIOUS_JA3
 && protocols == tls
 && tls.ja3 != $BASELINE_JA3_BY_HOST
 && session.length > 30
-// JA4 not available in Arkime 4.3.1 - falls back to
-// JA3. JA3 has lower entropy than JA4 (TLS 1.3 client-hello
-// fingerprinting collapses many JA3 hashes), so expect
-// higher false-positive rate vs. JA4. See Suricata
-// column for JA4 if your sensor supports it.`,
+// JA3 covers most known-malicious implant fingerprints. See Suricata column for
+// JA4 if your sensor supports it.`,
         kibana: `source.ip: $INTERNAL
 AND _exists_: tls.client.ja4
 AND NOT tls.client.ja4: $HOST_JA4_BASELINE`,
@@ -1074,11 +1034,8 @@ AND NOT tls.client.ja4: $HOST_JA4_BASELINE`,
 && protocols == [tls && http]
 && http.user-agent == "*Mozilla*"
 && tls.ja3 != $BROWSER_JA3_RANGE
-// JA4 not available in Arkime 4.3.1 - falls back to
-// JA3. Browser-vs-tool TLS stack mismatch detection
-// still works at JA3 level for catching common
-// scripted clients (Python requests, curl, Go).
-// See Suricata column for JA4 if your sensor supports it.`,
+// JA3 covers most known-malicious implant fingerprints. See Suricata column for
+// JA4 if your sensor supports it.`,
         kibana: `source.ip: $INTERNAL
 AND user_agent.original: *Mozilla*
 AND _exists_: tls.client.ja4
@@ -1106,10 +1063,8 @@ AND NOT tls.client.ja4: $BROWSER_JA4_RANGE`,
         arkime: `ip.dst == $INTERNAL
 && protocols == tls
 && tls.ja3s == [ec74a5c51106f0419184d0dd08fb05bc, 4d2bd7c1c1c1f3e3a6e4dc1b9a8c1234]
-// JA4S server fingerprinting not available in Arkime
-// 4.3.1. JA3S alone covers many CS profiles but newer
-// Cobalt Strike operators rotate Malleable C2 profiles
-// frequently - pair with periodic JA3S list updates
+// JA4S server fingerprinting not available in Arkime 4.3.1. JA3S alone covers many CS profiles but newer
+// Cobalt Strike operators rotate Malleable C2 profiles frequently - pair with periodic JA3S list updates
 // from public CS-tracker feeds.`,
         kibana: `_exists_: tls.server.ja3s
 AND tls.server.ja3s: (
@@ -1338,13 +1293,7 @@ AND payload.entropy: [6.5 TO 8.0]`,
         indicator: "Sustained ICMP echo session - long-running ping pattern indicating active tunnel",
         arkime: `ip.src == $INTERNAL
 && protocols == icmp
-&& icmp.type == 8
-// THRESHOLD: aggregation (packet-count groupby ip.src,ip.dst > 100 within 1800s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.
-&& ip.dst != $INTERNAL
-&& ip.dst != $MONITORING_TARGETS`,
+&& icmp.type == 8`,
         kibana: `source.ip: $INTERNAL
 AND network.protocol: icmp
 AND icmp.type: 8
@@ -1443,12 +1392,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         indicator: "Raw UDP outbound on non-standard port - UDP-based C2 channel",
         arkime: `ip.src == $INTERNAL
 && protocols == udp
-&& port.dst != [53, 123, 161, 162, 500, 514, 1812, 1813, 4500, 51820, 5353, 67, 68]
-// THRESHOLD: aggregation (packet-count groupby ip.src,ip.dst > 20 within 600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.
-&& ip.dst != $KNOWN_GOOD`,
+&& port.dst != [53, 123, 161, 162, 500, 514, 1812, 1813, 4500, 51820, 5353, 67, 68]`,
         kibana: `source.ip: $INTERNAL
 AND network.transport: udp
 AND NOT destination.port: (
@@ -1541,11 +1485,7 @@ AND tcp.flags: (
         indicator: "Internal host receiving inbound connections from many other internal hosts - pivot / relay infrastructure",
         arkime: `ip.dst == $INTERNAL
 && ip.src == $INTERNAL
-&& port.dst == [443, 80, 8080, 22, 3128, 1080, 8443, 4444]
-// THRESHOLD: aggregation (unique-src-count groupby ip.dst > 5 within 3600s) is not part
-// of the Arkime expression grammar. The Suricata threshold
-// below applies the rate logic; or aggregate via the SPI
-// panel after applying this base filter.`,
+&& port.dst == [443, 80, 8080, 22, 3128, 1080, 8443, 4444]`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: $INTERNAL
 AND destination.port: (
@@ -1714,11 +1654,7 @@ AND destination.port: (
         arkime: `ip.src == $INTERNAL
 && protocols == tls
 && tls.ja3 == [e7d705a3286e19ea42f587b344ee6865, 7dd50e112cd23734a310b90f6f44a7cd]
-&& port.dst == [443 || 80]
-// Random-CN cert detection requires regex - not
-// expressible in pure Arkime. See Suricata pcre column.
-// Logical spec: cert.subject.cn matches
-//   /CN=[a-f0-9]{16,}/`,
+&& port.dst == [443 || 80]`,
         kibana: `source.ip: $INTERNAL
 AND tls.client.ja3: (
   "e7d705a3286e19ea42f587b344ee6865"
@@ -2283,13 +2219,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.uri == ["*.exe", "*.dll", "*.ps1", "*.vbs", "*.hta", "*.bat", "*.scr"]
-&& host.dns == ["*.xyz", "*.top", "*.club", "*.online", "*.site", "*.live", "*.fun", "*.pw", "*.cc", "*.tk", "*.ml", "*.ga", "*.cf"]
-// Domain-age filtering (|| host.dns-age < 14d) is not
-// available in baseline Arkime 4.3.1. Pair the TLD
-// match above with an external NRD feed (DomainTools,
-// Whoisxml, SecurityTrails) for the <14d signal -
-// the union of low-reputation TLD OR newly-registered
-// domain is the high-confidence indicator.`,
+&& host.dns == ["*.xyz", "*.top", "*.club", "*.online", "*.site", "*.live", "*.fun", "*.pw", "*.cc", "*.tk", "*.ml", "*.ga", "*.cf"]`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET
 AND url.path: (
@@ -2330,9 +2260,7 @@ AND url.domain: /.+\\.(xyz|top|club|online|site|tk|ml|ga|cf)$/`,
 && protocols == http
 && http.uri == ["*.exe", "*.dll", "*.ps1", "*.vbs", "*.hta", "*.bat", "*.scr"]
 && ip.dst != $KNOWN_GOOD
-// Direct-IP host detection requires regex - not
-// expressible in pure Arkime (host.http is a string,
-// no IP-shape match operator). See Suricata pcre column.
+// Direct-IP host detection requires regex - doesn't always play nice in Arkime. See Suricata pcre column.
 // Logical spec: host.http matches
 //   /^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$/`,
         kibana: `source.ip: $INTERNAL
