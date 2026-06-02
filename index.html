@@ -18,7 +18,9 @@
   #tactic-search:focus { border-color: var(--accent2); }
   #tactic-search::placeholder { color: var(--text3); }
   .section-label { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; padding: 20px 20px 8px; max-width: 1200px; margin: 0 auto; display: block; }
-  .tactic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; padding: 0 20px 28px; max-width: 1200px; margin: 0 auto; }
+  .tactic-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 0 20px 28px; max-width: 1200px; margin: 0 auto; }
+  @media (max-width: 900px) { .tactic-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px) { .tactic-grid { grid-template-columns: 1fr; } }
   .tactic-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; text-decoration: none; transition: all .2s; display: block; }
   .tactic-card:hover { background: var(--bg3); transform: translateY(-2px); }
   .tactic-card.soon { opacity: .4; pointer-events: none; }
@@ -29,7 +31,9 @@
   .card-pill { display: inline-block; font-family: var(--mono); font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px; margin-bottom: 10px; }
 
   .info-section { max-width: 1200px; margin: 16px auto 0; padding: 0 20px 32px; }
-  .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  @media (max-width: 900px) { .info-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px) { .info-grid { grid-template-columns: 1fr; } }
   .info-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
   .info-card h3 { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; }
   .info-card p { font-size: 12px; color: var(--text2); line-height: 1.65; margin: 0 0 8px; }
@@ -55,10 +59,6 @@
   </div>
   <div class="index-title">MITRE ATT&amp;CK Network Analyst Reference</div>
   <div class="index-sub">Network analyst threat hunting: indicators, detection syntax, and APT attribution across the attack lifecycle</div>
-  <div class="mode-toggle" id="index-mode-toggle" title="Air-gapped: off-network indicators are tripwires that should never fire.&#10;Connected: those indicators are valid detection targets." style="margin: 18px auto 0;">
-    <button class="mode-opt" data-mode="airgap">Air-gapped</button>
-    <button class="mode-opt" data-mode="connected">Connected</button>
-  </div>
 </div>
 
 <span class="section-label">Tactics</span>
@@ -132,7 +132,7 @@
     <div class="info-card">
       <h3>What this is</h3>
       <p>A network threat hunting reference covering eight MITRE ATT&amp;CK tactics across the intrusion lifecycle. Every indicator includes paste-ready query syntax for <strong>Arkime</strong>, <strong>Kibana (KQL)</strong>, and <strong>Suricata</strong>, plus operational notes and APT attribution context.</p>
-      <p>Works on both air-gapped and connected networks. Use the <strong>Air-gapped / Connected</strong> toggle above (and in each tactic-page header) to set your environment - it changes how off-network indicators are presented.</p>
+      <p>Works on both air-gapped and connected networks. Use the <strong>Air-gapped / Connected</strong> toggle in each tactic-page header to set your environment - it changes how off-network indicators are presented.</p>
     </div>
 
     <div class="info-card">
@@ -198,27 +198,5 @@
 </footer>
 
 <script src="js/index.js"></script>
-<script>
-  // Operating-mode toggle on the landing page (shares localStorage key with tactic pages)
-  (function () {
-    var KEY = 'cpt_hunt_mode';
-    var wrap = document.getElementById('index-mode-toggle');
-    if (!wrap) return;
-    function current() { return localStorage.getItem(KEY) === 'connected' ? 'connected' : 'airgap'; }
-    function paint() {
-      var m = current();
-      wrap.querySelectorAll('.mode-opt').forEach(function (b) {
-        b.classList.toggle('active', b.dataset.mode === m);
-      });
-    }
-    wrap.querySelectorAll('.mode-opt').forEach(function (b) {
-      b.addEventListener('click', function () {
-        localStorage.setItem(KEY, b.dataset.mode === 'connected' ? 'connected' : 'airgap');
-        paint();
-      });
-    });
-    paint();
-  })();
-</script>
 </body>
 </html>
