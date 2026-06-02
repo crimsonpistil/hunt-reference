@@ -188,6 +188,7 @@ AND dns.question.type: "AXFR"`,
         sub: "T1018 - SMB-Based Discovery",
         indicator: "SMB connection burst from single source - host enumeration via SMB probes",
         arkime: `ip.src == $INTERNAL
+&& ip.src != $ALLOWED_SMB_CLIENTS
 && port.dst == 445
 && protocols == smb`,
         kibana: `source.ip: $INTERNAL
@@ -380,7 +381,7 @@ AND network.packets < 5`,
         arkime: `ip.src == $INTERNAL
 && ip.src != $WEB_CLIENTS
 && protocols == http
-&& http.method == [HEAD || OPTIONS]
+&& http.method == [HEAD, OPTIONS]
 && session.length < 5`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $WEB_CLIENTS
@@ -504,11 +505,11 @@ AND dcerpc.opnum: (15 OR 16)`,
         sub: "T1135 - SMB Tree Connect Enumeration",
         indicator: "SMB tree connect to many distinct share names - share enumeration via tree connect attempts",
         arkime: `ip.src == $INTERNAL
+&& ip.src != $ALLOWED_SMB_CLIENTS
 && port.dst == 445
 && protocols == smb`,
         kibana: `source.ip: $INTERNAL
-AND destination.port: 445
-AND zeek.smb_mapping.share_type: "DISK"`,
+AND destination.port: 445`,
         suricata: `alert tcp $HOME_NET any
   -> $HOME_NET 445
   (msg:"TA0007 T1135 SMB tree
@@ -521,7 +522,7 @@ AND zeek.smb_mapping.share_type: "DISK"`,
     count 5, seconds 60;
   classtype:attempted-recon;
   sid:9113502; rev:1;)`,
-        notes: "Some share enumeration tools work by attempting tree connects to common share names (ADMIN$, C$, IPC$, NETLOGON, SYSVOL, plus dictionary-based guesses like 'shared', 'public', 'data', 'backup'). The pattern: rapid sequence of tree_connect attempts with different UNC paths from one source to one target. Successful connects indicate accessible shares; access denied responses indicate the share exists but isn't accessible. Both responses are useful intelligence to the adversary. Zeek smb_files.log and smb.log capture tree connect operations. The signal is per-(src,dst) share count - 5+ distinct shares in a minute is anomalous (legitimate users typically connect to known shares, not enumerate many). Combine with successful-vs-denied response distribution: many denied = brute-force enumeration.",
+        notes: "Source-scope this query with ip.src != $ALLOWED_SMB_CLIENTS (operator-maintained list of expected SMB-reading hosts e.g. backup servers, monitoring agents) - the default query catches all SMB traffic which will be noisy. If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. Some share enumeration tools work by attempting tree connects to common share names (ADMIN$, C$, IPC$, NETLOGON, SYSVOL, plus dictionary-based guesses like 'shared', 'public', 'data', 'backup'). The pattern: rapid sequence of tree_connect attempts with different UNC paths from one source to one target. Successful connects indicate accessible shares; access denied responses indicate the share exists but isn't accessible. Both responses are useful intelligence to the adversary. Zeek smb_files.log and smb.log capture tree connect operations. The signal is per-(src,dst) share count - 5+ distinct shares in a minute is anomalous (legitimate users typically connect to known shares, not enumerate many). Combine with successful-vs-denied response distribution: many denied = brute-force enumeration.",
         apt: [
           { cls: "apt-mul", name: "Ransomware", note: "Tree connect enumeration in ransomware operations identifying writable shares for staging." },
           { cls: "apt-cn", name: "APT41", note: "Share probing in technology sector operations." },
@@ -603,13 +604,11 @@ AND smb.user.name: ""`,
         sub: "T1135 - Bulk File Enumeration",
         indicator: "Bulk file share index access - File explorer-style directory enumeration across many shares",
         arkime: `ip.src == $INTERNAL
+&& ip.src != $ALLOWED_SMB_CLIENTS
 && port.dst == 445
 && protocols == smb`,
         kibana: `source.ip: $INTERNAL
-AND destination.port: 445
-AND zeek.smb_files.action: (
-  "SMB_FILE_OPEN" OR "SMB_FILE_READ"
-)`,
+AND destination.port: 445`,
         suricata: `alert tcp $HOME_NET any
   -> $HOME_NET 445
   (msg:"TA0007 T1135 SMB directory
@@ -622,7 +621,7 @@ AND zeek.smb_files.action: (
     count 50, seconds 600;
   classtype:attempted-recon;
   sid:9113505; rev:1;)`,
-        notes: "After identifying accessible shares, adversaries enumerate their contents - looking for credential files, configuration data, password lists, source code, customer databases. Tools: PowerShell Get-ChildItem -Recurse against UNC paths, Snaffler, manyriahs, custom scripts. The SMB protocol primitive is FIND_FIRST2/FIND_NEXT2 (SMB1) or QUERY_DIRECTORY (SMB2). The signal: rapid sequence of directory queries across many distinct paths from one source. Legitimate file usage typically focuses on a small set of paths at a time; rapid enumeration across 50+ paths in 10 minutes is reconnaissance. Snaffler in particular is increasingly common - it specifically searches for files matching credential patterns (web.config, *.kdbx, id_rsa, .git, unattend.xml). Pair with EDR.",
+        notes: "Source-scope this query with ip.src != $ALLOWED_SMB_CLIENTS (operator-maintained list of expected SMB-reading hosts e.g. backup servers, monitoring agents) - the default query catches all SMB traffic which will be noisy. If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. After identifying accessible shares, adversaries enumerate their contents - looking for credential files, configuration data, password lists, source code, customer databases. Tools: PowerShell Get-ChildItem -Recurse against UNC paths, Snaffler, manyriahs, custom scripts. The SMB protocol primitive is FIND_FIRST2/FIND_NEXT2 (SMB1) or QUERY_DIRECTORY (SMB2). The signal: rapid sequence of directory queries across many distinct paths from one source. Legitimate file usage typically focuses on a small set of paths at a time; rapid enumeration across 50+ paths in 10 minutes is reconnaissance. Snaffler in particular is increasingly common - it specifically searches for files matching credential patterns (web.config, *.kdbx, id_rsa, .git, unattend.xml). Pair with EDR.",
         apt: [
           { cls: "apt-mul", name: "Ransomware", note: "Universal - pre-encryption file inventory and exfil target identification." },
           { cls: "apt-cn", name: "APT41", note: "Bulk enumeration in data theft operations." },
@@ -635,11 +634,11 @@ AND zeek.smb_files.action: (
         sub: "T1135 - DFS Namespace Discovery",
         indicator: "DFS namespace enumeration - DFS referral query patterns",
         arkime: `ip.src == $INTERNAL
+&& ip.src != $ALLOWED_SMB_CLIENTS
 && port.dst == 445
 && protocols == smb`,
         kibana: `source.ip: $INTERNAL
-AND destination.port: 445
-AND zeek.smb_cmd.command: "get_dfs_referral"`,
+AND destination.port: 445`,
         suricata: `alert tcp $HOME_NET any
   -> $HOME_NET 445
   (msg:"TA0007 T1135 DFS referral
@@ -651,7 +650,7 @@ AND zeek.smb_cmd.command: "get_dfs_referral"`,
     count 10, seconds 300;
   classtype:attempted-recon;
   sid:9113506; rev:1;)`,
-        notes: "DFS (Distributed File System) provides a unified namespace across multiple file servers - \\\\domain.local\\dfs\\... resolves to the actual file server hosting the content. Adversaries query DFS namespaces to discover the full set of file servers and shares available across the domain. The SMB primitive is GET_DFS_REFERRAL - a specific SMB command type that's rarely used by typical clients (browsers and Office apps issue these only when accessing DFS-published paths). The signal: DFS referral burst from one source. Legitimate DFS clients issue referrals occasionally during access; sustained enumeration is anomalous. Particularly relevant in enterprises with extensive DFS deployments - discovery via DFS is much faster than manual share-by-share enumeration. Zeek smb.log captures DFS referral commands.",
+        notes: "Source-scope this query with ip.src != $ALLOWED_SMB_CLIENTS (operator-maintained list of expected SMB-reading hosts e.g. backup servers, monitoring agents) - the default query catches all SMB traffic which will be noisy. If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. DFS (Distributed File System) provides a unified namespace across multiple file servers - \\\\domain.local\\dfs\\... resolves to the actual file server hosting the content. Adversaries query DFS namespaces to discover the full set of file servers and shares available across the domain. The SMB primitive is GET_DFS_REFERRAL - a specific SMB command type that's rarely used by typical clients (browsers and Office apps issue these only when accessing DFS-published paths). The signal: DFS referral burst from one source. Legitimate DFS clients issue referrals occasionally during access; sustained enumeration is anomalous. Particularly relevant in enterprises with extensive DFS deployments - discovery via DFS is much faster than manual share-by-share enumeration. Zeek smb.log captures DFS referral commands.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "DFS-based discovery in enterprise environments with extensive DFS deployments." },
           { cls: "apt-cn", name: "APT41", note: "DFS enumeration in operations against large enterprise targets." },
@@ -1147,7 +1146,6 @@ AND NOT dns.question.name: *.$LOCAL_DOMAIN`,
 && protocols == smb`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
-AND zeek.smb_files.action: "SMB_FILE_OPEN"
 AND event.duration > 300000000
 AND destination.bytes > 100000`,
         suricata: `alert tcp $HOME_NET any
@@ -1162,7 +1160,7 @@ AND destination.bytes > 100000`,
     count 200, seconds 300;
   classtype:attempted-recon;
   sid:9108301; rev:1;)`,
-        notes: "After identifying accessible shares (T1135), adversaries enumerate their contents recursively - finding sensitive files, source code, credentials, customer data. The network signal: sustained SMB sessions with continuous QUERY_DIRECTORY commands (SMB2) over many minutes, with substantial response data (directory listings). Tools: PowerShell Get-ChildItem -Recurse against UNC paths, Snaffler (specifically searches for credential-pattern files), Manyhats/Snaffler-derivatives, robocopy /L (list mode). Distinguishing from legitimate file usage: legitimate users open specific files; adversaries walk entire directory trees. Sustained high-volume query_directory traffic is the hallmark. Snaffler's pattern is particularly distinctive: rapid directory enumeration with file extension/name pattern matching against a wordlist. Pair with EDR.",
+        notes: "Source-scope this query with ip.src != $ALLOWED_SMB_CLIENTS (operator-maintained list of expected SMB-reading hosts e.g. backup servers, monitoring agents) - the default query catches all SMB traffic which will be noisy. If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. After identifying accessible shares (T1135), adversaries enumerate their contents recursively - finding sensitive files, source code, credentials, customer data. The network signal: sustained SMB sessions with continuous QUERY_DIRECTORY commands (SMB2) over many minutes, with substantial response data (directory listings). Tools: PowerShell Get-ChildItem -Recurse against UNC paths, Snaffler (specifically searches for credential-pattern files), Manyhats/Snaffler-derivatives, robocopy /L (list mode). Distinguishing from legitimate file usage: legitimate users open specific files; adversaries walk entire directory trees. Sustained high-volume query_directory traffic is the hallmark. Snaffler's pattern is particularly distinctive: rapid directory enumeration with file extension/name pattern matching against a wordlist. Pair with EDR.",
         apt: [
           { cls: "apt-mul", name: "Ransomware", note: "Universal - pre-encryption file inventory and exfil target identification." },
           { cls: "apt-cn", name: "APT41", note: "Bulk file enumeration in data theft operations." },
@@ -1180,11 +1178,10 @@ AND destination.bytes > 100000`,
     rows: [
       {
         sub: "T1016 - External IP Lookup",
-        indicator: "External IP lookup from non-browser process - adversary self-IP discovery",
+        indicator: "[OFF-NET TRIPWIRE] External IP lookup from non-browser process - adversary self-IP discovery",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& host.http == ["*icanhazip.com*", "*ifconfig.me*", "*api.ipify.org*", "*checkip.amazonaws.com*", "*ipinfo.io*", "*ip-api.com*", "*whatismyip.com*"]
-&& process != ["*chrome*", "*firefox*", "*edge*", "*safari*"]`,
+&& host.http == ["*icanhazip.com*", "*ifconfig.me*", "*api.ipify.org*", "*checkip.amazonaws.com*", "*ipinfo.io*", "*ip-api.com*", "*whatismyip.com*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   *icanhazip.com*
@@ -1208,7 +1205,7 @@ AND url.domain: (
   http.header;
   classtype:trojan-activity;
   sid:9101601; rev:1;)`,
-        notes: "Adversaries use IP-lookup services to discover their own external IP - needed for C2 callback configuration, geo-awareness, and avoiding self-targeting. Same indicator surfaces in T1568.003 (DNS Calculation precursor) but the use case here is different: T1016 is general network configuration awareness, T1568.003 is C2 endpoint derivation. Process correlation distinguishes legitimate browser traffic (a user clicking 'what's my IP') from implant self-discovery (PowerShell, custom binary, python-requests). The detection has minimal false positives once browser exclusions are applied.",
+        notes: "For process attribution, pivot to Kibana with Sysmon Event 3 filtered by the destination IP/port from this session - read winlog.event_data.Image for the culprit process. [AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Adversaries use IP-lookup services to discover their own external IP - needed for C2 callback configuration, geo-awareness, and avoiding self-targeting. Same indicator surfaces in T1568.003 (DNS Calculation precursor) but the use case here is different: T1016 is general network configuration awareness, T1568.003 is C2 endpoint derivation. Process correlation distinguishes legitimate browser traffic (a user clicking 'what's my IP') from implant self-discovery (PowerShell, custom binary, python-requests). The detection has minimal false positives once browser exclusions are applied.",
         apt: [
           { cls: "apt-ru", name: "APT28", note: "External IP lookup documented in espionage operations." },
           { cls: "apt-kp", name: "Lazarus", note: "IP awareness in financial sector targeting." },
@@ -1222,8 +1219,7 @@ AND url.domain: (
         indicator: "Public cloud metadata service query - IMDS access from compromised cloud workload",
         arkime: `ip.src == $INTERNAL
 && ip.dst == [169.254.169.254, fd00:ec2::254]
-&& protocols == http
-&& process != ["*cloud-init*", "*aws-*", "*azure-*", "*gcp-*"]`,
+&& protocols == http`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: (
   "169.254.169.254"
@@ -1238,7 +1234,7 @@ AND network.protocol: http`,
   flow:established,to_server;
   classtype:attempted-recon;
   sid:9101602; rev:1;)`,
-        notes: "Cloud Instance Metadata Service (IMDS) at 169.254.169.254 provides instance configuration data including (in vulnerable IMDSv1 configs) instance role temporary credentials - a critical privilege escalation primitive in cloud environments. Adversaries who land on a cloud workload (EC2, Azure VM, GCP instance) immediately query IMDS to extract credentials, security group rules, network interface info, and user-data scripts (often containing secrets). Detection: HTTP traffic to 169.254.169.254 from non-cloud-init processes. AWS strongly recommends IMDSv2 (which requires session tokens and prevents SSRF abuse) - environments still on IMDSv1 are particularly vulnerable. The attack pattern is documented extensively in cloud security research (Capital One breach 2019, numerous SSRF-to-credential-theft incidents).",
+        notes: "For process attribution, pivot to Kibana with Sysmon Event 3 filtered by the destination IP/port from this session - read winlog.event_data.Image for the culprit process. Cloud Instance Metadata Service (IMDS) at 169.254.169.254 provides instance configuration data including (in vulnerable IMDSv1 configs) instance role temporary credentials - a critical privilege escalation primitive in cloud environments. Adversaries who land on a cloud workload (EC2, Azure VM, GCP instance) immediately query IMDS to extract credentials, security group rules, network interface info, and user-data scripts (often containing secrets). Detection: HTTP traffic to 169.254.169.254 from non-cloud-init processes. AWS strongly recommends IMDSv2 (which requires session tokens and prevents SSRF abuse) - environments still on IMDSv1 are particularly vulnerable. The attack pattern is documented extensively in cloud security research (Capital One breach 2019, numerous SSRF-to-credential-theft incidents).",
         apt: [
           { cls: "apt-mul", name: "Scattered Spider", note: "IMDS abuse for cloud credential theft documented in CISA AA23-320A operations." },
           { cls: "apt-cn", name: "APT41", note: "Cloud workload IMDS abuse in operations against cloud-heavy targets." },

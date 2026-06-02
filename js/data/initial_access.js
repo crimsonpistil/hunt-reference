@@ -14,7 +14,7 @@ const DATA = [
 && protocols == http
 && http.method == POST
 && http.uri == ["*/login*", "*/auth*", "*/cgi-bin/luci*", "*/api/v1/auth*", "*/admin*"]
-&& http.reqbody == ["*admin=admin*", "*username=admin&password=admin*", "*user=admin&pass=admin*", "*username=root&password=root*", "*password=1234*", "*password=default*", "*password=password*"]`,
+&& http.reqbody == ["*admin=admin*", "*username=admin&password=admin*", "*user=admin&pass=admin*", "*username=root&password=root*", "*password=1234*", "*password=default*", "*password=password*", "*\\"password\\":\\"admin\\"*", "*\\"password\\":\\"root\\"*", "*\\"password\\":\\"password\\"*", "*\\"password\\":\\"1234\\"*", "*\\"password\\":\\"default\\"*", "*\\"username\\":\\"admin\\"*", "*\\"user\\":\\"admin\\"*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method: POST
 AND url.path: (
@@ -29,6 +29,12 @@ AND http.request.body: (
   OR *password=1234*
   OR *password=default*
   OR *password=password*
+  OR *"password":"admin"*
+  OR *"password":"root"*
+  OR *"password":"password"*
+  OR *"password":"1234"*
+  OR *"password":"default"*
+  OR *"username":"admin"*
 )`,
         suricata: `alert http $EXTERNAL_NET any
   -> $HOME_NET any
@@ -55,15 +61,15 @@ AND http.request.body: (
       },
       {
         sub: "T1078.002 - Domain Accounts",
-        indicator: "Kerberos authentication from external IP - domain account used outside the network perimeter",
+        indicator: "[OFF-NET TRIPWIRE] Kerberos authentication from external IP - domain account used outside the network perimeter",
         arkime: `ip.src != $INTERNAL
-&& ip.src != $KNOWN_VPN_RANGES
-&& port.dst == [88 || 464]
+&& ip.src != $EXTERNAL_VPN_RANGES
+&& port.dst == [88, 464]
 && protocols == kerberos
 && databytes.src > 0
 && databytes.dst > 0`,
         kibana: `NOT source.ip: $INTERNAL
-AND NOT source.ip: $KNOWN_VPN_RANGES
+AND NOT source.ip: $EXTERNAL_VPN_RANGES
 AND destination.port: (88 OR 464)
 AND network.transport: (tcp OR udp)
 AND source.bytes > 0`,
@@ -76,7 +82,7 @@ AND source.bytes > 0`,
   content:"|6a|"; depth:1;
   classtype:policy-violation;
   sid:9107802; rev:1;)`,
-        notes: "Kerberos (TCP/UDP 88) should never be reachable from external IPs - it is an internal-only authentication protocol. External Kerberos connections indicate either a perimeter misconfiguration (DC exposed to internet) or an adversary with network-level access routing traffic through a compromised internal host. Content '|6a|' matches the Kerberos AS-REQ message tag. If your DC's port 88 is reachable externally this is a critical misconfiguration. Zeek kerberos.log captures all Kerberos AS-REQ and TGS-REQ details including CNameString (username) and error codes.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Kerberos (TCP/UDP 88) should never be reachable from external IPs - it is an internal-only authentication protocol. External Kerberos connections indicate either a perimeter misconfiguration (DC exposed to internet) or an adversary with network-level access routing traffic through a compromised internal host. Content '|6a|' matches the Kerberos AS-REQ message tag. If your DC's port 88 is reachable externally this is a critical misconfiguration. Zeek kerberos.log captures all Kerberos AS-REQ and TGS-REQ details including CNameString (username) and error codes.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Uses stolen domain credentials to authenticate via Kerberos, with external Kerberos authentication visible when adversaries have established network-level access." },
           { cls: "apt-cn", name: "APT10", note: "Used domain credentials stolen from MSP environments to authenticate to customer AD environments via Kerberos." },
@@ -91,7 +97,7 @@ AND source.bytes > 0`,
 AND http.request.headers.authorization: (
   *NTLM* OR *Negotiate TlRM*
 )
-AND NOT source.ip: $KNOWN_PARTNERS
+AND NOT source.ip: $ALLOWED_PARTNERS
 AND destination.port: (
   445 OR 80 OR 443
 )`,
@@ -194,16 +200,16 @@ AND destination.bytes > 0`,
       },
       {
         sub: "T1078.004 - Cloud Accounts",
-        indicator: "Cloud service account / API key use from unexpected IP - stolen key or token abuse",
+        indicator: "[OFF-NET TRIPWIRE] Cloud service account / API key use from unexpected IP - stolen key or token abuse",
         arkime: `ip.src != $INTERNAL
-&& ip.src != $KNOWN_CI_CD_IPS
+&& ip.src != $EXTERNAL_CI_CD
 && protocols == https
 && host.http == ["*sts.amazonaws.com*", "*oauth2.googleapis.com*", "*login.microsoftonline.com*", "*iam.amazonaws.com*"]
 && http.method == POST
 && http.reqbody == ["*grant_type=client_credentials*", "*grant_type=urn:ietf:params*", "*Action=AssumeRole*", "*Action=GetSessionToken*"]
-&& ip.src != $KNOWN_GOOD`,
+&& ip.src != $ALLOWED_DEFAULTS`,
         kibana: `NOT source.ip: $INTERNAL
-AND NOT source.ip: $KNOWN_CI_CD_IPS
+AND NOT source.ip: $EXTERNAL_CI_CD
 AND http.request.method: POST
 AND url.domain: (
   *sts.amazonaws.com*
@@ -235,7 +241,7 @@ AND http.request.body: (
   http.request_body;
   classtype:policy-violation;
   sid:9107806; rev:1;)`,
-        notes: "Cloud service accounts and API keys are long-lived credentials that don't require MFA - a stolen key works indefinitely until rotated. AWS STS AssumeRole and GetSessionToken from unexpected IPs indicate stolen IAM credentials. OAuth2 client_credentials grant from unknown IPs indicates stolen service account credentials. Requires egress SSL inspection to see request bodies against cloud STS endpoints. Correlate with your cloud provider's audit logs (CloudTrail, Azure Activity, GCP Audit) - network layer detection catches the authentication attempt; cloud audit logs tell you what the account did afterward.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Cloud service accounts and API keys are long-lived credentials that don't require MFA - a stolen key works indefinitely until rotated. AWS STS AssumeRole and GetSessionToken from unexpected IPs indicate stolen IAM credentials. OAuth2 client_credentials grant from unknown IPs indicates stolen service account credentials. Requires egress SSL inspection to see request bodies against cloud STS endpoints. Correlate with your cloud provider's audit logs (CloudTrail, Azure Activity, GCP Audit) - network layer detection catches the authentication attempt; cloud audit logs tell you what the account did afterward.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Uses stolen OAuth tokens and service account credentials to access cloud environments, documented in CISA and NSA advisories on APT29 cloud targeting." },
           { cls: "apt-mul", name: "Scattered Spider", note: "Steals cloud API keys and service account credentials via social engineering then accesses cloud environments from adversary-controlled IPs." },
@@ -250,13 +256,13 @@ AND http.request.body: (
 && protocols == https
 && http.method == POST
 && http.reqbody == ["*SAMLResponse=*", "*grant_type=urn:ietf:params:oauth:grant-type:saml2-bearer*"]
-&& host.http != $KNOWN_IDPS
+&& host.http != $ALLOWED_IDPS
 && databytes.src > 500`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method: POST
 AND http.request.body:
   *SAMLResponse=*
-AND NOT url.domain: $KNOWN_IDPS
+AND NOT url.domain: $ALLOWED_IDPS
 AND source.bytes > 500`,
         suricata: `alert http $EXTERNAL_NET any
   -> $EXTERNAL_NET 443
@@ -285,9 +291,9 @@ AND source.bytes > 500`,
     rows: [
       {
         sub: "T1091 - Post-USB Execution",
-        indicator: "New outbound beacon from host within 5 minutes of USB device insertion event",
+        indicator: "[OFF-NET TRIPWIRE] New outbound beacon from host within 5 minutes of USB device insertion event",
         arkime: `ip.src == $INTERNAL
-&& ip.dst != $KNOWN_GOOD
+&& ip.dst != $ALLOWED_DEFAULTS
 && port.dst == [443, 80, 8080, 53, 4444]
 && packets.src > 5
 && packets.src < 50
@@ -298,7 +304,7 @@ AND source.bytes > 500`,
 // (USB device insertion). The <300s post-insertion
 // window must be applied at SIEM correlation time.`,
         kibana: `source.ip: $INTERNAL
-AND NOT destination.ip: $KNOWN_GOOD
+AND NOT destination.ip: $ALLOWED_DEFAULTS
 AND destination.port: (
   443 OR 80 OR 8080
   OR 53 OR 4444
@@ -317,7 +323,7 @@ AND event.duration > 60000000`,
     count 1, seconds 300;
   classtype:trojan-activity;
   sid:9109101; rev:1;)`,
-        notes: "Detection requires correlation between Windows Event 6416 (USB device insertion), Sysmon Event 9 (RawAccessRead on USB), or EDR USB telemetry and subsequent first-seen outbound network connections. The window is short - most USB-borne payloads beacon within seconds of execution. Build per-host network baselines: any new outbound destination IP appearing within 5 minutes of a USB event from a host that previously didn't communicate with that destination is a strong signal. Air-gapped or OT networks: any outbound from a host that just had a USB inserted is itself anomalous regardless of destination.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Detection requires correlation between Windows Event 6416 (USB device insertion), Sysmon Event 9 (RawAccessRead on USB), or EDR USB telemetry and subsequent first-seen outbound network connections. The window is short - most USB-borne payloads beacon within seconds of execution. Build per-host network baselines: any new outbound destination IP appearing within 5 minutes of a USB event from a host that previously didn't communicate with that destination is a strong signal. Air-gapped or OT networks: any outbound from a host that just had a USB inserted is itself anomalous regardless of destination.",
         apt: [
           { cls: "apt-ru", name: "Sandworm", note: "Has used USB-based propagation in operations targeting Ukrainian critical infrastructure, including OT and ICS environments where USB is often the only ingress vector." },
           { cls: "apt-cn", name: "Mustang Panda", note: "Extensively uses USB-based propagation (PlugX variant) targeting government and NGO sectors across Asia-Pacific, with infected USBs delivering payloads that immediately establish C2 beacons." },
@@ -360,7 +366,7 @@ AND network.transport: tcp`,
       {
         sub: "T1091 - Worm Propagation",
         indicator: "SMB write to ADMIN$ / C$ share from non-admin host - payload drop via removable media propagation",
-        arkime: `ip.src == $USER_VLAN
+        arkime: `ip.src == $WORKSTATIONS
 && port.dst == 445
 && protocols == smb
 && smb.share == ["*ADMIN$*", "*C$*", "*IPC$*"]
@@ -371,14 +377,13 @@ AND network.transport: tcp`,
 // command-type filtering, use Zeek smb_files.log action
 // field (SMB_FILE_WRITE) via SIEM.
 && ip.dst == $INTERNAL`,
-        kibana: `source.ip: $USER_VLAN
+        kibana: `source.ip: $WORKSTATIONS
 AND destination.ip: $INTERNAL
 AND destination.port: 445
 AND smb.share: (
   *ADMIN$* OR *C$* OR *IPC$*
-)
-AND zeek.smb_files.action: ("SMB_FILE_WRITE" OR "SMB_FILE_OPEN")`,
-        suricata: `alert tcp $USER_VLAN any
+)`,
+        suricata: `alert tcp $WORKSTATIONS any
   -> $HOME_NET 445
   (msg:"TA0001 T1091 SMB write to
     admin share from user VLAN
@@ -388,7 +393,7 @@ AND zeek.smb_files.action: ("SMB_FILE_WRITE" OR "SMB_FILE_OPEN")`,
   content:"ADMIN$"; nocase;
   classtype:trojan-activity;
   sid:9109103; rev:1;)`,
-        notes: "USB-borne worms drop their payload to administrative shares (ADMIN$ = C:\\Windows on remote host, C$ = C:\\, IPC$ = inter-process communication) on neighboring systems. End-user workstations should never write to ADMIN$ or C$ on other workstations - this is admin tooling territory only. Detection: any SMB CREATE or WRITE operation targeting ADMIN$/C$ from a user VLAN source. Legitimate use cases (Group Policy, SCCM, RMM tools) come from known admin server VLANs, not user workstations.",
+        notes: "If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. USB-borne worms drop their payload to administrative shares (ADMIN$ = C:\\Windows on remote host, C$ = C:\\, IPC$ = inter-process communication) on neighboring systems. End-user workstations should never write to ADMIN$ or C$ on other workstations - this is admin tooling territory only. Detection: any SMB CREATE or WRITE operation targeting ADMIN$/C$ from a user VLAN source. Legitimate use cases (Group Policy, SCCM, RMM tools) come from known admin server VLANs, not user workstations.",
         apt: [
           { cls: "apt-mul", name: "Stuxnet", note: "Wrote payloads to ADMIN$ shares on neighboring Windows systems as its primary lateral propagation method following USB initial access." },
           { cls: "apt-mul", name: "Raspberry Robin", note: "Criminal worm with documented use by EvilCorp/Indrik Spider that propagates via USB and uses SMB-based lateral movement to ADMIN$ shares." },
@@ -399,18 +404,18 @@ AND zeek.smb_files.action: ("SMB_FILE_WRITE" OR "SMB_FILE_OPEN")`,
       {
         sub: "T1091 - Air-Gap Bridging",
         indicator: "Network traffic from previously air-gapped / segmented host - USB-borne network bridge",
-        arkime: `ip.src == $AIR_GAPPED_VLAN
+        arkime: `ip.src == $INTERNAL
 && protocols != [arp, dhcp, ntp]
-&& ip.dst != $AIR_GAPPED_VLAN
+&& ip.dst != $INTERNAL
 && databytes.src > 0`,
-        kibana: `source.ip: $AIR_GAPPED_VLAN
-AND NOT destination.ip: $AIR_GAPPED_VLAN
+        kibana: `source.ip: $INTERNAL
+AND NOT destination.ip: $INTERNAL
 AND NOT network.protocol: (
   arp OR dhcp OR ntp
 )
 AND source.bytes > 0`,
-        suricata: `alert ip $AIR_GAPPED_VLAN any
-  -> !$AIR_GAPPED_VLAN any
+        suricata: `alert ip $INTERNAL any
+  -> !$INTERNAL any
   (msg:"TA0001 T1091 Traffic from
     air-gapped VLAN possible USB
     bridging";
@@ -426,12 +431,12 @@ AND source.bytes > 0`,
       },
       {
         sub: "T1091 - Stage-Two Payload",
-        indicator: "Internal host fetching second-stage payload after autorun-pattern execution - LNK / autorun.inf signal",
+        indicator: "[OFF-NET TRIPWIRE] Internal host fetching second-stage payload after autorun-pattern execution - LNK / autorun.inf signal",
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.method == GET
 && http.uri == ["*.bin", "*.dat", "*.exe", "*.dll", "*.ps1", "*.scr"]
-&& ip.dst != $KNOWN_GOOD
+&& ip.dst != $ALLOWED_DEFAULTS
 // Domain-age filtering and USB event correlation are
 // not available in baseline Arkime 4.3.1. Pair this
 // query with external domain-age enrichment for the
@@ -445,7 +450,7 @@ AND url.path: (
   OR *.exe OR *.dll
   OR *.ps1 OR *.scr
 )
-AND NOT destination.ip: $KNOWN_GOOD`,
+AND NOT destination.ip: $ALLOWED_DEFAULTS`,
         suricata: `alert http $HOME_NET any
   -> $EXTERNAL_NET any
   (msg:"TA0001 T1091 Second-stage
@@ -458,7 +463,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
   http.uri;
   classtype:trojan-activity;
   sid:9109105; rev:1;)`,
-        notes: "Modern USB-borne malware often uses LNK files or registered file handlers (autorun.inf is largely deprecated but still abused on legacy systems) that execute a small first-stage downloader. The downloader fetches the actual payload from an external server. Network signal: HTTP GET for an executable, DLL, PowerShell script, or generic binary file from an unfamiliar host within 60 seconds of a USB device event. Raspberry Robin specifically uses .lnk files on USBs that fetch payloads from compromised QNAP devices. User-Agent often reveals the downloader: WinHTTP, BITS/7.5, PowerShell, certutil - these from a workstation right after USB insertion are highly suspicious.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Modern USB-borne malware often uses LNK files or registered file handlers (autorun.inf is largely deprecated but still abused on legacy systems) that execute a small first-stage downloader. The downloader fetches the actual payload from an external server. Network signal: HTTP GET for an executable, DLL, PowerShell script, or generic binary file from an unfamiliar host within 60 seconds of a USB device event. Raspberry Robin specifically uses .lnk files on USBs that fetch payloads from compromised QNAP devices. User-Agent often reveals the downloader: WinHTTP, BITS/7.5, PowerShell, certutil - these from a workstation right after USB insertion are highly suspicious.",
         apt: [
           { cls: "apt-mul", name: "Raspberry Robin", note: "Uses USB-based .lnk file infection followed by HTTP downloads of second-stage payloads - associated with EvilCorp/Indrik Spider and used as a precursor to ransomware deployment." },
           { cls: "apt-cn", name: "Mustang Panda", note: "Uses USB-based LNK propagation followed by HTTP stage-two downloads in operations against government and NGO sectors." },
@@ -475,11 +480,11 @@ AND NOT destination.ip: $KNOWN_GOOD`,
     rows: [
       {
         sub: "T1133 - VPN Anomalies",
-        indicator: "VPN authentication from unexpected geolocation - impossible travel or first-seen country",
+        indicator: "[OFF-NET TRIPWIRE] VPN authentication from unexpected geolocation - impossible travel or first-seen country",
         arkime: `ip.dst == $VPN_SERVERS
 && protocols == [ssl, tls, udp]
 && port.dst == [443, 4433, 8443, 500, 4500, 1194, 1723]
-&& ip.src != $KNOWN_VPN_GEOS
+&& ip.src != $EXTERNAL_VPN_GEOS
 && databytes.src > 0
 && databytes.dst > 0`,
         kibana: `destination.ip: $VPN_SERVERS
@@ -504,7 +509,7 @@ AND source.bytes > 0`,
     count 3, seconds 60;
   classtype:policy-violation;
   sid:9113301; rev:1;)`,
-        notes: "Geolocation-based VPN anomaly detection is most effective when combined with user baseline data - a user who always authenticates from the US suddenly connecting from Eastern Europe or Southeast Asia is high-confidence. Impossible travel: same account authenticating from two geographically distant locations within a timeframe physically impossible for travel (e.g., US and Russia within 2 hours). First-seen country: account authenticating from a country it has never previously used. IKEv2 uses UDP/500 and UDP/4500; SSL VPN uses TCP/443 or TCP/4433; OpenVPN uses UDP or TCP/1194; PPTP uses TCP/1723.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Geolocation-based VPN anomaly detection is most effective when combined with user baseline data - a user who always authenticates from the US suddenly connecting from Eastern Europe or Southeast Asia is high-confidence. Impossible travel: same account authenticating from two geographically distant locations within a timeframe physically impossible for travel (e.g., US and Russia within 2 hours). First-seen country: account authenticating from a country it has never previously used. IKEv2 uses UDP/500 and UDP/4500; SSL VPN uses TCP/443 or TCP/4433; OpenVPN uses UDP or TCP/1194; PPTP uses TCP/1723.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Uses stolen credentials to authenticate to VPN services from adversary-controlled infrastructure, generating impossible travel indicators when the compromised account is also legitimately active." },
           { cls: "apt-cn", name: "APT10", note: "Used stolen VPN credentials to access MSP customer networks during Cloud Hopper, authenticating from unexpected geolocations." },
@@ -518,7 +523,7 @@ AND source.bytes > 0`,
         arkime: `ip.dst == $VPN_SERVERS
 && protocols == tls
 && port.dst == [443, 4433, 8443]
-&& ip.src != $KNOWN_VPN_IPS
+&& ip.src != $EXTERNAL_VPN_IPS
 && databytes.src > 1000
 && databytes.dst > 1000
 // Time-of-day filtering (hour > 22 || hour < 6) is
@@ -531,7 +536,7 @@ AND source.bytes > 0`,
 AND destination.port: (
   443 OR 4433 OR 8443
 )
-AND NOT source.ip: $KNOWN_VPN_IPS
+AND NOT source.ip: $EXTERNAL_VPN_IPS
 AND source.bytes > 1000
 // KQL has no native time-of-day filter. To filter
 // to 22:00-06:00 local, define an Elasticsearch
@@ -662,20 +667,20 @@ AND destination.bytes: [0 TO 3000]`,
       },
       {
         sub: "T1133 - SSH Anonymized Access",
-        indicator: "SSH login from Tor exit node or known proxy / VPS range - anonymized initial access",
+        indicator: "[OFF-NET TRIPWIRE] SSH login from Tor exit node or known proxy / VPS range - anonymized initial access",
         arkime: `ip.src != $INTERNAL
 && port.dst == 22
 && protocols == ssh
-&& ip.src == $TOR_EXIT_NODES
-|| ip.src == $KNOWN_VPS_RANGES
+&& ip.src == $EXTERNAL_TOR_NODES
+|| ip.src == $EXTERNAL_VPS_RANGES
 && databytes.src > 1000
 && databytes.dst > 1000`,
         kibana: `NOT source.ip: $INTERNAL
 AND destination.port: 22
-AND source.ip: $TOR_EXIT_NODES
+AND source.ip: $EXTERNAL_TOR_NODES
 AND source.bytes > 1000
 AND destination.bytes > 1000`,
-        suricata: `alert tcp $TOR_EXIT_NODES any
+        suricata: `alert tcp $EXTERNAL_TOR_NODES any
   -> $HOME_NET 22
   (msg:"TA0001 T1133 SSH login
     from Tor exit node
@@ -684,7 +689,7 @@ AND destination.bytes > 1000`,
   content:"SSH-"; depth:4;
   classtype:policy-violation;
   sid:9113306; rev:1;)`,
-        notes: "Adversaries route SSH initial access through Tor exit nodes or anonymizing VPS infrastructure (DigitalOcean, Vultr, Linode, AWS) to obscure their origin. Maintain a current Tor exit node list (updated daily from dan.me.uk/torlist or similar) in Suricata's $TOR_EXIT_NODES variable. Successful SSH sessions from Tor exit nodes (bidirectional traffic, high databytes) are near-certain malicious - no legitimate administrative use case requires Tor for SSH. VPS range detection requires a threat intel feed of commonly abused hosting provider CIDR ranges.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Adversaries route SSH initial access through Tor exit nodes or anonymizing VPS infrastructure (DigitalOcean, Vultr, Linode, AWS) to obscure their origin. Maintain a current Tor exit node list (updated daily from dan.me.uk/torlist or similar) in Suricata's $EXTERNAL_TOR_NODES variable. Successful SSH sessions from Tor exit nodes (bidirectional traffic, high databytes) are near-certain malicious - no legitimate administrative use case requires Tor for SSH. VPS range detection requires a threat intel feed of commonly abused hosting provider CIDR ranges.",
         apt: [
           { cls: "apt-kp", name: "Lazarus", note: "Uses Tor and anonymizing VPS infrastructure to route SSH access to compromised cryptocurrency and financial sector servers." },
           { cls: "apt-ir", name: "APT33", note: "Routes access to compromised energy sector infrastructure through anonymizing proxies and VPS services." },
@@ -739,15 +744,15 @@ AND url.path: (
       },
       {
         sub: "T1133 - Cloud Management",
-        indicator: "Cloud management API authentication from unexpected IP / new ASN - console credential abuse",
+        indicator: "[OFF-NET TRIPWIRE] Cloud management API authentication from unexpected IP / new ASN - console credential abuse",
         arkime: `ip.src != $INTERNAL
-&& ip.src != $KNOWN_ADMIN_IPS
+&& ip.src != $ALLOWED_ADMIN_IPS
 && protocols == https
 && host.http == ["*console.aws.amazon.com*", "*portal.azure.com*", "*console.cloud.google.com*", "*management.azure.com*", "*ec2.amazonaws.com*"]
 && http.method == POST
 && http.uri == ["*/oauth/token*", "*/signin/oauth*", "*/login*"]`,
         kibana: `NOT source.ip: $INTERNAL
-AND NOT source.ip: $KNOWN_ADMIN_IPS
+AND NOT source.ip: $ALLOWED_ADMIN_IPS
 AND http.request.method: POST
 AND url.domain: (
   *console.aws.amazon.com*
@@ -773,7 +778,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9113308; rev:1;)`,
-        notes: "Cloud console and API authentication from unexpected IPs or new ASNs indicates stolen credential use. Cloud management plane access is particularly high-impact - a successful console login gives adversaries access to all cloud resources including compute, storage, secrets, and IAM. Requires SSL/TLS inspection or egress proxy to detect outbound connections to cloud management URLs. Correlate with your cloud provider's CloudTrail (AWS), Azure Activity Log, or GCP Audit Log - network-layer detection is a supplementary signal. Watch for: new AWS access key usage, Azure portal login from new country, GCP service account key download from unknown IP.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Cloud console and API authentication from unexpected IPs or new ASNs indicates stolen credential use. Cloud management plane access is particularly high-impact - a successful console login gives adversaries access to all cloud resources including compute, storage, secrets, and IAM. Requires SSL/TLS inspection or egress proxy to detect outbound connections to cloud management URLs. Correlate with your cloud provider's CloudTrail (AWS), Azure Activity Log, or GCP Audit Log - network-layer detection is a supplementary signal. Watch for: new AWS access key usage, Azure portal login from new country, GCP service account key download from unknown IP.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Uses stolen credentials to access cloud management consoles (Azure, AWS) as an initial access vector, documented in CISA and NSA advisories on APT29 cloud-targeting operations." },
           { cls: "apt-cn", name: "APT41", note: "Abuses cloud management APIs with stolen credentials in targeted intrusion operations against technology and healthcare sector organizations." },
@@ -790,7 +795,7 @@ AND url.path: (
     rows: [
       {
         sub: "T1189 - Watering Hole Redirect Chains",
-        indicator: "Multi-hop HTTP redirect chain - exploit kit gate / traffic distribution system",
+        indicator: "[OFF-NET TRIPWIRE] Multi-hop HTTP redirect chain - exploit kit gate / traffic distribution system",
         kibana: `source.ip: $INTERNAL
 AND http.response.status_code: (
   301 OR 302 OR 303
@@ -799,7 +804,7 @@ AND http.response.status_code: (
 AND http.response.headers.location:
   http*
 AND NOT destination.ip:
-  $KNOWN_GOOD`,
+  $ALLOWED_DEFAULTS`,
         suricata: `alert http $HOME_NET any
   -> $EXTERNAL_NET any
   (msg:"TA0001 T1189 Multi-hop
@@ -812,7 +817,7 @@ AND NOT destination.ip:
     count 3, seconds 10;
   classtype:trojan-activity;
   sid:9118901; rev:1;)`,
-        notes: "Exploit kit traffic distribution systems (TDS) gate victims through 2-5 HTTP redirects before delivering the exploit landing page - each hop profiles the victim (OS, browser, plugins) and passes only qualifying targets forward. The redirect chain has a distinctive pattern: very small response bodies (just the redirect header, no content), rapid sequential requests from the same source IP to different hosts, and a mix of HTTP 301/302 codes. Low databytes.src (<500) confirms no meaningful content was served - just redirection. Correlate the final destination of the chain with threat intel.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Exploit kit traffic distribution systems (TDS) gate victims through 2-5 HTTP redirects before delivering the exploit landing page - each hop profiles the victim (OS, browser, plugins) and passes only qualifying targets forward. The redirect chain has a distinctive pattern: very small response bodies (just the redirect header, no content), rapid sequential requests from the same source IP to different hosts, and a mix of HTTP 301/302 codes. Low databytes.src (<500) confirms no meaningful content was served - just redirection. Correlate the final destination of the chain with threat intel.",
         apt: [
           { cls: "apt-ru", name: "APT28", note: "Used multi-hop redirect chains to gate watering hole victims through profiling infrastructure before delivering browser exploits, documented in operations against NATO member government websites." },
           { cls: "apt-cn", name: "APT40", note: "Used traffic distribution systems to gate maritime sector and government target victims through redirect chains before exploit delivery." },
@@ -822,13 +827,13 @@ AND NOT destination.ip:
       },
       {
         sub: "T1189 - Watering Hole Redirect Chains",
-        indicator: "Newly registered domain in HTTP redirect destination - drive-by staging infrastructure",
+        indicator: "[OFF-NET TRIPWIRE] Newly registered domain in HTTP redirect destination - drive-by staging infrastructure",
         kibana: `source.ip: $INTERNAL
 AND http.response.status_code:
   (301 OR 302)
 AND http.response.headers.location:
   http*
-AND NOT destination.ip: $KNOWN_GOOD`,
+AND NOT destination.ip: $ALLOWED_DEFAULTS`,
         suricata: `alert http $HOME_NET any
   -> $EXTERNAL_NET any
   (msg:"TA0001 T1189 Redirect to
@@ -843,7 +848,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
   http.header;
   classtype:trojan-activity;
   sid:9118902; rev:1;)`,
-        notes: "Drive-by staging infrastructure uses newly registered domains with cheap TLDs (.xyz, .top, .club, .online, .site, .pw) as exploit landing pages - these domains are registered days before the campaign and burned after. The Suricata PCRE matches these TLDs specifically. Enrich with passive DNS age data - any redirect destination registered less than 14 days ago is high-priority. Integrate with threat intel feeds that track newly registered domains for malicious patterns. This is one of the most reliable low-FP indicators of drive-by staging infrastructure.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Drive-by staging infrastructure uses newly registered domains with cheap TLDs (.xyz, .top, .club, .online, .site, .pw) as exploit landing pages - these domains are registered days before the campaign and burned after. The Suricata PCRE matches these TLDs specifically. Enrich with passive DNS age data - any redirect destination registered less than 14 days ago is high-priority. Integrate with threat intel feeds that track newly registered domains for malicious patterns. This is one of the most reliable low-FP indicators of drive-by staging infrastructure.",
         apt: [
           { cls: "apt-kp", name: "Lazarus", note: "Uses newly registered domains with cheap TLDs as exploit staging infrastructure, rotating infrastructure rapidly to avoid blocklist detection." },
           { cls: "apt-cn", name: "APT41", note: "Registers domains days before campaigns and uses them as exploit landing pages before burning them." },
@@ -853,14 +858,14 @@ AND NOT destination.ip: $KNOWN_GOOD`,
       },
       {
         sub: "T1189 - Exploit Kit Profiling",
-        indicator: "Browser plugin / capability enumeration request - exploit kit victim profiling",
+        indicator: "[OFF-NET TRIPWIRE] Browser plugin / capability enumeration request - exploit kit victim profiling",
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.method == GET
 && http.uri == ["*detect.js*", "*check.js*", "*scan.php*", "*gate.php*", "*land.php*", "*count.php*", "*click.php*", "*go.php*"]
 && http.user-agent == ["*Mozilla*", "*Chrome*"]
 && databytes.dst > 500
-&& ip.dst != $KNOWN_GOOD`,
+&& ip.dst != $ALLOWED_DEFAULTS`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET
 AND url.path: (
@@ -869,7 +874,7 @@ AND url.path: (
   OR *land.php* OR *count.php*
   OR *click.php* OR *go.php*
 )
-AND NOT destination.ip: $KNOWN_GOOD`,
+AND NOT destination.ip: $ALLOWED_DEFAULTS`,
         suricata: `alert http $HOME_NET any
   -> $EXTERNAL_NET any
   (msg:"TA0001 T1189 Exploit kit
@@ -882,7 +887,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
   http.uri;
   classtype:trojan-activity;
   sid:9118903; rev:1;)`,
-        notes: "Exploit kits serve a profiling script before delivering the exploit - this script fingerprints the victim's browser, plugins (Java, Flash, PDF reader), OS version, and screen resolution to select the appropriate exploit. Common filenames are detect.js, check.php, gate.php, and similar generic names. The response contains JavaScript that enumerates capabilities and returns them to the kit. Combine with the source domain reputation and whether it appears in redirect chain context - profiling scripts on their own are low-confidence, but in combination with a redirect chain entry and a subsequent PE/exploit delivery they form a strong kill chain narrative.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Exploit kits serve a profiling script before delivering the exploit - this script fingerprints the victim's browser, plugins (Java, Flash, PDF reader), OS version, and screen resolution to select the appropriate exploit. Common filenames are detect.js, check.php, gate.php, and similar generic names. The response contains JavaScript that enumerates capabilities and returns them to the kit. Combine with the source domain reputation and whether it appears in redirect chain context - profiling scripts on their own are low-confidence, but in combination with a redirect chain entry and a subsequent PE/exploit delivery they form a strong kill chain narrative.",
         apt: [
           { cls: "apt-ru", name: "APT28", note: "Used victim profiling scripts in watering hole operations against government and defense sector targets to fingerprint visiting browsers and deliver targeted exploits based on plugin version." },
           { cls: "apt-mul", name: "Multi", note: "Criminal exploit kit operations (Angler, RIG, Magnitude) universally use victim profiling as the first step in the delivery chain." }
@@ -896,7 +901,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
 && protocols == http
 && http.statuscode == 200
 && http.uri != ["*/download*", "*/files/*", "*/update*", "*/setup*"]
-&& ip.dst != $KNOWN_GOOD
+&& ip.dst != $ALLOWED_DEFAULTS
 && databytes.dst > 10000
 // Content-Type response-header inspection (application/octet-stream, x-msdownload, x-dosexec)
 // is not available in baseline Arkime 4.3.1 - http.response-header field does not exist. The
@@ -913,7 +918,7 @@ AND NOT url.path: (
   *download* OR *files*
   OR *update* OR *setup*
 )
-AND NOT destination.ip: $KNOWN_GOOD`,
+AND NOT destination.ip: $ALLOWED_DEFAULTS`,
         suricata: `alert http $EXTERNAL_NET any
   -> $HOME_NET any
   (msg:"TA0001 T1189 Drive-by
@@ -939,10 +944,10 @@ AND NOT destination.ip: $KNOWN_GOOD`,
       },
       {
         sub: "T1189 - Watering Hole Identification",
-        indicator: "Internal user requesting known compromised / categorized malicious domain",
+        indicator: "[OFF-NET TRIPWIRE] Internal user requesting known compromised / categorized malicious domain",
         arkime: `ip.src == $INTERNAL
 && protocols == http
-&& host.http == $THREAT_INTEL_DOMAINS
+&& host.http == $EXTERNAL_TI_DOMAINS
 && http.method == GET
 && databytes.src > 0`,
         kibana: `source.ip: $INTERNAL
@@ -959,7 +964,7 @@ AND source.bytes > 0`,
   content:"|00 01 00 00 00 00 00 00|";
   classtype:trojan-activity;
   sid:9118905; rev:1;)`,
-        notes: "Threat intel feeds maintain lists of known watering hole domains and IPs - integrate these with Suricata's rule sets and Kibana's threat intel enrichment. For Arkime, maintain a $THREAT_INTEL_DOMAINS field reference updated from your threat intel platform. A victim connecting to a known watering hole domain from inside your network = active drive-by in progress or already completed. Correlate with what was downloaded (databytes.dst) and any subsequent outbound connections from the same host - post-exploitation C2 often follows within seconds to minutes.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Threat intel feeds maintain lists of known watering hole domains and IPs - integrate these with Suricata's rule sets and Kibana's threat intel enrichment. For Arkime, maintain a $EXTERNAL_TI_DOMAINS field reference updated from your threat intel platform. A victim connecting to a known watering hole domain from inside your network = active drive-by in progress or already completed. Correlate with what was downloaded (databytes.dst) and any subsequent outbound connections from the same host - post-exploitation C2 often follows within seconds to minutes.",
         apt: [
           { cls: "apt-cn", name: "APT10", note: "Targeted industry vertical websites frequented by MSP and technology sector employees in watering hole operations." },
           { cls: "apt-ru", name: "APT28", note: "Targeted NATO and government sector news and policy sites in watering hole operations." },
@@ -970,11 +975,11 @@ AND source.bytes > 0`,
       },
       {
         sub: "T1189 - Post-Exploit C2",
-        indicator: "Unexpected outbound connection immediately following web browsing session - post-exploit C2 beacon",
+        indicator: "[OFF-NET TRIPWIRE] Unexpected outbound connection immediately following web browsing session - post-exploit C2 beacon",
         arkime: `ip.src == $INTERNAL
 && protocols != [http, https, dns]
 && port.dst == [443, 80, 8080, 8443, 4444, 1337, 6666]
-&& ip.dst != $KNOWN_GOOD`,
+&& ip.dst != $ALLOWED_DEFAULTS`,
         kibana: `source.ip: $INTERNAL
 AND NOT network.protocol: (
   http OR dns OR tls
@@ -983,7 +988,7 @@ AND destination.port: (
   443 OR 80 OR 8080
   OR 4444 OR 1337
 )
-AND NOT destination.ip: $KNOWN_GOOD`,
+AND NOT destination.ip: $ALLOWED_DEFAULTS`,
         suricata: `alert tcp $HOME_NET any
   -> $EXTERNAL_NET
   [80,443,8080,8443,4444,1337,6666]
@@ -999,7 +1004,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
     count 1, seconds 30;
   classtype:trojan-activity;
   sid:9118906; rev:1;)`,
-        notes: "Post drive-by exploitation, the delivered payload almost immediately initiates a C2 beacon. This is typically a non-HTTP/HTTPS connection on a web port (to blend in) or a raw TCP connection to the C2 server. The timing correlation is key - a non-browser process connecting outbound within 30 seconds of a browser session to an unknown host is highly suspicious. In Arkime, correlate by source IP across time windows. Suricata content negation (!|16 03| = not TLS, !'GET ' = not HTTP) catches raw TCP C2 on web ports. EDR correlation is ideal here - process-level data identifies which process made the connection.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Post drive-by exploitation, the delivered payload almost immediately initiates a C2 beacon. This is typically a non-HTTP/HTTPS connection on a web port (to blend in) or a raw TCP connection to the C2 server. The timing correlation is key - a non-browser process connecting outbound within 30 seconds of a browser session to an unknown host is highly suspicious. In Arkime, correlate by source IP across time windows. Suricata content negation (!|16 03| = not TLS, !'GET ' = not HTTP) catches raw TCP C2 on web ports. EDR correlation is ideal here - process-level data identifies which process made the connection.",
         apt: [
           { cls: "apt-kp", name: "Lazarus", note: "Payloads beacon within 5-30 seconds of execution following drive-by compromise." },
           { cls: "apt-cn", name: "APT41", note: "C2 traffic follows exploit delivery with characteristic timing patterns." },
@@ -1015,7 +1020,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
 && http.statuscode == 200
 && http.uri != ["*/download*", "*/docs/*", "*/files/*", "*/attachments/*"]
 && http.uri == ["*.pdf", "*.doc", "*.docx", "*.xls", "*.xlsx", "*.ppt", "*.pptx"]
-&& ip.dst != $KNOWN_GOOD
+&& ip.dst != $ALLOWED_DEFAULTS
 // Content-Type response-header inspection is not available in baseline Arkime 4.3.1. The query
 // uses URI-extension matching as a baseline-compatible alternative. For true MIME detection see Suricata
 // file_data rules or Zeek file analysis framework.`,
@@ -1027,7 +1032,7 @@ AND http.response.headers.content-type: (
   OR *vnd.ms-*
   OR *vnd.openxml*
 )
-AND NOT destination.ip: $KNOWN_GOOD
+AND NOT destination.ip: $ALLOWED_DEFAULTS
 AND NOT url.path: (
   *download* OR *docs*
   OR *files* OR *attachments*
@@ -1067,7 +1072,7 @@ AND NOT url.path: (
         indicator: "SQL injection attempt - classic and blind patterns in HTTP request parameters",
         arkime: `ip.src != $INTERNAL
 && protocols == http
-&& http.method == [GET || POST]
+&& http.method == [GET, POST]
 && http.uri == ["*%27*", "*%22*", "*'+OR+*", "*'+AND+*", "*1=1*", "*1%3D1*", "*UNION+SELECT*", "*union%20select*", "*SLEEP(*", "*WAITFOR*", "*benchmark(*", "*;DROP*", "*;SELECT*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method:
@@ -1107,7 +1112,7 @@ AND url.query: (
         indicator: "Command injection - OS command execution via HTTP parameter",
         arkime: `ip.src != $INTERNAL
 && protocols == http
-&& http.method == [GET || POST]
+&& http.method == [GET, POST]
 && http.uri == ["*;id*", "*;whoami*", "*;cat+/etc/passwd*", "*%3Bcat*", "*%7Cid*", "*|whoami*", "*\`id\`*", "*$(id)*", "*%24%28*", "*%0Aid*", "*%0Awhoami*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method:
@@ -1289,13 +1294,13 @@ AND url.path: (
         arkime: `ip.src == $DMZ_SERVERS
 && protocols != [http, https, dns, ntp, syslog]
 && ip.dst != $INTERNAL
-&& ip.dst != $KNOWN_GOOD
+&& ip.dst != $ALLOWED_DEFAULTS
 && port.dst == [4444, 1337, 8888, 9999, 6666, 443, 80, 8080]
 && databytes.src > 0
 && databytes.dst > 0`,
         kibana: `source.ip: $DMZ_SERVERS
 AND NOT destination.ip: (
-  $INTERNAL OR $KNOWN_GOOD
+  $INTERNAL OR $ALLOWED_DEFAULTS
 )
 AND NOT network.protocol: (
   http OR dns OR ntp
@@ -1330,7 +1335,7 @@ AND destination.port: (
       },
       {
         sub: "T1190 - Mail Server Exploitation",
-        indicator: "ProxyShell / ProxyLogon - Exchange autodiscover and EWS exploit path probing",
+        indicator: "[OFF-NET TRIPWIRE] ProxyShell / ProxyLogon - Exchange autodiscover and EWS exploit path probing",
         arkime: `ip.src != $INTERNAL
 && protocols == http
 && http.method == [GET, POST, PROPFIND, MKCOL]
@@ -1362,7 +1367,7 @@ AND url.path: (
   http.uri;
   classtype:web-application-attack;
   sid:9119008; rev:1;)`,
-        notes: "ProxyLogon (CVE-2021-26855) uses /autodiscover/autodiscover.json with a Server header to bypass authentication - the X-AnonResource-Backend header is characteristic. ProxyShell (CVE-2021-34473/34523/31207) chains three vulnerabilities via autodiscover.json and EWS to achieve RCE. /ecp/y.js and /ecp/default.flt are characteristic ProxyShell staging paths. /mapi/nspi is used in NTLM relay attacks against Exchange. Any of these paths against your Exchange server from external IPs = immediate P1. Zeek http.log captures all Exchange request paths. Post-exploitation: watch for new files in Exchange inetpub paths and outbound HTTPS from the Exchange server to unknown IPs.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. ProxyLogon (CVE-2021-26855) uses /autodiscover/autodiscover.json with a Server header to bypass authentication - the X-AnonResource-Backend header is characteristic. ProxyShell (CVE-2021-34473/34523/31207) chains three vulnerabilities via autodiscover.json and EWS to achieve RCE. /ecp/y.js and /ecp/default.flt are characteristic ProxyShell staging paths. /mapi/nspi is used in NTLM relay attacks against Exchange. Any of these paths against your Exchange server from external IPs = immediate P1. Zeek http.log captures all Exchange request paths. Post-exploitation: watch for new files in Exchange inetpub paths and outbound HTTPS from the Exchange server to unknown IPs.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Exploited ProxyShell vulnerabilities against multiple sector targets within days of disclosure." },
           { cls: "apt-cn", name: "HAFNIUM", note: "First documented actor to exploit ProxyLogon (CVE-2021-26855) at scale against US defense, law, and infectious disease research organizations." },
@@ -1379,17 +1384,17 @@ AND url.path: (
     rows: [
       {
         sub: "T1195.001 - Compromise Software Dependencies",
-        indicator: "Build server / CI/CD agent making unexpected outbound connection - dependency exfil or backdoor C2",
+        indicator: "[OFF-NET TRIPWIRE] Build server / CI/CD agent making unexpected outbound connection - dependency exfil or backdoor C2",
         arkime: `ip.src == $BUILD_SERVERS
 && protocols != [http, https, dns, ntp, git, ldap, syslog]
 && ip.dst != $INTERNAL
-&& ip.dst != $KNOWN_PACKAGE_REGISTRIES
+&& ip.dst != $EXTERNAL_PACKAGE_REGISTRIES
 && port.dst == [443, 80, 8443, 4444, 1337, 8080, 9999]
 && databytes.src > 0`,
         kibana: `source.ip: $BUILD_SERVERS
 AND NOT destination.ip: (
   $INTERNAL OR
-  $KNOWN_PACKAGE_REGISTRIES
+  $EXTERNAL_PACKAGE_REGISTRIES
 )
 AND destination.port: (
   443 OR 80 OR 8443
@@ -1412,7 +1417,7 @@ AND source.bytes > 0`,
     count 1, seconds 60;
   classtype:trojan-activity;
   sid:9119501; rev:1;)`,
-        notes: "Build servers (Jenkins, GitLab CI, GitHub Actions runners, Azure DevOps agents) have predictable network behavior - they pull from package registries (npm, PyPI, Maven, NuGet, Docker Hub) and source repositories, push artifacts to internal storage, and report back to orchestrators. Any outbound connection to non-package-registry destinations is anomalous. Compromised dependencies often beacon out from build agents during the build process - the malicious code runs in the CI environment with full credentials. Maintain $KNOWN_PACKAGE_REGISTRIES allowlist (registry.npmjs.org, pypi.org, maven.apache.org, *.docker.io, hub.docker.com, ghcr.io). Combine with EDR process data - node_modules postinstall scripts and pip install hooks are common compromise points.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Build servers (Jenkins, GitLab CI, GitHub Actions runners, Azure DevOps agents) have predictable network behavior - they pull from package registries (npm, PyPI, Maven, NuGet, Docker Hub) and source repositories, push artifacts to internal storage, and report back to orchestrators. Any outbound connection to non-package-registry destinations is anomalous. Compromised dependencies often beacon out from build agents during the build process - the malicious code runs in the CI environment with full credentials. Maintain $EXTERNAL_PACKAGE_REGISTRIES allowlist (registry.npmjs.org, pypi.org, maven.apache.org, *.docker.io, hub.docker.com, ghcr.io). Combine with EDR process data - node_modules postinstall scripts and pip install hooks are common compromise points.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Compromised the SolarWinds Orion build pipeline to inject SUNBURST malware into legitimate software updates, with the injection occurring during the CI/CD build process." },
           { cls: "apt-kp", name: "Lazarus", note: "Has compromised software supply chains via build infrastructure access in cryptocurrency exchange and software vendor targeting." },
@@ -1422,7 +1427,7 @@ AND source.bytes > 0`,
       },
       {
         sub: "T1195.001 - Compromise Software Dependencies",
-        indicator: "Typosquatting package fetch - internal host downloading from known typosquat namespace",
+        indicator: "[OFF-NET TRIPWIRE] Typosquatting package fetch - internal host downloading from known typosquat namespace",
         arkime: `ip.src == $INTERNAL
 && protocols == https
 && host.http == ["*registry.npmjs.org*", "*pypi.org*", "*files.pythonhosted.org*", "*rubygems.org*", "*crates.io*"]
@@ -1451,7 +1456,7 @@ AND url.path: $KNOWN_TYPOSQUAT_PACKAGES`,
   http.header;
   classtype:trojan-activity;
   sid:9119502; rev:1;)`,
-        notes: "Typosquatting packages mimic legitimate names (reqests vs requests, electrn vs electron, lodahs vs lodash, colors-js vs colors.js). Maintain a $KNOWN_TYPOSQUAT_PACKAGES feed from threat intel sources (Snyk, Socket.dev, GitHub Advisory Database). Match against URL paths - npm uses /package-name/-/package-name-version.tgz, PyPI uses /packages/source/[hash]/[package-name]-[version].tar.gz. Also detect newly published packages that match high-target package name patterns. Internal package mirroring (Artifactory, Nexus) significantly reduces this risk - direct fetches from public registries by developer machines is the primary attack surface.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Typosquatting packages mimic legitimate names (reqests vs requests, electrn vs electron, lodahs vs lodash, colors-js vs colors.js). Maintain a $KNOWN_TYPOSQUAT_PACKAGES feed from threat intel sources (Snyk, Socket.dev, GitHub Advisory Database). Match against URL paths - npm uses /package-name/-/package-name-version.tgz, PyPI uses /packages/source/[hash]/[package-name]-[version].tar.gz. Also detect newly published packages that match high-target package name patterns. Internal package mirroring (Artifactory, Nexus) significantly reduces this risk - direct fetches from public registries by developer machines is the primary attack surface.",
         apt: [
           { cls: "apt-kp", name: "Lazarus", note: "Has published typosquatting npm packages targeting cryptocurrency and blockchain developers." },
           { cls: "apt-kp", name: "Moonstone Sleet", note: "Published malicious packages to npm registry targeting blockchain and cryptocurrency development organizations." },
@@ -1461,19 +1466,19 @@ AND url.path: $KNOWN_TYPOSQUAT_PACKAGES`,
       },
       {
         sub: "T1195.001 - Compromise Software Dependencies",
-        indicator: "Dependency confusion - internal package name fetched from public registry",
+        indicator: "[OFF-NET TRIPWIRE] Dependency confusion - internal package name fetched from public registry",
         arkime: `ip.src == $INTERNAL
 && protocols == https
 && host.http == ["*registry.npmjs.org*", "*pypi.org*"]
-&& http.uri == $INTERNAL_PACKAGE_NAMES
-&& ip.dst != $INTERNAL_REGISTRY`,
+&& http.uri == $INTERNAL_PACKAGES
+&& ip.dst != $INTERNAL_PACKAGE_REGISTRY`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   *registry.npmjs.org*
   OR *pypi.org*
 )
-AND url.path: $INTERNAL_PACKAGE_NAMES
-AND NOT destination.ip: $INTERNAL_REGISTRY`,
+AND url.path: $INTERNAL_PACKAGES
+AND NOT destination.ip: $INTERNAL_PACKAGE_REGISTRY`,
         suricata: `alert http $HOME_NET any
   -> $EXTERNAL_NET 443
   (msg:"TA0001 T1195.001 Internal
@@ -1486,7 +1491,7 @@ AND NOT destination.ip: $INTERNAL_REGISTRY`,
   http.header;
   classtype:trojan-activity;
   sid:9119503; rev:1;)`,
-        notes: "Dependency confusion (Alex Birsan 2021) attack: adversary publishes a package on a public registry using the name of an internal-only package - when the build system resolves dependencies, the higher version on the public registry is preferred over the internal one. Detection: maintain a list of your internal package names ($INTERNAL_PACKAGE_NAMES) and alert when those names are fetched from public registries. The fetch should always be from your internal registry (Artifactory, Nexus, Verdaccio). Configure package managers with explicit registry pinning (.npmrc, pip.conf) to prevent the public lookup from happening at all.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Dependency confusion (Alex Birsan 2021) attack: adversary publishes a package on a public registry using the name of an internal-only package - when the build system resolves dependencies, the higher version on the public registry is preferred over the internal one. Detection: maintain a list of your internal package names ($INTERNAL_PACKAGES) and alert when those names are fetched from public registries. The fetch should always be from your internal registry (Artifactory, Nexus, Verdaccio). Configure package managers with explicit registry pinning (.npmrc, pip.conf) to prevent the public lookup from happening at all.",
         apt: [
           { cls: "apt-mul", name: "Multi", note: "Dependency confusion attacks have been documented against major technology companies including Apple, Microsoft, Tesla, PayPal, Uber, and Yelp. The technique is widely exploited by both criminal actors and security researchers." }
         ],
@@ -1494,10 +1499,10 @@ AND NOT destination.ip: $INTERNAL_REGISTRY`,
       },
       {
         sub: "T1195.002 - Compromise Software Supply Chain",
-        indicator: "Software updater connecting to non-vendor C2 infrastructure - Trojanized update detection",
+        indicator: "[OFF-NET TRIPWIRE] Software updater connecting to non-vendor C2 infrastructure - Trojanized update detection",
         arkime: `ip.src == $INTERNAL
 && protocols != [http, https, dns]
-&& ip.dst != $VENDOR_UPDATE_INFRA
+&& ip.dst != $ALLOWED_UPDATE_SOURCES
 && port.dst == [443, 80, 8080, 8443]
 && databytes.src > 0
 && databytes.dst > 0
@@ -1507,7 +1512,7 @@ AND NOT destination.ip: $INTERNAL_REGISTRY`,
 // *daemon*) for high confidence.`,
         kibana: `source.ip: $INTERNAL
 AND NOT destination.ip:
-  $VENDOR_UPDATE_INFRA
+  $ALLOWED_UPDATE_SOURCES
 AND destination.port: (
   443 OR 80 OR 8080 OR 8443
 )
@@ -1528,7 +1533,7 @@ AND process.name: (
     count 1, seconds 60;
   classtype:trojan-activity;
   sid:9119504; rev:1;)`,
-        notes: "Trojanized software updates (SolarWinds Orion, 3CX desktop client, MOVEit Transfer, Asus Live Update) generate post-install C2 connections to adversary-controlled infrastructure. Network signal: a known software updater process making outbound connections to IPs/domains that aren't part of the vendor's known infrastructure. Requires EDR process correlation to identify the source process. Maintain a $VENDOR_UPDATE_INFRA allowlist of legitimate update server IPs/domains for installed software (avsvmcloud.com domain pattern was the SUNBURST signal). Anomalous beaconing patterns from updaters - sleep + jitter, low data volume - are characteristic of supply chain backdoors waiting for activation.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Trojanized software updates (SolarWinds Orion, 3CX desktop client, MOVEit Transfer, Asus Live Update) generate post-install C2 connections to adversary-controlled infrastructure. Network signal: a known software updater process making outbound connections to IPs/domains that aren't part of the vendor's known infrastructure. Requires EDR process correlation to identify the source process. Maintain a $VENDOR_UPDATE_INFRA allowlist of legitimate update server IPs/domains for installed software (avsvmcloud.com domain pattern was the SUNBURST signal). Anomalous beaconing patterns from updaters - sleep + jitter, low data volume - are characteristic of supply chain backdoors waiting for activation.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Compromised SolarWinds Orion software updates with SUNBURST/SUPERNOVA backdoors, with infected updates beaconing to avsvmcloud.com infrastructure." },
           { cls: "apt-kp", name: "Lazarus", note: "Compromised the 3CX desktop client supply chain in 2023, with infected installations beaconing to adversary infrastructure." },
@@ -1541,12 +1546,13 @@ AND process.name: (
         indicator: "Anomalous DNS query from updater process - DGA or sandbox evasion behavior",
         arkime: `ip.src == $INTERNAL
 && protocols == dns
-&& dns.query.type == [A || AAAA]
-&& host.dns == ["*avsvmcloud.com*", "*.appsync-api.*", $KNOWN_C2_DOMAINS]
+&& dns.query.type == [A, AAAA]
+&& host.dns == ["*avsvmcloud.com*", "*.appsync-api.*", $EXTERNAL_C2_DOMAINS]
 // Process-name correlation is not available in baseline Arkime - pair with EDR/Sysmon Event 3 in the SIEM to
 // filter to updater processes (*update*, *agent*). DGA detection requires regex - not expressible
 // in pure Arkime. See Suricata pcre column or use Kibana KQL regex syntax for runtime matching.
-\n// Logical spec: host.dns matches
+
+// Logical spec: host.dns matches
 //   /^[a-z0-9]{16,}\\.(com|net|org|info)$/`,
         kibana: `source.ip: $INTERNAL
 AND dns.question.type:
@@ -1576,10 +1582,10 @@ AND dns.question.name: (
       },
       {
         sub: "T1195.002 - Compromise Software Supply Chain",
-        indicator: "HTTPS beacon with anomalous JA4 from established software process - supply chain implant",
+        indicator: "[OFF-NET TRIPWIRE] HTTPS beacon with anomalous JA4 from established software process - supply chain implant",
         arkime: `ip.src == $INTERNAL
 && protocols == tls
-&& tls.ja3 != $KNOWN_GOOD_CLIENTS
+&& tls.ja3 != $ALLOWED_CLIENTS
 && tls.ja3 != $BROWSER_JA3
 && port.dst == 443
 && packets.src > 5
@@ -1592,7 +1598,7 @@ AND dns.question.name: (
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND NOT tls.client.ja4: (
-  $KNOWN_GOOD_CLIENTS
+  $ALLOWED_CLIENTS
   OR $BROWSER_JA4
 )
 AND network.packets: [5 TO 50]`,
@@ -1608,7 +1614,7 @@ AND network.packets: [5 TO 50]`,
     count 5, seconds 600;
   classtype:trojan-activity;
   sid:9119506; rev:1;)`,
-        notes: "Supply chain implants embedded in legitimate software typically use bespoke TLS stacks (custom HTTP libraries, Go's net/http, .NET HttpClient with custom config) that produce distinctive JA4 fingerprints unlike legitimate vendor software. Build a JA4 baseline for known-good clients in your environment - vendor software JA4 hashes are stable across versions. Implants generate JA4s outside this baseline. Pair with low-volume periodic beacon patterns (5-50 packets per session, regular intervals) to identify dormant or check-in beacons typical of supply chain implants waiting for activation. Periodicity analysis at sessions level: beacon intervals of 60s, 300s, 3600s with low jitter are characteristic.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Supply chain implants embedded in legitimate software typically use bespoke TLS stacks (custom HTTP libraries, Go's net/http, .NET HttpClient with custom config) that produce distinctive JA4 fingerprints unlike legitimate vendor software. Build a JA4 baseline for known-good clients in your environment - vendor software JA4 hashes are stable across versions. Implants generate JA4s outside this baseline. Pair with low-volume periodic beacon patterns (5-50 packets per session, regular intervals) to identify dormant or check-in beacons typical of supply chain implants waiting for activation. Periodicity analysis at sessions level: beacon intervals of 60s, 300s, 3600s with low jitter are characteristic.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "SUNBURST implant used custom HTTP library generating distinctive JA3/JA4 fingerprints from infected SolarWinds Orion processes." },
           { cls: "apt-kp", name: "Lazarus", note: "3CX supply chain compromise generated anomalous JA4 from desktop client processes." },
@@ -1619,20 +1625,20 @@ AND network.packets: [5 TO 50]`,
       {
         sub: "T1195.003 - Compromise Hardware Supply Chain",
         indicator: "Hardware management interface phoning home to non-vendor infrastructure - IPMI/iLO/iDRAC backdoor",
-        arkime: `ip.src == $MGMT_INTERFACE_IPS
+        arkime: `ip.src == $MGMT_VLAN
 && protocols != [http, https, dns, ntp, syslog, snmp]
-&& ip.dst != $VENDOR_INFRA
+&& ip.dst != $ALLOWED_VENDOR_INFRA
 && ip.dst != $INTERNAL
 && port.dst == [443, 80, 8443, 4444, 6666]`,
-        kibana: `source.ip: $MGMT_INTERFACE_IPS
+        kibana: `source.ip: $MGMT_VLAN
 AND NOT destination.ip: (
-  $VENDOR_INFRA OR $INTERNAL
+  $ALLOWED_VENDOR_INFRA OR $INTERNAL
 )
 AND destination.port: (
   443 OR 80 OR 8443
   OR 4444 OR 6666
 )`,
-        suricata: `alert tcp $MGMT_INTERFACE_IPS any
+        suricata: `alert tcp $MGMT_VLAN any
   -> $EXTERNAL_NET
   [80,443,8443,4444,6666]
   (msg:"TA0001 T1195.003 Hardware
@@ -1644,7 +1650,7 @@ AND destination.port: (
     count 1, seconds 60;
   classtype:trojan-activity;
   sid:9119507; rev:1;)`,
-        notes: "Hardware management interfaces (IPMI, iLO, iDRAC, BMC) operate below the OS - they have their own network stack, IP address, and TLS implementation. A compromised BMC can persist across OS reinstalls and is invisible to host-based security tools. Network detection is the only reliable signal for BMC-level compromise. Maintain a separate VLAN for BMC interfaces ($MGMT_INTERFACE_IPS) and alert on any outbound connection from those IPs to non-vendor infrastructure. Legitimate BMC outbound: vendor health monitoring, firmware update servers, NTP, syslog. Anything else from a BMC = critical investigation. Hardware supply chain attacks against BMCs are documented (Bloomberg's 'The Big Hack' allegations 2018, multiple academic demonstrations of malicious BMC firmware).",
+        notes: "Hardware management interfaces (IPMI, iLO, iDRAC, BMC) operate below the OS - they have their own network stack, IP address, and TLS implementation. A compromised BMC can persist across OS reinstalls and is invisible to host-based security tools. Network detection is the only reliable signal for BMC-level compromise. Maintain a separate VLAN for BMC interfaces ($MGMT_VLAN) and alert on any outbound connection from those IPs to non-vendor infrastructure. Legitimate BMC outbound: vendor health monitoring, firmware update servers, NTP, syslog. Anything else from a BMC = critical investigation. Hardware supply chain attacks against BMCs are documented (Bloomberg's 'The Big Hack' allegations 2018, multiple academic demonstrations of malicious BMC firmware).",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Has been associated with hardware-level operations against technology sector supply chains." },
           { cls: "apt-mul", name: "Multi", note: "Hardware supply chain compromise targeting BMCs and management interfaces is documented in academic security research and vendor advisories. While direct nation-state attribution is limited in public reporting, the technical capability is well-documented and the attack surface is significant." }
@@ -1719,8 +1725,8 @@ AND _exists_: source.mac`,
       },
       {
         sub: "T1200 - Network Implants",
-        indicator: "Reverse SSH / persistent outbound connection from network device subnet - implant phone-home",
-        arkime: `ip.src == $USER_VLAN
+        indicator: "[OFF-NET TRIPWIRE] Reverse SSH / persistent outbound connection from network device subnet - implant phone-home",
+        arkime: `ip.src == $WORKSTATIONS
 || ip.src == $PRINTER_VLAN
 && protocols == ssh
 && port.dst == 22
@@ -1728,7 +1734,7 @@ AND _exists_: source.mac`,
 && ip.dst != $INTERNAL
 && packets.src > 10
 && session.length > 300`,
-        kibana: `source.ip: ($USER_VLAN OR $PRINTER_VLAN)
+        kibana: `source.ip: ($WORKSTATIONS OR $PRINTER_VLAN)
 AND NOT destination.ip: $INTERNAL
 AND destination.port: (
   22 OR 443 OR 8443
@@ -1747,7 +1753,7 @@ AND event.duration > 300000000`,
     count 1, seconds 300;
   classtype:trojan-activity;
   sid:9120003; rev:1;)`,
-        notes: "Network implants (LAN Turtle, Packet Squirrel) typically establish a persistent reverse SSH tunnel to adversary infrastructure for command and control. The connection is long-lived (hours to days), originates from a host VLAN that shouldn't be making outbound SSH connections, and uses port 22, 443, 2222, or another common port. Most enterprise printers, IoT devices, and end-user workstations have no legitimate reason to initiate outbound SSH. Build per-VLAN baselines: which subnets should/shouldn't initiate which protocols outbound. Long session duration (5+ minutes) plus low data volume = classic beacon/tunnel pattern. Pair with EDR if available to identify the source process - implants don't run on the host, so EDR on the host won't show the process.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Network implants (LAN Turtle, Packet Squirrel) typically establish a persistent reverse SSH tunnel to adversary infrastructure for command and control. The connection is long-lived (hours to days), originates from a host VLAN that shouldn't be making outbound SSH connections, and uses port 22, 443, 2222, or another common port. Most enterprise printers, IoT devices, and end-user workstations have no legitimate reason to initiate outbound SSH. Build per-VLAN baselines: which subnets should/shouldn't initiate which protocols outbound. Long session duration (5+ minutes) plus low data volume = classic beacon/tunnel pattern. Pair with EDR if available to identify the source process - implants don't run on the host, so EDR on the host won't show the process.",
         apt: [
           { cls: "apt-ru", name: "Sandworm", note: "Has used custom hardware implants in operations against Ukrainian infrastructure for persistent network access." },
           { cls: "apt-mul", name: "Insider", note: "Long-lived outbound connections from non-administrative VLANs are documented in CISA and NSA defensive guidance as a high-priority detection pattern." },
@@ -1761,8 +1767,8 @@ AND event.duration > 300000000`,
         arkime: `ip.src == 0.0.0.0
 && protocols == dhcp
 && dhcp.type == DISCOVER
-// OUI extraction (mac.src.oui), per-host MAC tracking (source-host == $KNOWN_HOST), and matching against
-// $REGISTERED_HOST_MAC are not available as fields in baseline Arkime 4.3.1. Logical spec: detect a host
+// OUI extraction (mac.src.oui), per-host MAC tracking (source-host == $ALLOWED_HOST), and matching against
+// $ALLOWED_HOST_MACS are not available as fields in baseline Arkime 4.3.1. Logical spec: detect a host
 // generating DHCP DISCOVER from a NEW MAC address while the host's primary MAC is still active, where
 // the new MAC OUI matches a USB-Ethernet chipset (Realtek RTL8152, ASIX AX88179, Microchip LAN9512).
 // Implement via SIEM correlation of DHCP logs + switch CAM table data + USB device telemetry from
@@ -1773,7 +1779,7 @@ AND source.mac.vendor: (
   Realtek OR Microchip
   OR ASIX OR "ProCurve Networking"
 )
-AND host.name: $KNOWN_HOSTS`,
+AND host.name: $ALLOWED_HOSTS`,
         suricata: `alert udp 0.0.0.0 68
   -> 255.255.255.255 67
   (msg:"TA0001 T1200 DHCP from
@@ -1820,7 +1826,7 @@ AND NOT wireless.bssid:
 && mac.dst == 01:80:c2:00:00:0e
 // OUI extraction (mac.src.oui) and per-device naming (lldp.system-name) are not available as fields in
 // baseline Arkime 4.3.1. Logical spec: filter to LLDP frames (mac.dst is the standard LLDP multicast
-// MAC) where the source MAC OUI is NOT in your $KNOWN_NETWORK_GEAR_OUIS list (Cisco, Juniper,
+// MAC) where the source MAC OUI is NOT in your $ALLOWED_NETWORK_OUIS list (Cisco, Juniper,
 // Aruba, etc.) and the system-name does not match your inventory. Implement via Zeek lldp.log or
 // SIEM correlation against switch SNMP data.`,
         kibana: `network.protocol: "lldp"
@@ -1853,7 +1859,7 @@ AND NOT source.mac.vendor: $APPROVED_NETWORK_VENDORS`,
         indicator: "Inbound SMTP - password-protected archive or document from newly registered sending domain",
         kibana: `destination.ip: $INTERNAL
 AND network.protocol: smtp
-AND NOT source.ip: $KNOWN_MX
+AND NOT source.ip: $ALLOWED_MX
 AND email.attachments.file.extension: (
   zip OR rar OR 7z OR iso
   OR img OR doc OR docx
@@ -1890,7 +1896,7 @@ AND email.attachments.file.name: (
   *.pdf.exe OR *.doc.exe
   OR *.jpg.exe OR *\\u202e*
 )
-AND NOT source.ip: $KNOWN_MX`,
+AND NOT source.ip: $ALLOWED_MX`,
         suricata: `alert smtp $EXTERNAL_NET any
   -> $HOME_NET 25
   (msg:"TA0001 T1566.001 SMTP
@@ -1913,12 +1919,12 @@ AND NOT source.ip: $KNOWN_MX`,
       },
       {
         sub: "T1566.001 - Spearphishing Attachment",
-        indicator: "Remote template injection - outbound DOTX/DOTM fetch immediately after email open",
+        indicator: "[OFF-NET TRIPWIRE] Remote template injection - outbound DOTX/DOTM fetch immediately after email open",
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.method == GET
 && http.uri == ["*.dotx", "*.dotm", "*.dot", "*.xltx", "*.xltm", "*.potx"]
-&& ip.dst != $KNOWN_GOOD
+&& ip.dst != $ALLOWED_DEFAULTS
 && databytes.dst > 5000`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET
@@ -1927,7 +1933,7 @@ AND url.path: (
   OR *.xltx OR *.xltm
   OR *.potx
 )
-AND NOT destination.ip: $KNOWN_GOOD`,
+AND NOT destination.ip: $ALLOWED_DEFAULTS`,
         suricata: `alert http $HOME_NET any
   -> $EXTERNAL_NET any
   (msg:"TA0001 T1566.001 Remote
@@ -1940,7 +1946,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
   http.uri;
   classtype:trojan-activity;
   sid:9115603; rev:1;)`,
-        notes: "Remote template injection embeds a URL in an Office document that fetches a macro-enabled template (.dotm, .xltm) from an external server when the document is opened. The document itself contains no macros - it only fetches them remotely, bypassing static AV scanning. The network signal is a GET request for a .dotx/.dotm/.xltm file from an internal host to an unknown external server - often within seconds of the document being opened. The fetched template contains the actual malicious macro. This technique bypasses email gateway scanning because the original attachment is clean. Correlate with SMTP logs to identify the document that triggered the fetch.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Remote template injection embeds a URL in an Office document that fetches a macro-enabled template (.dotm, .xltm) from an external server when the document is opened. The document itself contains no macros - it only fetches them remotely, bypassing static AV scanning. The network signal is a GET request for a .dotx/.dotm/.xltm file from an internal host to an unknown external server - often within seconds of the document being opened. The fetched template contains the actual malicious macro. This technique bypasses email gateway scanning because the original attachment is clean. Correlate with SMTP logs to identify the document that triggered the fetch.",
         apt: [
           { cls: "apt-ru", name: "APT28", note: "Extensively uses remote template injection to deliver macro payloads to government and military targets, embedding template URLs in clean-looking documents that fetch malicious templates on open." },
           { cls: "apt-ir", name: "Charming Kitten", note: "Uses remote template injection against academic and NGO targets, using .dotm templates hosted on adversary infrastructure." },
@@ -1950,19 +1956,19 @@ AND NOT destination.ip: $KNOWN_GOOD`,
       },
       {
         sub: "T1566.002 - Spearphishing Link",
-        indicator: "Internal host clicking URL in email - GET to newly registered domain within minutes of SMTP delivery",
+        indicator: "[OFF-NET TRIPWIRE] Internal host clicking URL in email - GET to newly registered domain within minutes of SMTP delivery",
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.method == GET
 && http.hasheader.src.value == *mail*
-&& ip.dst != $KNOWN_GOOD
+&& ip.dst != $ALLOWED_DEFAULTS
 && http.user-agent == ["*Outlook*", "*Thunderbird*", "*Mail*", "*Chrome*", "*Firefox*"]
 // Domain-age filtering is not available in baseline Arkime 4.3.1. Pair this query with external domain-age
 // enrichment (PassiveTotal, DomainTools, RiskIQ) or filter on results manually for domains <30 days old.`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET
 AND http.request.headers.referer: *mail*
-AND NOT destination.ip: $KNOWN_GOOD`,
+AND NOT destination.ip: $ALLOWED_DEFAULTS`,
         suricata: `alert http $HOME_NET any
   -> $EXTERNAL_NET any
   (msg:"TA0001 T1566.002 Internal
@@ -1976,7 +1982,7 @@ AND NOT destination.ip: $KNOWN_GOOD`,
   http.header;
   classtype:trojan-activity;
   sid:9115604; rev:1;)`,
-        notes: "The Referer header reveals when a user clicked a link from a webmail interface (mail., outlook., webmail., owa.). Combining the Referer with a destination domain age check <30 days is a high-confidence phishing click indicator. Correlate forward from the click: what did the destination serve? A redirect chain, a credential harvesting page, or a payload download all follow predictably. This is one of the most actionable real-time detections - the click happens before any credentials are entered or payload executes, giving a response window. Alert immediately and correlate with inbound SMTP logs to identify the phishing email.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. The Referer header reveals when a user clicked a link from a webmail interface (mail., outlook., webmail., owa.). Combining the Referer with a destination domain age check <30 days is a high-confidence phishing click indicator. Correlate forward from the click: what did the destination serve? A redirect chain, a credential harvesting page, or a payload download all follow predictably. This is one of the most actionable real-time detections - the click happens before any credentials are entered or payload executes, giving a response window. Alert immediately and correlate with inbound SMTP logs to identify the phishing email.",
         apt: [
           { cls: "apt-ru", name: "Midnight Blizzard", note: "Uses spearphishing links in targeted campaigns against government, technology, and defense sector organizations." },
           { cls: "apt-ir", name: "Charming Kitten", note: "Delivers phishing links via webmail and sends targets to credential harvesting pages, with the click generating a Referer-tagged request to the harvesting infrastructure." },
@@ -1986,17 +1992,17 @@ AND NOT destination.ip: $KNOWN_GOOD`,
       },
       {
         sub: "T1566.002 - Spearphishing Link",
-        indicator: "Credential POST to external host following phishing link click - active harvest in progress",
+        indicator: "[OFF-NET TRIPWIRE] Credential POST to external host following phishing link click - active harvest in progress",
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.method == POST
-&& ip.dst != $KNOWN_GOOD
+&& ip.dst != $ALLOWED_DEFAULTS
 && http.reqbody == ["*password=*", "*passwd=*", "*pass=*", "*pwd=*", "*credential*", "*login*"]
 && databytes.src > 100
 && databytes.src < 2000`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: POST
-AND NOT destination.ip: $KNOWN_GOOD
+AND NOT destination.ip: $ALLOWED_DEFAULTS
 AND http.request.body: (
   *password=* OR *passwd=*
   OR *pass=* OR *pwd=*
@@ -2015,7 +2021,7 @@ AND http.request.body: (
   http.request_body;
   classtype:trojan-activity;
   sid:9115605; rev:1;)`,
-        notes: "A credential POST to an external unknown host is one of the highest-priority network alerts - credentials are actively being submitted to an adversary-controlled harvesting page. POST body size 100-2000 bytes covers typical credential form submissions (username + password) while filtering out large form submissions. This fires after the victim has already entered their credentials - immediate response required. Identify which user submitted, what credentials (email domain suggests the service), and whether MFA is in use. Correlate with upstream: was there a phishing click (Referer) in the minutes preceding this POST? Check for AiTM proxy patterns in the response (anomalous cookies, JA4S mismatch).",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. A credential POST to an external unknown host is one of the highest-priority network alerts - credentials are actively being submitted to an adversary-controlled harvesting page. POST body size 100-2000 bytes covers typical credential form submissions (username + password) while filtering out large form submissions. This fires after the victim has already entered their credentials - immediate response required. Identify which user submitted, what credentials (email domain suggests the service), and whether MFA is in use. Correlate with upstream: was there a phishing click (Referer) in the minutes preceding this POST? Check for AiTM proxy patterns in the response (anomalous cookies, JA4S mismatch).",
         apt: [
           { cls: "apt-ru", name: "Midnight Blizzard", note: "Credential harvesting operations generate POST-to-external patterns from victim hosts, with the POST containing Office 365 or Azure AD credentials to adversary-controlled infrastructure." },
           { cls: "apt-mul", name: "Scattered Spider", note: "Uses AiTM infrastructure that proxies credential POSTs to legitimate IdPs while capturing credentials in transit." },
@@ -2025,13 +2031,14 @@ AND http.request.body: (
       },
       {
         sub: "T1566.002 - Spearphishing Link",
-        indicator: "AiTM phishing proxy - session cookie harvest via reverse proxy to legitimate IdP",
+        indicator: "[OFF-NET TRIPWIRE] AiTM phishing proxy - session cookie harvest via reverse proxy to legitimate IdP",
         arkime: `ip.src == $INTERNAL
 && protocols == tls
-&& tls.ja3s != $KNOWN_IDPS_JA3S
-&& ip.dst != $KNOWN_IDPS`,
+&& tls.ja3s != $ALLOWED_IDPS_JA3S
+&& ip.dst != $ALLOWED_IDPS
+&& cert.subject.cn == ["*microsoft*", "*office365*", "*login.microsoftonline*", "*google*", "*accounts.google*", "*okta*", "*azure*", "*duo*", "*ping*"]`,
         kibana: `source.ip: $INTERNAL
-AND NOT destination.ip: $KNOWN_IDPS
+AND NOT destination.ip: $ALLOWED_IDPS
 AND tls.server.x509.subject.common_name: (
   *microsoft* OR *office365*
   OR *google* OR *okta*
@@ -2051,7 +2058,7 @@ AND tls.server.not_before:
     azure|duo|ping)/i";
   classtype:trojan-activity;
   sid:9115606; rev:1;)`,
-        notes: "AiTM phishing proxies (Evilginx2, Modlishka, Muraena) present TLS certificates with CNs mimicking legitimate IdPs (Microsoft, Google, Okta) while proxying traffic to the real IdP - capturing session cookies after MFA completes. Detection: the certificate CN claims to be a known IdP but the destination IP is not a known IdP IP range, and the JA4S fingerprint differs from legitimate IdP TLS server responses. A new certificate (<14 days old) claiming to be Microsoft or Okta from an unknown IP is near-certain AiTM infrastructure. Build a JA4S allowlist for your legitimate IdPs and alert on any deviation from a host claiming to serve their CN.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. AiTM phishing proxies (Evilginx2, Modlishka, Muraena) present TLS certificates with CNs mimicking legitimate IdPs (Microsoft, Google, Okta) while proxying traffic to the real IdP - capturing session cookies after MFA completes. Detection: the certificate CN claims to be a known IdP but the destination IP is not a known IdP IP range, and the JA4S fingerprint differs from legitimate IdP TLS server responses. A new certificate (<14 days old) claiming to be Microsoft or Okta from an unknown IP is near-certain AiTM infrastructure. Build a JA4S allowlist for your legitimate IdPs and alert on any deviation from a host claiming to serve their CN.",
         apt: [
           { cls: "apt-ru", name: "Midnight Blizzard", note: "Uses Evilginx2-based AiTM infrastructure to harvest session cookies from Microsoft 365 authentication flows, bypassing MFA by capturing post-authentication session tokens." },
           { cls: "apt-mul", name: "Scattered Spider", note: "Deploys AiTM phishing infrastructure against technology and hospitality sector targets, using Evilginx2 and custom proxies to harvest Okta and Azure AD session cookies." },
@@ -2061,14 +2068,12 @@ AND tls.server.not_before:
       },
       {
         sub: "T1566.002 - Spearphishing Link",
-        indicator: "OTP / MFA relay - rapid token submission to legitimate IdP immediately after phishing click",
+        indicator: "[OFF-NET TRIPWIRE] OTP / MFA relay - rapid token submission to legitimate IdP immediately after phishing click",
         arkime: `ip.src == $INTERNAL
 && protocols == https
 && http.method == POST
 && host.http == ["*login.microsoftonline.com*", "*accounts.google.com*", "*okta.com*", "*duo.com*"]
-&& http.reqbody == ["*otc=*", "*otp=*", "*token=*", "*code=*", "*mfa=*", "*totp=*"]
-&& starttime - prev.starttime
-  < 60s`,
+&& http.reqbody == ["*otc=*", "*otp=*", "*token=*", "*code=*", "*mfa=*", "*totp=*"]`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: POST
 AND url.domain: (
@@ -2096,7 +2101,7 @@ AND http.request.body: (
   http.request_body;
   classtype:trojan-activity;
   sid:9115607; rev:1;)`,
-        notes: "Real-time MFA relay attacks prompt the victim to enter their OTP, which the adversary immediately submits to the legitimate IdP before it expires. The network signal is an MFA token POST to a legitimate IdP coming from an internal host in the immediate aftermath of a phishing link click. Timing correlation is key - an MFA POST within 60 seconds of a phishing-Referer-tagged HTTP request is a strong signal. Also watch for MFA fatigue attacks: repeated push notification approvals (POST to duo.com or okta.com) from a user who isn't actively logging in. Correlate with your IdP logs for the same user simultaneously authenticating from two geographic locations.",
+        notes: "Cross-session timing (this session within N seconds of another session) is not expressible in Arkime baseline. Use the Suricata threshold rule below for time-windowed detection, or pivot to Kibana for session-timestamp aggregation. [AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Real-time MFA relay attacks prompt the victim to enter their OTP, which the adversary immediately submits to the legitimate IdP before it expires. The network signal is an MFA token POST to a legitimate IdP coming from an internal host in the immediate aftermath of a phishing link click. Timing correlation is key - an MFA POST within 60 seconds of a phishing-Referer-tagged HTTP request is a strong signal. Also watch for MFA fatigue attacks: repeated push notification approvals (POST to duo.com or okta.com) from a user who isn't actively logging in. Correlate with your IdP logs for the same user simultaneously authenticating from two geographic locations.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Uses real-time OTP relay in credential harvesting operations, prompting victims to enter MFA codes that are immediately relayed to Microsoft 365 authentication infrastructure." },
           { cls: "apt-mul", name: "Scattered Spider", note: "Conducts MFA fatigue and real-time relay attacks against technology and hospitality sector targets using both push notification fatigue and real-time OTP relay." },
@@ -2106,7 +2111,7 @@ AND http.request.body: (
       },
       {
         sub: "T1566.003 - Spearphishing via Service",
-        indicator: "Internal host connecting to social platform / messaging API immediately after receiving DM",
+        indicator: "[OFF-NET TRIPWIRE] Internal host connecting to social platform / messaging API immediately after receiving DM",
         arkime: `ip.src == $INTERNAL
 && protocols == https
 && host.http == ["*linkedin.com*", "*twitter.com*", "*x.com*", "*discord.com*", "*slack.com*", "*teams.microsoft.com*", "*telegram.org*", "*whatsapp.com*"]
@@ -2141,7 +2146,7 @@ AND url.path: (
   http.uri;
   classtype:trojan-activity;
   sid:9115608; rev:1;)`,
-        notes: "Spearphishing via service uses trusted platforms (LinkedIn, Teams, Discord, Slack, Telegram) to deliver phishing links, bypassing email gateway controls entirely. The network signal is a redirect click through the platform's link tracking system - LinkedIn uses /redirect/, Twitter uses t.co, Discord uses discord.com/channels/ with external links, Teams uses teams.microsoft.com/l/. The redirect leads to the actual phishing payload. Detection requires SSL/TLS inspection at the proxy layer to see the URL paths. Correlate the redirect destination with newly registered domain indicators and threat intel. LinkedIn is the primary vector for Lazarus and Kimsuky social engineering.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Spearphishing via service uses trusted platforms (LinkedIn, Teams, Discord, Slack, Telegram) to deliver phishing links, bypassing email gateway controls entirely. The network signal is a redirect click through the platform's link tracking system - LinkedIn uses /redirect/, Twitter uses t.co, Discord uses discord.com/channels/ with external links, Teams uses teams.microsoft.com/l/. The redirect leads to the actual phishing payload. Detection requires SSL/TLS inspection at the proxy layer to see the URL paths. Correlate the redirect destination with newly registered domain indicators and threat intel. LinkedIn is the primary vector for Lazarus and Kimsuky social engineering.",
         apt: [
           { cls: "apt-kp", name: "Lazarus", note: "Uses LinkedIn extensively for Operation Dream Job social engineering, sending malicious links via DM that generate redirect-click network signals." },
           { cls: "apt-kp", name: "Kimsuky", note: "Uses social platform messaging to deliver phishing links to South Korean government and research targets, bypassing email gateway controls." },
@@ -2170,7 +2175,7 @@ AND http.response.body: (
   OR *<script*src=*//*.tk*
   OR *<script*src=*//*.xyz*
 )
-AND source.ip: $KNOWN_GOOD`,
+AND source.ip: $ALLOWED_DEFAULTS`,
         suricata: `alert http $EXTERNAL_NET any
   -> $HOME_NET any
   (msg:"TA0001 T1659 HTTP response
@@ -2275,7 +2280,7 @@ AND NOT http.response.body:
   file_data;
   pcre:"/<script[^>]+src\\s*=\\s*
     [\\"\\']https?:\\/\\/(?!yourcdn|
-    yourdomain)[^\\\"\\']+/i";
+    <YOUR_DOMAIN>)[^\\\"\\']+/i";
   classtype:trojan-activity;
   sid:9165904; rev:1;)`,
         notes: "Internal applications should serve scripts from a defined set of sources - your CDN, jsdelivr, unpkg, cloudflare, your own domain. New third-party script sources appearing on internal applications indicate injection - either via compromised application code, malicious CMS plugin, or modified template. Maintain $APPROVED_SCRIPT_SOURCES allowlist of legitimate script source domains. Implement Content Security Policy (CSP) headers on internal apps to enforce script source allowlisting at the browser level - CSP violations are also an excellent detection signal (CSP report-uri telemetry). Particularly relevant for WordPress, Drupal, and other CMS deployments where plugin compromise is common.",
@@ -2334,7 +2339,7 @@ AND _exists_: dns.id`,
     count 2, seconds 1;
   classtype:trojan-activity;
   sid:9165906; rev:1;)`,
-        notes: "DNS injection attacks race the legitimate DNS server - the adversary's spoofed response arrives at the victim resolver before the legitimate response. The legitimate response then arrives second and is silently discarded by the resolver. Network-level capture sees both responses with the same transaction ID, same query, but different answers. Zeek dns.log captures all DNS traffic including duplicates. Build detection that joins responses by transaction ID and resolver, alerting when the same query yields different answers within 1 second. This is a near-zero false positive indicator outside of legitimate DNS load balancers - and those should be in your $KNOWN_GOOD_DNS list.",
+        notes: "DNS injection attacks race the legitimate DNS server - the adversary's spoofed response arrives at the victim resolver before the legitimate response. The legitimate response then arrives second and is silently discarded by the resolver. Network-level capture sees both responses with the same transaction ID, same query, but different answers. Zeek dns.log captures all DNS traffic including duplicates. Build detection that joins responses by transaction ID and resolver, alerting when the same query yields different answers within 1 second. This is a near-zero false positive indicator outside of legitimate DNS load balancers - and those should be in your $ALLOWED_DNS list.",
         apt: [
           { cls: "apt-cn", name: "APT10", note: "Documented DNS injection capability in MSP-targeted operations." },
           { cls: "apt-ru", name: "Sandworm", note: "Has used DNS-based attacks against Ukrainian infrastructure including DNS server compromise enabling on-path injection." },
@@ -2371,7 +2376,7 @@ AND bgp.nlri_prefix: $YOUR_PREFIXES`,
       },
       {
         sub: "T1659 - TLS Downgrade / HSTS Bypass",
-        indicator: "TLS handshake using deprecated version - SSLv3 / TLSv1.0 / TLSv1.1 from internal client",
+        indicator: "[OFF-NET TRIPWIRE] TLS handshake using deprecated version - SSLv3 / TLSv1.0 / TLSv1.1 from internal client",
         arkime: `ip.src == $INTERNAL
 && protocols == tls
 && tls.version == [SSLv3, TLSv1.0, TLSv1.1]
@@ -2396,7 +2401,7 @@ AND NOT destination.ip:
   depth:2;
   classtype:policy-violation;
   sid:9165908; rev:1;)`,
-        notes: "TLS downgrade attacks force a connection to use deprecated TLS versions (SSLv3/POODLE, TLSv1.0/BEAST, TLSv1.1) which have known cryptographic weaknesses. Modern browsers and OS reject these by default - any internal client negotiating these versions to external servers indicates either a downgrade attack, a misconfigured client, or legacy software that needs upgrading. Build a $LEGACY_INTERNAL allowlist for known-legacy internal services that genuinely require old TLS, and alert on everything else. Zeek ssl.log captures TLS version explicitly. For external destinations, modern services (Google, Microsoft, AWS) all support TLS 1.3 - any negotiation to TLS 1.0/1.1 with these services is highly suspicious.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. TLS downgrade attacks force a connection to use deprecated TLS versions (SSLv3/POODLE, TLSv1.0/BEAST, TLSv1.1) which have known cryptographic weaknesses. Modern browsers and OS reject these by default - any internal client negotiating these versions to external servers indicates either a downgrade attack, a misconfigured client, or legacy software that needs upgrading. Build a $LEGACY_INTERNAL allowlist for known-legacy internal services that genuinely require old TLS, and alert on everything else. Zeek ssl.log captures TLS version explicitly. For external destinations, modern services (Google, Microsoft, AWS) all support TLS 1.3 - any negotiation to TLS 1.0/1.1 with these services is highly suspicious.",
         apt: [
           { cls: "apt-ru", name: "Midnight Blizzard", note: "Documented use of TLS downgrade and protocol manipulation in advanced operations against Microsoft 365 and Azure infrastructure." },
           { cls: "apt-mul", name: "Scattered Spider", note: "Uses TLS protocol manipulation as part of AiTM proxy infrastructure to maintain compatibility with vulnerable client implementations." },
@@ -2407,15 +2412,15 @@ AND NOT destination.ip:
       },
       {
         sub: "T1659 - TLS Downgrade / HSTS Bypass",
-        indicator: "HTTP request to HSTS-listed domain - bypass attempt or initial connection injection",
+        indicator: "[OFF-NET TRIPWIRE] HTTP request to HSTS-listed domain - bypass attempt or initial connection injection",
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.method == GET
-&& host.http == $HSTS_PRELOAD_DOMAINS
+&& host.http == $EXTERNAL_HSTS_DOMAINS
 && port.dst == 80`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: GET
-AND url.domain: $HSTS_PRELOAD_DOMAINS
+AND url.domain: $EXTERNAL_HSTS_DOMAINS
 AND destination.port: 80`,
         suricata: `alert http $HOME_NET any
   -> $EXTERNAL_NET 80
@@ -2430,7 +2435,7 @@ AND destination.port: 80`,
   http.header;
   classtype:policy-violation;
   sid:9165909; rev:1;)`,
-        notes: "HSTS preload list domains (google.com, microsoft.com, github.com, cloudflare.com, facebook.com, amazon.com, apple.com, and thousands of others) are hardcoded in modern browsers as HTTPS-only - browsers will refuse to make HTTP connections to these domains. An HTTP request to an HSTS preload domain from a modern browser indicates either a non-browser client (curl/wget/python script - possibly malicious), an outdated browser without the HSTS preload list, or a sophisticated SSL stripping attack with a custom client. Maintain $HSTS_PRELOAD_DOMAINS list synced from the Chromium HSTS preload list. The HTTP probe itself is suspicious - successful exploitation would produce subsequent HTTPS to a different IP than the legitimate domain.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. HSTS preload list domains (google.com, microsoft.com, github.com, cloudflare.com, facebook.com, amazon.com, apple.com, and thousands of others) are hardcoded in modern browsers as HTTPS-only - browsers will refuse to make HTTP connections to these domains. An HTTP request to an HSTS preload domain from a modern browser indicates either a non-browser client (curl/wget/python script - possibly malicious), an outdated browser without the HSTS preload list, or a sophisticated SSL stripping attack with a custom client. Maintain $EXTERNAL_HSTS_DOMAINS list synced from the Chromium HSTS preload list. The HTTP probe itself is suspicious - successful exploitation would produce subsequent HTTPS to a different IP than the legitimate domain.",
         apt: [
           { cls: "apt-mul", name: "Multi", note: "SSL stripping attacks (sslstrip, mitm6) are documented in academic security research and offensive security tooling. HSTS preload list adoption has dramatically reduced SSL stripping effectiveness against major sites, but legacy clients and non-preloaded domains remain vulnerable." }
         ],

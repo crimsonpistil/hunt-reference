@@ -55,6 +55,10 @@
   </div>
   <div class="index-title">MITRE ATT&amp;CK Network Analyst Reference</div>
   <div class="index-sub">Network analyst threat hunting: indicators, detection syntax, and APT attribution across the attack lifecycle</div>
+  <div class="mode-toggle" id="index-mode-toggle" title="Air-gapped: off-network indicators are tripwires that should never fire.&#10;Connected: those indicators are valid detection targets." style="margin: 18px auto 0;">
+    <button class="mode-opt" data-mode="airgap">Air-gapped</button>
+    <button class="mode-opt" data-mode="connected">Connected</button>
+  </div>
 </div>
 
 <span class="section-label">Tactics</span>
@@ -128,6 +132,7 @@
     <div class="info-card">
       <h3>What this is</h3>
       <p>A network threat hunting reference covering eight MITRE ATT&amp;CK tactics across the intrusion lifecycle. Every indicator includes paste-ready query syntax for <strong>Arkime</strong>, <strong>Kibana (KQL)</strong>, and <strong>Suricata</strong>, plus operational notes and APT attribution context.</p>
+      <p>Works on both air-gapped and connected networks. Use the <strong>Air-gapped / Connected</strong> toggle above (and in each tactic-page header) to set your environment - it changes how off-network indicators are presented.</p>
     </div>
 
     <div class="info-card">
@@ -137,17 +142,50 @@
         <li>Use the search box or technique filter buttons to narrow down indicators</li>
         <li>Copy the query syntax matching your tool (Arkime, Kibana, or Suricata)</li>
         <li>Click the &#9733; star on any row to add it to your hunt list</li>
-        <li>Open <strong>My Hunts</strong> from the header to review and export your hunt as TXT or CSV with a CMS-ready template</li>
+        <li>Open <strong>My Hunts</strong> from the header to review and export your hunt as TXT or CSV</li>
       </ul>
-      <div class="info-callout">
-        <b>Pls Note:</b> <br> Variables like <code>$INTERNAL</code>, <code>$DOMAIN_CONTROLLERS</code>, and <code>$ADMIN_HOSTS</code> in queries are placeholders: replace them with values from your environment before actually running.
-      </div>
     </div>
 
     <div class="info-card">
       <h3>About hunts</h3>
       <p>Starred indicators persist across browser restarts and sync across open tabs in real-time. Hunts are stored in <code>localStorage</code> under the key <code>hunt_reference_hunts_v1</code>; nothing leaves the browser.</p>
-      <p>Each export comes pre-formatted as a CMS-ready hunt package with timestamps, technique IDs, query syntax, and notes for easy import into TheHive. Ordering is chronological so the export reads as a hunt timeline.</p>
+      <p>Each export is a self-contained hunt package with timestamps, technique IDs, query syntax, and notes. Ordering is chronological so the export reads as a hunt timeline. A per-technique case template is also available on each row for structured note-taking.</p>
+    </div>
+
+    <div class="info-card" style="border-left: 2px solid var(--amber);">
+      <h3 style="color:var(--amber);">&#9888; Off-network indicators</h3>
+      <p>Indicators that detect traffic leaving your network (outbound to external infrastructure, cloud storage, paste sites, Tor, etc.) are marked with a <strong>&#9888;</strong> in <strong>Air-gapped</strong> mode.</p>
+      <p><strong>Air-gapped mode:</strong> these are tripwires - they should never fire. A hit means a likely air-gap violation (USB tether, rogue cellular modem, vendor laptop bridging, supply-chain implant). Investigate immediately.</p>
+      <p><strong>Connected mode:</strong> the same indicators are normal detection targets - outbound C2, exfil, and beaconing are exactly what you hunt. The &#9888; marker and escalation framing drop out.</p>
+    </div>
+
+    <div class="info-card">
+      <h3>Variables: zones &amp; VLANs</h3>
+      <p>Variables (prefix <code>$</code>) are placeholders. Map to your environment before running.</p>
+      <p><strong>Network zones:</strong> <code>$INTERNAL</code> (your network), <code>$EXTERNAL</code> (anything outside it), <code>$DMZ</code>.</p>
+      <p><strong>VLANs:</strong> <code>$WORKSTATIONS</code>, <code>$ADMIN_VLAN</code>, <code>$MGMT_VLAN</code>, <code>$PRINTER_VLAN</code>. Generic names - map to your deployment's actual VLAN IDs.</p>
+      <p><strong>Asset roles:</strong> <code>$DOMAIN_CONTROLLERS</code>, <code>$FILE_SERVERS</code>, <code>$DNS_SERVERS</code>, <code>$MAIL_SERVERS</code>, <code>$ROUTERS</code>, etc. Append <code>_2</code>, <code>_3</code> for multi-VLAN environments (e.g. <code>$DC_2</code>, <code>$FILE_SERVERS_2</code>).</p>
+    </div>
+
+    <div class="info-card">
+      <h3>Variables: allowlists &amp; fill-ins</h3>
+      <p><strong>Allowlists:</strong> <code>$ALLOWED_*</code> prefix denotes operator-maintained lists of expected/sanctioned activity (e.g. <code>$ALLOWED_UPDATE_SOURCES</code>, <code>$ALLOWED_VENDOR_INFRA</code>, <code>$ALLOWED_SMB_CLIENTS</code>).</p>
+      <p><strong>External tripwire variables:</strong> <code>$EXTERNAL_*</code> prefix (e.g. <code>$EXTERNAL_TOR_NODES</code>, <code>$EXTERNAL_VPS_RANGES</code>). In air-gapped mode the indicators referencing them are tripwires; in connected mode they are normal detection targets.</p>
+      <p><strong>Operator-fill placeholders:</strong> tokens shown like <code style="color:#f0883e; font-weight:600;">&lt;YOUR_DOMAIN&gt;</code> in queries are values you must replace before running. The orange color is your visual cue - search the page for any orange tokens before deploying queries.</p>
+    </div>
+
+    <div class="info-card">
+      <h3>Arkime tools &amp; workflow</h3>
+      <p>The search-bar expression syntax used here is one of several Arkime surfaces. Many detections that look like "find bursts" or "find fan-out" require pivoting into Arkime's aggregation views after the initial query.</p>
+      <p><strong>SPIView:</strong> aggregates the result set by any field, showing unique values and counts. This is where burst/fan-out detections surface - run the candidate query, open SPIView, sort by unique count on the field of interest.</p>
+      <p><strong>SPIGraph:</strong> visualizes session counts as a time series per node - good for spotting periodic beaconing and bursts as visual spikes.</p>
+      <p>Rule of thumb: <em>indicator says "burst" / "fan-out" / "many"</em> &rarr; run the query, then aggregate in SPIView to surface the actual hit.</p>
+    </div>
+
+    <div class="info-card" style="border-left: 2px solid var(--amber);">
+      <h3 style="color:var(--amber);">Tuning thresholds</h3>
+      <p>Numeric thresholds in queries (<code>&gt; 60s</code>, <code>&gt; 100MB</code>, <code>&gt; 50 packets</code>) are starting points calibrated for typical environments. Tune against your network's normal baseline - what counts as "anomalous" in a 50-host network differs from a 500-host one.</p>
+      <p>Before treating any indicator as a production rule: run it against baseline traffic for 1-2 weeks, look at the false-positive rate, then adjust. The shipped values are intentionally conservative-but-loose; expect to tighten.</p>
     </div>
 
   </div>
@@ -160,5 +198,27 @@
 </footer>
 
 <script src="js/index.js"></script>
+<script>
+  // Operating-mode toggle on the landing page (shares localStorage key with tactic pages)
+  (function () {
+    var KEY = 'cpt_hunt_mode';
+    var wrap = document.getElementById('index-mode-toggle');
+    if (!wrap) return;
+    function current() { return localStorage.getItem(KEY) === 'connected' ? 'connected' : 'airgap'; }
+    function paint() {
+      var m = current();
+      wrap.querySelectorAll('.mode-opt').forEach(function (b) {
+        b.classList.toggle('active', b.dataset.mode === m);
+      });
+    }
+    wrap.querySelectorAll('.mode-opt').forEach(function (b) {
+      b.addEventListener('click', function () {
+        localStorage.setItem(KEY, b.dataset.mode === 'connected' ? 'connected' : 'airgap');
+        paint();
+      });
+    });
+    paint();
+  })();
+</script>
 </body>
 </html>

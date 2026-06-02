@@ -11,12 +11,12 @@ const DATA = [
         sub: "T1039 - Bulk Read Patterns",
         indicator: "SMB read burst - single source reading many files across many directories",
         arkime: `ip.src == $INTERNAL
+&& ip.src != $ALLOWED_SMB_CLIENTS
 && port.dst == 445
 && protocols == smb
 && databytes.dst > 0`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
-AND zeek.smb_files.action: "SMB_FILE_READ"
 AND _exists_: file.path`,
         suricata: `alert tcp $HOME_NET any
   -> $FILE_SERVERS 445
@@ -31,7 +31,7 @@ AND _exists_: file.path`,
     count 50, seconds 300;
   classtype:trojan-activity;
   sid:9103901; rev:1;)`,
-        notes: "Normal user file access patterns are characterized by depth, not breadth - they open a project folder, read 5-10 related files, work for a while, occasionally open another related folder. Adversary collection is the inverse: shallow but wide reads across many directories within minutes. Detection: count unique file paths AND unique parent directories per source IP per 5-minute window. Threshold of 50 files across 10+ directories is a starting point - tune based on your environment (developers and analysts may legitimately hit higher baselines for code/data folders). Build per-role baselines if you can: HR users access HR shares, finance users access finance shares; cross-role access is highly anomalous. Zeek's smb_files.log is the primary data source; pair with smb_mapping.log to see which shares the source first connected to.",
+        notes: "Source-scope this query with ip.src != $ALLOWED_SMB_CLIENTS (operator-maintained list of expected SMB-reading hosts e.g. backup servers, monitoring agents) - the default query catches all SMB traffic which will be noisy. If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. Normal user file access patterns are characterized by depth, not breadth - they open a project folder, read 5-10 related files, work for a while, occasionally open another related folder. Adversary collection is the inverse: shallow but wide reads across many directories within minutes. Detection: count unique file paths AND unique parent directories per source IP per 5-minute window. Threshold of 50 files across 10+ directories is a starting point - tune based on your environment (developers and analysts may legitimately hit higher baselines for code/data folders). Build per-role baselines if you can: HR users access HR shares, finance users access finance shares; cross-role access is highly anomalous. Zeek's smb_files.log is the primary data source; pair with smb_mapping.log to see which shares the source first connected to.",
         apt: [
           { cls: "apt-mul", name: "Ransomware", note: "Bulk SMB reads universal in ransomware double-extortion (read-then-encrypt) operations." },
           { cls: "apt-cn", name: "APT41", note: "Documented in operations against tech sector and gaming companies." },
@@ -45,7 +45,7 @@ AND _exists_: file.path`,
         sub: "T1039 - Admin Share Access",
         indicator: "SMB tree connect to administrative or hidden shares from non-admin source - share enumeration",
         kibana: `source.ip: $INTERNAL
-AND NOT source.ip: $ADMIN_HOSTS
+AND NOT source.ip: $ADMIN_VLAN
 AND destination.port: 445
 AND smb.tree: (*$\\C$ OR *$\\ADMIN$ OR *\\*$)`,
         suricata: `alert tcp $HOME_NET any
@@ -59,7 +59,7 @@ AND smb.tree: (*$\\C$ OR *$\\ADMIN$ OR *\\*$)`,
   pcre:"/\\\\(C|ADMIN|IPC)\\$/i";
   classtype:trojan-activity;
   sid:9103902; rev:1;)`,
-        notes: "Hidden administrative shares (C$, ADMIN$, IPC$) and ad-hoc dollar-suffixed shares are rarely accessed legitimately by end-user workstations - they're admin tooling endpoints. Adversaries connect to them for two reasons: (1) lateral movement preparation (already covered under T1021.002), and (2) collection - file servers often have full-disk shares (D$, E$) that expose entire data volumes. Detection: SMB tree connect requests targeting any \\\\host\\X$ pattern from sources that aren't on your $ADMIN_HOSTS allowlist. Zeek's smb_mapping.log captures every tree connect. Investigate which user account performed the connect (via the prior NTLMSSP_AUTHENTICATE or Kerberos AP-REQ) - admin shares accessed by service accounts during off-hours are particularly suspicious. Pair with subsequent file read volume from the same connection.",
+        notes: "Hidden administrative shares (C$, ADMIN$, IPC$) and ad-hoc dollar-suffixed shares are rarely accessed legitimately by end-user workstations - they're admin tooling endpoints. Adversaries connect to them for two reasons: (1) lateral movement preparation (already covered under T1021.002), and (2) collection - file servers often have full-disk shares (D$, E$) that expose entire data volumes. Detection: SMB tree connect requests targeting any \\\\host\\X$ pattern from sources that aren't on your $ADMIN_VLAN allowlist. Zeek's smb_mapping.log captures every tree connect. Investigate which user account performed the connect (via the prior NTLMSSP_AUTHENTICATE or Kerberos AP-REQ) - admin shares accessed by service accounts during off-hours are particularly suspicious. Pair with subsequent file read volume from the same connection.",
         apt: [
           { cls: "apt-mul", name: "Ransomware", note: "Admin share access for collection of full-disk shares on file servers." },
           { cls: "apt-mul", name: "Scattered Spider", note: "Documented in CISA AA23-320A operations." },
@@ -73,20 +73,7 @@ AND smb.tree: (*$\\C$ OR *$\\ADMIN$ OR *\\*$)`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 445
 && protocols == smb
-&& smb.fn == [
-  *password*
-  || *passwd*
-  || *secret*
-  || *credential*
-  || *confidential*
-  || *payroll*
-  || *salary*
-  || *ssn*
-  || *tax*
-  || *merger*
-  || *acquisition*
-  || *financial*statement*
-]`,
+&& smb.fn == ["*password*", "*passwd*", "*secret*", "*credential*", "*confidential*", "*payroll*", "*salary*", "*ssn*", "*tax*", "*merger*", "*acquisition*", "*financial*statement*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND file.name: (*password* OR *passwd* OR *secret* OR *credential* OR *confidential* OR *payroll* OR *salary* OR *ssn* OR *tax* OR *merger* OR *acquisition*)`,
@@ -122,7 +109,7 @@ AND file.name: (*password* OR *passwd* OR *secret* OR *credential* OR *confident
         sub: "T1213.001 - Confluence Search Burst",
         indicator: "Confluence REST API search burst - single user, many distinct queries",
         arkime: `ip.src == $INTERNAL
-&& port.dst == [80 || 443 || 8090]
+&& port.dst == [80, 443, 8090]
 && http.uri == "*/rest/api/content/search*"`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (80 OR 443 OR 8090)
@@ -160,12 +147,8 @@ AND url.path: */rest/api/content/search*`,
         sub: "T1213.002 - SharePoint Search Burst",
         indicator: "SharePoint search API burst - bulk site enumeration and document discovery",
         arkime: `ip.src == $INTERNAL
-&& port.dst == [80 || 443]
-&& http.uri == [
-  */_api/search/query*
-  || */_api/web/lists*
-  || */_vti_bin/search.asmx*
-]`,
+&& port.dst == [80, 443]
+&& http.uri == ["*/_api/search/query*", "*/_api/web/lists*", "*/_vti_bin/search.asmx*"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (80 OR 443)
 AND url.path: (*/_api/search/query* OR */_api/web/lists* OR */_vti_bin/search*)`,
@@ -204,7 +187,7 @@ AND url.path: (*/_api/search/query* OR */_api/web/lists* OR */_vti_bin/search*)`
         sub: "T1213.003 - Bulk Clone",
         indicator: "Git clone burst - single source cloning many repositories",
         arkime: `ip.src == $INTERNAL
-&& port.dst == [22 || 80 || 443 || 9418]
+&& port.dst == [22, 80, 443, 9418]
 && (http.uri == "*/info/refs?service=git-upload-pack*"
     || protocols == ssh)`,
         kibana: `source.ip: $INTERNAL
@@ -274,7 +257,7 @@ AND file.size > 52428800`,
     rows: [
       {
         sub: "T1114.002 - EWS Bulk Enumeration",
-        indicator: "EWS FindItem / GetItem burst - bulk email enumeration via Exchange Web Services",
+        indicator: "[OFF-NET TRIPWIRE] EWS FindItem / GetItem burst - bulk email enumeration via Exchange Web Services",
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND url.path: */EWS/Exchange.asmx*
@@ -295,7 +278,7 @@ AND http.request.body: (*FindItem* OR *GetItem* OR *ExportItems*)`,
     count 100, seconds 600;
   classtype:trojan-activity;
   sid:9111402; rev:1;)`,
-        notes: "Exchange Web Services (EWS) at /EWS/Exchange.asmx is the SOAP API used by Outlook for Mac, mobile clients, and many third-party tools. It's also the API used by adversary tools like MailSniper, FireEye's RuleSnoop, and custom Python/PowerShell scripts. FindItem enumerates mailbox contents; GetItem retrieves specific items; ExportItems pulls items in bulk. The high-volume detection threshold (100 calls in 10 min) tunes for normal heavy mail clients; adjust per environment. Particularly important for on-prem Exchange or hybrid deployments. For M365 Exchange Online, much of this traffic terminates at outlook.office365.com - detection moves to M365 audit logs (mailbox audit, particularly MailItemsAccessed events for E5 licenses). Graph API equivalents at graph.microsoft.com/v1.0/me/messages produce similar network patterns.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Exchange Web Services (EWS) at /EWS/Exchange.asmx is the SOAP API used by Outlook for Mac, mobile clients, and many third-party tools. It's also the API used by adversary tools like MailSniper, FireEye's RuleSnoop, and custom Python/PowerShell scripts. FindItem enumerates mailbox contents; GetItem retrieves specific items; ExportItems pulls items in bulk. The high-volume detection threshold (100 calls in 10 min) tunes for normal heavy mail clients; adjust per environment. Particularly important for on-prem Exchange or hybrid deployments. For M365 Exchange Online, much of this traffic terminates at outlook.office365.com - detection moves to M365 audit logs (mailbox audit, particularly MailItemsAccessed events for E5 licenses). Graph API equivalents at graph.microsoft.com/v1.0/me/messages produce similar network patterns.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Bulk email collection via EWS heavily documented in operations against government and tech targets." },
           { cls: "apt-ir", name: "APT34", note: "MailSniper-like tooling against Exchange in Middle East operations." },
@@ -313,7 +296,7 @@ AND http.request.body: (*FindItem* OR *GetItem* OR *ExportItems*)`,
     rows: [
       {
         sub: "T1114.003 - Forwarding Rule Creation",
-        indicator: "EWS UpdateInboxRules / Set-InboxRule - forwarding rule creation pattern",
+        indicator: "[OFF-NET TRIPWIRE] EWS UpdateInboxRules / Set-InboxRule - forwarding rule creation pattern",
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND url.path: (*/EWS/Exchange.asmx* OR */PowerShell* OR */v1.0/me/mailFolders*)
@@ -330,7 +313,7 @@ AND http.request.body: (*UpdateInboxRules* OR *Set-InboxRule* OR *ForwardToRecip
     forwardingSmtpAddress)/i";
   classtype:trojan-activity;
   sid:9111403; rev:1;)`,
-        notes: "Email forwarding rules persist after the adversary loses session access - set a rule to forward all incoming mail to an attacker-controlled address, and email exfiltration continues automatically. Common patterns: (1) BEC-style external forwarding (rule forwards to attacker@gmail.com), (2) deletion-after-forward to hide evidence, (3) keyword-triggered rules ('forward only emails matching invoice OR wire OR payment'). Detection points: EWS UpdateInboxRules SOAP body, Graph API mailFolders/inbox/messageRules POST, Exchange Online PowerShell Set-InboxRule cmdlet (visible in remote PowerShell sessions). Once you have hits, examine RULE BODY: rules forwarding outside the org are highest priority, rules with deletion enabled are next, rules matching financial keywords are next. M365 environments: Exchange Online audit logs (UnifiedAuditLog 'New-InboxRule' / 'Set-InboxRule' events) provide cleaner detection than network - but network catches it before logs are reviewed. Modern best practice: disable auto-forwarding to external recipients via tenant policy.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Email forwarding rules persist after the adversary loses session access - set a rule to forward all incoming mail to an attacker-controlled address, and email exfiltration continues automatically. Common patterns: (1) BEC-style external forwarding (rule forwards to attacker@gmail.com), (2) deletion-after-forward to hide evidence, (3) keyword-triggered rules ('forward only emails matching invoice OR wire OR payment'). Detection points: EWS UpdateInboxRules SOAP body, Graph API mailFolders/inbox/messageRules POST, Exchange Online PowerShell Set-InboxRule cmdlet (visible in remote PowerShell sessions). Once you have hits, examine RULE BODY: rules forwarding outside the org are highest priority, rules with deletion enabled are next, rules matching financial keywords are next. M365 environments: Exchange Online audit logs (UnifiedAuditLog 'New-InboxRule' / 'Set-InboxRule' events) provide cleaner detection than network - but network catches it before logs are reviewed. Modern best practice: disable auto-forwarding to external recipients via tenant policy.",
         apt: [
           { cls: "apt-mul", name: "BEC Actors", note: "Forwarding rules are the signature persistence technique in BEC - documented across FBI IC3 reports." },
           { cls: "apt-mul", name: "Scattered Spider", note: "Forwarding rule creation documented in CISA AA23-320A operations targeting M365." },
@@ -348,7 +331,7 @@ AND http.request.body: (*UpdateInboxRules* OR *Set-InboxRule* OR *ForwardToRecip
     rows: [
       {
         sub: "T1530 - Cloud Storage Bulk Download",
-        indicator: "S3 ListObjects / GetObject burst - bulk bucket enumeration and download",
+        indicator: "[OFF-NET TRIPWIRE] S3 ListObjects / GetObject burst - bulk bucket enumeration and download",
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND destination.domain: (*.s3*.amazonaws.com OR *.blob.core.windows.net OR storage.googleapis.com)`,
@@ -366,7 +349,7 @@ AND destination.domain: (*.s3*.amazonaws.com OR *.blob.core.windows.net OR stora
     count 200, seconds 600;
   classtype:trojan-activity;
   sid:9153001; rev:1;)`,
-        notes: "Cloud storage providers each have distinctive SNI patterns: AWS S3 uses bucket.s3.region.amazonaws.com or s3.amazonaws.com, Azure Blob uses account.blob.core.windows.net, GCS uses storage.googleapis.com. Bulk download attacks: adversaries with stolen IAM credentials/SAS tokens enumerate buckets and download contents. Pattern: 200+ HTTPS requests to cloud storage SNI from one source within 10 minutes is well above normal application baseline. Tools: AWS CLI s3 sync/cp, rclone, custom boto3/azure-sdk scripts. Cloud-side detection is more precise (CloudTrail, Azure Activity Log, GCS audit logs) and SHOULD be your primary detection - but network-side catches the egress side and can fire before cloud audit logs are reviewed. Build $CLOUD_USERS allowlist of known sources that legitimately access cloud storage at scale (CI/CD runners, backup services, data pipelines). After exclusions, this signature catches adversaries operating with stolen tokens from compromised workstations.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Cloud storage providers each have distinctive SNI patterns: AWS S3 uses bucket.s3.region.amazonaws.com or s3.amazonaws.com, Azure Blob uses account.blob.core.windows.net, GCS uses storage.googleapis.com. Bulk download attacks: adversaries with stolen IAM credentials/SAS tokens enumerate buckets and download contents. Pattern: 200+ HTTPS requests to cloud storage SNI from one source within 10 minutes is well above normal application baseline. Tools: AWS CLI s3 sync/cp, rclone, custom boto3/azure-sdk scripts. Cloud-side detection is more precise (CloudTrail, Azure Activity Log, GCS audit logs) and SHOULD be your primary detection - but network-side catches the egress side and can fire before cloud audit logs are reviewed. Build $CLOUD_USERS allowlist of known sources that legitimately access cloud storage at scale (CI/CD runners, backup services, data pipelines). After exclusions, this signature catches adversaries operating with stolen tokens from compromised workstations.",
         apt: [
           { cls: "apt-mul", name: "Scattered Spider", note: "Cloud storage targeting documented heavily in CISA AA23-320A - particularly AWS S3 buckets containing customer data." },
           { cls: "apt-mul", name: "Cybercrime", note: "S3 buckets targeted across cybercrime ransomware operations targeting cloud-native organizations." },
@@ -443,7 +426,6 @@ AND file.name: (running-config* OR startup-config* OR *.cfg OR *.conf)`,
         indicator: "SMB write to staging directory patterns - Recycle Bin, ProgramData, temp paths",
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
-AND zeek.smb_files.action: "SMB_FILE_WRITE"
 AND file.path: (*$Recycle.Bin* OR *Windows\\Temp* OR *ProgramData* OR *Users\\Public* OR *PerfLogs*)`,
         suricata: `alert tcp $HOME_NET any
   -> $HOME_NET 445
@@ -457,7 +439,7 @@ AND file.path: (*$Recycle.Bin* OR *Windows\\Temp* OR *ProgramData* OR *Users\\Pu
     \\\\Users\\\\Public|PerfLogs)/i";
   classtype:trojan-activity;
   sid:9107401; rev:1;)`,
-        notes: "Staging locations are chosen because they're: writeable by most users (including service accounts), often excluded from EDR/AV scanning, large enough for big archives, unlikely to be reviewed by users. Common patterns: C:\\$Recycle.Bin\\... (looks like deleted files; rarely browsed), C:\\Windows\\Temp (generic temp; massive baseline of writes), C:\\ProgramData\\... (hidden by default; service-account writeable), C:\\Users\\Public\\... (legitimately writeable by all users), C:\\PerfLogs (often empty; always present), C:\\Intel\\Logs (looks like driver logs). Detection focuses on UNUSUAL files appearing in these locations: .zip/.rar/.7z archives, .dat/.bin generic blobs, oddly-named files. Pair with file SIZE thresholds - staged archives are typically >50MB. Also pair with subsequent SMB read of the same files (preparation for exfil pulls them out) or outbound transfer matching the file size profile.",
+        notes: "If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. Staging locations are chosen because they're: writeable by most users (including service accounts), often excluded from EDR/AV scanning, large enough for big archives, unlikely to be reviewed by users. Common patterns: C:\\$Recycle.Bin\\... (looks like deleted files; rarely browsed), C:\\Windows\\Temp (generic temp; massive baseline of writes), C:\\ProgramData\\... (hidden by default; service-account writeable), C:\\Users\\Public\\... (legitimately writeable by all users), C:\\PerfLogs (often empty; always present), C:\\Intel\\Logs (looks like driver logs). Detection focuses on UNUSUAL files appearing in these locations: .zip/.rar/.7z archives, .dat/.bin generic blobs, oddly-named files. Pair with file SIZE thresholds - staged archives are typically >50MB. Also pair with subsequent SMB read of the same files (preparation for exfil pulls them out) or outbound transfer matching the file size profile.",
         apt: [
           { cls: "apt-mul", name: "Ransomware", note: "Staging in non-standard directories universal across ransomware double-extortion." },
           { cls: "apt-cn", name: "APT41", note: "Documented in operations against tech sector." },
@@ -478,7 +460,6 @@ AND file.path: (*$Recycle.Bin* OR *Windows\\Temp* OR *ProgramData* OR *Users\\Pu
         indicator: "SMB write to internal staging share - large file collection at central host",
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
-AND zeek.smb_files.action: "SMB_FILE_WRITE"
 AND file.size > 104857600`,
         suricata: `alert tcp $HOME_NET any
   -> $HOME_NET 445
@@ -488,7 +469,7 @@ AND file.size > 104857600`,
   flow:established,to_server;
   classtype:trojan-activity;
   sid:9107402; rev:1;)`,
-        notes: "Remote staging consolidates collection across many source hosts to one staging host inside the network - typically the host with the best outbound egress path. Pattern: multiple internal source IPs writing large files (>100MB) to one destination over short time window, accumulating to 1GB+ of inbound data at the destination. Common staging hosts: file servers (already trusted to receive bulk data), jump hosts (often have egress for legit reasons), forgotten dev servers (low monitoring). Detection: aggregate write volume per destination IP per hour; alert when total inbound writes exceed 1GB from multiple distinct sources. False positives: legitimate backup operations (allowlist $BACKUP_HOSTS), file server consolidation (allowlist $FILE_SERVERS - though those usually have outbound restrictions). Pair with subsequent outbound traffic from the staging host - the staging-then-exfil pattern is essentially diagnostic. Modern best practice: data exfiltration prevention via DLP at egress, but network-side staging detection catches the activity before egress.",
+        notes: "If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. Remote staging consolidates collection across many source hosts to one staging host inside the network - typically the host with the best outbound egress path. Pattern: multiple internal source IPs writing large files (>100MB) to one destination over short time window, accumulating to 1GB+ of inbound data at the destination. Common staging hosts: file servers (already trusted to receive bulk data), jump hosts (often have egress for legit reasons), forgotten dev servers (low monitoring). Detection: aggregate write volume per destination IP per hour; alert when total inbound writes exceed 1GB from multiple distinct sources. False positives: legitimate backup operations (allowlist $BACKUP_HOSTS), file server consolidation (allowlist $FILE_SERVERS - though those usually have outbound restrictions). Pair with subsequent outbound traffic from the staging host - the staging-then-exfil pattern is essentially diagnostic. Modern best practice: data exfiltration prevention via DLP at egress, but network-side staging detection catches the activity before egress.",
         apt: [
           { cls: "apt-mul", name: "Ransomware", note: "Standard pattern in ransomware double-extortion before exfiltration." },
           { cls: "apt-ru", name: "APT29", note: "Remote staging in long-term espionage operations including SolarWinds." },
@@ -509,7 +490,6 @@ AND file.size > 104857600`,
         indicator: "SMB write of archive files with adversary-typical naming - .zip/.rar/.7z bursts",
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
-AND zeek.smb_files.action: "SMB_FILE_WRITE"
 AND file.name: (*.zip OR *.rar OR *.7z OR *.tar.gz OR *.tgz OR *.tar)
 AND file.size > 10485760`,
         suricata: `alert tcp $HOME_NET any
@@ -522,7 +502,7 @@ AND file.size > 10485760`,
     tgz|tar)/i";
   classtype:trojan-activity;
   sid:9156001; rev:1;)`,
-        notes: "Archive creation as part of collection: 7-Zip, WinRAR, tar+gzip on Linux. Typical archives are 10MB-10GB depending on data volume. Detection: SMB write of files with archive extensions exceeding 10MB threshold. Adversary-typical naming patterns: random short names (a.zip, x.rar), date-stamped (2025-04-30.zip), location-named (data.zip, files.rar, backup.7z). Sophisticated adversaries password-protect archives - visible at archive header level: ZIP central directory, RAR header, 7z header all reveal encryption flags without revealing contents. False positives: legitimate backup archives, software distribution packages, IT operations. Build $BACKUP_HOSTS allowlist. The 10MB threshold filters out most legitimate small archives (installer .zips, log bundles) while catching realistic data-theft archives. Pair with subsequent outbound transfer of files matching the size profile and with staging-directory writes (sid 9107401).",
+        notes: "If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. Archive creation as part of collection: 7-Zip, WinRAR, tar+gzip on Linux. Typical archives are 10MB-10GB depending on data volume. Detection: SMB write of files with archive extensions exceeding 10MB threshold. Adversary-typical naming patterns: random short names (a.zip, x.rar), date-stamped (2025-04-30.zip), location-named (data.zip, files.rar, backup.7z). Sophisticated adversaries password-protect archives - visible at archive header level: ZIP central directory, RAR header, 7z header all reveal encryption flags without revealing contents. False positives: legitimate backup archives, software distribution packages, IT operations. Build $BACKUP_HOSTS allowlist. The 10MB threshold filters out most legitimate small archives (installer .zips, log bundles) while catching realistic data-theft archives. Pair with subsequent outbound transfer of files matching the size profile and with staging-directory writes (sid 9107401).",
         apt: [
           { cls: "apt-mul", name: "Ransomware", note: "Universal in ransomware double-extortion: collect, archive, exfiltrate, then encrypt." },
           { cls: "apt-ru", name: "APT29", note: "Archive creation in long-term espionage operations." },
@@ -539,20 +519,15 @@ AND file.size > 10485760`,
 && port.dst == 445
 && protocols == smb
 && databytes.src > 0
-&& smb.fn == [
-  *.zip
-  || *.rar
-  || *.7z
-]
+&& smb.fn == ["*.zip", "*.rar", "*.7z"]
 // Magic-byte / encryption-flag detection requires Zeek's file analyzer (files.log + file_state).
 // See Suricata content signatures below for byte matching.
 // Logical spec: file content bytes 1-8 match one of:
-//   PK\x03\x04 + general-purpose-bit-flag bit 0 set (ZIP encrypted)
+//   PK + general-purpose-bit-flag bit 0 set (ZIP encrypted)
 //   Rar! + HEAD_FLAGS encrypted bit (RAR encrypted)
-//   7z\xbc\xaf\x27\x1c (7z signature)`,
+//   7z¼¯' (7z signature)`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
-AND zeek.smb_files.action: "SMB_FILE_WRITE"
 AND file.name: (*.zip OR *.rar OR *.7z)
 AND file.encrypted: true`,
         suricata: `alert tcp $HOME_NET any
@@ -565,7 +540,7 @@ AND file.encrypted: true`,
   content:"|01 00|"; offset:6; depth:2;
   classtype:trojan-activity;
   sid:9156002; rev:1;)`,
-        notes: "Password-protected archives are a strong adversary signal - legitimate enterprise file sharing rarely uses password-protected ZIPs (people use proper file sharing platforms instead). When they DO appear, it's often: (1) DLP-evading exfil prep (encrypted archive defeats simple DLP keyword scanning), (2) ransomware staging before exfil (archives are encrypted to prevent recovery), (3) insider data theft. Detection: ZIP files with general-purpose-bit-flag bit 0 set (encrypted), RAR files with HEAD_FLAGS encrypted bit, 7z files with header encryption. Zeek's file analyzer can extract these flags. The signature shown is simplified; full implementation needs file-format-aware parsing. Particularly investigate when password-protected archives appear in staging directories (combine with sid 9107401). Treat as high-priority alert: encrypted-archive-on-network is one of the highest-fidelity collection-prep signals.",
+        notes: "If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. Password-protected archives are a strong adversary signal - legitimate enterprise file sharing rarely uses password-protected ZIPs (people use proper file sharing platforms instead). When they DO appear, it's often: (1) DLP-evading exfil prep (encrypted archive defeats simple DLP keyword scanning), (2) ransomware staging before exfil (archives are encrypted to prevent recovery), (3) insider data theft. Detection: ZIP files with general-purpose-bit-flag bit 0 set (encrypted), RAR files with HEAD_FLAGS encrypted bit, 7z files with header encryption. Zeek's file analyzer can extract these flags. The signature shown is simplified; full implementation needs file-format-aware parsing. Particularly investigate when password-protected archives appear in staging directories (combine with sid 9107401). Treat as high-priority alert: encrypted-archive-on-network is one of the highest-fidelity collection-prep signals.",
         apt: [
           { cls: "apt-mul", name: "Ransomware", note: "Password-protected archives to evade DLP scanning before exfiltration." },
           { cls: "apt-ru", name: "APT29", note: "Encrypted archives in espionage operations." },

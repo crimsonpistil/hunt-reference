@@ -493,13 +493,8 @@ N/A pure Suricata`,
         sub: "T1110.004 - External Stuffing",
         indicator: "Authentication burst from external source against many accounts - leaked credential testing",
         arkime: `ip.src == $EXTERNAL
-&& port.dst == [443 || 80]
-&& http.uri == [
-  */login*
-  || */auth*
-  || */signin*
-  || */owa*
-]`,
+&& port.dst == [443, 80]
+&& http.uri == ["*/login*", "*/auth*", "*/signin*", "*/owa*"]`,
         kibana: `source.ip: NOT $INTERNAL
 AND destination.port: (443 OR 80)
 AND url.path: (*login* OR *auth* OR *signin* OR *owa*)`,
@@ -535,16 +530,8 @@ AND url.path: (*login* OR *auth* OR *signin* OR *owa*)`,
         sub: "T1552.004 - Private Key Exfiltration",
         indicator: "SMB / SCP file access for SSH private keys - id_rsa exfiltration pattern",
         arkime: `ip.src == $INTERNAL
-&& port.dst == [445 || 22]
-&& smb.fn == [
-  *id_rsa*
-  || *id_dsa*
-  || *id_ecdsa*
-  || *id_ed25519*
-  || *.pem
-  || *.key
-  || *.ppk
-]`,
+&& port.dst == [445, 22]
+&& smb.fn == ["*id_rsa*", "*id_dsa*", "*id_ecdsa*", "*id_ed25519*", "*.pem", "*.key", "*.ppk"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (445 OR 22)
 AND file.name: (id_rsa* OR id_dsa* OR id_ecdsa* OR id_ed25519* OR *.pem OR *.key OR *.ppk)`,
@@ -581,7 +568,6 @@ AND file.name: (id_rsa* OR id_dsa* OR id_ecdsa* OR id_ed25519* OR *.pem OR *.key
         indicator: "SMB write of memory dump files - exfiltrating LSASS dumps",
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
-AND zeek.smb_files.action: "SMB_FILE_WRITE"
 AND file.name: (*lsass*.dmp* OR *.dmp OR *memory.dmp)
 AND file.size > 10485760`,
         suricata: `alert tcp $HOME_NET any
@@ -594,7 +580,7 @@ AND file.size > 10485760`,
     \\.dmp)/i";
   classtype:trojan-activity;
   sid:9100301; rev:1;)`,
-        notes: "LSASS memory dumping (Mimikatz, ProcDump, Task Manager, comsvcs.dll MiniDump, custom tools) produces a .dmp file (typically 50-150MB for LSASS). Adversaries then exfiltrate the dump for offline credential extraction with pypykatz or Mimikatz. Network signal at the exfiltration step: SMB write of large .dmp files. The 10MB minimum threshold filters out small unrelated dumps. False positives: legitimate crash dumps being moved by IT, Windows Error Reporting (WER) artifacts - both should originate from sanctioned crash-collection servers ($CRASH_DUMP_SERVERS allowlist). After exclusions, large .dmp file movement is typically credential exfiltration. Pair with subsequent activity that suggests offline credential cracking: outbound traffic to attacker infrastructure, downloads of Mimikatz tools.",
+        notes: "If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. LSASS memory dumping (Mimikatz, ProcDump, Task Manager, comsvcs.dll MiniDump, custom tools) produces a .dmp file (typically 50-150MB for LSASS). Adversaries then exfiltrate the dump for offline credential extraction with pypykatz or Mimikatz. Network signal at the exfiltration step: SMB write of large .dmp files. The 10MB minimum threshold filters out small unrelated dumps. False positives: legitimate crash dumps being moved by IT, Windows Error Reporting (WER) artifacts - both should originate from sanctioned crash-collection servers ($CRASH_DUMP_SERVERS allowlist). After exclusions, large .dmp file movement is typically credential exfiltration. Pair with subsequent activity that suggests offline credential cracking: outbound traffic to attacker infrastructure, downloads of Mimikatz tools.",
         apt: [
           { cls: "apt-mul", name: "Scattered Spider", note: "LSASS dumping documented in CISA AA23-320A operations." },
           { cls: "apt-ru", name: "APT29", note: "LSASS dumps used in SolarWinds compromise." },

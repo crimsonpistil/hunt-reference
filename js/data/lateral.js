@@ -155,10 +155,9 @@ AND rdp.security_protocol: "standard"`,
         arkime: `ip.src == $INTERNAL
 && port.dst == 3389
 && protocols == rdp
-&& payload == "*MS_T120*"
 // BlueKeep's full byte signature (TPKT header + MS_T120 channel reference) requires regex on
 // binary payload - not expressible in pure Arkime. See Suricata pcre column for full byte-pattern match.
-\n// Logical spec: payload matches
+// Logical spec: payload matches
 //   /\\x03\\x00.{2}\\x02\\xf0\\x80.*MS_T120/`,
         kibana: `destination.port: 3389
 AND _exists_: rdp.channel
@@ -173,7 +172,7 @@ AND rdp.channel: "MS_T120"`,
   content:"MS_T120"; within:200;
   classtype:trojan-activity;
   sid:9100106; rev:1;)`,
-        notes: "BlueKeep (CVE-2019-0708) is a wormable RDP pre-authentication RCE in Windows 7, Server 2008, Server 2008 R2. The vulnerability is in how RDP handles the MS_T120 internal virtual channel - adversaries bind it to a non-default channel and trigger a use-after-free. Network signature: a client-side request to bind 'MS_T120' as a virtual channel during the RDP MCS Connect Initial phase, which doesn't happen in legitimate RDP traffic (MS_T120 is reserved for internal Windows use). Detection at the MS_T120 string level catches both Metasploit's BlueKeep module and most public PoCs. Modern Windows is patched (MS19-7), but unpatched Server 2008 R2 and Windows 7 systems still exist in many environments - particularly OT, healthcare, and legacy ICS networks. Worth maintaining the signature even though widespread exploitation has subsided.",
+        notes: "Byte-pattern detection of this signature lives in the Suricata content/pcre rule (see Suricata column). Arkime baseline has no field for deep-payload matching - payload8.src.hex / payload8.dst.hex only capture first 8 bytes. BlueKeep (CVE-2019-0708) is a wormable RDP pre-authentication RCE in Windows 7, Server 2008, Server 2008 R2. The vulnerability is in how RDP handles the MS_T120 internal virtual channel - adversaries bind it to a non-default channel and trigger a use-after-free. Network signature: a client-side request to bind 'MS_T120' as a virtual channel during the RDP MCS Connect Initial phase, which doesn't happen in legitimate RDP traffic (MS_T120 is reserved for internal Windows use). Detection at the MS_T120 string level catches both Metasploit's BlueKeep module and most public PoCs. Modern Windows is patched (MS19-7), but unpatched Server 2008 R2 and Windows 7 systems still exist in many environments - particularly OT, healthcare, and legacy ICS networks. Worth maintaining the signature even though widespread exploitation has subsided.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "BlueKeep exploitation documented in some operations targeting unpatched legacy infrastructure." },
           { cls: "apt-mul", name: "Red Team", note: "Standard red team tooling - Metasploit BlueKeep module." },
@@ -184,7 +183,7 @@ AND rdp.channel: "MS_T120"`,
       },
       {
         sub: "T1021.001 - Tunneled RDP",
-        indicator: "RDP-over-HTTPS / Gateway abuse - RDP traffic to non-gateway destination on TCP/443",
+        indicator: "[OFF-NET TRIPWIRE] RDP-over-HTTPS / Gateway abuse - RDP traffic to non-gateway destination on TCP/443",
         kibana: `source.ip: $INTERNAL
 AND destination.port: 443
 AND _exists_: rdp.connect_request
@@ -198,7 +197,7 @@ AND NOT destination.ip: $RDP_GATEWAYS`,
   content:"|03 00 00|"; offset:0; depth:3;
   classtype:trojan-activity;
   sid:9100107; rev:1;)`,
-        notes: "RDP can be tunneled over HTTPS via Remote Desktop Gateway (legitimate, $RDP_GATEWAYS) or via custom tunneling (ngrok, Chisel, Cloudflare Tunnel, custom implants). Detection requires either app-layer inspection (DPD detecting RDP inside TLS - Zeek's tls + rdp protocol detection) or destination IP analysis. RDP traffic to a non-corporate-gateway destination on 443 is anomalous. Particularly relevant in modern operations where Scattered Spider and similar actors use Cloudflare Tunnel + RDP to maintain persistent access without traditional VPN. Pair with the T1572 protocol tunneling indicators for cross-tactic kill-chain visibility - RDP-over-Cloudflare-Tunnel involves both T1021.001 (RDP) and T1572 (tunneling).",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. RDP can be tunneled over HTTPS via Remote Desktop Gateway (legitimate, $RDP_GATEWAYS) or via custom tunneling (ngrok, Chisel, Cloudflare Tunnel, custom implants). Detection requires either app-layer inspection (DPD detecting RDP inside TLS - Zeek's tls + rdp protocol detection) or destination IP analysis. RDP traffic to a non-corporate-gateway destination on 443 is anomalous. Particularly relevant in modern operations where Scattered Spider and similar actors use Cloudflare Tunnel + RDP to maintain persistent access without traditional VPN. Pair with the T1572 protocol tunneling indicators for cross-tactic kill-chain visibility - RDP-over-Cloudflare-Tunnel involves both T1021.001 (RDP) and T1572 (tunneling).",
         apt: [
           { cls: "apt-mul", name: "Scattered Spider", note: "RDP tunneling for persistence documented in CISA AA23-320A - Cloudflare Tunnel + RDP increasingly common." },
           { cls: "apt-cn", name: "APT41", note: "RDP tunneling in operations against technology sector targets." },
@@ -218,12 +217,12 @@ AND NOT destination.ip: $RDP_GATEWAYS`,
         sub: "T1021.002 - Administrative Share Access",
         indicator: "ADMIN$ tree connect from non-admin source - administrative share access",
         arkime: `ip.src == $INTERNAL
-&& ip.src != $ADMIN_HOSTS
+&& ip.src != $ADMIN_VLAN
 && port.dst == 445
 && protocols == smb
 && smb.share == ADMIN$`,
         kibana: `source.ip: $INTERNAL
-AND NOT source.ip: $ADMIN_HOSTS
+AND NOT source.ip: $ADMIN_VLAN
 AND destination.port: 445
 AND smb.share.name: "ADMIN$"`,
         suricata: `alert tcp $HOME_NET any
@@ -236,7 +235,7 @@ AND smb.share.name: "ADMIN$"`,
   content:"ADMIN$"; nocase;
   classtype:trojan-activity;
   sid:9100201; rev:1;)`,
-        notes: "ADMIN$ is a hidden administrative share that maps to %SystemRoot% (typically C:\\Windows). Access requires local admin rights on the target. Legitimate use: SCCM agent operations, IT management tools, manual administrative maintenance from sanctioned admin workstations. Adversary use: PsExec drops PSEXESVC.exe to ADMIN$, smbexec writes batch files, wmiexec uses ADMIN$ for output redirection. Build $ADMIN_HOSTS allowlist tightly - your actual sanctioned admin sources, NOT the broader IT VLAN. After exclusions, ADMIN$ access from workstations is essentially always lateral movement. Pair with subsequent svcctl RPC calls (sid 9100204) - the ADMIN$ access alone is enumeration; ADMIN$ + service creation is execution.",
+        notes: "ADMIN$ is a hidden administrative share that maps to %SystemRoot% (typically C:\\Windows). Access requires local admin rights on the target. Legitimate use: SCCM agent operations, IT management tools, manual administrative maintenance from sanctioned admin workstations. Adversary use: PsExec drops PSEXESVC.exe to ADMIN$, smbexec writes batch files, wmiexec uses ADMIN$ for output redirection. Build $ADMIN_VLAN allowlist tightly - your actual sanctioned admin sources, NOT the broader IT VLAN. After exclusions, ADMIN$ access from workstations is essentially always lateral movement. Pair with subsequent svcctl RPC calls (sid 9100204) - the ADMIN$ access alone is enumeration; ADMIN$ + service creation is execution.",
         apt: [
           { cls: "apt-mul", name: "Scattered Spider", note: "ADMIN$ lateral movement documented in CISA AA23-320A operations." },
           { cls: "apt-mul", name: "Ransomware", note: "Universal in ransomware affiliate operations - PsExec is the dominant lateral movement tool." },
@@ -250,14 +249,12 @@ AND smb.share.name: "ADMIN$"`,
         sub: "T1021.002 - Administrative Share Access",
         indicator: "C$ administrative drive access - root C: drive enumeration via SMB",
         arkime: `ip.src == $INTERNAL
-&& ip.src != $ADMIN_HOSTS
+&& ip.src != $ADMIN_VLAN
 && port.dst == 445
 && protocols == smb
-&& smb.share == [
-  C$ || D$ || ADMIN$ || IPC$
-]`,
+&& smb.share == [C$, D$, ADMIN$, IPC$]`,
         kibana: `source.ip: $INTERNAL
-AND NOT source.ip: $ADMIN_HOSTS
+AND NOT source.ip: $ADMIN_VLAN
 AND destination.port: 445
 AND smb.share.name: (
   "C$" OR "D$" OR "ADMIN$" OR "IPC$"
@@ -293,17 +290,10 @@ AND smb.share.name: (
 && protocols == smb
 && databytes.src > 0
 && smb.share == ADMIN$
-&& smb.fn == [
-  *.exe
-  || *.dll
-  || *.bat
-  || *.ps1
-  || *.vbs
-]`,
+&& smb.fn == ["*.exe", "*.dll", "*.bat", "*.ps1", "*.vbs"]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND smb.share.name: "ADMIN$"
-AND zeek.smb_files.action: ("SMB_FILE_WRITE" OR "SMB_FILE_OPEN")
 AND file.name: /.+\\.(exe|dll|bat|ps1|vbs)$/`,
         suricata: `alert tcp $HOME_NET any
   -> $HOME_NET 445
@@ -315,7 +305,7 @@ AND file.name: /.+\\.(exe|dll|bat|ps1|vbs)$/`,
   content:"|4d 5a|"; within:1024;
   classtype:trojan-activity;
   sid:9100203; rev:1;)`,
-        notes: "PsExec and equivalents drop their service binary to ADMIN$ before invoking it: PsExec writes PSEXESVC.exe, Impacket psexec.py writes a randomly-named .exe, smbexec writes a batch file. The SMB command sequence is tree-connect to ADMIN$ → create file → write data → close. Zeek smb_files.log captures filename and write operations. The Suricata signature looks for the PE magic bytes 'MZ' (0x4D 0x5A) within 1KB of the ADMIN$ tree connect - catches PE writes to admin shares. False positives: legitimate SCCM updates, Windows Update Server pushes - both should be allowlisted by source. After exclusions, executable writes to ADMIN$ are the highest-confidence single network signal for SMB lateral movement. Particularly powerful when the destination is a workstation rather than a server.",
+        notes: "If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. PsExec and equivalents drop their service binary to ADMIN$ before invoking it: PsExec writes PSEXESVC.exe, Impacket psexec.py writes a randomly-named .exe, smbexec writes a batch file. The SMB command sequence is tree-connect to ADMIN$ → create file → write data → close. Zeek smb_files.log captures filename and write operations. The Suricata signature looks for the PE magic bytes 'MZ' (0x4D 0x5A) within 1KB of the ADMIN$ tree connect - catches PE writes to admin shares. False positives: legitimate SCCM updates, Windows Update Server pushes - both should be allowlisted by source. After exclusions, executable writes to ADMIN$ are the highest-confidence single network signal for SMB lateral movement. Particularly powerful when the destination is a workstation rather than a server.",
         apt: [
           { cls: "apt-mul", name: "Scattered Spider", note: "Executable drops to ADMIN$ documented in CISA AA23-320A operations." },
           { cls: "apt-mul", name: "Ransomware", note: "Canonical SMB lateral movement fingerprint across ransomware operations." },
@@ -391,7 +381,6 @@ AND smb.named_pipe: (
         kibana: `source.ip: $INTERNAL
 AND destination.port: 445
 AND smb.share.name: "ADMIN$"
-AND zeek.smb_files.action: "SMB_FILE_READ"
 AND file.name: /__\\d+\\.\\d+/`,
         suricata: `alert tcp $HOME_NET any
   -> $HOME_NET 445
@@ -402,7 +391,7 @@ AND file.name: /__\\d+\\.\\d+/`,
   pcre:"/__\\d{10,}\\.\\d+/";
   classtype:trojan-activity;
   sid:9100206; rev:1;)`,
-        notes: "Impacket's wmiexec.py creates output files on the target with names like '__1234567890.123' (timestamp.fraction) in ADMIN$ - the executed command's stdout/stderr is redirected here, then the script reads back the file via SMB and deletes it. The filename pattern is highly distinctive: double underscore + 10+ digit number + period + fractional digits. Other Impacket tools (atexec.py, smbexec.py) use similar patterns. Zeek smb_files.log captures the filenames; the regex catches the canonical Impacket signature. Modern Impacket forks sometimes change the format - the upstream repo's pattern remains the dominant signature. Adversaries using stock Impacket (which is most of them) generate this pattern; only those who modify Impacket source escape it.",
+        notes: "If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. Impacket's wmiexec.py creates output files on the target with names like '__1234567890.123' (timestamp.fraction) in ADMIN$ - the executed command's stdout/stderr is redirected here, then the script reads back the file via SMB and deletes it. The filename pattern is highly distinctive: double underscore + 10+ digit number + period + fractional digits. Other Impacket tools (atexec.py, smbexec.py) use similar patterns. Zeek smb_files.log captures the filenames; the regex catches the canonical Impacket signature. Modern Impacket forks sometimes change the format - the upstream repo's pattern remains the dominant signature. Adversaries using stock Impacket (which is most of them) generate this pattern; only those who modify Impacket source escape it.",
         apt: [
           { cls: "apt-mul", name: "Scattered Spider", note: "Impacket usage documented in CISA AA23-320A." },
           { cls: "apt-mul", name: "Ransomware", note: "Impacket near-universal in ransomware operations." },
@@ -451,8 +440,7 @@ AND dcerpc.opnum: (3 OR 4)`,
         indicator: "MMC20.Application CLSID - canonical DCOM lateral movement signature",
         arkime: `ip.src == $INTERNAL
 && port.dst == 135
-&& protocols == dcerpc
-&& payload == "*49B2791A-B1AE-4C90-9B8E-E860BA07F889*"`,
+&& protocols == dcerpc`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 135
 AND _exists_: dcerpc.activation_clsid
@@ -468,7 +456,7 @@ AND dcerpc.activation_clsid: "49b2791a-b1ae-4c90-9b8e-e860ba07f889"`,
   within:8;
   classtype:trojan-activity;
   sid:9100302; rev:1;)`,
-        notes: "MMC20.Application (CLSID 49B2791A-B1AE-4C90-9B8E-E860BA07F889) is the COM object for Microsoft Management Console. Its Document.ActiveView.ExecuteShellCommand method allows remote command execution - Matt Nelson's original research published in 2017 made this the canonical DCOM lateral movement technique. Tools: Invoke-DCOM (PowerShell), Cobalt Strike's dcom command, custom scripts. Detection: the CLSID byte pattern in DCERPC activation traffic is highly distinctive - almost no legitimate use case for remote MMC20.Application instantiation. Microsoft has not deprecated this interface; mitigation requires disabling DCOM on workstations or restricting MMC.exe permissions. Worth alerting on every match - false positive rate near zero.",
+        notes: "Byte-pattern detection of this signature lives in the Suricata content/pcre rule (see Suricata column). Arkime baseline has no field for deep-payload matching - payload8.src.hex / payload8.dst.hex only capture first 8 bytes. MMC20.Application (CLSID 49B2791A-B1AE-4C90-9B8E-E860BA07F889) is the COM object for Microsoft Management Console. Its Document.ActiveView.ExecuteShellCommand method allows remote command execution - Matt Nelson's original research published in 2017 made this the canonical DCOM lateral movement technique. Tools: Invoke-DCOM (PowerShell), Cobalt Strike's dcom command, custom scripts. Detection: the CLSID byte pattern in DCERPC activation traffic is highly distinctive - almost no legitimate use case for remote MMC20.Application instantiation. Microsoft has not deprecated this interface; mitigation requires disabling DCOM on workstations or restricting MMC.exe permissions. Worth alerting on every match - false positive rate near zero.",
         apt: [
           { cls: "apt-mul", name: "Red Team", note: "Standard red team tradecraft - Invoke-DCOM, Cobalt Strike dcom command." },
           { cls: "apt-cn", name: "APT41", note: "DCOM lateral movement in operations." },
@@ -482,11 +470,7 @@ AND dcerpc.activation_clsid: "49b2791a-b1ae-4c90-9b8e-e860ba07f889"`,
         indicator: "ShellWindows / ShellBrowserWindow CLSID - DCOM lateral movement variants",
         arkime: `ip.src == $INTERNAL
 && port.dst == 135
-&& protocols == dcerpc
-&& payload == [
-  *9BA05972-F6A8-11CF-A442-00A0C90A8F39*
-  || *C08AFD90-F2A1-11D1-8455-00A0C91F3880*
-]`,
+&& protocols == dcerpc`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 135
 AND dcerpc.activation_clsid: (
@@ -503,7 +487,7 @@ AND dcerpc.activation_clsid: (
     90 fd 8a c0 a1 f2 d1 11)/i";
   classtype:trojan-activity;
   sid:9100303; rev:1;)`,
-        notes: "ShellWindows (CLSID 9BA05972-F6A8-11CF-A442-00A0C90A8F39) and ShellBrowserWindow (CLSID C08AFD90-F2A1-11D1-8455-00A0C91F3880) are alternative DCOM lateral movement vectors using the same Document.Application.ShellExecute or Document.Application.Open methods to execute arbitrary commands. They were Nelson's follow-on research after MMC20.Application, providing alternatives when MMC20 was restricted. Detection at the CLSID byte pattern level. Like MMC20.Application, near-zero false positive rate - these objects are essentially never remotely instantiated for legitimate reasons. Worth maintaining alongside the MMC20 signature for full DCOM lateral movement coverage.",
+        notes: "Byte-pattern detection of this signature lives in the Suricata content/pcre rule (see Suricata column). Arkime baseline has no field for deep-payload matching - payload8.src.hex / payload8.dst.hex only capture first 8 bytes. ShellWindows (CLSID 9BA05972-F6A8-11CF-A442-00A0C90A8F39) and ShellBrowserWindow (CLSID C08AFD90-F2A1-11D1-8455-00A0C91F3880) are alternative DCOM lateral movement vectors using the same Document.Application.ShellExecute or Document.Application.Open methods to execute arbitrary commands. They were Nelson's follow-on research after MMC20.Application, providing alternatives when MMC20 was restricted. Detection at the CLSID byte pattern level. Like MMC20.Application, near-zero false positive rate - these objects are essentially never remotely instantiated for legitimate reasons. Worth maintaining alongside the MMC20 signature for full DCOM lateral movement coverage.",
         apt: [
           { cls: "apt-mul", name: "Red Team", note: "Alternative to MMC20.Application in red team operations." },
           { cls: "apt-cn", name: "APT41", note: "ShellWindows DCOM in some operations." },
@@ -516,11 +500,7 @@ AND dcerpc.activation_clsid: (
         indicator: "Excel.Application DDE DCOM - Excel-based DCOM lateral execution",
         arkime: `ip.src == $INTERNAL
 && port.dst == 135
-&& protocols == dcerpc
-&& payload == [
-  *00020812-0000-0000-C000-000000000046*
-  || *00024500-0000-0000-C000-000000000046*
-]`,
+&& protocols == dcerpc`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: 135
 AND dcerpc.activation_clsid: (
@@ -539,7 +519,7 @@ AND dcerpc.activation_clsid: (
   within:30;
   classtype:trojan-activity;
   sid:9100304; rev:1;)`,
-        notes: "Excel.Application (CLSIDs 00020812-... and 00024500-... depending on version) provides DDEInitiate and RegisterXLL methods that can be abused for remote code execution via DCOM. Less common than MMC20.Application but documented in research and in some operations. The technique requires Excel installed on the target - limits applicability to workstation-heavy environments. Detection at the CLSID byte pattern. False positives possible: legitimate Excel automation across networks (rare in modern environments - replaced by APIs and PowerBI). Worth maintaining as low-cost coverage. Particularly relevant in finance and analytics environments where Excel COM automation may be more common.",
+        notes: "Byte-pattern detection of this signature lives in the Suricata content/pcre rule (see Suricata column). Arkime baseline has no field for deep-payload matching - payload8.src.hex / payload8.dst.hex only capture first 8 bytes. Excel.Application (CLSIDs 00020812-... and 00024500-... depending on version) provides DDEInitiate and RegisterXLL methods that can be abused for remote code execution via DCOM. Less common than MMC20.Application but documented in research and in some operations. The technique requires Excel installed on the target - limits applicability to workstation-heavy environments. Detection at the CLSID byte pattern. False positives possible: legitimate Excel automation across networks (rare in modern environments - replaced by APIs and PowerBI). Worth maintaining as low-cost coverage. Particularly relevant in finance and analytics environments where Excel COM automation may be more common.",
         apt: [
           { cls: "apt-mul", name: "Red Team", note: "Excel DCOM documented in offensive security research." },
           { cls: "apt-mul", name: "Multi", note: "Documented in offensive security research, particularly Cybereason and SpecterOps research on Office COM lateral movement." }
@@ -684,7 +664,7 @@ AND network.packets < 20`,
         indicator: "WinRM connection from non-admin source - TCP/5985 / 5986 lateral movement",
         arkime: `ip.src == $INTERNAL
 && ip.src != $WINRM_ADMINS
-&& port.dst == [5985 || 5986]
+&& port.dst == [5985, 5986]
 && protocols == http
 && session.length > 5`,
         kibana: `source.ip: $INTERNAL
@@ -712,7 +692,7 @@ AND destination.port: (5985 OR 5986)`,
         sub: "T1021.006 - Source/Destination",
         indicator: "WinRM fan-out from single source - one host running PSSession to many destinations",
         arkime: `ip.src == $INTERNAL
-&& port.dst == [5985 || 5986]`,
+&& port.dst == [5985, 5986]`,
         kibana: `source.ip: $INTERNAL
 AND destination.port: (5985 OR 5986)`,
         suricata: `alert tcp $HOME_NET any
@@ -740,7 +720,7 @@ AND destination.port: (5985 OR 5986)`,
         sub: "T1021.006 - WS-Management Protocol",
         indicator: "WS-Management SOAP request - wsman endpoint pattern",
         arkime: `ip.src == $INTERNAL
-&& port.dst == [5985 || 5986]
+&& port.dst == [5985, 5986]
 && protocols == http
 && http.uri == "*/wsman*"
 && http.method == POST
@@ -774,12 +754,9 @@ AND user_agent.original: *Microsoft WinRM Client*`,
         sub: "T1021.006 - Tool Fingerprints",
         indicator: "Evil-WinRM tool fingerprint - Ruby-based WinRM client signature",
         arkime: `ip.src == $INTERNAL
-&& port.dst == [5985 || 5986]
+&& port.dst == [5985, 5986]
 && protocols == http
-&& http.user-agent == [
-  *Ruby*
-  || *Faraday*
-]
+&& http.user-agent == ["*Ruby*", "*Faraday*"]
 && http.uri == "*/wsman*"
 // Note: Faraday match here is a substring match. Original regex anchored to start of UA (/^Faraday/).
 // Pure Arkime cannot anchor on string start - the substring match may catch UAs containing "Faraday"
@@ -811,7 +788,7 @@ AND url.path: */wsman*`,
         sub: "T1021.006 - Interactive Sessions",
         indicator: "Sustained WinRM session - long-lived PSSession indicating interactive access",
         arkime: `ip.src == $INTERNAL
-&& port.dst == [5985 || 5986]
+&& port.dst == [5985, 5986]
 && session.length > 1800
 && databytes.src > 50000
 && databytes.dst > 50000`,
@@ -855,20 +832,10 @@ AND destination.bytes > 50000`,
 && port.dst == 445
 && protocols == smb
 && databytes.src > 0
-&& smb.fn == [
-  *.exe
-  || *.dll
-  || *.bat
-  || *.ps1
-  || *.vbs
-  || *.7z
-  || *.zip
-  || *.rar
-]`,
+&& smb.fn == ["*.exe", "*.dll", "*.bat", "*.ps1", "*.vbs", "*.7z", "*.zip", "*.rar"]`,
         kibana: `source.ip: $INTERNAL
 AND NOT source.ip: $FILE_SERVERS
 AND destination.port: 445
-AND zeek.smb_files.action: "SMB_FILE_WRITE"
 AND file.name: /.+\\.(exe|dll|bat|ps1|vbs|7z|zip|rar)$/`,
         suricata: `alert tcp $HOME_NET any
   -> $HOME_NET 445
@@ -883,7 +850,7 @@ AND file.name: /.+\\.(exe|dll|bat|ps1|vbs|7z|zip|rar)$/`,
     count 10, seconds 300;
   classtype:trojan-activity;
   sid:9157001; rev:1;)`,
-        notes: "After establishing a foothold, adversaries copy tools to multiple internal hosts: PsExec, BloodHound, Cobalt Strike beacons, custom binaries, archive files containing tool collections. The pattern: bulk SMB write of executable/script/archive files from one non-file-server source. Build $FILE_SERVERS allowlist (sanctioned file servers, SCCM distribution points). After exclusions, sustained executable file writes via SMB from a workstation source = adversary tool staging. Particularly powerful when destinations are administrative shares (combine with sid 9100203 for ADMIN$ writes specifically). Pair with EDR file-creation events on destination hosts for definitive correlation. Sophisticated adversaries sometimes archive their tools (.7z, .rar, .zip with passwords) to defeat content inspection - extension monitoring catches this anyway.",
+        notes: "If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. After establishing a foothold, adversaries copy tools to multiple internal hosts: PsExec, BloodHound, Cobalt Strike beacons, custom binaries, archive files containing tool collections. The pattern: bulk SMB write of executable/script/archive files from one non-file-server source. Build $FILE_SERVERS allowlist (sanctioned file servers, SCCM distribution points). After exclusions, sustained executable file writes via SMB from a workstation source = adversary tool staging. Particularly powerful when destinations are administrative shares (combine with sid 9100203 for ADMIN$ writes specifically). Pair with EDR file-creation events on destination hosts for definitive correlation. Sophisticated adversaries sometimes archive their tools (.7z, .rar, .zip with passwords) to defeat content inspection - extension monitoring catches this anyway.",
         apt: [
           { cls: "apt-mul", name: "Scattered Spider", note: "Tool staging documented in CISA AA23-320A operations - pre-encryption tool deployment." },
           { cls: "apt-mul", name: "Ransomware", note: "Universal pre-encryption tool staging - most visible phase of ransomware operations." },

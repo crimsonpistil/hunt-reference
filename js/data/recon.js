@@ -6,7 +6,7 @@ const DATA = [
     rows: [
       {
         sub: "T1589.001 - Credentials",
-        indicator: "Azure AD / O365 GetCredentialType username enumeration",
+        indicator: "[OFF-NET TRIPWIRE] Azure AD / O365 GetCredentialType username enumeration",
         arkime: `ip.src != $INTERNAL
 && http.method == POST
 && host.http ==
@@ -32,7 +32,7 @@ AND http.request.method: POST`,
     count 10, seconds 60;
   classtype:attempted-recon;
   sid:9158901; rev:1;)`,
-        notes: "Returns UPN existence, auth method, and federation status without authentication. Tools: AADInternals, o365enum, TREVORspray. Enumerate thousands of usernames via this endpoint. Monitor via proxy/CASB egress logs - this hits Microsoft infrastructure, not your perimeter directly.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Returns UPN existence, auth method, and federation status without authentication. Tools: AADInternals, o365enum, TREVORspray. Enumerate thousands of usernames via this endpoint. Monitor via proxy/CASB egress logs - this hits Microsoft infrastructure, not your perimeter directly.",
         apt: [
           { name: "Midnight Blizzard", cls: "apt-ru", note: "Used GetCredentialType enumeration to profile Microsoft corporate O365 tenants prior to 2024 corporate email compromise." },
           { name: "Charming Kitten", cls: "apt-ir", note: "Profiles O365 tenants of academic, NGO, and government contractor targets using AADInternals-equivalent tooling." },
@@ -45,7 +45,7 @@ AND http.request.method: POST`,
         sub: "T1589.001 - Credentials",
         indicator: "O365 Autodiscover username validation",
         arkime: `ip.src != $INTERNAL
-&& http.method == [GET || POST]
+&& http.method == [GET, POST]
 && host.http == ["*autodiscover*", "*outlook.office365.com*"]
 && http.uri == ["*/autodiscover.xml*", "*/autodiscover.json*", "*/mapi/emsmdb*", "*/mapi/nspi*"]`,
         kibana: `NOT source.ip: $INTERNAL
@@ -126,10 +126,10 @@ AND http.response.status_code:
       },
       {
         sub: "T1589.001 - Credentials",
-        indicator: "Credential validation against breach / leak check APIs - internal host",
+        indicator: "[OFF-NET TRIPWIRE] Credential validation against breach / leak check APIs - internal host",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*haveibeenpwned.com*", "*dehashed.com*", "*leakcheck.io*", "*snusbase.com*", "*intelx.io*", "*breachdirectory.org*"]
-&& http.method == [GET || POST]`,
+&& http.method == [GET, POST]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   "haveibeenpwned.com"
@@ -153,7 +153,7 @@ AND url.domain: (
   http.header;
   classtype:policy-violation;
   sid:9158904; rev:1;)`,
-        notes: "Internal hosts querying breach databases against your own domain = red team (document it) or compromised host validating harvested creds before use. Dehashed/Snusbase/IntelX are paid API services - automated bulk queries from an endpoint = adversarial tooling signal. Correlate source host identity.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Internal hosts querying breach databases against your own domain = red team (document it) or compromised host validating harvested creds before use. Dehashed/Snusbase/IntelX are paid API services - automated bulk queries from an endpoint = adversarial tooling signal. Correlate source host identity.",
         apt: [
           { name: "Lazarus", cls: "apt-kp", note: "Validated harvested credential lists against breach databases prior to financial sector targeting and credential stuffing." },
           { name: "APT33", cls: "apt-ir", note: "Used breach database lookups to identify previously compromised employee accounts at energy sector targets." },
@@ -168,10 +168,10 @@ AND url.domain: (
 && port.dst == 25
 && protocols == smtp
 && databytes.src > 0
-&& ip.src != $KNOWN_MX`,
+&& ip.src != $ALLOWED_MX`,
         kibana: `NOT source.ip: $INTERNAL
 AND destination.port: 25
-AND NOT source.ip: $KNOWN_MX
+AND NOT source.ip: $ALLOWED_MX
 AND network.transport: tcp`,
         suricata: `alert tcp $EXTERNAL_NET any
   -> $SMTP_SERVERS 25
@@ -195,12 +195,12 @@ AND network.transport: tcp`,
         arkime: `ip.src != $INTERNAL
 && port.dst == 25
 && protocols == smtp
-&& ip.src != $KNOWN_MX
+&& ip.src != $ALLOWED_MX
 && packets.src > 20
 && packets.dst > 20`,
         kibana: `NOT source.ip: $INTERNAL
 AND destination.port: 25
-AND NOT source.ip: $KNOWN_MX
+AND NOT source.ip: $ALLOWED_MX
 AND network.packets > 40`,
         suricata: `alert tcp $EXTERNAL_NET any
   -> $SMTP_SERVERS 25
@@ -309,7 +309,7 @@ AND http.response.bytes > 50000`,
       },
       {
         sub: "T1589.003 - Employee Names",
-        indicator: "LinkedIn / OSINT enrichment API queries from internal hosts",
+        indicator: "[OFF-NET TRIPWIRE] LinkedIn / OSINT enrichment API queries from internal hosts",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*linkedin.com*", "*hunter.io*", "*rocketreach.co*", "*clearbit.com*", "*apollo.io*", "*zoominfo.com*"]
 && http.uri == ["*/search/results*", "*/company/*", "*/v2/people*", "*/prospector*"]`,
@@ -340,7 +340,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9158909; rev:1;)`,
-        notes: "Hunter.io, RocketReach, Apollo, Clearbit are identity enrichment APIs - bulk queries from internal hosts against your own domain are a red flag. Baseline expected use from sales/marketing teams. Anomalous volume from IT/security endpoints warrants investigation. LinkedIn scraping at high velocity generates 429s visible in proxy logs.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Hunter.io, RocketReach, Apollo, Clearbit are identity enrichment APIs - bulk queries from internal hosts against your own domain are a red flag. Baseline expected use from sales/marketing teams. Anomalous volume from IT/security endpoints warrants investigation. LinkedIn scraping at high velocity generates 429s visible in proxy logs.",
         apt: [
           { name: "Lazarus", cls: "apt-kp", note: "Identity enrichment platforms to map org structures at financial sector targets prior to BEC operations." },
           { name: "APT33", cls: "apt-ir", note: "People-search APIs to identify OT staff and privileged account holders at energy sector targets." },
@@ -353,7 +353,7 @@ AND url.path: (
         indicator: "LDAP / LDAPS external anonymous bind or unauthenticated enumeration",
         arkime: `ip.src != $INTERNAL
 && port.dst == [389, 636, 3268, 3269]
-&& protocols == [ldap || ldaps]
+&& protocols == [ldap, ldaps]
 && databytes.src > 0`,
         kibana: `NOT source.ip: $INTERNAL
 AND destination.port: (
@@ -383,7 +383,7 @@ AND network.transport: tcp`,
         indicator: "Kerberos user enumeration - AS-REQ without pre-auth (Kerbrute)",
         arkime: `ip.src != $INTERNAL
 && port.dst == 88
-&& protocols == [krb5 || udp]
+&& protocols == [krb5, udp]
 && databytes.src > 0
 && packets.src > 10`,
         kibana: `NOT source.ip: $INTERNAL
@@ -488,7 +488,7 @@ AND network.transport: tcp`,
         indicator: "DNS zone transfer attempt - AXFR / IXFR",
         arkime: `ip.src != $INTERNAL
 && protocols == dns
-&& dns.query.type == [AXFR || IXFR]
+&& dns.query.type == [AXFR, IXFR]
 && port.dst == 53`,
         kibana: `NOT source.ip: $INTERNAL
 AND dns.question.type: (
@@ -518,12 +518,12 @@ AND destination.port: 53`,
         arkime: `ip.src != $INTERNAL
 && protocols == dns
 && dns.query.type == A
-&& host.dns == "*.yourdomain.com"
+&& host.dns == "*.<YOUR_DOMAIN>"
 && packets.src > 50`,
         kibana: `NOT source.ip: $INTERNAL
 AND dns.question.type: "A"
 AND dns.question.name:
-  *.yourdomain.com
+  *.<YOUR_DOMAIN>
 AND NOT dns.resolved_ip: *`,
         suricata: `alert dns $EXTERNAL_NET any
   -> $DNS_SERVERS any
@@ -531,7 +531,7 @@ AND NOT dns.resolved_ip: *`,
     brute-force enumeration";
   dns.query;
   pcre:"/^[a-z0-9\\-]{2,30}
-    \\.yourdomain\\.com$/i";
+    \\.<YOUR_DOMAIN>\\.com$/i";
   threshold:type both,
     track by_src,
     count 20, seconds 30;
@@ -695,7 +695,7 @@ AND dns.question.name:
       },
       {
         sub: "T1590.005 - IP Addresses",
-        indicator: "ASN / BGP enumeration via external looking glass - from internal host",
+        indicator: "[OFF-NET TRIPWIRE] ASN / BGP enumeration via external looking glass - from internal host",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*bgp.he.net*", "*stat.ripe.net*", "*bgpview.io*", "*ipinfo.io*", "*ipwhois.io*", "*team-cymru.com*"]`,
         kibana: `source.ip: $INTERNAL
@@ -721,7 +721,7 @@ AND url.domain: (
   http.header;
   classtype:policy-violation;
   sid:9159009; rev:1;)`,
-        notes: "Internal endpoints hitting BGP looking glasses = red team or adversary-in-network pre-lateral-movement recon. Legitimate NOC uses internal tooling. Enrich source host identity and cross-reference recent authentication events. Requires existing foothold.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Internal endpoints hitting BGP looking glasses = red team or adversary-in-network pre-lateral-movement recon. Legitimate NOC uses internal tooling. Enrich source host identity and cross-reference recent authentication events. Requires existing foothold.",
         apt: [
           { name: "APT10", cls: "apt-cn", note: "Queried BGP/ASN data from compromised MSP hosts to map customer IP allocations during Cloud Hopper." },
           { name: "APT29", cls: "apt-ru", note: "Internal IP range mapping via external ASN lookup during dwell-time recon phases prior to SolarWinds lateral movement." },
@@ -733,7 +733,7 @@ AND url.domain: (
         sub: "T1590.005 - IP Addresses",
         indicator: "Shodan / Censys / BinaryEdge crawler IPs probing perimeter",
         arkime: `ip.src == ["66.240.192.0/19", "198.20.69.0/24", "162.142.125.0/24", "71.6.135.0/24", "45.33.32.0/24", 93.120.27.62]
-&& port.dst != [80 || 443]`,
+&& port.dst != [80, 443]`,
         kibana: `source.ip: (
   "66.240.0.0/14"
   OR "162.142.125.0/24"
@@ -764,7 +764,7 @@ AND url.domain: (
         sub: "T1590.006 - Network Security Appliances",
         indicator: "VPN gateway IKE vendor-ID fingerprinting",
         arkime: `ip.src != $INTERNAL
-&& port.dst == [500 || 4500]
+&& port.dst == [500, 4500]
 && protocols == udp
 && databytes.src > 28
 && databytes.src < 500`,
@@ -971,7 +971,7 @@ AND network.transport: tcp`,
       },
       {
         sub: "T1591.002 - Business Relationships",
-        indicator: "Business relationship / third-party vendor enumeration via OSINT",
+        indicator: "[OFF-NET TRIPWIRE] Business relationship / third-party vendor enumeration via OSINT",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*zoominfo.com*", "*dnb.com*", "*opencorporates.com*", "*crunchbase.com*", "*pitchbook.com*", "*sec.gov*"]
 && http.uri == ["*/company/*", "*/search*", "*/v2/organizations*", "*/filings*"]`,
@@ -1002,7 +1002,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159104; rev:1;)`,
-        notes: "Internal hosts querying business intelligence platforms against your own org or vendors may indicate a compromised host mapping third-party relationships for supply chain targeting. Baseline expected use from BD/sales teams - anomalous volume from IT or security hosts is the flag.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Internal hosts querying business intelligence platforms against your own org or vendors may indicate a compromised host mapping third-party relationships for supply chain targeting. Baseline expected use from BD/sales teams - anomalous volume from IT or security hosts is the flag.",
         apt: [
           { name: "FIN7", cls: "apt-mul", note: "Compiled victim lists by filtering companies by revenue using Zoominfo." },
           { name: "APT41", cls: "apt-cn", note: "Researches business relationships to identify supply chain access paths." },
@@ -1142,8 +1142,8 @@ AND url.path: (
         sub: "T1592.001 - Hardware",
         indicator: "WMI remote queries - external or lateral WMI hardware enumeration (DCOM/RPC)",
         arkime: `ip.src != $INTERNAL
-&& port.dst == [135 || 445]
-&& protocols == [dce-rpc || smb]
+&& port.dst == [135, 445]
+&& protocols == [dce-rpc, smb]
 && databytes.src > 0
 && databytes.dst > 0`,
         kibana: `NOT source.ip: $INTERNAL
@@ -1428,7 +1428,7 @@ AND network.packets > 10`,
 && protocols == http
 && http.method == GET
 && http.uri == ["*/firmware*", "*/version*", "*/cgi-bin/luci*", "*/webui/login*", "*/admin/status.php*", "*/system/device-info*", "*/api/v1/system/info*", "*/rest/system/info*"]
-&& host.http != $KNOWN_GOOD`,
+&& host.http != $ALLOWED_DEFAULTS`,
         kibana: `NOT source.ip: $INTERNAL
 AND http.request.method: GET
 AND url.path: (
@@ -1440,7 +1440,7 @@ AND url.path: (
   OR */api/v1/system/info*
   OR */rest/system/info*
 )
-AND NOT url.domain: $KNOWN_GOOD`,
+AND NOT url.domain: $ALLOWED_DEFAULTS`,
         suricata: `alert http $EXTERNAL_NET any
   -> $HTTP_SERVERS any
   (msg:"RECON T1592.003 Device mgmt
@@ -1492,9 +1492,10 @@ AND destination.bytes > 0`,
       },
       {
         sub: "T1592.003 - Firmware",
-        indicator: "TLS certificate CN / SAN - device firmware version and model disclosure",
+        indicator: "[OFF-NET TRIPWIRE] TLS certificate CN / SAN - device firmware version and model disclosure",
         arkime: `ip.src != $INTERNAL
-&& protocols == tls`,
+&& protocols == tls
+&& cert.subject.cn == ["*FortiGate*", "*SonicWall*", "*pfSense*", "*OPNsense*", "*Cisco*", "*Juniper*", "*Ubiquiti*", "*MikroTik*", "*Synology*", "*QNAP*", "*router*", "*firewall*", "*ESXi*", "*vCenter*", "*iLO*", "*iDRAC*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND tls.server.x509.subject.common_name: (
   *FortiGate* OR *SonicWall*
@@ -1517,7 +1518,7 @@ AND tls.server.x509.subject.common_name: (
     router|firewall)/ix";
   classtype:policy-violation;
   sid:9159217; rev:1;)`,
-        notes: "Network devices generating self-signed TLS certs often include device model, hostname, and sometimes firmware version in the CN or SAN fields. A FortiGate self-signed cert with CN=FortiGate-100F reveals exact hardware model - adversaries correlate with Shodan to track firmware update history. Remediate: replace self-signed certs with CA-issued certs with generic CNs.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Network devices generating self-signed TLS certs often include device model, hostname, and sometimes firmware version in the CN or SAN fields. A FortiGate self-signed cert with CN=FortiGate-100F reveals exact hardware model - adversaries correlate with Shodan to track firmware update history. Remediate: replace self-signed certs with CA-issued certs with generic CNs.",
         apt: [
           { name: "APT33", cls: "apt-ir", note: "Collects TLS certificate CN/SAN data from network device management interfaces to identify device models and correlate with Shodan data." },
           { name: "Volt Typhoon", cls: "apt-cn", note: "Harvests TLS certificate metadata from network device management interfaces to identify hardware models and correlate against CVE-vulnerable firmware versions." },
@@ -1595,10 +1596,10 @@ AND user_agent.original: (
         indicator: "JA4S - server TLS response fingerprinting for rogue/AiTM infrastructure detection",
         arkime: `ip.dst == $INTERNAL
 && protocols == tls
-&& tls.ja3s != $KNOWN_GOOD_SERVERS`,
+&& tls.ja3s != $ALLOWED_SERVERS`,
         kibana: `destination.ip: $INTERNAL
 AND NOT tls.server.ja3s:
-  $KNOWN_GOOD_SERVERS
+  $ALLOWED_SERVERS
 AND tls.server.not_before:
   [now-14d TO now]`,
         suricata: `alert tls $EXTERNAL_NET any
@@ -1718,7 +1719,7 @@ AND url.path: (
     rows: [
       {
         sub: "T1593.001 - Social Media",
-        indicator: "LinkedIn bulk profile / company scraping from internal host",
+        indicator: "[OFF-NET TRIPWIRE] LinkedIn bulk profile / company scraping from internal host",
         arkime: `ip.src == $INTERNAL
 && host.http == *linkedin.com*
 && http.method == GET
@@ -1751,7 +1752,7 @@ AND http.response.bytes > 20000`,
     count 20, seconds 60;
   classtype:policy-violation;
   sid:9159301; rev:1;)`,
-        notes: "High-volume LinkedIn profile and company page fetches from single internal host = automated scraping. Legitimate LinkedIn use is interactive - 20+ profile GETs in 60 seconds from one endpoint is anomalous. LinkedIn rate limiting generates 429 responses visible in proxy logs - a 429 from LinkedIn is itself an indicator. Baseline sales/recruiting team use first.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. High-volume LinkedIn profile and company page fetches from single internal host = automated scraping. Legitimate LinkedIn use is interactive - 20+ profile GETs in 60 seconds from one endpoint is anomalous. LinkedIn rate limiting generates 429 responses visible in proxy logs - a 429 from LinkedIn is itself an indicator. Baseline sales/recruiting team use first.",
         apt: [
           { name: "Charming Kitten", cls: "apt-ir", note: "Uses LinkedIn profile scraping to identify high-value targets at academic, NGO, and government organizations before spearphishing." },
           { name: "Kimsuky", cls: "apt-kp", note: "Scrapes LinkedIn profiles of South Korean government and US policy organization staff to identify personnel with access to target information." },
@@ -1761,7 +1762,7 @@ AND http.response.bytes > 20000`,
       },
       {
         sub: "T1593.001 - Social Media",
-        indicator: "Social platform bulk org mention queries from internal host",
+        indicator: "[OFF-NET TRIPWIRE] Social platform bulk org mention queries from internal host",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*twitter.com*", "*x.com*", "*reddit.com*", "*glassdoor.com*", "*facebook.com*"]
 && http.uri == ["*/search*", "*/query*", "*/api/search*", "*/graphql*"]
@@ -1795,7 +1796,7 @@ AND http.response.bytes > 10000`,
     count 15, seconds 60;
   classtype:policy-violation;
   sid:9159302; rev:1;)`,
-        notes: "Adversaries query social platforms for mentions of your org, employee names, and internal tool names. Reddit contains employee posts mentioning internal tools and outages. Glassdoor reviews often disclose internal technology stacks in detail. GraphQL endpoints on Twitter/X and Facebook are used by automated tools to bulk-harvest org-related content.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Adversaries query social platforms for mentions of your org, employee names, and internal tool names. Reddit contains employee posts mentioning internal tools and outages. Glassdoor reviews often disclose internal technology stacks in detail. GraphQL endpoints on Twitter/X and Facebook are used by automated tools to bulk-harvest org-related content.",
         apt: [
           { name: "Kimsuky", cls: "apt-kp", note: "Conducts social media reconnaissance across multiple platforms to build target profiles of government and policy organization employees." },
           { name: "Cozy Bear", cls: "apt-ru", note: "Used social media intelligence gathering to identify and profile targets prior to spearphishing." },
@@ -1805,17 +1806,17 @@ AND http.response.bytes > 10000`,
       },
       {
         sub: "T1593.002 - Search Engines",
-        indicator: "Google / Bing dork queries targeting your own domain from internal host",
+        indicator: "[OFF-NET TRIPWIRE] Google / Bing dork queries targeting your own domain from internal host",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*google.com*", "*bing.com*", "*duckduckgo.com*"]
-&& http.uri == ["*site:yourdomain.com*", "*inurl:yourdomain*", "*filetype:*", "*intitle:index.of*", "*"internal use only"*"]`,
+&& http.uri == ["*site:<YOUR_DOMAIN>*", "*inurl:<YOUR_DOMAIN>*", "*filetype:*", "*intitle:index.of*", "*"internal use only"*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   "google.com" OR "bing.com"
   OR "duckduckgo.com"
 )
 AND url.query: (
-  *site:yourdomain* OR *inurl:*
+  *site:<YOUR_DOMAIN>* OR *inurl:*
   OR *filetype:* OR *intitle:*
   OR *"internal use only"*
   OR *confidential*
@@ -1836,7 +1837,7 @@ AND url.query: (
   http.uri;
   classtype:policy-violation;
   sid:9159303; rev:1;)`,
-        notes: "Google dork operators (site:, inurl:, filetype:, intitle:) allow targeted searches for exposed files and sensitive content. An internal host running dork queries against your own domain is either red team activity (document it) or a compromised host performing pre-exfil intelligence gathering. URL-encoded operators (%3A = :) used by automated tools - the Suricata PCRE matches both encoded and decoded forms.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Google dork operators (site:, inurl:, filetype:, intitle:) allow targeted searches for exposed files and sensitive content. An internal host running dork queries against your own domain is either red team activity (document it) or a compromised host performing pre-exfil intelligence gathering. URL-encoded operators (%3A = :) used by automated tools - the Suricata PCRE matches both encoded and decoded forms.",
         apt: [
           { name: "APT28", cls: "apt-ru", note: "Used Google dorking to identify exposed files, login pages, and sensitive content on target organization websites." },
           { name: "Charming Kitten", cls: "apt-ir", note: "Uses targeted Google dork queries to find publicly accessible documents containing employee information and technology details on target websites." },
@@ -1846,7 +1847,7 @@ AND url.query: (
       },
       {
         sub: "T1593.002 - Search Engines",
-        indicator: "Shodan / Censys / FOFA search API queries from internal host - own org lookup",
+        indicator: "[OFF-NET TRIPWIRE] Shodan / Censys / FOFA search API queries from internal host - own org lookup",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*shodan.io*", "*censys.io*", "*zoomeye.org*", "*fofa.info*", "*binaryedge.io*"]
 && http.uri == ["*/shodan/host/search*", "*/api/v2/hosts/search*", "*/search*"]
@@ -1874,7 +1875,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159304; rev:1;)`,
-        notes: "Internal hosts querying Shodan or Censys API against your own org's IP ranges = either security team exposure assessment (document and baseline) or a compromised host mapping your internet-facing attack surface. FOFA (fofa.info) and ZoomEye (zoomeye.org) are Chinese internet-wide scan databases - internal hits from non-security-team endpoints are a strong indicator of CN-attributed adversarial tooling.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Internal hosts querying Shodan or Censys API against your own org's IP ranges = either security team exposure assessment (document and baseline) or a compromised host mapping your internet-facing attack surface. FOFA (fofa.info) and ZoomEye (zoomeye.org) are Chinese internet-wide scan databases - internal hits from non-security-team endpoints are a strong indicator of CN-attributed adversarial tooling.",
         apt: [
           { name: "APT41", cls: "apt-cn", note: "Uses FOFA and ZoomEye (Chinese internet scan databases) to search for exposed services - internal hits indicate adversary tooling performing attack surface mapping." },
           { name: "Volt Typhoon", cls: "apt-cn", note: "Queried Shodan and Censys for exposed management interfaces on US critical infrastructure during pre-positioning operations." },
@@ -1884,11 +1885,11 @@ AND url.path: (
       },
       {
         sub: "T1593.003 - Code Repositories",
-        indicator: "GitHub API search for org secrets / internal naming from internal host",
+        indicator: "[OFF-NET TRIPWIRE] GitHub API search for org secrets / internal naming from internal host",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*github.com*", "*api.github.com*"]
 && http.uri == ["*/search/code*", "*/search?q=*"]
-&& http.uri == ["*password*", "*secret*", "*api_key*", "*token*", "*yourdomain*", "*internal*"]`,
+&& http.uri == ["*password*", "*secret*", "*api_key*", "*token*", "*<YOUR_DOMAIN>*", "*internal*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
   "github.com"
@@ -1899,7 +1900,7 @@ AND url.path: (
   OR *search/repositories*
 )
 AND url.query: (
-  *yourdomain* OR *internal*
+  *<YOUR_DOMAIN>* OR *internal*
   OR *password* OR *secret*
   OR *api_key* OR *token*
   OR *BEGIN+RSA*
@@ -1918,7 +1919,7 @@ AND url.query: (
   http.uri;
   classtype:policy-violation;
   sid:9159305; rev:1;)`,
-        notes: "GitHub code search API queries targeting your org's domain, internal naming conventions, or credential keywords from internal hosts = security team secret scanning (document it) or compromised host hunting for accidentally committed credentials. GitHub API rate-limits at 10 req/min for authenticated users - 403 responses in proxy logs indicate automated tooling hitting rate limits.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. GitHub code search API queries targeting your org's domain, internal naming conventions, or credential keywords from internal hosts = security team secret scanning (document it) or compromised host hunting for accidentally committed credentials. GitHub API rate-limits at 10 req/min for authenticated users - 403 responses in proxy logs indicate automated tooling hitting rate limits.",
         apt: [
           { name: "APT41", cls: "apt-cn", note: "Searches GitHub for accidentally committed credentials, API keys, and internal configuration data from target organizations." },
           { name: "Cozy Bear", cls: "apt-ru", note: "Searched code repositories for credentials and configuration files related to target organizations." },
@@ -1928,7 +1929,7 @@ AND url.query: (
       },
       {
         sub: "T1593.003 - Code Repositories",
-        indicator: "git clone over HTTPS - bulk repository cloning from suspicious endpoint",
+        indicator: "[OFF-NET TRIPWIRE] git clone over HTTPS - bulk repository cloning from suspicious endpoint",
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && host.http == ["*github.com*", "*gitlab.com*", "*bitbucket.org*"]
@@ -1958,7 +1959,7 @@ AND destination.bytes > 100000`,
     count 5, seconds 300;
   classtype:policy-violation;
   sid:9159306; rev:1;)`,
-        notes: "Git clone over HTTPS generates a two-step HTTP exchange: GET /repo.git/info/refs?service=git-upload-pack (discovery) followed by POST /repo.git/git-upload-pack (pack download). User-Agent is always git/[version] - unforgeable without breaking git protocol. Bulk cloning of multiple repos from your org's namespace from an endpoint that isn't a known CI/CD system is anomalous. Large databytes.dst reflects repository size.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Git clone over HTTPS generates a two-step HTTP exchange: GET /repo.git/info/refs?service=git-upload-pack (discovery) followed by POST /repo.git/git-upload-pack (pack download). User-Agent is always git/[version] - unforgeable without breaking git protocol. Bulk cloning of multiple repos from your org's namespace from an endpoint that isn't a known CI/CD system is anomalous. Large databytes.dst reflects repository size.",
         apt: [
           { name: "APT41", cls: "apt-cn", note: "Has cloned target organization code repositories to harvest credentials, API keys, and internal infrastructure details." },
           { name: "APT29", cls: "apt-ru", note: "Cloned repositories related to target organizations during pre-compromise intelligence gathering." },
@@ -1970,14 +1971,14 @@ AND destination.bytes > 100000`,
         sub: "T1593.003 - Code Repositories",
         indicator: "Self-hosted GitLab / Bitbucket SCM API enumeration - external repository listing",
         arkime: `ip.src != $INTERNAL
-&& host.http == ["*gitlab.yourdomain.com*", "*bitbucket.yourdomain.com*", "*git.yourdomain.com*"]
+&& host.http == ["*gitlab.<YOUR_DOMAIN>*", "*bitbucket.<YOUR_DOMAIN>*", "*git.<YOUR_DOMAIN>*"]
 && http.method == GET
 && http.uri == ["*/api/v4/projects*", "*/rest/api/1.0/repos*", "*/explore/repos*", "*/api/v4/users*"]`,
         kibana: `NOT source.ip: $INTERNAL
 AND url.domain: (
-  *gitlab.yourdomain*
-  OR *bitbucket.yourdomain*
-  OR *git.yourdomain*
+  *gitlab.<YOUR_DOMAIN>*
+  OR *bitbucket.<YOUR_DOMAIN>*
+  OR *git.<YOUR_DOMAIN>*
 )
 AND url.path: (
   */api/v4/projects*
@@ -2359,7 +2360,7 @@ AND http.response.status_code: (
     rows: [
       {
         sub: "T1596.001 - WHOIS / .002 WHOIS History",
-        indicator: "RDAP / WHOIS API query - internal host querying registration data for own domain",
+        indicator: "[OFF-NET TRIPWIRE] RDAP / WHOIS API query - internal host querying registration data for own domain",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*rdap.arin.net*", "*rdap.ripe.net*", "*rdap.apnic.net*", "*whois.domaintools.com*", "*whoisxmlapi.com*", "*whoisfreaks.com*"]
 && http.method == GET
@@ -2392,7 +2393,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159401; rev:1;)`,
-        notes: "Internal hosts querying RDAP or commercial WHOIS APIs against your own domain or IP ranges = NOC/security team activity (baseline and document) or a compromised host mapping registration data. Automated bulk queries from endpoints are anomalous. Port 43 TCP (legacy WHOIS) is covered in T1590.001 - this row covers the modern RDAP/HTTP equivalent.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Internal hosts querying RDAP or commercial WHOIS APIs against your own domain or IP ranges = NOC/security team activity (baseline and document) or a compromised host mapping registration data. Automated bulk queries from endpoints are anomalous. Port 43 TCP (legacy WHOIS) is covered in T1590.001 - this row covers the modern RDAP/HTTP equivalent.",
         apt: [
           { name: "Volt Typhoon", cls: "apt-cn", note: "Queried RDAP and WHOIS data to map organizational relationships between target organizations and their ISPs, identifying OT-segment IP ranges." },
           { name: "APT29", cls: "apt-ru", note: "Queried domain registration and RDAP data to map subsidiary and partner relationships during pre-SolarWinds reconnaissance." },
@@ -2402,7 +2403,7 @@ AND url.path: (
       },
       {
         sub: "T1596.001 - WHOIS / .002 WHOIS History",
-        indicator: "WHOIS history / DomainTools API - historical registration data query from internal host",
+        indicator: "[OFF-NET TRIPWIRE] WHOIS history / DomainTools API - historical registration data query from internal host",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*domaintools.com*", "*whoisology.com*", "*whoxy.com*", "*whoishistory.com*", "*completedns.com*"]
 && http.method == GET
@@ -2433,7 +2434,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159402; rev:1;)`,
-        notes: "WHOIS history services reveal historical registrant data, previous name servers, past IP associations, and ownership changes. Adversaries use this to identify previously used infrastructure and overlooked decommissioned services. DomainTools reverse WHOIS (find all domains registered to the same email/org) maps your entire domain portfolio - extremely high intelligence value.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. WHOIS history services reveal historical registrant data, previous name servers, past IP associations, and ownership changes. Adversaries use this to identify previously used infrastructure and overlooked decommissioned services. DomainTools reverse WHOIS (find all domains registered to the same email/org) maps your entire domain portfolio - extremely high intelligence value.",
         apt: [
           { name: "APT28", cls: "apt-ru", note: "Uses WHOIS history data to map target organization domain registration history and identify the full domain portfolio." },
           { name: "APT33", cls: "apt-ir", note: "Queries WHOIS history services to identify historically registered domains associated with target organizations." },
@@ -2443,7 +2444,7 @@ AND url.path: (
       },
       {
         sub: "T1596.003 - Passive DNS",
-        indicator: "Passive DNS database query - internal host querying pDNS for own infrastructure history",
+        indicator: "[OFF-NET TRIPWIRE] Passive DNS database query - internal host querying pDNS for own infrastructure history",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*passivetotal.org*", "*api.passivetotal.org*", "*virustotal.com*", "*robtex.com*", "*dnsdb.info*", "*farsightsecurity.com*", "*community.riskiq.com*"]
 && http.method == GET
@@ -2477,7 +2478,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159403; rev:1;)`,
-        notes: "Passive DNS databases record historical DNS resolutions - what IPs a hostname resolved to over time. Internal hosts querying pDNS for your own hostnames map your historical DNS footprint, potentially exposing decommissioned services still in DNS and past infrastructure still accessible. Farsight DNSDB is extremely comprehensive. These queries also create intelligence-leakage risk on top of the detection signal.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Passive DNS databases record historical DNS resolutions - what IPs a hostname resolved to over time. Internal hosts querying pDNS for your own hostnames map your historical DNS footprint, potentially exposing decommissioned services still in DNS and past infrastructure still accessible. Farsight DNSDB is extremely comprehensive. These queries also create intelligence-leakage risk on top of the detection signal.",
         apt: [
           { name: "APT10", cls: "apt-cn", note: "Queried passive DNS databases to map historical DNS resolutions for MSP customer infrastructure, locating decommissioned but still-accessible services." },
           { name: "APT29", cls: "apt-ru", note: "Used passive DNS data to map infrastructure relationships between target organizations and hosting providers during pre-SolarWinds reconnaissance." },
@@ -2487,7 +2488,7 @@ AND url.path: (
       },
       {
         sub: "T1596.004 - Certificate Transparency",
-        indicator: "Certificate Transparency log query - CT log scraping for org subdomain enumeration",
+        indicator: "[OFF-NET TRIPWIRE] Certificate Transparency log query - CT log scraping for org subdomain enumeration",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*crt.sh*", "*certspotter.com*", "*sslmate.com*", "*transparencyreport.google.com*", "*censys.io*"]
 && http.method == GET
@@ -2516,7 +2517,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159404; rev:1;)`,
-        notes: "Certificate Transparency logs record every TLS certificate issued for your domain - including wildcard certs revealing subdomain patterns, SAN entries listing internal hostnames, and certs for decommissioned services. A crt.sh query for %.yourdomain.com returns every cert ever issued. CT logs are public and queryable without authentication - adversaries use this as a zero-noise subdomain enumeration technique that never touches your infrastructure.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects connections to off-network infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Certificate Transparency logs record every TLS certificate issued for your domain - including wildcard certs revealing subdomain patterns, SAN entries listing internal hostnames, and certs for decommissioned services. A crt.sh query for %.<YOUR_DOMAIN> returns every cert ever issued. CT logs are public and queryable without authentication - adversaries use this as a zero-noise subdomain enumeration technique that never touches your infrastructure.",
         apt: [
           { name: "APT41", cls: "apt-cn", note: "Queries CT logs to enumerate subdomains of target organizations before active scanning, identifying dev/staging/internal services with public certs." },
           { name: "APT28", cls: "apt-ru", note: "Uses CT log queries to identify target organization subdomains and map infrastructure scope prior to exploitation." },
@@ -2526,7 +2527,7 @@ AND url.path: (
       },
       {
         sub: "T1596.004 - Certificate Transparency",
-        indicator: "CT stream monitoring - real-time WebSocket feed for newly issued cert tracking",
+        indicator: "[OFF-NET TRIPWIRE] CT stream monitoring - real-time WebSocket feed for newly issued cert tracking",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*certstream.calidog.io*", "*ct.cloudflare.com*", "*mammoth.ct.comodo.com*"]
 && protocols == wss
@@ -2549,7 +2550,7 @@ AND network.protocol: "websocket"`,
   http.header;
   classtype:policy-violation;
   sid:9159405; rev:1;)`,
-        notes: "CertStream provides a real-time WebSocket feed of all newly issued CT log certificates. A persistent WebSocket connection to certstream.calidog.io from an endpoint that isn't a known security monitoring system is anomalous - it's a running process. Adversaries can use this feed to monitor when you issue new certificates, revealing new services and infrastructure as they come online. Relatively niche but high-signal when it fires from unexpected endpoints.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. CertStream provides a real-time WebSocket feed of all newly issued CT log certificates. A persistent WebSocket connection to certstream.calidog.io from an endpoint that isn't a known security monitoring system is anomalous - it's a running process. Adversaries can use this feed to monitor when you issue new certificates, revealing new services and infrastructure as they come online. Relatively niche but high-signal when it fires from unexpected endpoints.",
         apt: [
           { name: "Multi", cls: "apt-mul", note: "CT stream monitoring from internal hosts is primarily observed in security operations contexts - from unexpected endpoints it indicates adversary automation tracking newly issued infrastructure certificates." },
         ],
@@ -2557,7 +2558,7 @@ AND network.protocol: "websocket"`,
       },
       {
         sub: "T1596.005 - Scan Databases",
-        indicator: "Shodan / Censys historical host data API - own infrastructure exposure query",
+        indicator: "[OFF-NET TRIPWIRE] Shodan / Censys historical host data API - own infrastructure exposure query",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*api.shodan.io*", "*search.censys.io*", "*api.censys.io*", "*app.binaryedge.io*"]
 && http.method == GET
@@ -2589,7 +2590,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159406; rev:1;)`,
-        notes: "Shodan and Censys host APIs return historical scan data for a specific IP - all open ports ever observed, banners captured, TLS certificates indexed. An internal host querying these APIs for your own IP ranges retrieves exactly what adversaries see when they look you up. Legitimate security team activity - document and baseline it. From unexpected endpoints = compromised host or insider reconnaissance.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Shodan and Censys host APIs return historical scan data for a specific IP - all open ports ever observed, banners captured, TLS certificates indexed. An internal host querying these APIs for your own IP ranges retrieves exactly what adversaries see when they look you up. Legitimate security team activity - document and baseline it. From unexpected endpoints = compromised host or insider reconnaissance.",
         apt: [
           { name: "Volt Typhoon", cls: "apt-cn", note: "Queried Shodan and Censys host APIs for US critical infrastructure IP ranges to identify historically exposed management interfaces." },
           { name: "APT33", cls: "apt-ir", note: "Used Shodan historical host data to monitor energy sector target infrastructure for new service exposures and version changes." },
@@ -2599,10 +2600,10 @@ AND url.path: (
       },
       {
         sub: "T1596.005 - Scan Databases",
-        indicator: "VirusTotal / OTX / URLScan - own infrastructure submitted to threat intel platform",
+        indicator: "[OFF-NET TRIPWIRE] VirusTotal / OTX / URLScan - own infrastructure submitted to threat intel platform",
         arkime: `ip.src == $INTERNAL
 && host.http == ["*virustotal.com*", "*otx.alienvault.com*", "*urlscan.io*", "*urlvoid.com*"]
-&& http.method == [GET || POST]
+&& http.method == [GET, POST]
 && http.uri == ["*/api/v3/domains/*", "*/api/v3/ip_addresses/*", "*/api/v1/indicators/*", "*/result/*", "*/scan*"]`,
         kibana: `source.ip: $INTERNAL
 AND url.domain: (
@@ -2631,7 +2632,7 @@ AND url.path: (
   http.header;
   classtype:policy-violation;
   sid:9159407; rev:1;)`,
-        notes: "Submitting your own domain or IP to VirusTotal from an internal host leaks intelligence - VT results are visible to all paid subscribers. A compromised host checking if infrastructure is flagged = adversary verifying C2 isn't burned. URLScan.io takes public screenshots of submitted URLs - submitting an internal URL creates a permanent public screenshot of your internal web applications. Critical OPSEC failure if observed from unexpected endpoints.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Submitting your own domain or IP to VirusTotal from an internal host leaks intelligence - VT results are visible to all paid subscribers. A compromised host checking if infrastructure is flagged = adversary verifying C2 isn't burned. URLScan.io takes public screenshots of submitted URLs - submitting an internal URL creates a permanent public screenshot of your internal web applications. Critical OPSEC failure if observed from unexpected endpoints.",
         apt: [
           { name: "Lazarus", cls: "apt-kp", note: "Submitted infrastructure components to threat intel platforms from compromised hosts to verify detection status before deploying additional tooling." },
           { name: "Multi", cls: "apt-mul", note: "Adversaries inside target networks have been documented submitting infrastructure to VT and OTX to verify whether C2 domains and payloads are flagged." },
@@ -2647,14 +2648,14 @@ AND url.path: (
     rows: [
       {
         sub: "T1598.003 - Spearphishing Link",
-        indicator: "Spearphishing link - internal host clicking newly registered suspicious domain",
+        indicator: "[OFF-NET TRIPWIRE] Spearphishing link - internal host clicking newly registered suspicious domain",
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.method == GET
-&& host.http != $KNOWN_GOOD
+&& host.http != $ALLOWED_DEFAULTS
 && host.http == ["*login*", "*verify*", "*secure*", "*account*", "*signin*", "*auth*", "*microsoft*", "*office365*"]`,
         kibana: `source.ip: $INTERNAL
-AND NOT url.domain: $KNOWN_GOOD
+AND NOT url.domain: $ALLOWED_DEFAULTS
 AND url.path: (
   *login* OR *verify*
   OR *secure* OR *account*
@@ -2675,7 +2676,7 @@ AND tls.server.not_before:
   http.uri;
   classtype:social-engineering;
   sid:9159801; rev:1;)`,
-        notes: "Correlate domain age via threat intel (WHOIS, PassiveDNS). Domains registered within 30 days containing auth-themed keywords are high-risk. Typosquats (micros0ft, g00gle, rn-icrosoft) require fuzzy matching against your known-good list.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Correlate domain age via threat intel (WHOIS, PassiveDNS). Domains registered within 30 days containing auth-themed keywords are high-risk. Typosquats (micros0ft, g00gle, rn-icrosoft) require fuzzy matching against your known-good list.",
         apt: [
           { name: "APT28", cls: "apt-ru", note: "Used spearphishing links to compromise credentials." },
           { name: "Kimsuky", cls: "apt-kp", note: "Tailored spearphishing emails to gather victim information including contact lists." },
@@ -2686,16 +2687,16 @@ AND tls.server.not_before:
       },
       {
         sub: "T1598.003 - Spearphishing Link",
-        indicator: "Internal host POSTing credentials to external harvester page",
+        indicator: "[OFF-NET TRIPWIRE] Internal host POSTing credentials to external harvester page",
         arkime: `ip.src == $INTERNAL
 && http.method == POST
-&& host.http != $KNOWN_GOOD
+&& host.http != $ALLOWED_DEFAULTS
 && http.uri == ["*login*", "*signin*", "*verify*", "*auth*", "*password*", "*credential*"]
 && databytes.src > 50
 && databytes.src < 500`,
         kibana: `source.ip: $INTERNAL
 AND http.request.method: POST
-AND NOT url.domain: $KNOWN_GOOD
+AND NOT url.domain: $ALLOWED_DEFAULTS
 AND url.path: (
   *login* OR *signin*
   OR *verify* OR *auth*
@@ -2717,7 +2718,7 @@ AND http.request.body.bytes < 500`,
   http.request_body;
   classtype:social-engineering;
   sid:9159802; rev:1;)`,
-        notes: "POST body 50-500 bytes is the sweet spot for a username+password submission. Also match 'passwd=', 'pwd=', 'pass=', 'credential=' variants. Pair with proxy category for the destination domain.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. POST body 50-500 bytes is the sweet spot for a username+password submission. Also match 'passwd=', 'pwd=', 'pass=', 'credential=' variants. Pair with proxy category for the destination domain.",
         apt: [
           { name: "APT33", cls: "apt-ir", note: "Dedicated credential harvesting infrastructure targeting energy/aviation via fake O365/OWA portals." },
           { name: "Charming Kitten", cls: "apt-ir", note: "HYPERSCRAPE tool collects credentials from fake Gmail and Yahoo portals." },
@@ -2731,13 +2732,13 @@ AND http.request.body.bytes < 500`,
         indicator: "AiTM / Evilginx proxy - session cookie harvest post-MFA",
         arkime: `ip.src == $INTERNAL
 && protocols == https
-&& host.http != $KNOWN_GOOD`,
+&& host.http != $ALLOWED_DEFAULTS`,
         kibana: `source.ip: $INTERNAL
-AND NOT tls.server.name: $KNOWN_GOOD
+AND NOT tls.server.name: $ALLOWED_DEFAULTS
 AND http.response.headers.set_cookie: *
 AND tls.server.not_before:
   [now-14d TO now]
-AND NOT url.domain: $KNOWN_GOOD`,
+AND NOT url.domain: $ALLOWED_DEFAULTS`,
         suricata: `alert http $EXTERNAL_NET any
   -> $HOME_NET any
   (msg:"RECON T1598 AiTM proxy
@@ -2805,7 +2806,7 @@ AND http.response.status_code:
         arkime: `ip.src == $INTERNAL
 && protocols == dns
 && dns.query.type == [A, AAAA, TXT]
-&& host.dns != $KNOWN_GOOD
+&& host.dns != $ALLOWED_DEFAULTS
 // Encoded-subdomain detection (long hex or base64 strings) requires regex - does not always play nice in Arkime. 
 // See Suricata pcre column or use Kibana KQLegex syntax for runtime matching.
 \n// Logical spec: host.dns matches
@@ -2838,14 +2839,14 @@ AND dns.question.name: /
       },
       {
         sub: "T1598.002 - Spearphishing Attachment",
-        indicator: "Remote template fetch - post-email open outbound connection",
+        indicator: "[OFF-NET TRIPWIRE] Remote template fetch - post-email open outbound connection",
         arkime: `ip.src == $INTERNAL
 && protocols == http
 && http.uri == ["*.dotx*", "*.dot*", "*.xltx*", "*.potx*", "*.sct*", "*.hta*", "*.wsdl*"]
-&& host.http != $KNOWN_GOOD
+&& host.http != $ALLOWED_DEFAULTS
 && http.hasheader.src.value == ["*outlook*", "*mail*", "*webmail*", "*owa*"]`,
         kibana: `source.ip: $INTERNAL
-AND NOT url.domain: $KNOWN_GOOD
+AND NOT url.domain: $ALLOWED_DEFAULTS
 AND url.path: (
   *.dotx* OR *.dot*
   OR *.xltx* OR *.potx*
@@ -2867,7 +2868,7 @@ AND http.request.referrer: (
   http.uri;
   classtype:social-engineering;
   sid:9159806; rev:1;)`,
-        notes: "Clean document fetches malicious template on open (T1221). Outlook/OWA referrer + .dotx from unknown external host is strong correlation. UNC path triggers (SMB to external IP) won't appear in HTTP logs - catch in Zeek conn.log. The document itself evades AV; the network fetch is the only detection opportunity.",
+        notes: "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from the internal network to off-network infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Clean document fetches malicious template on open (T1221). Outlook/OWA referrer + .dotx from unknown external host is strong correlation. UNC path triggers (SMB to external IP) won't appear in HTTP logs - catch in Zeek conn.log. The document itself evades AV; the network fetch is the only detection opportunity.",
         apt: [
           { name: "APT40", cls: "apt-cn", note: "Remote template injection in spearphishing docs targeting maritime/defense/government sectors." },
           { name: "APT41", cls: "apt-cn", note: "Remote template injection as supply chain pre-positioning - clean doc passes email gateway scanning." },
@@ -2882,12 +2883,12 @@ AND http.request.referrer: (
         arkime: `ip.dst == $MAIL_SERVERS
 && port.dst == [25, 587]
 && protocols == smtp
-&& ip.src != $KNOWN_MX
-&& ip.src != $KNOWN_GOOD`,
+&& ip.src != $ALLOWED_MX
+&& ip.src != $ALLOWED_DEFAULTS`,
         kibana: `destination.ip: $MAIL_SERVERS
 AND destination.port: (25 OR 587)
-AND NOT source.ip: $KNOWN_MX
-AND NOT source.ip: $KNOWN_GOOD
+AND NOT source.ip: $ALLOWED_MX
+AND NOT source.ip: $ALLOWED_DEFAULTS
 AND tls.server.not_before:
   [now-30d TO now]`,
         suricata: `alert smtp $EXTERNAL_NET any

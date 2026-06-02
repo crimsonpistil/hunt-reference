@@ -302,3 +302,55 @@ mark{background:rgba(210,153,34,.3);color:var(--text);border-radius:2px;padding:
   cursor:default;
   box-shadow:inset 0 -1px 0 rgba(0,0,0,0.2);
 }
+
+/* AIR-GAP TRIPWIRE STYLING (subtle) */
+/* In air-gapped mode, core.js adds .tripwire to ind-row and prepends a warning glyph */
+/* to the indicator name. Styling is intentionally restrained - a faint amber cue, no */
+/* loud red borders. The glyph carries the signal. */
+.ind-row.tripwire .ind-name {
+  color: var(--text);
+}
+.ind-row.tripwire .ind-collapsed {
+  border-left: 2px solid var(--amber);
+}
+.ind-row.tripwire.open .ind-collapsed {
+  background: transparent;
+}
+
+/* OPERATING-MODE TOGGLE (header) */
+.mode-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-right: 10px;
+}
+.mode-toggle .mode-opt {
+  background: var(--bg2);
+  color: var(--text3);
+  border: none;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.mode-toggle .mode-opt:hover:not(.active) {
+  color: var(--text);
+  background: var(--bg3);
+}
+.mode-toggle .mode-opt.active {
+  background: var(--accent);
+  color: #0d1117;
+  font-weight: 600;
+}
+
+/* OPERATOR-FILL PLACEHOLDERS (e.g. <YOUR_DOMAIN>) */
+/* core.js wraps <UPPERCASE> tokens in queries with this span so operators see they must replace */
+.code-body .placeholder {
+  color: #f0883e;
+  font-weight: 600;
+  background: rgba(240, 136, 62, 0.08);
+  padding: 0 2px;
+  border-radius: 2px;
+}

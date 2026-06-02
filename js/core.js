@@ -2,7 +2,7 @@
 // Shared UI logic for all tactic pages.
 // DATA must be loaded before this file via a tactic-specific data/*.js script tag.
 
-// ── CMS TEMPLATES ──
+// ── CASE TEMPLATES ──
 const CMS_TEMPLATES = {
   T1595: { title:'T1595 - Active Scanning', body:`## TAG - RECON\n### Technique: Active Scanning, T1595\n- Time:\n- Source IP:\n- Destination IP(s):\n- Port(s):\n\nNotes:` },
   T1589: { title:'T1589 - Gather Victim Identity Information', body:`## TAG - RECON\n### Technique: Gather Victim Identity Information, T1589\n- Time:\n- Source IP:\n- Destination IP(s):\n- Port(s):\n- Type of Info Gathered: (Usernames, Emails, Employee Names, Credentials, etc.)\n\nNotes:` },
@@ -96,6 +96,48 @@ let totalRows  = 0;
 let selectedRows = new Set();
 let huntItems  = {};     // rowId -> { indicator, techId, severity, addedAt, row }
 let rowRegistry = {};    // rowId -> { row, techId }
+
+// ── OPERATING MODE (air-gapped vs connected) ──
+// Air-gapped: off-network indicators are tripwires that should never fire.
+// Connected: those same indicators are valid detection targets (external C2,
+// exfil, etc. are exactly what you hunt on a connected network).
+// The mode flips display only - underlying data is unchanged.
+const MODE_STORAGE_KEY = 'cpt_hunt_mode';
+const TRIPWIRE_PREFIX = '[OFF-NET TRIPWIRE] ';
+// The air-gap escalation note is prepended to tripwire rows. Detect+strip in connected mode.
+const AIRGAP_NOTE_RE = /^\[AIR-GAP TRIPWIRE\][^]*?(?:thorough investigation\.|priority-1 escalation[^.]*\.)\s*/;
+
+function getMode() {
+  const m = localStorage.getItem(MODE_STORAGE_KEY);
+  return (m === 'connected') ? 'connected' : 'airgap';  // default air-gapped
+}
+
+function setMode(mode) {
+  localStorage.setItem(MODE_STORAGE_KEY, mode === 'connected' ? 'connected' : 'airgap');
+}
+
+function isTripwireRow(row) {
+  return !!(row && row.indicator && row.indicator.startsWith(TRIPWIRE_PREFIX));
+}
+
+// Indicator name as it should appear given the current mode.
+// Air-gapped: strip the bracketed prefix, prepend a warning glyph.
+// Connected: strip the bracketed prefix entirely (it's just a normal indicator).
+function displayIndicator(row) {
+  if (!isTripwireRow(row)) return row.indicator;
+  const base = row.indicator.slice(TRIPWIRE_PREFIX.length);
+  return getMode() === 'airgap' ? ('\u26A0 ' + base) : base;
+}
+
+// Notes as they should appear given the current mode.
+// Connected mode strips the air-gap escalation preamble (it's misleading there).
+function displayNotes(row) {
+  if (!row.notes) return row.notes;
+  if (getMode() === 'connected' && isTripwireRow(row)) {
+    return row.notes.replace(AIRGAP_NOTE_RE, '');
+  }
+  return row.notes;
+}
 
 // ── PERSISTENCE ──
 // Hunt items survive across tabs and browser sessions via localStorage.
@@ -191,6 +233,9 @@ function buildRow(row, techId, rowId) {
 
   const el = document.createElement('div');
   el.className = 'ind-row';
+  if (isTripwireRow(row) && getMode() === 'airgap') {
+    el.classList.add('tripwire');
+  }
   el.dataset.tech = techId;
   el.dataset.apt  = aptOrigins(row.apt);
   el.dataset.text = searchText;
@@ -204,7 +249,7 @@ function buildRow(row, techId, rowId) {
   bar.innerHTML = `
     <input type="checkbox" class="row-check" title="Select for export">
     <button class="star-btn${isStarred ? ' starred' : ''}" title="Add to hunt">${isStarred ? '&#9733;' : '&#9734;'}</button>
-    <span class="ind-name">${esc(row.indicator)}</span>
+    <span class="ind-name">${esc(displayIndicator(row))}</span>
     <div class="apt-badges">${aptBadges}</div>
     <div class="quick-tools">
       ${row.arkime ? '<button class="qtool qt-a" title="Copy Arkime">ARK</button>' : ''}
@@ -248,7 +293,7 @@ function buildRow(row, techId, rowId) {
     ['t-sur', 'Suricata',     true],
     ['t-not', 'Notes',        true],
     ['t-apt', 'APT',          true],
-    ['t-cms', 'CMS Template', true],
+    ['t-cms', 'Case Template', true],
   ];
   const tabBar = document.createElement('div');
   tabBar.className = 'tab-bar';
@@ -277,7 +322,9 @@ function buildRow(row, techId, rowId) {
     wrap.querySelector('.code-hdr').appendChild(copyBtn);
     const pre = document.createElement('pre');
     pre.className = 'code-body';
-    pre.textContent = content;
+    // Highlight <PLACEHOLDER> tokens in orange to flag operator-fill values
+    // First HTML-escape, then wrap any &lt;UPPERCASE_WITH_UNDERSCORES&gt; in a span
+    pre.innerHTML = esc(content).replace(/&lt;([A-Z][A-Z0-9_]*)&gt;/g, '<span class="placeholder">&lt;$1&gt;</span>');
     wrap.appendChild(pre);
     return wrap;
   }
@@ -287,7 +334,7 @@ function buildRow(row, techId, rowId) {
     ...(row.arkime ? { 'ark': codePanel('l-ark', 'Arkime SPI/Search', row.arkime) } : {}),
     'kib': codePanel('l-kib', 'Kibana KQL',        row.kibana),
     'sur': codePanel('l-sur', 'Suricata Rule',     row.suricata),
-    'not': (() => { const d = document.createElement('div'); d.className = 'notes-body'; d.textContent = row.notes; return d; })(),
+    'not': (() => { const d = document.createElement('div'); d.className = 'notes-body'; d.textContent = displayNotes(row); return d; })(),
     'apt': (() => {
       const d = document.createElement('div');
       row.apt.forEach(a => {
@@ -332,7 +379,7 @@ function buildRow(row, techId, rowId) {
         d.appendChild(hdr);
         d.appendChild(pre);
       } else {
-        d.innerHTML = '<span style="color:var(--text3);font-size:12px">No CMS template for this technique yet.</span>';
+        d.innerHTML = '<span style="color:var(--text3);font-size:12px">No case template for this technique yet.</span>';
       }
       return d;
     })(),
@@ -442,7 +489,7 @@ function exportSelected() {
     const entry = rowRegistry[rowId];
     if (!entry) return;
     const { row, techId } = entry;
-    out += `[${techId}] ${row.indicator}\n${'-'.repeat(50)}\n${row.arkime ? `ARKIME:\n${row.arkime}\n\n` : ''}KIBANA:\n${row.kibana}\n\nSURICATA:\n${row.suricata}\n\nNOTES:\n${row.notes}\n\n${'='.repeat(60)}\n\n`;
+    out += `[${techId}] ${displayIndicator(row)}\n${'-'.repeat(50)}\n${row.arkime ? `ARKIME:\n${row.arkime}\n\n` : ''}KIBANA:\n${row.kibana}\n\nSURICATA:\n${row.suricata}\n\nNOTES:\n${displayNotes(row)}\n\n${'='.repeat(60)}\n\n`;
   });
   download(out, 'selected_indicators.txt', 'text/plain');
 }
@@ -511,7 +558,7 @@ function renderHunt() {
       : '';
     html += `<div class="hunt-item">
       <span class="hunt-item-tech">${item.techId}</span>
-      <span class="hunt-item-name">${esc(item.indicator)}</span>
+      <span class="hunt-item-name">${esc((item.row ? displayIndicator(item.row) : null) || item.indicator)}</span>
       ${ts ? `<span class="hunt-item-ts" title="Added">${ts}</span>` : ''}
       <select class="sev-sel sev-${item.severity}" data-rowid="${rowId}">
         <option value="critical" ${item.severity==='critical'?'selected':''}>CRITICAL</option>
@@ -582,7 +629,7 @@ function exportHunt(fmt) {
       const r = getRow(rowId);
       if (!r) return;
       const ts = item.addedAt ? new Date(item.addedAt).toISOString() : '';
-      csv += [i+1, ts, item.severity.toUpperCase(), item.techId, r.indicator, r.arkime, r.kibana, r.suricata, r.notes].map(q).join(',') + '\n';
+      csv += [i+1, ts, item.severity.toUpperCase(), item.techId, displayIndicator(r), r.arkime, r.kibana, r.suricata, displayNotes(r)].map(q).join(',') + '\n';
     });
     download(csv, 'hunt_package.csv', 'text/csv');
   } else {
@@ -592,7 +639,7 @@ function exportHunt(fmt) {
       const r = getRow(rowId);
       if (!r) return;
       const ts = item.addedAt ? new Date(item.addedAt).toLocaleString() : 'unknown';
-      out += `[${i+1}] [${item.severity.toUpperCase()}] ${item.techId} - ${r.indicator}\nAdded: ${ts}\n${'-'.repeat(50)}\n${r.arkime ? `ARKIME:\n${r.arkime}\n\n` : ''}KIBANA:\n${r.kibana}\n\nSURICATA:\n${r.suricata}\n\nNOTES:\n${r.notes}\n\n${'='.repeat(60)}\n\n`;
+      out += `[${i+1}] [${item.severity.toUpperCase()}] ${item.techId} - ${displayIndicator(r)}\nAdded: ${ts}\n${'-'.repeat(50)}\n${r.arkime ? `ARKIME:\n${r.arkime}\n\n` : ''}KIBANA:\n${r.kibana}\n\nSURICATA:\n${r.suricata}\n\nNOTES:\n${displayNotes(r)}\n\n${'='.repeat(60)}\n\n`;
     });
     download(out, 'hunt_package.txt', 'text/plain');
   }
@@ -704,6 +751,32 @@ loadHunts();
 render();
 applyFilters();
 renderHunt();
+injectModeToggle();
+
+// ── OPERATING-MODE TOGGLE (header) ──
+// Injected via JS so all pages get it without hand-editing each HTML file.
+function injectModeToggle() {
+  const host = document.querySelector('.header-right');
+  if (!host) return;
+  const mode = getMode();
+  const wrap = document.createElement('div');
+  wrap.className = 'mode-toggle';
+  wrap.title = 'Air-gapped: off-network indicators are tripwires that should never fire.\nConnected: those indicators are valid detection targets.';
+  wrap.innerHTML = `
+    <button class="mode-opt${mode === 'airgap' ? ' active' : ''}" data-mode="airgap">Air-gapped</button>
+    <button class="mode-opt${mode === 'connected' ? ' active' : ''}" data-mode="connected">Connected</button>`;
+  wrap.querySelectorAll('.mode-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const newMode = btn.dataset.mode;
+      if (newMode === getMode()) return;
+      setMode(newMode);
+      location.reload();  // clean re-render with no stale DOM
+    });
+  });
+  // Place it first in the header-right cluster
+  host.insertBefore(wrap, host.firstChild);
+}
+
 
 // ── SIDEBAR COLLAPSE ──
 (function () {
