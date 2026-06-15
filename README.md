@@ -16,8 +16,6 @@ TONK is meant to live somewhere a network analyst can actually reach it: a harde
 
 Everything is plain HTML, CSS, and vanilla JavaScript. There is no transpiler, bundler, package manager, or runtime dependency.
 
-This repo serves `hunt.6b74.dev`. The threat-sim trainer (DETECT) lives separately at `detect.6b74.dev`, and the portfolio/landing site at `6b74.dev`; neither is part of this repo. (`6b74` is hex for KT — Katie Tonkin — so the naming lines up with TONK either way.)
-
 ---
 
 ## Repository layout
