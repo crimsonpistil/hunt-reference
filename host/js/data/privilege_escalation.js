@@ -1760,6 +1760,46 @@ Velociraptor:
           { cls: "apt-mul", name: "Red Team / PowerUp", note: "Modifiable-service abuse is a staple of PowerUp/SharpUp LPE enumeration." },
           { cls: "apt-mul", name: "Ransomware Affiliates", note: "Weak service ACLs used to gain SYSTEM before disabling defenses." }
         ],
+              },
+      {
+        sub: "T1574.011 - Service FailureCommand / Recovery Abuse",
+        os: "win",
+        indicator: "Abuse of Windows service failure recovery actions (FailureCommand, sc failure) to execute attacker code when a service stops or crashes, a stealthier variant than ImagePath modification because failure actions are rarely audited and trigger only on service fault",
+        sysmon: `// Sysmon EID 13 - FailureCommand registry write
+TargetObject=*\\Services\\*\\FailureActions*
+OR TargetObject=*\\Services\\*\\FailureCommand*
+
+// sc.exe failure configuration
+Image=*\\sc.exe AND CommandLine=*failure*`,
+        kibana: `// Service failure action registry modification
+winlog.event_id: 13
+AND winlog.event_data.TargetObject: *Services*FailureCommand*
+
+// sc failure command
+process.name: "sc.exe"
+AND process.command_line: *failure*`,
+        powershell: `# Hunt for services with FailureCommand set
+Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\*' -Name FailureCommand -EA SilentlyContinue |
+  Where-Object { $_.FailureCommand } |
+  Select-Object PSChildName, FailureCommand`,
+        registry: `HKLM\SYSTEM\CurrentControlSet\Services\<name>\FailureCommand
+  Arbitrary command executed on service failure.
+  Rarely set legitimately; presence is suspicious.`,
+        tools: `Sysmon (EID 13 registry)
+sc.exe query type= service (enumerate)
+Autoruns (shows service recovery actions)`,
+        ossdetect: `Sigma:
+- win_registry_service_failure_command.yml
+Autoruns:
+- Service recovery action enumeration`,
+        notes: "Service failure recovery actions (FailureCommand, RunProgram in FailureActions) execute when a service stops abnormally. Adversaries set these and then intentionally crash or stop the service to trigger execution. This is stealthier than ImagePath modification because (a) failure actions are not shown by default in services.msc, (b) most monitoring focuses on ImagePath and Start values, and (c) the execution only occurs on fault, making it intermittent and harder to reproduce during investigation.",
+        apt: [
+          { cls: "apt-cn", name: "APT41", note: "Service recovery abuse for stealthy execution documented in intrusions." },
+          { cls: "apt-kp", name: "Lazarus", note: "Service manipulation for privileged execution." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Red Teams", note: "FailureCommand abuse is a known privilege escalation technique." }
+        ],
         cite: "MITRE ATT&CK T1574.011"
       }
     ]
@@ -2144,6 +2184,67 @@ Microsoft Defender for Identity:
         activity: [
           { cls: "apt-mul", name: "Ransomware Operators", note: "SID-History injection used for stealthy DA-equivalent persistence pre-encryption." }
         ],
+              },
+      {
+        sub: "T1134.005 - SID-History Attribute Sweep (proactive hunt)",
+        os: "win",
+        indicator: "Proactive sweep for any Active Directory account with a non-empty SID-History attribute, which should be empty in normal operations and whose presence indicates either a legitimate domain migration or SID-History injection for privilege escalation",
+        sysmon: `// SID-History injection is a domain operation, not a host process.
+// Detection is via AD-side Security events and LDAP queries.
+
+// On DCs: Security EID 4765 (SID History added)
+// Security EID 4766 (SID History add failed)
+// Security EID 4662 (DRSUAPI access - DCShadow/DCSync)`,
+        kibana: `// SID-History added event on DCs
+winlog.event_id: (4765 OR 4766)
+
+// DRSUAPI access (DCSync/DCShadow prerequisite)
+winlog.event_id: 4662
+AND winlog.event_data.Properties: *1131f6ad*
+
+// LDAP query: sweep for non-empty sIDHistory
+// (run via PowerShell, results shipped to SIEM)`,
+        powershell: `# SID-History sweep - run against Active Directory
+Import-Module ActiveDirectory
+
+Write-Host "[*] === Accounts with non-empty SID-History ==="
+Get-ADUser -Filter * -Properties SIDHistory |
+  Where-Object { $_.SIDHistory.Count -gt 0 } |
+  Select-Object SamAccountName, SIDHistory,
+    @{n='SIDHistoryRIDs';e={$_.SIDHistory | ForEach-Object {$_.Value.Split('-')[-1]}}}
+
+Get-ADGroup -Filter * -Properties SIDHistory |
+  Where-Object { $_.SIDHistory.Count -gt 0 } |
+  Select-Object SamAccountName, SIDHistory
+
+# Check for privileged RIDs in SID-History (512=DA, 519=EA, 500=Admin)
+# Any account with these RIDs in SIDHistory has those privileges`,
+        registry: `No local registry artifact. SID-History is an AD attribute.
+
+Privileged RIDs to flag in SID-History:
+- 500 = Built-in Administrator
+- 512 = Domain Admins
+- 519 = Enterprise Admins
+- 518 = Schema Admins
+Any of these in a non-admin account's SIDHistory = escalation.`,
+        tools: `BloodHound / SharpHound (maps SID-History edges)
+PingCastle (AD audit includes SIDHistory sweep)
+PurpleKnight (AD security assessment)`,
+        ossdetect: `Sigma:
+- win_security_sid_history_added.yml
+BloodHound:
+- HasSIDHistory edge in attack graph
+PingCastle:
+- SIDHistory audit finding`,
+        notes: "SID-History injection is a domain-level privilege escalation that survives password resets, group membership changes, and most remediation actions because SID-History is an attribute on the account object, not a group membership. The injected SID grants the same access as being a member of that group. In production environments, SID-History should be empty except during active domain migrations. A scheduled sweep (weekly or after any suspicious DC access) is the primary detection. BloodHound's HasSIDHistory edge visualizes the escalation path.",
+        apt: [
+          { cls: "apt-ru", name: "APT28", note: "SID-History abuse documented in AD-focused operations." },
+          { cls: "apt-ru", name: "APT29", note: "Domain-level persistence techniques including SID-History in post-SolarWinds." },
+          { cls: "apt-cn", name: "APT41", note: "AD escalation techniques documented in enterprise intrusions." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Impacket", note: "SID-History injection tooling available in Impacket suite." }
+        ],
         cite: "MITRE ATT&CK T1134.005"
       }
     ]
@@ -2293,6 +2394,64 @@ Sysinternals autoruns.exe:
         activity: [
           { cls: "apt-mul", name: "Hands-on-Keyboard Operators", note: "RDP sticky-keys backdoor is among the most common manual persistence/escalation tricks." },
           { cls: "apt-mul", name: "Ransomware Affiliates", note: "Accessibility backdoors used for resilient SYSTEM-level re-entry." }
+        ],
+              },
+      {
+        sub: "T1546.008 - Pre-Auth Logon Screen Trigger (winlogon child shell)",
+        os: "win",
+        indicator: "A shell process (cmd.exe, powershell.exe) spawned as a child of winlogon.exe at the logon screen, indicating a sticky-keys or accessibility binary replacement was triggered before authentication, providing unauthenticated SYSTEM-level access",
+        sysmon: `// Sysmon EID 1 - winlogon spawning a shell (the trigger)
+ParentImage=*\\winlogon.exe
+Image=(*\\cmd.exe OR *\\powershell.exe OR *\\pwsh.exe)
+// This should NEVER happen in normal operations.
+// winlogon spawns userinit.exe and LogonUI.exe, not shells.
+
+// IFEO Debugger set on accessibility binaries
+TargetObject=*\\Image File Execution Options\\(sethc|utilman|osk|Magnify|Narrator).exe\\Debugger*`,
+        kibana: `// winlogon child shell (high-confidence, near-zero FP)
+process.parent.name: "winlogon.exe"
+AND process.name: ("cmd.exe" OR "powershell.exe" OR "pwsh.exe")
+
+// IFEO Debugger on accessibility binaries
+winlog.event_id: 13
+AND winlog.event_data.TargetObject: *"Image File Execution Options"*
+AND winlog.event_data.TargetObject: (*sethc* OR *utilman* OR *osk* OR *Magnify* OR *Narrator*)
+AND winlog.event_data.TargetObject: *Debugger*`,
+        powershell: `# Check for accessibility binary replacement / IFEO
+$bins = @('sethc.exe','utilman.exe','osk.exe','Magnify.exe','Narrator.exe')
+foreach ($b in $bins) {
+  $path = "$env:SystemRoot\System32\$b"
+  $hash = (Get-FileHash $path -Algorithm SHA256 -EA SilentlyContinue).Hash
+  Write-Host "$b : $hash"
+
+  # Check IFEO Debugger
+  $ifeo = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$b" -Name Debugger -EA SilentlyContinue
+  if ($ifeo) { Write-Host "  IFEO Debugger: $($ifeo.Debugger) (SUSPICIOUS)" }
+}`,
+        registry: `IFEO Debugger keys:
+HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\
+  Image File Execution Options\\sethc.exe\\Debugger
+  Image File Execution Options\\utilman.exe\\Debugger
+  Image File Execution Options\\osk.exe\\Debugger
+
+Any Debugger value pointing to cmd.exe, powershell.exe,
+or another binary = accessibility backdoor.`,
+        tools: `Sysmon (EID 1 parent-child + EID 13 registry)
+Autoruns (IFEO tab)
+EDR behavioral detection`,
+        ossdetect: `Sigma:
+- win_proc_creation_winlogon_child_shell.yml
+- win_registry_ifeo_accessibility.yml
+Elastic:
+- Accessibility Features Modification`,
+        notes: "The winlogon child shell detection catches the TRIGGER of an accessibility backdoor, not just its installation. The installation (binary replacement or IFEO Debugger setting) can be detected via FIM or registry monitoring, but the winlogon-to-shell parent-child event is the definitive proof that the backdoor was actually used. This is particularly valuable for RDP-accessible systems where an attacker can trigger sethc (5x Shift) or utilman (Win+U) at the logon screen without authenticating.",
+        apt: [
+          { cls: "apt-cn", name: "APT41", note: "Accessibility backdoors for SYSTEM access and re-entry." },
+          { cls: "apt-ir", name: "APT33", note: "Accessibility-feature backdoors in Iranian operations." },
+          { cls: "apt-ir", name: "APT34", note: "Sticky-keys backdoors in OilRig operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware Affiliates", note: "Accessibility backdoors for SYSTEM re-entry during operations." }
         ],
         cite: "MITRE ATT&CK T1546.008"
       }

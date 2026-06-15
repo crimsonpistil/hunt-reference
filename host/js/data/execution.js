@@ -5867,6 +5867,72 @@ Velociraptor:
           { cls: "apt-mul", name: "Rocke", note: "Cron-based re-infection loops are signature behavior for Linux coinminer crews." }
         ],
         cite: "MITRE ATT&CK T1053.003",
+      },
+      {
+        sub: "T1053.003 - System cron.d Injection and Spoofed-Name Cron Entries",
+        os: "linux",
+        indicator: "A new file in /etc/cron.d/ or modification of /etc/crontab with an entry using a spoofed system-sounding name (apache, sshd, sysstat) or an entry whose command includes curl/wget piped to shell, base64 decoding, or targets a binary in /tmp or /dev/shm",
+        sysmon: `// Auditd rules for system cron directories
+-w /etc/cron.d/ -p wa -k cron_persist
+-w /etc/crontab -p wa -k cron_persist
+-w /var/spool/cron/ -p wa -k cron_persist
+
+// Sysmon for Linux EID 11 - file creation in cron directories
+TargetFilename matches: /etc/cron.d/*
+  OR /etc/cron.daily/* OR /etc/cron.hourly/*`,
+        kibana: `// System cron directory writes
+file.path: (/etc/cron.d/* OR /etc/crontab OR /etc/cron.daily/* OR /etc/cron.hourly/*)
+AND event.action: ("created" OR "modified")
+
+// crontab command execution
+process.name: "crontab"
+AND process.args: ("-l" OR "-e" OR "-r")`,
+        powershell: `# Hunt for suspicious system cron entries
+echo "[*] === /etc/cron.d contents ==="
+ls -la /etc/cron.d/
+
+echo ""
+echo "[*] === Non-package cron.d files ==="
+for f in /etc/cron.d/*; do
+  [ -f "$f" ] || continue
+  pkg=$(dpkg -S "$f" 2>/dev/null || rpm -qf "$f" 2>/dev/null)
+  if [ -z "$pkg" ] || echo "$pkg" | grep -q 'not found\\|not owned'; then
+    echo "  UNPACKAGED: $f"
+    cat "$f" | grep -v '^#\\|^$'
+    echo "  ---"
+  fi
+done
+
+echo ""
+echo "[*] === Suspicious cron commands ==="
+grep -rh 'curl\\|wget\\|base64\\|/dev/shm\\|/tmp/' /etc/cron* /var/spool/cron/ 2>/dev/null | grep -v '^#'`,
+        registry: `No registry artifact (Linux technique).
+
+System cron hierarchy:
+- /etc/crontab: master system crontab
+- /etc/cron.d/: drop-in cron files (package-managed and custom)
+- /etc/cron.{hourly,daily,weekly,monthly}/: run-parts dirs
+- /var/spool/cron/crontabs/: per-user crontabs`,
+        tools: `osquery:
+  SELECT * FROM crontab;
+Wazuh FIM on /etc/cron.d/
+Auditd rules for cron directory writes`,
+        ossdetect: `Sigma:
+- lnx_auditd_cron_job_creation.yml
+osquery:
+- crontab table sweep
+Wazuh:
+- FIM on /etc/cron.d/`,
+        notes: "System cron.d injection is preferred over user crontab by sophisticated operators because (a) /etc/cron.d files can specify the run-as user (root), (b) they survive user account changes, and (c) they are less visible than crontab -l for the affected user. Spoofed names (apache, sshd, sysstat) are a deliberate masquerade technique. The package-verification approach works: enumerate /etc/cron.d files, verify against the package manager, flag unpackaged entries.",
+        apt: [
+          { cls: "apt-cn", name: "APT41", note: "cron.d injection for scheduled command execution on Linux servers." },
+          { cls: "apt-cn", name: "Volt Typhoon", note: "Cron-based persistence on critical infrastructure." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "TeamTNT", note: "cron.d with spoofed names is signature TeamTNT persistence." },
+          { cls: "apt-mul", name: "Rocke", note: "cron.d entries with curl|bash payloads for cryptomining persistence." }
+        ],
+        cite: "MITRE ATT&CK T1053.003",
       }
     ]
   }

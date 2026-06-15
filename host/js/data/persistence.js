@@ -5353,6 +5353,65 @@ Pepe Berba blog series:
           { cls: "apt-ru", name: "Ebury", note: "OpenSSH backdoor; uses systemd service for persistence on Linux servers globally, targeting hosting providers." },
           { cls: "apt-mul", name: "TeamTNT", note: "Cloud/container threat actor; drops systemd service files as part of post-exploitation persistence chain." }
         ],
+              },
+      {
+        sub: "T1543.002 - Systemd Timer Persistence (.timer as cron alternative)",
+        os: "linux",
+        indicator: "Creation of a .timer unit file as an alternative to cron-based persistence, or a .service unit with a corresponding .timer that triggers execution on a schedule, particularly when the timer unit or its target service ExecStart points to a binary in a writable or non-package path",
+        sysmon: `// Auditd rules for timer unit creation
+-w /etc/systemd/system/ -p wa -k systemd_unit_write
+-w /usr/lib/systemd/system/ -p wa -k systemd_unit_write
+
+// Sysmon for Linux EID 11 (FileCreate)
+TargetFilename matches: *.timer
+  AND path contains: /etc/systemd/ OR /usr/lib/systemd/
+
+// systemctl enable of a timer unit
+Image=*/systemctl AND CommandLine=*enable* AND CommandLine=*.timer*`,
+        kibana: `// Timer unit file creation
+file.path: (*/etc/systemd/system/*.timer OR */usr/lib/systemd/system/*.timer)
+AND event.action: ("created" OR "modified")
+
+// systemctl enable for timer units
+process.name: "systemctl"
+AND process.args: "enable" AND process.args: *.timer*`,
+        powershell: `# Hunt for systemd timer persistence
+echo "[*] === All .timer units ==="
+systemctl list-timers --all --no-pager
+
+echo ""
+echo "[*] === Non-package .timer files ==="
+find /etc/systemd/system /usr/lib/systemd/system -name '*.timer' -type f 2>/dev/null | while read t; do
+  pkg=$(dpkg -S "$t" 2>/dev/null || rpm -qf "$t" 2>/dev/null)
+  if [ -z "$pkg" ] || echo "$pkg" | grep -q 'not found\|not owned'; then
+    echo "  UNPACKAGED: $t"
+    grep -E 'OnCalendar|OnBoot|OnActiveSec' "$t" 2>/dev/null
+    unit=$(grep 'Unit=' "$t" 2>/dev/null | cut -d= -f2)
+    [ -n "$unit" ] && echo "  -> triggers: $unit"
+  fi
+done`,
+        registry: `No registry artifact (Linux technique).
+
+Timer units use OnCalendar, OnBootSec, OnActiveSec directives
+for scheduling. Unlike cron, timers have built-in randomized
+delay (AccuracySec), persistent across reboots (Persistent=true),
+and can trigger any service unit.`,
+        tools: `osquery:
+  SELECT * FROM systemd_units WHERE id LIKE '%.timer';
+Wazuh FIM on /etc/systemd/system/
+Auditd rules for systemd directory writes`,
+        ossdetect: `Sigma:
+- lnx_auditd_systemd_unit_file_creation.yml
+Wazuh:
+- FIM alert on /etc/systemd/system/*.timer`,
+        notes: "Systemd timers are increasingly used by adversaries as a cron alternative because they offer more flexible scheduling, randomized jitter (AccuracySec), and are less frequently audited than crontab entries. The detection approach mirrors the .service detection: verify timer units against the package manager (dpkg -S / rpm -qf), flag unpackaged timers, and inspect what service they trigger.",
+        apt: [
+          { cls: "apt-cn", name: "APT41", note: "Systemd timer persistence as alternative to cron on Linux servers." },
+          { cls: "apt-ru", name: "Turla", note: "Flexible scheduling persistence on Linux infrastructure." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "TeamTNT", note: "Timer-based re-execution for cryptomining persistence." }
+        ],
         cite: "MITRE ATT&CK T1543.002"
       }
     ]
@@ -5578,6 +5637,66 @@ auditd + ausearch:
         activity: [
           { cls: "apt-mul", name: "Commodity Linux malware", note: "Shell RC modification is universally used across Linux malware for user-session persistence; lower sophistication actors use this before systemd/cron." },
           { cls: "apt-mul", name: "Web shell operators", note: "Threat actors with initial access via web shell frequently drop /etc/profile.d scripts for persistent root shell access." }
+        ],
+              },
+      {
+        sub: "T1546.004 - /etc/profile.d Injection (all-users scope)",
+        os: "linux",
+        indicator: "A new or modified .sh script in /etc/profile.d/ that runs for every user on every login shell, particularly containing curl/wget pipelines, reverse shell syntax, or base64-encoded payloads, targeting the highest-impact shell config directory that is often overlooked in favor of /etc/profile itself",
+        sysmon: `// Auditd rules for profile.d writes
+-w /etc/profile.d/ -p wa -k shell_rc_write
+-w /etc/profile -p wa -k shell_rc_write
+
+// Sysmon for Linux EID 11 (FileCreate)
+TargetFilename matches: /etc/profile.d/*.sh`,
+        kibana: `// profile.d script creation or modification
+file.path: /etc/profile.d/*.sh
+AND event.action: ("created" OR "modified")
+
+// Suspicious content in new shell scripts
+// (Cross-reference with file content inspection)`,
+        powershell: `# Hunt for unauthorized profile.d scripts
+echo "[*] === /etc/profile.d scripts ==="
+ls -la /etc/profile.d/
+
+echo ""
+echo "[*] === Non-package scripts in profile.d ==="
+for f in /etc/profile.d/*.sh; do
+  pkg=$(dpkg -S "$f" 2>/dev/null || rpm -qf "$f" 2>/dev/null)
+  if [ -z "$pkg" ] || echo "$pkg" | grep -q 'not found\|not owned'; then
+    echo "  UNPACKAGED: $f ($(stat -c '%y' "$f"))"
+    head -5 "$f"
+    echo "  ---"
+  fi
+done
+
+echo ""
+echo "[*] === Suspicious patterns in profile.d ==="
+grep -rl 'curl\|wget\|base64\|/dev/tcp\|nc \|ncat\|socat' /etc/profile.d/ 2>/dev/null`,
+        registry: `No registry artifact (Linux technique).
+
+/etc/profile.d/ scripts execute on EVERY login shell for
+EVERY user, making them the highest-impact injection point.
+Compare with ~/.bashrc (single user, interactive only) and
+/etc/profile (single file, more visible to auditors).`,
+        tools: `osquery:
+  SELECT * FROM file WHERE directory='/etc/profile.d/'
+    AND filename LIKE '%.sh';
+Wazuh FIM on /etc/profile.d/
+Lynis (shell config hardening audit)`,
+        ossdetect: `Sigma:
+- lnx_auditd_shell_config_modification.yml
+Wazuh:
+- FIM on /etc/profile.d/ and /etc/profile
+Auditd:
+- -w /etc/profile.d/ -p wa -k shell_rc_write`,
+        notes: "/etc/profile.d/ is the most dangerous shell config persistence target because a single .sh file there executes for every user on every login, equivalent to a GPO startup script. Administrators focus on /etc/profile and ~/.bashrc, making profile.d a blind spot. The detection approach: enumerate all .sh files in profile.d, verify each against the package manager, and flag unpackaged scripts. Any script containing network commands (curl, wget, /dev/tcp) or encoding (base64) is high-confidence malicious.",
+        apt: [
+          { cls: "apt-cn", name: "APT41", note: "profile.d injection for all-users persistence on Linux servers." },
+          { cls: "apt-kp", name: "Lazarus", note: "Shell config modification for credential harvesting." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Web shell operators", note: "profile.d scripts dropped from web shell access for persistent root callbacks." }
         ],
         cite: "MITRE ATT&CK T1546.004"
       }
@@ -6186,6 +6305,93 @@ Volatility3 Linux plugins:
         activity: [
           { cls: "apt-mul", name: "Advanced ransomware operators", note: "Enterprise Linux ransomware operators have used LKM persistence to prevent defenders from identifying or removing the staging implant before encryption begins." }
         ],
+              },
+      {
+        sub: "T1547.006 - Hidden Kernel Module Detection (lsmod vs /sys/module discrepancy)",
+        os: "linux",
+        indicator: "A kernel module present in /sys/module/ but absent from lsmod output, indicating the module has removed itself from the kernel's module list while remaining loaded, the signature behavior of LKM rootkits like Diamorphine and Reptile",
+        sysmon: `// Sysmon for Linux cannot directly detect hidden modules.
+// The detection requires a sweep comparing two kernel data sources.
+
+// Supporting signals:
+// Auditd - module load events
+-a always,exit -F arch=b64 -S init_module -S finit_module -k module_load
+
+// Kernel taint value changed (module load taints kernel)
+// Check /proc/sys/kernel/tainted (non-zero = tainted)`,
+        kibana: `// Auditd module load events
+auditd.log.record_type: "SYSCALL"
+AND auditd.log.syscall: ("init_module" OR "finit_module")
+
+// osquery results showing hidden modules
+osquery.result.name: "kernel_modules"
+AND osquery.result.columns.status: "hidden_suspect" `,
+        powershell: `# Hidden kernel module sweep
+echo "[*] === lsmod vs /sys/module discrepancy ==="
+# Modules in /sys/module/ but NOT in lsmod
+lsmod_list=$(lsmod | awk 'NR>1{print $1}' | sort)
+sys_list=$(ls /sys/module/ | sort)
+
+echo "$sys_list" | while read mod; do
+  if ! echo "$lsmod_list" | grep -qx "$mod"; then
+    # Check if it's a built-in (not loadable, always in /sys/module)
+    if [ -d "/sys/module/$mod/sections" ]; then
+      echo "  HIDDEN MODULE: $mod (has sections/ = loadable, not in lsmod)"
+    fi
+  fi
+done
+
+echo ""
+echo "[*] === Kernel taint value ==="
+cat /proc/sys/kernel/tainted
+echo "  (0=clean, non-zero=tainted by unsigned/force-loaded module)"
+
+echo ""
+echo "[*] === Recent module load events ==="
+ausearch -m SYSCALL -sc init_module -ts recent 2>/dev/null | head -20`,
+        registry: `No registry artifact (Linux technique).
+
+The lsmod-vs-sysmodule discrepancy explained:
+- lsmod reads /proc/modules, which the kernel maintains
+- /sys/module/ is a sysfs representation of loaded modules
+- LKM rootkits (Diamorphine, Reptile) remove themselves from
+  /proc/modules (hiding from lsmod) but cannot easily remove
+  themselves from /sys/module/ without breaking functionality
+- The delta between the two lists reveals hidden modules
+
+Built-in modules (compiled into the kernel, not loadable)
+also appear in /sys/module/ without lsmod. Distinguish by
+checking for /sys/module/<name>/sections/ directory:
+present = loadable module (suspicious if hidden from lsmod)
+absent = built-in module (expected, not suspicious)`,
+        tools: `osquery:
+  SELECT name, status, size FROM kernel_modules;
+  -- Cross-reference with filesystem sweep
+
+Volatility (memory forensics):
+  linux.lsmod - enumerate modules from memory
+  linux.check_modules - detect hidden modules
+
+rkhunter / chkrootkit:
+  Basic rootkit detection (check hidden module signatures)
+
+unhide:
+  Detects hidden processes, ports, and modules`,
+        ossdetect: `Sigma:
+- lnx_auditd_kernel_module_load.yml
+osquery:
+- kernel_modules table sweep
+- Scheduled: module count change alert
+Falco:
+- rule: Kernel Module Loaded`,
+        notes: "The lsmod-vs-sysmodule comparison is the primary userland detection for LKM rootkits. Rootkits that hide from lsmod typically hook the /proc/modules read path but leave /sys/module/ intact because removing sysfs entries can cause kernel instability. The detection has a known false-positive source: built-in modules appear in /sys/module/ but never in lsmod. The sections/ directory check distinguishes them. For higher confidence, memory forensics (Volatility linux_check_modules) compares the in-kernel module list against the /proc/modules output at the memory level, catching even rootkits that hook both paths.",
+        apt: [
+          { cls: "apt-ru", name: "APT28", note: "Drovorub LKM rootkit detectable through module list discrepancy." },
+          { cls: "apt-ru", name: "Turla", note: "Kernel-mode persistence components in Linux operations." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Diamorphine / Reptile users", note: "Open-source LKM rootkits that self-hide from lsmod; detectable via /sys/module/ sweep." }
+        ],
         cite: "MITRE ATT&CK T1547.006"
       }
     ]
@@ -6438,6 +6644,95 @@ Wazuh:
         ],
         activity: [
           { cls: "apt-mul", name: "Advanced operators", note: "PAM backdoors document in campaigns targeting cloud server infrastructure; used for long-term credential access and persistence simultaneously." }
+        ],
+              },
+      {
+        sub: "T1556.003 - PAM Module Integrity Verification (hash-based detection)",
+        os: "linux",
+        indicator: "pam_unix.so or other PAM modules with file hashes that do not match the package manager's recorded values (dpkg --verify / rpm -Va), or PAM .so files loaded from non-standard paths outside the package-managed library directory",
+        sysmon: `// Auditd rules for PAM directory writes
+-w /etc/pam.d/ -p wa -k pam_config_write
+-w /lib/x86_64-linux-gnu/security/ -p wa -k pam_module_write
+-w /lib64/security/ -p wa -k pam_module_write
+
+// Sysmon for Linux EID 11 - PAM module file creation
+TargetFilename matches: */security/pam_*.so
+  OR */pam.d/*`,
+        kibana: `// PAM module file modifications
+file.path: (*/security/pam_*.so OR */pam.d/*)
+AND event.action: ("created" OR "modified")
+
+// Package verification failures (if shipping results)
+// dpkg --verify output showing PAM module hash mismatches`,
+        powershell: `# PAM module integrity verification
+echo "[*] === Package manager verification ==="
+if command -v dpkg >/dev/null 2>&1; then
+  echo "--- dpkg --verify (PAM modules) ---"
+  dpkg --verify 2>/dev/null | grep -i pam
+elif command -v rpm >/dev/null 2>&1; then
+  echo "--- rpm -Va (PAM modules) ---"
+  rpm -Va 2>/dev/null | grep -i pam
+fi
+
+echo ""
+echo "[*] === pam_unix.so hash check ==="
+for f in /lib/x86_64-linux-gnu/security/pam_unix.so /lib64/security/pam_unix.so; do
+  [ -f "$f" ] && sha256sum "$f"
+done
+
+echo ""
+echo "[*] === PAM config changes (non-standard modules) ==="
+grep -r 'pam_' /etc/pam.d/ 2>/dev/null | grep -v '#' | \
+  while read line; do
+    mod=$(echo "$line" | grep -oP 'pam_\w+\.so')
+    if [ -n "$mod" ]; then
+      found=$(find /lib*/security/ /usr/lib*/security/ -name "$mod" 2>/dev/null | head -1)
+      if [ -z "$found" ]; then
+        echo "  MISSING MODULE: $line"
+      fi
+    fi
+  done
+
+echo ""
+echo "[*] === PAM modules in non-standard paths ==="
+grep -r '/' /etc/pam.d/ 2>/dev/null | grep -v '#' | grep 'pam_.*/' | grep -v '/lib'`,
+        registry: `No registry artifact (Linux technique).
+
+PAM module integrity check logic:
+1. dpkg --verify / rpm -Va compares installed file hashes
+   against the package database. Any PAM .so showing a hash
+   mismatch (5 flag in dpkg, ..5.... in rpm) means the file
+   was modified after installation.
+2. pam_unix.so is the primary target because it handles
+   password authentication for sshd, sudo, su, and login.
+   A replaced pam_unix.so can accept a master password while
+   forwarding normal auth, or log all passwords in cleartext.
+3. PAM config files (/etc/pam.d/*) should reference only
+   modules in /lib*/security/ or /usr/lib*/security/.
+   Any config line pointing to a non-standard path is suspicious.`,
+        tools: `osquery:
+  SELECT * FROM hash WHERE path LIKE '/lib%/security/pam_unix.so';
+  -- Compare against known-good hash from package repo
+debsums (Debian/Ubuntu):
+  debsums --changed | grep pam
+AIDE / Tripwire:
+  File integrity monitoring for /lib*/security/
+rkhunter:
+  Checks for known PAM backdoor signatures`,
+        ossdetect: `Wazuh:
+- Rootcheck: PAM module integrity
+- FIM on /lib*/security/ and /etc/pam.d/
+osquery:
+- Scheduled hash comparison for PAM modules
+AIDE:
+- PAM library directory monitoring`,
+        notes: "PAM backdoors are among the most sophisticated Linux persistence mechanisms because they operate at the authentication layer itself, intercepting every login attempt. The integrity verification approach (package manager hash check) is the most reliable detection because it catches both replaced modules (pam_unix.so swap) and injected modules (new .so added to the config). The dpkg --verify / rpm -Va check should be run regularly as a baseline, and any PAM module hash mismatch should trigger immediate incident response. Note that an attacker with root access can also modify the package database itself, so memory forensics or comparison against a known-good offline copy provides the highest confidence.",
+        apt: [
+          { cls: "apt-cn", name: "APT41", note: "PAM module replacement for credential harvesting and authentication bypass." },
+          { cls: "apt-ru", name: "Ebury", note: "PAM backdoor as core persistence mechanism for SSH credential theft." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "linux-pam-backdoor", note: "Open-source PoC PAM backdoor; pam_unix.so replacement detectable via package hash verification." }
         ],
         cite: "MITRE ATT&CK T1556.003"
       }
@@ -6693,6 +6988,83 @@ auditd + ausearch:
         ],
         activity: [
           { cls: "apt-mul", name: "Various Linux server actors", note: "rc.local is a favored low-noise persistence mechanism on older RHEL/CentOS server infrastructure targeted by espionage and financial actors." }
+        ],
+              },
+      {
+        sub: "T1037.004 - SysV init.d Script and rc.d Symlink Persistence",
+        os: "linux",
+        indicator: "A new or modified script in /etc/init.d/ with corresponding symlinks in /etc/rcN.d/ (or chkconfig/update-rc.d registration), particularly when the script is not owned by any installed package and its target binary resides in a writable or non-standard path",
+        sysmon: `// Auditd rules for init.d and rc.d writes
+-w /etc/init.d/ -p wa -k initd_write
+-w /etc/rc0.d/ -p wa -k rcd_write
+-w /etc/rc1.d/ -p wa -k rcd_write
+-w /etc/rc2.d/ -p wa -k rcd_write
+-w /etc/rc3.d/ -p wa -k rcd_write
+-w /etc/rc5.d/ -p wa -k rcd_write
+
+// update-rc.d or chkconfig invocation
+Image=*/update-rc.d OR Image=*/chkconfig`,
+        kibana: `// init.d script creation
+file.path: /etc/init.d/*
+AND event.action: ("created" OR "modified")
+
+// rc.d symlink creation
+file.path: /etc/rc*.d/*
+AND event.action: ("created" OR "modified")
+
+// Registration commands
+process.name: ("update-rc.d" OR "chkconfig")`,
+        powershell: `# Hunt for init.d persistence
+echo "[*] === Non-package init.d scripts ==="
+for f in /etc/init.d/*; do
+  [ -f "$f" ] || continue
+  pkg=$(dpkg -S "$f" 2>/dev/null || rpm -qf "$f" 2>/dev/null)
+  if [ -z "$pkg" ] || echo "$pkg" | grep -q 'not found\|not owned'; then
+    echo "  UNPACKAGED: $f"
+    head -3 "$f"
+    # Check what it runs
+    grep -E '^[^#]*(/tmp/|/dev/shm/|/var/tmp/|curl|wget|python|perl)' "$f" 2>/dev/null
+    echo "  ---"
+  fi
+done
+
+echo ""
+echo "[*] === rc.d symlinks to non-package scripts ==="
+find /etc/rc?.d/ -type l 2>/dev/null | while read lnk; do
+  target=$(readlink -f "$lnk")
+  pkg=$(dpkg -S "$target" 2>/dev/null || rpm -qf "$target" 2>/dev/null)
+  if [ -z "$pkg" ] || echo "$pkg" | grep -q 'not found\|not owned'; then
+    echo "  $lnk -> $target (UNPACKAGED)"
+  fi
+done`,
+        registry: `No registry artifact (Linux technique).
+
+SysV init persistence mechanics:
+- /etc/init.d/<name> is the service script
+- /etc/rcN.d/S##<name> symlinks control start at runlevel N
+- /etc/rcN.d/K##<name> symlinks control stop at runlevel N
+- update-rc.d (Debian) or chkconfig (RHEL) manage the symlinks
+
+On systemd systems, SysV init scripts still work via the
+systemd-sysv-generator compatibility layer, which creates
+transient .service units for each init.d script at boot.`,
+        tools: `osquery:
+  SELECT * FROM startup_items WHERE type='init';
+Wazuh FIM on /etc/init.d/ and /etc/rc*.d/
+Lynis: init script audit`,
+        ossdetect: `Auditd:
+- -w /etc/init.d/ -p wa -k initd_write
+Wazuh:
+- FIM on /etc/init.d/ and /etc/rc*.d/
+osquery:
+- startup_items table`,
+        notes: "SysV init.d persistence is a legacy mechanism that remains effective because (a) systemd's sysv-generator compatibility layer still runs these scripts on modern systems, and (b) many defenders only audit systemd units, not init.d. The same package-verification approach works: enumerate all init.d scripts, verify against the package manager, flag unpackaged scripts. Scripts pointing at binaries in /tmp, /dev/shm, or user home directories are high-confidence malicious. On ESXi hosts, /etc/rc.local.d/ is the primary persistence mechanism since ESXi uses a custom init, not systemd.",
+        apt: [
+          { cls: "apt-cn", name: "APT41", note: "init.d script persistence on legacy Linux infrastructure." },
+          { cls: "apt-ru", name: "Sandworm", note: "init.d scripts on Linux hosts adjacent to ICS infrastructure." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "ESXiArgs ransomware", note: "rc.local.d persistence on ESXi hosts." }
         ],
         cite: "MITRE ATT&CK T1037.004"
       }

