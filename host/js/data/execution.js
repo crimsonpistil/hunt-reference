@@ -1389,7 +1389,7 @@ Velociraptor:
 Network-side (complements host detection):
 - Zeek dce_rpc.log: filter for WMI-related operations
 - Suricata: DCOM/RPC anomaly rules
-- hunt.6b74.dev Lateral Movement reference
+- /net/lateral.html (Lateral Movement) reference
   for the network-side complement to this detection`,
         notes: "Remote WMI execution is one of the cleanest lateral movement techniques from an adversary perspective: it requires no dropped binary on the target, uses a legitimate Windows protocol (DCOM/RPC), authenticates via normal Windows credentials, and leaves a minimal footprint. The network traffic blends into background Windows management noise in environments that use WMI for legitimate remote management. Detection requires correlating artifacts across two hosts: the source (wmic /node: command or DCOM network connection) and the destination (wmiprvse.exe spawning an unexpected child, Security Event 4624 network logon). Neither artifact alone is high-fidelity - combined they are. This is a genuine case where your network sensor (Zeek/Suricata on the wire) and host sensor (Sysmon on the endpoint) complement each other: the DCOM connection is visible at the network layer, and the process creation is visible at the host layer. Neither sensor alone gives the full picture. If you see wmiprvse.exe spawning cmd.exe or powershell.exe on a host that is not a WMI management server, treat it as high-confidence lateral movement until proven otherwise.",
         apt: [
@@ -1750,7 +1750,7 @@ Lateral movement context:
 Network pivot:
 - SMB connection (TCP 445) from source to target
   is visible in Zeek conn.log and Suricata alerts
-- Cross-reference with hunt.6b74.dev Lateral Movement
+- Cross-reference with /net/lateral.html (Lateral Movement)
   reference for the network-side complement`,
         tools: `schtasks.exe /create /s <target> (built-in)
 Impacket atexec.py
@@ -2210,7 +2210,7 @@ Velociraptor:
   PSEXESVC.exe create/delete even post-cleanup)
 
 Network-side complement:
-- hunt.6b74.dev Lateral Movement reference
+- /net/lateral.html (Lateral Movement) reference
   for SMB-based lateral movement network detection`,
         notes: "PSEXESVC is one of the most reliable lateral movement fingerprints in Windows forensics precisely because PsExec is so widely used - by both legitimate administrators and adversaries. The detection is straightforward: PSEXESVC.exe should never appear in C:\\Windows\\ in a healthy environment outside of an active PsExec session. The challenge is that PsExec cleans up after itself, so the window for live detection is short. The forensic artifacts that survive cleanup (System Event 7045, Sysmon EID 11, USN Journal) are your primary post-incident evidence sources. Context is everything here: seeing PSEXESVC in logs from a known IT admin workstation targeting a server it manages during business hours is probably legitimate. Seeing PSEXESVC originating from a developer workstation, a user endpoint, or targeting a domain controller is worth immediate investigation. Impacket psexec.py deserves a callout: it's a Python reimplementation of the PsExec protocol that produces the same PSEXESVC artifact on the destination, so this detection catches Impacket psexec.py as well as the legitimate Sysinternals tool.",
         apt: [
