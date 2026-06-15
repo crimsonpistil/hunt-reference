@@ -35,6 +35,8 @@ header{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 
 .fbtn.apt-ru{background:rgba(248,81,73,.2);border-color:var(--red);color:var(--red)}
 .fbtn.apt-ir{background:rgba(63,185,80,.2);border-color:var(--green);color:var(--green)}
 .fbtn.apt-kp{background:rgba(188,140,255,.2);border-color:var(--purple);color:var(--purple)}
+.fbtn.apt-mal{background:rgba(88,166,255,.15);border-color:#79c0ff;color:#79c0ff}
+.fbtn.apt-act{background:rgba(110,118,129,.12);border-color:var(--text3);color:var(--text3)}
 
 /* HEADER RIGHT */
 .header-right{display:flex;gap:8px;align-items:center;margin-left:auto}
@@ -198,6 +200,8 @@ main{flex:1;min-width:0}
 .apt-ir{background:rgba(63,185,80,.12);color:var(--green)}
 .apt-kp{background:rgba(188,140,255,.12);color:var(--purple)}
 .apt-mul{background:rgba(139,148,158,.12);color:var(--text2)}
+.apt-mal{background:rgba(88,166,255,.10);color:#79c0ff}
+.apt-act{background:rgba(110,118,129,.08);color:var(--text3);font-style:italic}
 /* OS badge on the collapsed row (WIN / LINUX) */
 .os-badge{font-family:var(--mono);font-size:8px;font-weight:700;border-radius:3px;padding:1px 5px;letter-spacing:.04em;white-space:nowrap;flex-shrink:0}
 .os-badge.os-win{background:rgba(88,166,255,.15);color:var(--accent);border:1px solid rgba(88,166,255,.35)}

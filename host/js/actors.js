@@ -221,7 +221,7 @@ const THREAT_ACTORS = {
   },
   "Cobalt Strike": {
     aliases: ["CobaltStrike","CS Beacon","Beacon"],
-    cls: "apt-mul",
+    cls: "apt-mal",
     mitre: "S0154",
     origin: "Red team / criminal tooling"
   },

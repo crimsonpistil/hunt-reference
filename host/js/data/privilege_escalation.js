@@ -139,8 +139,8 @@ Velociraptor:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "UAC bypass via auto-elevating binaries documented in multiple intrusion sets." },
           { cls: "apt-cn", name: "APT41", note: "Fodhelper and related UAC bypasses used in elevation steps." },
-          { cls: "apt-mul", name: "Commodity Malware", note: "Fodhelper bypass bundled in many info-stealers and RAT loaders (Emotet, AgentTesla, etc.)." },
-          { cls: "apt-mul", name: "Ransomware", note: "UAC bypass commonly used to elevate before disabling defenses and encrypting." }
+          { cls: "apt-act", name: "Commodity Malware", note: "Fodhelper bypass bundled in many info-stealers and RAT loaders (Emotet, AgentTesla, etc.)." },
+          { cls: "apt-act", name: "Ransomware", note: "UAC bypass commonly used to elevate before disabling defenses and encrypting." }
         ],
         cite: "MITRE ATT&CK T1548.002"
       },
@@ -245,8 +245,8 @@ Sysinternals:
         notes: "This is the quieter cousin of the registry-based UAC bypass and it's worth a dedicated indicator because it's registry-clean and easy to miss. Two mechanisms ride under this row. First, the mock trusted directory: Windows path normalization strips trailing spaces, so 'C:\\Windows \\System32\\' (note the space after Windows) gets treated as the trusted System32 by the auto-elevation trust check, but the file open resolves to the attacker's spoofed folder. Any directory on disk with a trailing space is essentially always malicious. Second, DLL hijack of an auto-elevating binary: several auto-elevating system binaries (fodhelper, dccw, wsreset, slui, computerdefaults) load DLLs by relative or user-influenceable paths, so dropping a malicious proxy DLL where they look gets your code running at high integrity. Detection: hunt for unsigned DLLs loaded by the known auto-elevating binary set from AppData/Temp/Public, and scan the filesystem for trailing-space directories. Both signals are low-volume and high-fidelity. This technique overlaps heavily with DLL search-order hijack (T1574.001) - the difference is intent (elevation vs persistence/defense-evasion), not mechanism.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "DLL hijack of auto-elevating binaries used for elevation in multiple campaigns." },
-          { cls: "apt-mul", name: "Red Team / UACMe", note: "Mock-folder and auto-elevator DLL-hijack methods are standard UACMe tradecraft." },
-          { cls: "apt-mul", name: "Commodity Loaders", note: "Trailing-space trusted-directory trick widely reused from public PoCs." }
+          { cls: "apt-act", name: "Red Team / UACMe", note: "Mock-folder and auto-elevator DLL-hijack methods are standard UACMe tradecraft." },
+          { cls: "apt-act", name: "Commodity Loaders", note: "Trailing-space trusted-directory trick widely reused from public PoCs." }
         ],
         cite: "MITRE ATT&CK T1548.002"
       },
@@ -360,7 +360,7 @@ Velociraptor:
         apt: [
           { cls: "apt-ru", name: "APT28", note: "eventvwr-style UAC bypass documented in intrusion reporting." },
           { cls: "apt-ir", name: "MuddyWater", note: "cmstp.exe INF abuse used for execution and elevation." },
-          { cls: "apt-mul", name: "Cobalt Strike Operators", note: "cmstp INF execution is a common red-team and crimeware technique." }
+          { cls: "apt-mal", name: "Cobalt Strike Operators", note: "cmstp INF execution is a common red-team and crimeware technique." }
         ],
         cite: "MITRE ATT&CK T1548.002"
       }
@@ -490,8 +490,8 @@ is more reliable than the raw token API calls.`,
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Token theft and the Potato pattern used for service-account to SYSTEM escalation on web/DB servers." },
           { cls: "apt-ru", name: "APT29", note: "Token impersonation documented for moving between security contexts." },
-          { cls: "apt-mul", name: "Ransomware Affiliates", note: "PrintSpoofer/GodPotato heavily used by ransomware crews on exposed IIS/MSSQL hosts." },
-          { cls: "apt-mul", name: "Red Team", note: "steal_token / make_token is standard Cobalt Strike post-exploitation." }
+          { cls: "apt-act", name: "Ransomware Affiliates", note: "PrintSpoofer/GodPotato heavily used by ransomware crews on exposed IIS/MSSQL hosts." },
+          { cls: "apt-act", name: "Red Team", note: "steal_token / make_token is standard Cobalt Strike post-exploitation." }
         ],
         cite: "MITRE ATT&CK T1134.001"
       },
@@ -598,7 +598,7 @@ Velociraptor:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "CreateProcessWithToken used to spawn SYSTEM payloads after token theft." },
           { cls: "apt-kp", name: "Lazarus", note: "Token-based process creation documented in DPRK financial-sector intrusions." },
-          { cls: "apt-mul", name: "Ransomware Affiliates", note: "Standard final step of Potato escalations on server targets." }
+          { cls: "apt-act", name: "Ransomware Affiliates", note: "Standard final step of Potato escalations on server targets." }
         ],
         cite: "MITRE ATT&CK T1134.002"
       }
@@ -724,7 +724,7 @@ Moneta / PE-sieve / Hollows-Hunter (Hasherezade):
           { cls: "apt-ru", name: "APT29", note: "Reflective and remote-thread injection used to run implants inside trusted processes." },
           { cls: "apt-cn", name: "APT41", note: "Process injection into system binaries documented across espionage and crimeware ops." },
           { cls: "apt-kp", name: "Lazarus", note: "Custom injectors and reflective loaders used extensively." },
-          { cls: "apt-mul", name: "Cobalt Strike", note: "inject/shinject is default tradecraft for nearly all C2 operators." }
+          { cls: "apt-mal", name: "Cobalt Strike", note: "inject/shinject is default tradecraft for nearly all C2 operators." }
         ],
         cite: "MITRE ATT&CK T1055.001"
       },
@@ -849,8 +849,8 @@ PE-sieve / Hollows-Hunter:
         apt: [
           { cls: "apt-kp", name: "Lazarus", note: "Process hollowing of system binaries documented across DPRK financial operations." },
           { cls: "apt-ru", name: "Turla", note: "Hollowing used to run implants inside trusted Windows processes." },
-          { cls: "apt-mul", name: "Commodity Stealers", note: "GuLoader, AgentTesla, Formbook routinely hollow RegAsm/MSBuild as .NET hosts." },
-          { cls: "apt-mul", name: "Ransomware", note: "Hollowing used to stage encryptors inside benign-looking processes." }
+          { cls: "apt-act", name: "Commodity Stealers", note: "GuLoader, AgentTesla, Formbook routinely hollow RegAsm/MSBuild as .NET hosts." },
+          { cls: "apt-act", name: "Ransomware", note: "Hollowing used to stage encryptors inside benign-looking processes." }
         ],
         cite: "MITRE ATT&CK T1055.012"
       },
@@ -961,7 +961,7 @@ Moneta / PE-sieve:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Modern loaders favor thread hijacking to evade CreateRemoteThread monitoring." },
           { cls: "apt-cn", name: "APT41", note: "Thread-context manipulation used in stealthier injection chains." },
-          { cls: "apt-mul", name: "Modern Loaders", note: "SetThreadContext hijacking widely adopted as an EID-8 evasion." }
+          { cls: "apt-mal", name: "Modern Loaders", note: "SetThreadContext hijacking widely adopted as an EID-8 evasion." }
         ],
         cite: "MITRE ATT&CK T1055.003"
       }
@@ -1087,8 +1087,8 @@ Velociraptor:
         notes: "BYOVD is the dominant kernel-privilege-escalation and EDR-evasion technique in current ransomware and APT tradecraft. The trick: Windows enforces Driver Signature Enforcement, so attackers don't write their own kernel driver - they load a legitimately-signed but vulnerable one (RTCore64 from MSI Afterburner, Dell's dbutil, Gigabyte's gdrv, Intel's iqvw64e, etc.) and exploit its arbitrary kernel read/write primitive to disable protections, kill EDR from kernel space, or elevate. Because the driver is validly signed, signature checks pass - so detection must be name/hash-based against a vulnerable-driver list (loldrivers.io and Microsoft's blocklist are the references) plus path heuristics. The highest-fidelity signals: Sysmon EID 6 driver loads matching the known-vulnerable set OR loading from a user-writable path (legit drivers load from System32\\drivers), and System 7045 kernel-mode service installs. The strongest single hardening control is enabling Microsoft's Vulnerable Driver Blocklist (HVCI/WDAC), which blocks the known-bad drivers outright. Operationally, a BYOVD load is rarely benign on an endpoint - any .sys from AppData/Temp, or any load matching the vuln list, warrants immediate investigation, since the next step is usually EDR being blinded right before ransomware detonates.",
         apt: [
           { cls: "apt-kp", name: "Lazarus", note: "BYOVD (incl. Dell dbutil) used to disable security tooling and gain kernel access." },
-          { cls: "apt-mul", name: "Ransomware (BlackByte, Cuba, AvosLocker)", note: "RTCore64 / vulnerable-driver EDR-killers bundled as a pre-encryption step." },
-          { cls: "apt-mul", name: "EDR Killers (AuKill, Terminator)", note: "Commodity tools that load a vulnerable driver to terminate AV/EDR from kernel." },
+          { cls: "apt-act", name: "Ransomware (BlackByte, Cuba, AvosLocker)", note: "RTCore64 / vulnerable-driver EDR-killers bundled as a pre-encryption step." },
+          { cls: "apt-mal", name: "EDR Killers (AuKill, Terminator)", note: "Commodity tools that load a vulnerable driver to terminate AV/EDR from kernel." },
           { cls: "apt-cn", name: "APT41", note: "Vulnerable-driver abuse for kernel-level access documented in multiple operations." }
         ],
         cite: "MITRE ATT&CK T1068"
@@ -1209,10 +1209,10 @@ Recon/hardening tooling (defender-side use):
   conditions attackers enumerate, and close them`,
         notes: "This row covers the 'exploit something local to become SYSTEM' bucket, with the SeImpersonate-coercion ('Potato') family as the dominant real-world case because it needs no memory-corruption exploit at all - it abuses a privilege many service accounts hold by default. On any IIS or MSSQL server, the service identity typically holds SeImpersonatePrivilege; PrintSpoofer/GodPotato/JuicyPotato coerce a SYSTEM process to authenticate to an attacker-controlled named pipe or COM endpoint, then impersonate the SYSTEM token - instant escalation. The cleanest behavioral detection is a SYSTEM-context shell (cmd/powershell) whose parent is a web/db service process (w3wp.exe, sqlservr.exe, tomcat, java) - that lineage is almost never legitimate. Supplement with named-pipe creation (EID 17/18) by a service account right before the SYSTEM child, and enumerate SeImpersonate holders as your attack surface. The other half - genuine local CVE exploitation (spooler PrintNightmare, kernel LPEs in clfs.sys/afd.sys/win32k) - is more variable, but shares the end-state tell: an unexpected SYSTEM process or a privileged service (spoolsv) loading a DLL from an odd path (EID 7). Pair this with the BYOVD row for full T1068 coverage; together they cover the overwhelming majority of host privilege-escalation-by-exploitation seen in the wild.",
         apt: [
-          { cls: "apt-mul", name: "Ransomware Affiliates", note: "PrintSpoofer/GodPotato are go-to SYSTEM escalations on exposed IIS/MSSQL servers." },
+          { cls: "apt-act", name: "Ransomware Affiliates", note: "PrintSpoofer/GodPotato are go-to SYSTEM escalations on exposed IIS/MSSQL servers." },
           { cls: "apt-cn", name: "APT41", note: "Local service exploitation and Potato-style escalation on web-facing servers." },
           { cls: "apt-ir", name: "MuddyWater", note: "Local privilege-escalation exploits used following initial web-server access." },
-          { cls: "apt-mul", name: "Red Team", note: "Potato family + SharpUp/WinPEAS enumeration is standard LPE tradecraft." }
+          { cls: "apt-act", name: "Red Team", note: "Potato family + SharpUp/WinPEAS enumeration is standard LPE tradecraft." }
         ],
         cite: "MITRE ATT&CK T1068"
       },
@@ -1405,7 +1405,7 @@ Atomic Red Team:
         apt: [
           { cls: "apt-mul", name: "TeamTNT", note: "Adopted PwnKit for container-to-host and host privilege escalation after initial cloud/container access." },
           { cls: "apt-mul", name: "8220 Gang", note: "PwnKit used opportunistically post-access on unpatched hosts to gain root for miner deployment." },
-          { cls: "apt-mul", name: "Commodity / red team", note: "CVE-2021-4034 is in LinPEAS, linux-exploit-suggester, and Metasploit; near-universal LPE option on unpatched Linux." }
+          { cls: "apt-act", name: "Commodity / red team", note: "CVE-2021-4034 is in LinPEAS, linux-exploit-suggester, and Metasploit; near-universal LPE option on unpatched Linux." }
         ],
         cite: "MITRE ATT&CK T1068"
       },
@@ -1616,7 +1616,7 @@ Disable attack surface:
           { cls: "apt-mul", name: "TeamTNT", note: "Chain web/SSH foothold to kernel or pkexec LPE for root, then deploy cryptominers and persistence." },
           { cls: "apt-mul", name: "Kinsing", note: "Exploit-to-root escalation chains documented in containerized and cloud server targeting." },
           { cls: "apt-mul", name: "8220 Gang", note: "Opportunistic kernel LPE use on unpatched cloud Linux hosts following initial access." },
-          { cls: "apt-mul", name: "Container-escape operators", note: "CVE-2024-1086 (nf_tables) and DirtyPipe used to break out of containers to host root via kernel bugs." }
+          { cls: "apt-act", name: "Container-escape operators", note: "CVE-2024-1086 (nf_tables) and DirtyPipe used to break out of containers to host root via kernel bugs." }
         ],
         cite: "MITRE ATT&CK T1068"
       }
@@ -1728,8 +1728,8 @@ Velociraptor:
 - Windows.Detection.ServiceRegistryHijack`,
         notes: "This is one of the classic Windows local-privilege-escalation primitives and it's distinct from the persistence framing of services: here the goal is escalation via a weak service-key ACL. The precondition is that a non-admin user holds SetValue/WriteKey on a service's registry key (or has write access to the service binary itself - see the file-permissions row). When that's true, the attacker rewrites ImagePath (or ServiceDll for svchost-hosted services, or FailureCommand) to point at their payload, then triggers a restart - and the Service Control Manager launches it as the service account, almost always LocalSystem. The detection that matters most: Sysmon EID 13 writes to a Services\\*\\ImagePath|ServiceDll|FailureCommand value by anything other than services.exe/TrustedInstaller/msiexec/a known installer, especially when the new value points at AppData/Temp or an interpreter. Correlate with a subsequent service-start (7036 'running' or an EID 1 child of services.exe). The proactive hardening pivot is to enumerate service-key ACLs for non-admin write access (accesschk -kvuqsw / PowerUp) and fix them - that closes the technique entirely. Baseline legitimate updaters that rewrite ImagePath during version upgrades to avoid false positives.",
         apt: [
-          { cls: "apt-mul", name: "Red Team / PowerUp", note: "Modifiable-service abuse is a staple of PowerUp/SharpUp LPE enumeration." },
-          { cls: "apt-mul", name: "Ransomware Affiliates", note: "Weak service ACLs used to gain SYSTEM before disabling defenses." },
+          { cls: "apt-act", name: "Red Team / PowerUp", note: "Modifiable-service abuse is a staple of PowerUp/SharpUp LPE enumeration." },
+          { cls: "apt-act", name: "Ransomware Affiliates", note: "Weak service ACLs used to gain SYSTEM before disabling defenses." },
           { cls: "apt-cn", name: "APT41", note: "Service configuration tampering documented for privileged execution." }
         ],
         cite: "MITRE ATT&CK T1574.011"
@@ -1846,8 +1846,8 @@ Velociraptor:
 - Windows.Detection.UnquotedServicePath`,
         notes: "Unquoted service path is a textbook Windows LPE that still appears constantly on third-party software. The vulnerability: a service's ImagePath is stored without quotes and contains spaces (e.g. C:\\Program Files\\Some App\\svc.exe), so the SCM tries each space-delimited prefix in turn - C:\\Program.exe, then C:\\Program Files\\Some.exe, then the real path. If a low-priv user can write a file at one of those intercept points (C:\\ root is writable by Authenticated Users on a surprising number of systems), it executes first as the service account - almost always SYSTEM. Detection has two clean signals: (1) the candidate set is enumerable - services with unquoted, space-containing paths outside C:\\Windows; (2) the exploitation is a file drop at an intercept point (C:\\Program.exe or C:\\Program Files\\<word>.exe) followed by services.exe launching a binary from a drive root or truncation point as SYSTEM. That services.exe-child-from-a-weird-path pattern is the smoking gun and is very low-FP. The hardening fix is trivial (quote the ImagePath, or fix the directory ACL), which is why proactive enumeration with PowerUp/WinPEAS is the right defensive posture - find and fix them before an attacker does.",
         apt: [
-          { cls: "apt-mul", name: "Red Team / PowerUp", note: "Unquoted service path is one of the first LPE checks any operator runs." },
-          { cls: "apt-mul", name: "Commodity Malware", note: "Some loaders opportunistically exploit unquoted paths on third-party services." },
+          { cls: "apt-act", name: "Red Team / PowerUp", note: "Unquoted service path is one of the first LPE checks any operator runs." },
+          { cls: "apt-act", name: "Commodity Malware", note: "Some loaders opportunistically exploit unquoted paths on third-party services." },
           { cls: "apt-ir", name: "MuddyWater", note: "Local privilege escalation via service misconfiguration documented post-access." }
         ],
         cite: "MITRE ATT&CK T1574.009"
@@ -1972,8 +1972,8 @@ Velociraptor:
 - Windows.Detection.WeakServicePermissions`,
         notes: "The file-permissions sibling of the registry-ACL row: instead of rewriting ImagePath, the attacker exploits write access to the service's binary or its folder. Three variants share this row - (1) the service EXE itself is writable, so the attacker overwrites it; (2) the service's folder is writable, so the attacker plants a DLL the service loads (a DLL search-order hijack landing in a SYSTEM process); (3) a dependency DLL lives in a writable location. All three end the same way: at the next service start the SCM runs the service as LocalSystem and the attacker's code executes as SYSTEM. The precondition is enumerable - non-admin Write/Modify/FullControl on a service exe or its directory (accesschk -quvw, PowerUp Get-ModifiableServiceFile). The runtime detection: a non-installer process writing to a Program Files .exe that belongs to a service, an unsigned DLL loaded by a services.exe child, or a SYSTEM service binary whose signature suddenly mismatches the vendor original. Lead with the signature/modified-time anomaly on SYSTEM service binaries - it's high fidelity. As always the fix is cheap (correct the ACL), so proactive enumeration is the strongest defense; this technique disappears the moment service binaries and folders are admin-write-only.",
         apt: [
-          { cls: "apt-mul", name: "Red Team / PowerUp", note: "Modifiable service binary/path is core PowerUp/SharpUp LPE tradecraft." },
-          { cls: "apt-mul", name: "Ransomware Affiliates", note: "Weak service-binary permissions abused to reach SYSTEM before encryption." },
+          { cls: "apt-act", name: "Red Team / PowerUp", note: "Modifiable service binary/path is core PowerUp/SharpUp LPE tradecraft." },
+          { cls: "apt-act", name: "Ransomware Affiliates", note: "Weak service-binary permissions abused to reach SYSTEM before encryption." },
           { cls: "apt-kp", name: "Lazarus", note: "Service binary replacement documented for privileged execution and persistence." }
         ],
         cite: "MITRE ATT&CK T1574.010"
@@ -2107,7 +2107,7 @@ Microsoft Defender for Identity:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "SID-History and golden-ticket-adjacent directory abuse documented in domain-dominance operations." },
           { cls: "apt-ru", name: "APT28", note: "Directory manipulation incl. SID-History injection in long-dwell intrusions." },
-          { cls: "apt-mul", name: "Ransomware Operators", note: "SID-History injection used for stealthy DA-equivalent persistence pre-encryption." },
+          { cls: "apt-act", name: "Ransomware Operators", note: "SID-History injection used for stealthy DA-equivalent persistence pre-encryption." },
           { cls: "apt-cn", name: "APT41", note: "Domain privilege escalation via directory attribute abuse documented across operations." }
         ],
         cite: "MITRE ATT&CK T1134.005"
@@ -2255,8 +2255,8 @@ Sysinternals autoruns.exe:
           { cls: "apt-cn", name: "APT41", note: "Sticky-keys / accessibility backdoors documented for SYSTEM access and re-entry." },
           { cls: "apt-ir", name: "APT33", note: "Accessibility-feature backdoors documented in Iranian intrusion operations." },
           { cls: "apt-ir", name: "APT34", note: "Accessibility-feature backdoors used in OilRig intrusion sets." },
-          { cls: "apt-mul", name: "Hands-on-Keyboard Operators", note: "RDP sticky-keys backdoor is among the most common manual persistence/escalation tricks." },
-          { cls: "apt-mul", name: "Ransomware Affiliates", note: "Accessibility backdoors used for resilient SYSTEM-level re-entry." }
+          { cls: "apt-act", name: "Hands-on-Keyboard Operators", note: "RDP sticky-keys backdoor is among the most common manual persistence/escalation tricks." },
+          { cls: "apt-act", name: "Ransomware Affiliates", note: "Accessibility backdoors used for resilient SYSTEM-level re-entry." }
         ],
         cite: "MITRE ATT&CK T1546.008"
       }
@@ -2392,8 +2392,8 @@ Sysinternals autoruns.exe:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "IFEO Debugger injection documented for privileged execution and persistence." },
           { cls: "apt-ru", name: "Turla", note: "IFEO-based triggers used in stealthy long-dwell intrusions." },
-          { cls: "apt-mul", name: "Red Team", note: "SilentProcessExit and IFEO Debugger are standard escalation/persistence tradecraft." },
-          { cls: "apt-mul", name: "Commodity Malware", note: "IFEO Debugger hijacks used by various families for persistence and defense evasion." }
+          { cls: "apt-act", name: "Red Team", note: "SilentProcessExit and IFEO Debugger are standard escalation/persistence tradecraft." },
+          { cls: "apt-act", name: "Commodity Malware", note: "IFEO Debugger hijacks used by various families for persistence and defense evasion." }
         ],
         cite: "MITRE ATT&CK T1546.012"
       }
@@ -2671,9 +2671,9 @@ Microsoft Defender for Identity:
         notes: "GPO modification is one of the most powerful domain privilege-escalation primitives because a single edit propagates SYSTEM-level execution or local-admin membership to every host the GPO applies to, at the next policy refresh. The two artifact surfaces are SYSVOL (the policy files - GptTmpl.inf for group membership and user rights, ScheduledTasks.xml for tasks including the fire-once ImmediateTaskV2, Groups.xml for local group pushes, Scripts\\Startup for SYSTEM scripts) and the directory object (the groupPolicyContainer's versionNumber and gPCMachineExtensionNames, which must update for clients to process the change). Detection should cover both: file-modify events on SYSVOL policy files (EID 11 / file auditing), especially any ImmediateTaskV2 which is almost always malicious, and Security 5136 directory-change events on GPO objects and their extension-name attributes. The strongest proactive control is auditing GPO write/link delegation - it's frequently over-granted, and BloodHound maps exactly who can edit or link which GPOs (the WriteGPLink/GenericWrite-on-GPO edges that SharpGPOAbuse weaponizes). This needs SYSVOL file auditing and Directory Service Changes auditing enabled on DCs to catch reliably - flag that as a prerequisite. Defender for Identity detects this natively at the directory level and is the strongest single control if available. Note this requires existing GPO-edit rights, so it's typically post-initial-escalation domain dominance rather than a first-foothold technique.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "GPO abuse for domain-wide deployment of payloads and privileged tasks documented in major intrusions." },
-          { cls: "apt-mul", name: "Ransomware Operators", note: "GPO modification (esp. immediate tasks / startup scripts) is a favored mass-deployment vector for encryptors." },
+          { cls: "apt-act", name: "Ransomware Operators", note: "GPO modification (esp. immediate tasks / startup scripts) is a favored mass-deployment vector for encryptors." },
           { cls: "apt-ir", name: "APT34", note: "Group Policy abuse used for lateral movement and privileged execution across domains." },
-          { cls: "apt-mul", name: "Red Team", note: "SharpGPOAbuse / PowerView GPO abuse is standard post-DA-rights tradecraft." }
+          { cls: "apt-act", name: "Red Team", note: "SharpGPOAbuse / PowerView GPO abuse is standard post-DA-rights tradecraft." }
         ],
         cite: "MITRE ATT&CK T1484.001"
       },
@@ -2789,7 +2789,7 @@ Microsoft Defender for Identity / Defender for Cloud Apps:
           { cls: "apt-ru", name: "APT29", note: "Golden SAML / federation-trust abuse (token-signing cert theft) was central to the SolarWinds-era cloud persistence." },
           { cls: "apt-ru", name: "APT28", note: "Domain trust manipulation documented in forest-wide compromise operations." },
           { cls: "apt-cn", name: "APT41", note: "Trust relationship abuse for cross-domain movement documented across campaigns." },
-          { cls: "apt-mul", name: "Red Team", note: "AADInternals / ADFSDump Golden SAML tradecraft for persistent cross-tenant access." }
+          { cls: "apt-act", name: "Red Team", note: "AADInternals / ADFSDump Golden SAML tradecraft for persistent cross-tenant access." }
         ],
         cite: "MITRE ATT&CK T1484.002"
       }
@@ -2933,7 +2933,7 @@ Tracee / Tetragon (eBPF) - syscall-level escape detection`,
           { cls: "apt-mul", name: "TeamTNT", note: "Cloud/container-focused crimeware; docker.sock and privileged-container escapes are core tradecraft." },
           { cls: "apt-mul", name: "Kinsing", note: "Container-targeting malware exploiting exposed Docker APIs and escaping to host." },
           { cls: "apt-cn", name: "Scattered Spider", note: "Container escape via misconfiguration and runc/containerd CVEs documented in cloud intrusions." },
-          { cls: "apt-mul", name: "Cryptojacking Crews", note: "Privileged-container and docker-socket escapes widely used to pivot to host for resource hijacking." }
+          { cls: "apt-act", name: "Cryptojacking Crews", note: "Privileged-container and docker-socket escapes widely used to pivot to host for resource hijacking." }
         ],
         cite: "MITRE ATT&CK T1611"
       },
@@ -3356,9 +3356,9 @@ Prevention:
   - gVisor / Kata for runtime isolation`,
         notes: "The runc binary overwrite (CVE-2019-5736) and the cgroups release_agent escape represent the more sophisticated tier of container escape, beyond simple privileged/socket misconfiguration. CVE-2019-5736 is notable because it weaponizes a routine administrative action: when an operator runs docker exec into a malicious container, the container overwrites the host's runc binary, and the next invocation of runc executes attacker code as root on the host. This makes runc binary integrity the single most critical file-monitoring target on any container host - the runc binary should never change except during a controlled package update, so any modification is a critical incident warranting immediate response. The cgroups v1 release_agent escape is not a CVE but a feature abuse: a container with CAP_SYS_ADMIN can mount a cgroup hierarchy, set a release_agent path pointing to an attacker payload, and trigger it to execute as root on the host when a cgroup empties. The two preventive controls that eliminate this entire class are dropping CAP_SYS_ADMIN from containers (which removes the release_agent precondition) and migrating to cgroups v2, which removed the release_agent mechanism entirely. For detection, Falco ships a dedicated release_agent escape rule, and file integrity monitoring on /usr/bin/runc with SHA-256 is the essential complement. Track CVE-2024-21626 (Leaky Vessels) as the modern runc escape requiring updated patching.",
         apt: [
-          { cls: "apt-mul", name: "Container-escape operators", note: "CVE-2019-5736 runc overwrite and release_agent escapes appear in commodity container attack toolkits (CDK, deepce, BOtB)." },
-          { cls: "apt-mul", name: "Cryptojacking crews", note: "Container escapes chained to host access for persistent miner deployment in cloud environments." },
-          { cls: "apt-mul", name: "Leaky Vessels exploiters", note: "CVE-2024-21626 runc escape saw rapid weaponization in 2024 against container build and runtime environments." }
+          { cls: "apt-act", name: "Container-escape operators", note: "CVE-2019-5736 runc overwrite and release_agent escapes appear in commodity container attack toolkits (CDK, deepce, BOtB)." },
+          { cls: "apt-act", name: "Cryptojacking crews", note: "Container escapes chained to host access for persistent miner deployment in cloud environments." },
+          { cls: "apt-act", name: "Leaky Vessels exploiters", note: "CVE-2024-21626 runc escape saw rapid weaponization in 2024 against container build and runtime environments." }
         ],
         cite: "MITRE ATT&CK T1611"
       }
@@ -3491,8 +3491,8 @@ Microsoft Defender for Identity:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Privileged group additions and AdminSDHolder abuse documented in domain-dominance operations." },
           { cls: "apt-cn", name: "APT41", note: "Account rights manipulation incl. DnsAdmins and privileged group abuse for escalation." },
-          { cls: "apt-mul", name: "Ransomware Operators", note: "Adding controlled accounts to Domain Admins is a near-universal pre-encryption step." },
-          { cls: "apt-mul", name: "Red Team", note: "PowerView/BloodHound ACL and group-membership abuse is core escalation tradecraft." }
+          { cls: "apt-act", name: "Ransomware Operators", note: "Adding controlled accounts to Domain Admins is a near-universal pre-encryption step." },
+          { cls: "apt-act", name: "Red Team", note: "PowerView/BloodHound ACL and group-membership abuse is core escalation tradecraft." }
         ],
         cite: "MITRE ATT&CK T1098"
       }
@@ -3709,8 +3709,8 @@ Atomic Red Team:
           { cls: "apt-mul", name: "TeamTNT", note: "SUID enumeration as part of post-access escalation in cloud cryptojacking campaigns." },
           { cls: "apt-mul", name: "Rocke", note: "SUID-based privilege escalation documented in cloud cryptomining operations." },
           { cls: "apt-mul", name: "8220 Gang", note: "Standard post-access SUID enumeration in Linux cryptojacking campaigns." },
-          { cls: "apt-mul", name: "Web-shell operators", note: "www-data context plus a SUID perl/python on legacy servers yields instant root; extremely common in web exploitation chains." },
-          { cls: "apt-mul", name: "Red team / commodity", note: "GTFOBins-based SUID escalation is automated by LinPEAS, LinEnum, and linux-smart-enumeration; near-universal first escalation attempt." }
+          { cls: "apt-act", name: "Web-shell operators", note: "www-data context plus a SUID perl/python on legacy servers yields instant root; extremely common in web exploitation chains." },
+          { cls: "apt-act", name: "Red team / commodity", note: "GTFOBins-based SUID escalation is automated by LinPEAS, LinEnum, and linux-smart-enumeration; near-universal first escalation attempt." }
         ],
         cite: "MITRE ATT&CK T1548.001"
       },
@@ -3924,9 +3924,9 @@ Hardening:
   Most servers should have NO cap_setuid/cap_dac_override files`,
         notes: "Linux capabilities are the stealthy counterpart to SUID and represent a frequently-missed escalation and persistence vector precisely because they are invisible to the standard SUID hunt (find -perm -4000). Capabilities split root's monolithic power into roughly 40 distinct units, and the setcap command assigns specific ones to a binary file. A binary with cap_setuid+ep can call setuid(0) and become root - functionally identical to SUID-root - but it does not appear in any permission-based search; only getcap -r / reveals it. This invisibility is exactly why it appeals to attackers for persistence: an attacker with root can grant cap_setuid+ep to a benign-looking binary, drop to a low-privilege account, and retain a one-command re-escalation path that survives cleanups focused on SUID binaries and cron jobs. The most dangerous capabilities for escalation are cap_setuid (direct root), cap_dac_override and cap_dac_read_search (read/write any file, including /etc/shadow and /etc/passwd), cap_sys_admin (the de facto new root, enabling mount and numerous escape paths), cap_sys_ptrace (inject into privileged processes), and cap_sys_module (load a malicious kernel module for total control). The single most important detection control is running getcap -r / on a schedule and diffing against a known-good baseline - on a normal server the legitimate capability set is tiny (typically just cap_net_raw on ping and a few network tools), so cap_setuid, cap_dac_override, or cap_sys_admin on any file is almost always worth investigating. GTFOBins includes a Capabilities filter mapping binaries to the capability needed for escalation.",
         apt: [
-          { cls: "apt-mul", name: "Targeted Linux intrusions", note: "Capability-based escalation and persistence (cap_setuid on interpreters) documented in targeted server compromises; survives SUID-focused cleanup." },
-          { cls: "apt-mul", name: "Container attackers", note: "CAP_SYS_ADMIN and related capabilities in containers are the precondition for multiple T1611 escape chains." },
-          { cls: "apt-mul", name: "Red team / LinPEAS users", note: "getcap enumeration and GTFOBins capability cross-reference are standard in modern Linux privilege-escalation tooling." }
+          { cls: "apt-act", name: "Targeted Linux intrusions", note: "Capability-based escalation and persistence (cap_setuid on interpreters) documented in targeted server compromises; survives SUID-focused cleanup." },
+          { cls: "apt-act", name: "Container attackers", note: "CAP_SYS_ADMIN and related capabilities in containers are the precondition for multiple T1611 escape chains." },
+          { cls: "apt-act", name: "Red team / LinPEAS users", note: "getcap enumeration and GTFOBins capability cross-reference are standard in modern Linux privilege-escalation tooling." }
         ],
         cite: "MITRE ATT&CK T1548.001"
       }
@@ -4156,9 +4156,9 @@ Atomic Red Team:
           { cls: "apt-cn", name: "APT41", note: "Sudo misconfig exploitation and CVE-based sudo escalation on compromised Linux hosts." },
           { cls: "apt-cn", name: "Volt Typhoon", note: "Sudo abuse as part of living-off-the-land privilege escalation on critical infrastructure." },
           { cls: "apt-kp", name: "Lazarus", note: "Sudo exploitation documented as a privilege escalation vector in Linux-targeted operations." },
-          { cls: "apt-mul", name: "Universal post-access", note: "sudo -l enumeration and GTFOBins escalation is run by virtually every actor with a Linux foothold; the path of least resistance to root." },
-          { cls: "apt-mul", name: "Cryptomining crews", note: "Sudo misconfiguration exploited opportunistically for root before miner deployment on compromised servers." },
-          { cls: "apt-mul", name: "Red team / LinPEAS", note: "LinPEAS and sudo_killer automate sudo -l parsing and GTFOBins matching; standard escalation tooling." }
+          { cls: "apt-act", name: "Universal post-access", note: "sudo -l enumeration and GTFOBins escalation is run by virtually every actor with a Linux foothold; the path of least resistance to root." },
+          { cls: "apt-act", name: "Cryptomining crews", note: "Sudo misconfiguration exploited opportunistically for root before miner deployment on compromised servers." },
+          { cls: "apt-act", name: "Red team / LinPEAS", note: "LinPEAS and sudo_killer automate sudo -l parsing and GTFOBins matching; standard escalation tooling." }
         ],
         cite: "MITRE ATT&CK T1548.003"
       },
@@ -4376,9 +4376,9 @@ Atomic Red Team:
   T1548.003 - includes sudo caching/token abuse tests`,
         notes: "Sudo binary vulnerabilities complement sudoers misconfiguration as a root path, and Baron Samedit (CVE-2021-3156) is the standout: a heap-based buffer overflow in sudo's argument parsing that any local user can trigger with no sudo rights whatsoever, fixed only in sudo 1.9.5p2 (January 2021). It is reliable, leaves a segfault trace in kernel logs when exploitation is attempted, and remains unpatched on many legacy and OT-adjacent systems where sudo is rarely updated - making version verification the primary control. CVE-2019-14287 is a narrower but elegant bug: when a sudoers rule grants a user the right to run a command as any user except root (a pattern administrators sometimes use thinking it is safe), the user can specify -u#-1, which wraps around to UID 0, bypassing the restriction with nothing more than a command-line trick. Sudo token reuse is a design-level abuse rather than a CVE: sudo caches credentials for roughly 15 minutes in /run/sudo/ts/, so an attacker who controls a process owned by a user with a valid timestamp can ptrace-inject into it and run sudo without a password. The two most effective hardening controls beyond patching are setting kernel.yama.ptrace_scope to 1 or higher (which blocks the ptrace injection underlying token reuse) and setting timestamp_timeout=0 in sudoers (which disables credential caching entirely). For detection, watch for sudo invoked with -u#-1 or -u#4294967295, sudo/sudoedit segfaults in kernel logs, and ptrace of shell processes followed by sudo execution.",
         apt: [
-          { cls: "apt-mul", name: "Cryptomining crews", note: "Baron Samedit (CVE-2021-3156) rapidly adopted for root on unpatched Linux hosts prior to miner deployment." },
-          { cls: "apt-mul", name: "Commodity Linux LPE", note: "CVE-2021-3156 and CVE-2019-14287 are staples in linux-exploit-suggester, sudo_killer, and LinPEAS output." },
-          { cls: "apt-mul", name: "Hands-on intruders", note: "Sudo token reuse via ptrace injection documented in targeted, interactive Linux intrusions where a privileged user session is present." }
+          { cls: "apt-act", name: "Cryptomining crews", note: "Baron Samedit (CVE-2021-3156) rapidly adopted for root on unpatched Linux hosts prior to miner deployment." },
+          { cls: "apt-act", name: "Commodity Linux LPE", note: "CVE-2021-3156 and CVE-2019-14287 are staples in linux-exploit-suggester, sudo_killer, and LinPEAS output." },
+          { cls: "apt-act", name: "Hands-on intruders", note: "Sudo token reuse via ptrace injection documented in targeted, interactive Linux intrusions where a privileged user session is present." }
         ],
         cite: "MITRE ATT&CK T1548.003"
       }
@@ -4604,8 +4604,8 @@ Atomic Red Team:
         apt: [
           { cls: "apt-ru", name: "Ebury", note: "Canonical example of dynamic linker abuse (libssl LD_PRELOAD); primarily credential theft/persistence but demonstrates the privileged-process injection mechanism." },
           { cls: "apt-cn", name: "APT41", note: "LD_PRELOAD injection documented in Linux-targeted operations for privilege escalation and rootkit deployment." },
-          { cls: "apt-mul", name: "Pentest / CTF-documented", note: "sudo env_keep LD_PRELOAD escalation is a classic real-world misconfiguration finding, flagged by LinPEAS and GTFOBins." },
-          { cls: "apt-mul", name: "Linux rootkit operators", note: "/etc/ld.so.preload injection used for both root-context execution and persistence across SUID and daemon processes." }
+          { cls: "apt-act", name: "Pentest / CTF-documented", note: "sudo env_keep LD_PRELOAD escalation is a classic real-world misconfiguration finding, flagged by LinPEAS and GTFOBins." },
+          { cls: "apt-act", name: "Linux rootkit operators", note: "/etc/ld.so.preload injection used for both root-context execution and persistence across SUID and daemon processes." }
         ],
         cite: "MITRE ATT&CK T1574.006"
       }

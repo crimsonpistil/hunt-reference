@@ -140,6 +140,9 @@ function aptOrigins(apt) {
     if (a.cls === 'apt-ru') return 'RU';
     if (a.cls === 'apt-ir') return 'IR';
     if (a.cls === 'apt-kp') return 'KP';
+    if (a.cls === 'apt-mul') return 'MUL';
+    if (a.cls === 'apt-mal') return 'MAL';
+    if (a.cls === 'apt-act') return 'ACT';
     return '';
   }).join(' ');
 }
