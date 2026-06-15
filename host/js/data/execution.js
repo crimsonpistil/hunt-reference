@@ -73,12 +73,14 @@ YARA:
 - Florian Roth's signature-base PowerShell rules`,
         notes: "Encoded PowerShell remains the most common adversary execution method even in 2026 because it (a) defeats simple keyword-matching detection, (b) handles arbitrary script content including special characters, and (c) is built into PowerShell itself with no additional tooling. Detection sweet spot: combine the -EncodedCommand arg with parent-process context. Office app spawning powershell -enc = high-confidence phish chain. Service spawning powershell -enc = potential persistence. svchost spawning powershell -enc = likely WMI-based execution. The encoded payload itself is base64; decoding requires UTF-16LE encoding (not ASCII) - a common pitfall in incident response.",
         apt: [
-          { cls: "apt-act", name: "Red Team", note: "Universal in Cobalt Strike, Empire, and most C2 framework default stagers." },
-          { cls: "apt-act", name: "Ransomware", note: "Universal across modern ransomware affiliate operations for staging." },
           { cls: "apt-ru", name: "APT29", note: "Encoded PowerShell extensively used in SolarWinds and ongoing operations." },
           { cls: "apt-kp", name: "Lazarus", note: "Encoded PowerShell stagers in cryptocurrency-targeted operations." },
-          { cls: "apt-cn", name: "APT41", note: "Documented in operations against tech sector." },
-          { cls: "apt-act", name: "Multi", note: "Documented across virtually all modern operations using PowerShell." }
+          { cls: "apt-cn", name: "APT41", note: "Documented in operations against tech sector." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Red Team", note: "Universal in Cobalt Strike, Empire, and most C2 framework default stagers." },
+          { cls: "apt-mul", name: "Ransomware", note: "Universal across modern ransomware affiliate operations for staging." },
+          { cls: "apt-mul", name: "Multi", note: "Documented across virtually all modern operations using PowerShell." }
         ],
         cite: "MITRE ATT&CK T1059.001"
       },
@@ -164,12 +166,14 @@ ParentBaseFileName IN ("WINWORD.EXE","EXCEL.EXE",
 ImageFileName IN ("powershell.exe","cmd.exe")`,
         notes: "Office-spawning-PowerShell is one of the highest-fidelity initial-access detections in modern environments. The technique pre-dates ATT&CK itself - 'macro spawns shell' has been a phishing detection target for over a decade. Modern phishing increasingly uses container-types (ISO/IMG/ONE) to bypass MOTW, but the ultimate execution still goes through PowerShell or CMD eventually. Tune by user role: developers and admins legitimately spawn PowerShell from various contexts; finance/HR/sales users almost never do, especially from Office apps. Pair with: outbound network connections in the PowerShell child process, file writes to %TEMP% / %APPDATA%, subsequent persistence creation (scheduled tasks, registry run keys).",
         apt: [
-          { cls: "apt-act", name: "Phishing", note: "Universal in phishing-based initial access operations." },
-          { cls: "apt-act", name: "Initial Access", note: "Standard pattern across initial access broker operations." },
           { cls: "apt-ru", name: "APT28", note: "Office-based phishing extensively documented." },
-          { cls: "apt-kp", name: "Lazarus", note: "Office and HWP-based phishing in operations against South Korea and Japan." },
-          { cls: "apt-act", name: "Ransomware", note: "Standard phishing→PowerShell chain in many ransomware affiliate operations." },
-          { cls: "apt-act", name: "Multi", note: "Documented across virtually all phishing-based operations targeting Windows endpoints." }
+          { cls: "apt-kp", name: "Lazarus", note: "Office and HWP-based phishing in operations against South Korea and Japan." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Phishing", note: "Universal in phishing-based initial access operations." },
+          { cls: "apt-mul", name: "Initial Access", note: "Standard pattern across initial access broker operations." },
+          { cls: "apt-mul", name: "Ransomware", note: "Standard phishing→PowerShell chain in many ransomware affiliate operations." },
+          { cls: "apt-mul", name: "Multi", note: "Documented across virtually all phishing-based operations targeting Windows endpoints." }
         ],
         cite: "MITRE ATT&CK T1059.001, T1566.001"
       },
@@ -250,12 +254,14 @@ Velociraptor:
 - Built-in IOC matching for known IOCs in script content`,
         notes: "ScriptBlock logging (Event 4104) captures the actual code being executed AFTER PowerShell de-obfuscates it - meaning even if the command-line shows -EncodedCommand <base64>, the 4104 event shows the decoded script. This is the most powerful PowerShell visibility you can get. Caveat: it must be enabled via GPO. Many environments don't have it on by default. Detection signal-to-noise is high: legitimate PowerShell use rarely contains IEX + DownloadString + Net.WebClient in the same script. AMSI integration with PowerShell 5+ further enhances this - when AMSI flags a ScriptBlock as malicious, you get Event ID 4104 with content + Event ID 5061 from Microsoft-Windows-PowerShell/Admin. Combine for highest fidelity. Adversary countermove: AMSI bypass via memory patching (Patriot, AMSI.fail) - detection shifts to Sysmon EID 7 (Image Load) of amsi.dll into PowerShell, which is itself suspicious.",
         apt: [
-          { cls: "apt-act", name: "Red Team", note: "Universal in red team post-exploitation." },
-          { cls: "apt-act", name: "Ransomware", note: "Standard staging pattern across ransomware operations." },
           { cls: "apt-ru", name: "APT29", note: "Documented in SolarWinds and ongoing espionage operations." },
           { cls: "apt-kp", name: "Lazarus", note: "PowerShell-based stagers in cryptocurrency operations." },
-          { cls: "apt-cn", name: "APT41", note: "PowerShell post-exploitation in operations against tech sector." },
-          { cls: "apt-act", name: "Multi", note: "Documented in CISA AA23-320A Scattered Spider operations and across ransomware playbooks." }
+          { cls: "apt-cn", name: "APT41", note: "PowerShell post-exploitation in operations against tech sector." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Red Team", note: "Universal in red team post-exploitation." },
+          { cls: "apt-mul", name: "Ransomware", note: "Standard staging pattern across ransomware operations." },
+          { cls: "apt-mul", name: "Multi", note: "Documented in CISA AA23-320A Scattered Spider operations and across ransomware playbooks." }
         ],
         cite: "MITRE ATT&CK T1059.001"
       },
@@ -327,11 +333,13 @@ Velociraptor:
 - Windows.Detection.PowerShell.SuspiciousFlags`,
         notes: "ExecutionPolicy is one of the most misunderstood security features in PowerShell - it's not a security boundary. Microsoft documents it explicitly as 'not a security feature' but as a 'safety guardrail.' Adversaries bypass it trivially with -ExecutionPolicy Bypass, but ALSO with: -EncodedCommand (no script file = no policy check), running PowerShell scripts via Get-Content + IEX, or just calling powershell.exe -Command directly. The detection value of catching -ep bypass isn't in stopping the bypass - it's that legitimate IT scripts rarely need it (they sign their scripts) while adversary tooling almost always uses it. False-positive sources: software installers that bundle PowerShell scripts, vendor monitoring agents, some legitimate sysadmin one-liners. Build allowlists by source/parent process. Pair with combined-flag detection: -nop -w hidden -ep bypass is essentially an adversary fingerprint when seen together.",
         apt: [
-          { cls: "apt-act", name: "Red Team", note: "Universal flag pattern in red team operations." },
-          { cls: "apt-act", name: "Ransomware", note: "Standard in ransomware staging." },
           { cls: "apt-ru", name: "APT29", note: "Documented in ongoing espionage operations." },
-          { cls: "apt-kp", name: "Lazarus", note: "Standard in PowerShell-based stagers." },
-          { cls: "apt-act", name: "Multi", note: "Often combined with -EncodedCommand and -NonInteractive flags as full adversary fingerprint." }
+          { cls: "apt-kp", name: "Lazarus", note: "Standard in PowerShell-based stagers." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Red Team", note: "Universal flag pattern in red team operations." },
+          { cls: "apt-mul", name: "Ransomware", note: "Standard in ransomware staging." },
+          { cls: "apt-mul", name: "Multi", note: "Often combined with -EncodedCommand and -NonInteractive flags as full adversary fingerprint." }
         ],
         cite: "MITRE ATT&CK T1059.001"
       }
@@ -424,11 +432,13 @@ Velociraptor:
   (covers cmd.exe and powershell.exe children)`,
         notes: "Office-spawning-cmd is the cmd.exe equivalent of the PowerShell parent indicator - same logic, same high fidelity, slightly different toolchain. Where PowerShell is preferred for in-memory staging, cmd.exe is often used as a relay: the macro or HTA spawns cmd.exe, which then chains into something else (certutil, bitsadmin, curl, etc.). That chaining pattern - cmd spawning a network-capable LOLBin - is worth treating as a separate pivot: look at Sysmon EID 1 events where cmd.exe is BOTH child (suspicious parent) and parent (spawning LOLBin) within the same process tree. False positives are low for end-user machines. Admin and developer workstations will generate noise. Tune by user role and parent-child pair, not just parent alone.",
         apt: [
-          { cls: "apt-act", name: "Phishing", note: "Universal in phishing chains - macro or HTA drops cmd, cmd relays to next stage." },
           { cls: "apt-ru", name: "APT28", note: "Office-based phishing chains invoking cmd.exe extensively documented." },
           { cls: "apt-kp", name: "Lazarus", note: "HTA and Office macro loaders spawning cmd.exe in cryptocurrency-targeted operations." },
-          { cls: "apt-ir", name: "APT35", note: "Macro-based initial access chains documented in CISA advisories." },
-          { cls: "apt-act", name: "Ransomware", note: "Affiliate operators use Office-to-cmd chains as standard initial access pathway." }
+          { cls: "apt-ir", name: "APT35", note: "Macro-based initial access chains documented in CISA advisories." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Phishing", note: "Universal in phishing chains - macro or HTA drops cmd, cmd relays to next stage." },
+          { cls: "apt-mul", name: "Ransomware", note: "Affiliate operators use Office-to-cmd chains as standard initial access pathway." }
         ],
         cite: "MITRE ATT&CK T1059.003, T1566.001"
       },
@@ -557,11 +567,13 @@ Velociraptor:
 - Windows.EventLogs.Sysmon (with filters)`,
         notes: "Individual recon commands like whoami and ipconfig run constantly in healthy enterprise environments - IT scripts, monitoring agents, login scripts. The detection is not per-command but per-burst: multiple distinct recon binaries run by the same user or from the same parent process within a short time window. This is almost exclusively human operator behavior post-compromise. The timing gap between commands is a secondary signal: automated tools run commands in milliseconds; human operators take 2-30 seconds between commands. Sysmon alone cannot express the windowed-count correlation - you need Kibana threshold rules, EQL sequences, or a SIEM aggregation query. This is one of the cases where the PowerShell hunt script above is genuinely useful for rapid triage without a SIEM. APT attribution is broad because this is a universal technique - every threat actor who gains shell access does some version of this recon sequence.",
         apt: [
-          { cls: "apt-act", name: "All Operators", note: "Universal post-compromise behavior - virtually every documented intrusion includes a recon command burst." },
           { cls: "apt-ru", name: "APT29", note: "Documented in SolarWinds post-compromise activity." },
           { cls: "apt-cn", name: "APT41", note: "Discovery command sequences documented across multiple sectors." },
-          { cls: "apt-kp", name: "Lazarus", note: "Standard recon sequence documented in CISA advisories on DPRK operators." },
-          { cls: "apt-act", name: "Ransomware", note: "Pre-encryption recon (network share and user enumeration) is standard across ransomware operations." }
+          { cls: "apt-kp", name: "Lazarus", note: "Standard recon sequence documented in CISA advisories on DPRK operators." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "All Operators", note: "Universal post-compromise behavior - virtually every documented intrusion includes a recon command burst." },
+          { cls: "apt-mul", name: "Ransomware", note: "Pre-encryption recon (network share and user enumeration) is standard across ransomware operations." }
         ],
         cite: "MITRE ATT&CK T1059.003, T1087.001, T1016, T1082"
       },
@@ -663,9 +675,11 @@ Velociraptor:
 - Windows.EventLogs.Sysmon + regex filter on CommandLine`,
         notes: "DOSfuscation exploits cmd.exe's quirky parsing rules - carets are escape characters, quoted empty strings are silently removed, commas and semicolons can substitute for spaces in certain positions. The result is command strings that look like noise but execute normally. The core reference is Daniel Bohannon's 2018 DEF CON talk and the Invoke-DOSfuscation tool. Detection angle: legitimate cmd.exe usage almost never contains 3+ consecutive carets or quoted null strings mid-token. These patterns have near-zero false-positive rate in normal enterprise telemetry - they're detectable because the obfuscation itself is anomalous. The deeper hunt is what the obfuscated command actually does: decode the outer shell (drop carets, remove quoted nulls, resolve env var substrings) and analyze the revealed payload. Kibana regex on CommandLine is more reliable than Sysmon config-level filtering here because Sysmon's XML match syntax doesn't support regex in CommandLine fields - this is one of the genuine cases where the Kibana column catches things the Sysmon column misses at config time.",
         apt: [
-          { cls: "apt-act", name: "Commodity Malware", note: "DOSfuscation present in several malware families using cmd.exe staging." },
-          { cls: "apt-cn", name: "APT41", note: "Cmd-level obfuscation documented in intrusions against gaming and tech sectors." },
-          { cls: "apt-act", name: "Ransomware", note: "Some ransomware droppers use DOSfuscated cmd.exe wrappers for staging scripts." }
+          { cls: "apt-cn", name: "APT41", note: "Cmd-level obfuscation documented in intrusions against gaming and tech sectors." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Commodity Malware", note: "DOSfuscation present in several malware families using cmd.exe staging." },
+          { cls: "apt-mul", name: "Ransomware", note: "Some ransomware droppers use DOSfuscated cmd.exe wrappers for staging scripts." }
         ],
         cite: "MITRE ATT&CK T1059.003, T1027"
       }
@@ -767,11 +781,13 @@ YARA:
 - Didier Stevens' oledump.py for static macro analysis`,
         notes: "wscript.exe and cscript.exe are the two Windows Script Host engines - wscript runs scripts with a GUI context (no console window visible), cscript runs them in a console. Adversaries strongly prefer wscript for macro-dropped scripts because it runs silently. The detection is the same as the Office-spawning-PowerShell and Office-spawning-cmd patterns - the anomaly is the parent, not the child. One important addition to the parent list vs the cmd/PS indicators: onenote.exe. Since the MOTW macro block in 2022, OneNote became a popular delivery vehicle - embedded attachments inside .one files execute via the OneNote process, not a standard Office app. Also worth noting: msaccess.exe and mspub.exe are lower-volume Office apps that get less scrutiny but are used in targeted operations specifically because defenders don't always include them in parent-process watchlists. False positives: IT automation scripts occasionally use wscript legitimately - allowlist by known-good script paths and parent context.",
         apt: [
-          { cls: "apt-act", name: "Commodity Malware", note: "Emotet, QakBot, IcedID all used Office macro to wscript/cscript chains extensively pre-2022." },
           { cls: "apt-ru", name: "APT28", note: "VBA macro delivery documented in multiple spearphishing campaigns." },
           { cls: "apt-ir", name: "APT35", note: "Office macro-based initial access documented in CISA advisories targeting US organizations." },
           { cls: "apt-cn", name: "APT41", note: "VBA macro loaders documented in operations against multiple sectors." },
           { cls: "apt-mul", name: "TA505", note: "Prolific use of Office macro chains spawning wscript as part of Dridex and Clop distribution." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Commodity Malware", note: "Emotet, QakBot, IcedID all used Office macro to wscript/cscript chains extensively pre-2022." }
         ],
         cite: "MITRE ATT&CK T1059.005, T1566.001"
       },
@@ -893,11 +909,15 @@ Any.run / VirusTotal sandbox:
 - VBS is often obfuscated but sandboxes detonate it`,
         notes: "This indicator represents the post-2022 evolution of VBScript delivery after Microsoft's macro block. The ISO container trick works because Windows auto-mounts ISO files when double-clicked (since Windows 8), and files inside the mounted ISO volume do not inherit the Zone.Identifier ADS from the outer ISO file - so the .vbs inside has no MOTW and runs without a macro security prompt. The detection pivot is twofold: first, the ISO mount event itself (MountPoints2 registry key, Sysmon EID 11 on the ISO), then wscript executing a script from a mounted drive letter or staging path. The drive-letter heuristic (wscript running D:\\something.vbs where D: is not a standard drive) is high-fidelity but requires knowing which drive letters are fixed vs removable vs mounted in your environment. The %TEMP% and %APPDATA% path heuristics are broader and catch the cases where the script is first dropped to disk before execution. VBE (.vbe) is encoded VBScript - the content is obfuscated using Microsoft's Script Encoder - and is a meaningful escalation signal when seen in these paths.",
         apt: [
-          { cls: "apt-act", name: "Initial Access Brokers", note: "ISO/LNK/VBS chains are the dominant IAB delivery method post-2022 macro block." },
-          { cls: "apt-mal", name: "QakBot", note: "Pivoted to ISO + VBS delivery after the 2022 Microsoft macro block." },
-          { cls: "apt-mal", name: "Bumblebee", note: "Heavy use of ISO container with LNK launching VBS or DLL payload." },
-          { cls: "apt-kp", name: "Lazarus", note: "ISO-based delivery documented in operations against financial and defense sectors." },
-          { cls: "apt-mal", name: "Raspberry Robin", note: "LNK-based worm using wscript for execution, spread via USB and ISO." }
+          { cls: "apt-kp", name: "Lazarus", note: "ISO-based delivery documented in operations against financial and defense sectors." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "QakBot", note: "Pivoted to ISO + VBS delivery after the 2022 Microsoft macro block." },
+          { cls: "apt-mul", name: "Bumblebee", note: "Heavy use of ISO container with LNK launching VBS or DLL payload." },
+          { cls: "apt-mul", name: "Raspberry Robin", note: "LNK-based worm using wscript for execution, spread via USB and ISO." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Initial Access Brokers", note: "ISO/LNK/VBS chains are the dominant IAB delivery method post-2022 macro block." }
         ],
         cite: "MITRE ATT&CK T1059.005, T1566.001, T1027"
       }
@@ -1029,11 +1049,15 @@ Static analysis:
 - Any.run: sandbox detonation for behavioral analysis`,
         notes: "The detection pattern here is nearly identical to T1059.005 VBScript - same engines (wscript/cscript), same suspicious paths, same EID 11 supplementary hunt. The distinctions that matter: .js files have a user-visible double-click association on Windows (wscript runs them silently), making them effective for lure-based delivery without requiring a macro or container trick. The user sees what looks like a document icon, double-clicks, and wscript silently executes the payload. JSE (.jse) is encoded JScript using Microsoft's Script Encoder - same tool as VBE encoding - and is a stronger signal because legitimate software rarely produces .jse files in staging directories. Gootloader is worth calling out specifically because it uses an unusual pattern: a large multi-stage .js file (often 5,000+ lines of obfuscated code) that may be staged in the registry between stages rather than purely on disk - if you see wscript running a .js with an unusually large file size or see powershell.exe reading registry values and piping to wscript, that's a Gootloader indicator. False positives: some legitimate software installers use .js files during setup, typically from their own installation directory rather than temp paths - path context resolves most of these.",
         apt: [
-          { cls: "apt-mal", name: "Gootloader", note: "Signature use of large obfuscated .js files for multi-stage delivery, heavily documented." },
           { cls: "apt-mul", name: "TA505", note: "JScript-based loaders used in Dridex and FlawedAmmyy distribution campaigns." },
-          { cls: "apt-act", name: "Initial Access Brokers", note: "ZIP-delivered .js files are a recurring IAB delivery mechanism." },
-          { cls: "apt-cn", name: "APT41", note: "JScript-based loaders documented in operations against multiple sectors." },
-          { cls: "apt-act", name: "Commodity Malware", note: "JScript delivery present across multiple malware families favoring WSH over PowerShell for lower detection profile." }
+          { cls: "apt-cn", name: "APT41", note: "JScript-based loaders documented in operations against multiple sectors." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Gootloader", note: "Signature use of large obfuscated .js files for multi-stage delivery, heavily documented." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Initial Access Brokers", note: "ZIP-delivered .js files are a recurring IAB delivery mechanism." },
+          { cls: "apt-mul", name: "Commodity Malware", note: "JScript delivery present across multiple malware families favoring WSH over PowerShell for lower detection profile." }
         ],
         cite: "MITRE ATT&CK T1059.007"
       },
@@ -1141,10 +1165,14 @@ Gootloader-specific:
 - Velociraptor Windows.Forensics.Gootloader artifact`,
         notes: "The explorer.exe parent is the most common real-world path for JScript delivery - it means the user double-clicked the .js file directly, relying on the default Windows file association (wscript.exe handles .js). This is the 'ZIP attachment -> extract -> double-click' chain. Gootloader is the canonical example and worth understanding in depth: it uses SEO poisoning to rank malicious sites in search results for legal/business document searches, delivers a large obfuscated .js file disguised as the document, and relies entirely on the user double-clicking it. The browser parent variant is less common now because modern browsers (Chrome, Edge) warn before opening script files downloaded from the internet - but it still surfaces in environments with older browser configurations or where the .js is delivered inside a password-protected ZIP (bypasses browser warning because the file is 'opened' from the ZIP handler, not the browser directly). The Office parent variant is the most sophisticated - it means a macro is orchestrating the JScript execution as a second stage, suggesting a more deliberate operator rather than commodity tooling.",
         apt: [
-          { cls: "apt-mal", name: "Gootloader", note: "Canonical example of explorer-spawned wscript via user double-click of SEO-poisoned .js lure." },
           { cls: "apt-mul", name: "TA505", note: "Browser and email delivery chains resulting in wscript execution documented across campaigns." },
-          { cls: "apt-act", name: "Phishing Operators", note: "ZIP-delivered .js with explorer parent is a standard commodity phishing pattern." },
           { cls: "apt-cn", name: "APT41", note: "Multi-stage chains using Office macro dropping and executing JScript documented in intrusion reports." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Gootloader", note: "Canonical example of explorer-spawned wscript via user double-click of SEO-poisoned .js lure." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Phishing Operators", note: "ZIP-delivered .js with explorer parent is a standard commodity phishing pattern." }
         ],
         cite: "MITRE ATT&CK T1059.007, T1566.001"
       }
@@ -1264,9 +1292,13 @@ Velociraptor:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "WMI process execution documented across multiple operations including SolarWinds follow-on activity." },
           { cls: "apt-cn", name: "APT41", note: "wmic.exe and direct WMI COM execution documented in intrusions across multiple sectors." },
-          { cls: "apt-cn", name: "APT32", note: "WMI-based execution used for lateral movement and staging in documented operations." },
-          { cls: "apt-act", name: "Ransomware", note: "WMI process creation used for lateral movement and payload execution across many ransomware operations." },
-          { cls: "apt-mal", name: "Cobalt Strike", note: "Built-in WMI lateral movement module used extensively by ransomware affiliates and APT operators." }
+          { cls: "apt-cn", name: "APT32", note: "WMI-based execution used for lateral movement and staging in documented operations." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Built-in WMI lateral movement module used extensively by ransomware affiliates and APT operators." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "WMI process creation used for lateral movement and payload execution across many ransomware operations." }
         ],
         cite: "MITRE ATT&CK T1047"
       },
@@ -1395,9 +1427,13 @@ Network-side (complements host detection):
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Remote WMI lateral movement documented extensively across espionage operations." },
           { cls: "apt-cn", name: "APT41", note: "WMI-based lateral movement documented in intrusions across tech, healthcare, and government sectors." },
-          { cls: "apt-cn", name: "APT32", note: "wmiexec-style lateral movement documented in operations against Southeast Asian targets." },
-          { cls: "apt-act", name: "Ransomware", note: "WMI lateral movement used for ransomware propagation - Ryuk, Conti, and others documented." },
-          { cls: "apt-mal", name: "Impacket", note: "wmiexec.py is a standard tool across red team and APT operations for agentless lateral movement." }
+          { cls: "apt-cn", name: "APT32", note: "wmiexec-style lateral movement documented in operations against Southeast Asian targets." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Impacket", note: "wmiexec.py is a standard tool across red team and APT operations for agentless lateral movement." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "WMI lateral movement used for ransomware propagation - Ryuk, Conti, and others documented." }
         ],
         cite: "MITRE ATT&CK T1047, T1021"
       },
@@ -1519,8 +1555,10 @@ Set-WmiInstance -Namespace root\subscription
           { cls: "apt-ru", name: "APT29", note: "WMI subscription persistence documented in multiple long-dwell espionage operations." },
           { cls: "apt-cn", name: "APT41", note: "WMI event subscriptions used for persistence in operations across multiple sectors." },
           { cls: "apt-mul", name: "FIN6", note: "WMI subscription persistence documented in financial sector intrusions." },
-          { cls: "apt-ru", name: "Turla", note: "WMI-based persistence documented across long-term espionage campaigns." },
-          { cls: "apt-act", name: "Red Teams", note: "WMI subscription persistence is a standard red team technique due to evasiveness - widely emulated." }
+          { cls: "apt-ru", name: "Turla", note: "WMI-based persistence documented across long-term espionage campaigns." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Red Teams", note: "WMI subscription persistence is a standard red team technique due to evasiveness - widely emulated." }
         ],
         cite: "MITRE ATT&CK T1047, T1546.003"
       }
@@ -1664,9 +1702,13 @@ Sysinternals autoruns.exe:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Scheduled task persistence documented across multiple long-term espionage operations." },
           { cls: "apt-cn", name: "APT41", note: "schtasks-based persistence documented in intrusions across tech and healthcare sectors." },
-          { cls: "apt-kp", name: "Lazarus", note: "Scheduled task persistence documented in CISA advisories on DPRK-attributed operations." },
-          { cls: "apt-act", name: "Ransomware", note: "Scheduled tasks used for persistence and propagation across Ryuk, Conti, LockBit operations." },
-          { cls: "apt-mal", name: "Cobalt Strike", note: "Built-in scheduled task persistence module used across red team and APT operations." }
+          { cls: "apt-kp", name: "Lazarus", note: "Scheduled task persistence documented in CISA advisories on DPRK-attributed operations." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Built-in scheduled task persistence module used across red team and APT operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Scheduled tasks used for persistence and propagation across Ryuk, Conti, LockBit operations." }
         ],
         cite: "MITRE ATT&CK T1053.005"
       },
@@ -1790,9 +1832,13 @@ Velociraptor:
         notes: "Remote scheduled task creation is a lateral movement technique that predates most modern C2 frameworks - the Windows 'at' command (now deprecated) and its successor schtasks /s have been used for decades. The detection split between source and destination is the same pattern as remote WMI: the source generates a process creation event (schtasks /s) and a network connection (SMB to 445), while the destination generates a task creation event (Security EID 4698) with a network logon (Security EID 4624 LogonType=3). The EID 4699 (task deleted) paired shortly after EID 4698 is worth a separate alert - it's the signature of execution-only remote task use (Impacket atexec pattern) where the adversary creates a task, runs it immediately, and deletes it to minimize forensic evidence. A task that exists for less than 60 seconds and was created by a remote user is high-confidence malicious activity.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Remote scheduled task lateral movement documented in SolarWinds follow-on intrusion activity." },
-          { cls: "apt-cn", name: "APT41", note: "Remote task scheduling documented as lateral movement method across multiple sector intrusions." },
-          { cls: "apt-mal", name: "Impacket", note: "atexec.py is a standard tool in red team and APT lateral movement toolkits." },
-          { cls: "apt-act", name: "Ransomware", note: "Remote task creation for ransomware propagation documented across Conti, Ryuk, and LockBit operations." }
+          { cls: "apt-cn", name: "APT41", note: "Remote task scheduling documented as lateral movement method across multiple sector intrusions." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Impacket", note: "atexec.py is a standard tool in red team and APT lateral movement toolkits." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Remote task creation for ransomware propagation documented across Conti, Ryuk, and LockBit operations." }
         ],
         cite: "MITRE ATT&CK T1053.005, T1021"
       },
@@ -1934,9 +1980,11 @@ Sysinternals autoruns.exe:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Disguised scheduled task names with suspicious action paths documented in long-dwell operations." },
           { cls: "apt-cn", name: "APT41", note: "Scheduled task persistence with LOLBin or interpreter actions documented across multiple intrusions." },
-          { cls: "apt-kp", name: "Lazarus", note: "Persistent scheduled tasks with obfuscated PowerShell actions documented in CISA advisories." },
-          { cls: "apt-act", name: "Ransomware", note: "Pre-encryption scheduled tasks for persistence and propagation documented across ransomware families." },
-          { cls: "apt-act", name: "Red Teams", note: "Task disguise (legitimate-looking name + suspicious action) is standard red team persistence tradecraft." }
+          { cls: "apt-kp", name: "Lazarus", note: "Persistent scheduled tasks with obfuscated PowerShell actions documented in CISA advisories." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Pre-encryption scheduled tasks for persistence and propagation documented across ransomware families." },
+          { cls: "apt-mul", name: "Red Teams", note: "Task disguise (legitimate-looking name + suspicious action) is standard red team persistence tradecraft." }
         ],
         cite: "MITRE ATT&CK T1053.005"
       }
@@ -2067,9 +2115,13 @@ Sysinternals autoruns.exe:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Service-based execution and persistence documented across multiple espionage operations." },
           { cls: "apt-cn", name: "APT41", note: "sc.exe service creation for lateral movement and persistence documented in multiple sector intrusions." },
-          { cls: "apt-act", name: "Ransomware", note: "Service creation for persistence and propagation documented across Ryuk, Conti, BlackCat operations." },
-          { cls: "apt-mal", name: "Cobalt Strike", note: "Service-based lateral movement is a built-in Cobalt Strike capability used across APT and ransomware operations." },
           { cls: "apt-kp", name: "Lazarus", note: "Malicious service installation documented in CISA advisories on DPRK-attributed intrusions." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Service-based lateral movement is a built-in Cobalt Strike capability used across APT and ransomware operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Service creation for persistence and propagation documented across Ryuk, Conti, BlackCat operations." }
         ],
         cite: "MITRE ATT&CK T1569.002"
       },
@@ -2216,9 +2268,13 @@ Network-side complement:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "PsExec and Impacket psexec.py used for lateral movement in SolarWinds and other documented operations." },
           { cls: "apt-cn", name: "APT41", note: "PsExec-based lateral movement documented across multiple sector intrusions." },
-          { cls: "apt-act", name: "Ransomware", note: "PsExec is the single most commonly observed lateral movement tool in ransomware incident response engagements." },
-          { cls: "apt-mal", name: "Impacket", note: "psexec.py produces identical PSEXESVC artifact - standard tool across red team and APT lateral movement." },
           { cls: "apt-mul", name: "FIN7", note: "PsExec lateral movement documented across financial sector intrusions." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Impacket", note: "psexec.py produces identical PSEXESVC artifact - standard tool across red team and APT lateral movement." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "PsExec is the single most commonly observed lateral movement tool in ransomware incident response engagements." }
         ],
         cite: "MITRE ATT&CK T1569.002, T1021.002"
       },
@@ -2353,9 +2409,11 @@ Sysinternals autoruns.exe:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Malicious service binaries in non-standard paths documented in long-dwell espionage operations." },
           { cls: "apt-cn", name: "APT41", note: "Services with ImagePath in ProgramData and AppData documented across multiple intrusions." },
-          { cls: "apt-act", name: "Ransomware", note: "Ransomware persistence via services with binaries in world-writable paths documented across multiple families." },
-          { cls: "apt-mul", name: "FIN6", note: "Malicious service installation with non-standard binary paths documented in financial sector intrusions." },
-          { cls: "apt-act", name: "Red Teams", note: "Service binary staging in ProgramData or Temp is standard red team persistence tradecraft." }
+          { cls: "apt-mul", name: "FIN6", note: "Malicious service installation with non-standard binary paths documented in financial sector intrusions." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Ransomware persistence via services with binaries in world-writable paths documented across multiple families." },
+          { cls: "apt-mul", name: "Red Teams", note: "Service binary staging in ProgramData or Temp is standard red team persistence tradecraft." }
         ],
         cite: "MITRE ATT&CK T1569.002, T1543.003"
       }
@@ -2484,9 +2542,11 @@ LOLBAS project:
         apt: [
           { cls: "apt-ru", name: "APT28", note: "HTA-based delivery documented in spearphishing campaigns." },
           { cls: "apt-cn", name: "APT41", note: "mshta-based loaders documented across operations targeting multiple sectors." },
-          { cls: "apt-kp", name: "Kimsuky", note: "HTA delivery extensively documented in operations against South Korean targets." },
-          { cls: "apt-act", name: "Commodity Malware", note: "Trickbot, IcedID, and various phishing operators have used mshta-based delivery chains." },
-          { cls: "apt-act", name: "Red Teams", note: "Cobalt Strike HTA payload generation is a standard red team capability." }
+          { cls: "apt-kp", name: "Kimsuky", note: "HTA delivery extensively documented in operations against South Korean targets." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Commodity Malware", note: "Trickbot, IcedID, and various phishing operators have used mshta-based delivery chains." },
+          { cls: "apt-mul", name: "Red Teams", note: "Cobalt Strike HTA payload generation is a standard red team capability." }
         ],
         cite: "MITRE ATT&CK T1218.005"
       },
@@ -2577,9 +2637,11 @@ LOLBAS project:
         notes: "The inline script variant (vbscript: / javascript: / jscript: protocol handlers) has near-zero legitimate use in modern enterprise environments. Unlike the URL variant where the false positive consideration is 'is this an internal HTA app being launched legitimately,' the inline form is almost exclusively an attacker convenience. The payload appears directly in the command line, which is both an opportunity and a challenge: opportunity because the full intent is visible in a single Sysmon event; challenge because the payload is often obfuscated with string concatenation, character codes, or chained CreateObject calls to defeat string matching. Detection should focus on the protocol handler keywords (vbscript:, javascript:, jscript:) rather than trying to pattern-match the payload itself. Once an alert fires, manual decoding of the command line reveals intent. Pair with child process analysis: inline mshta almost always spawns cmd.exe or powershell.exe as a follow-on stage.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Inline mshta payloads documented in operations targeting tech and gaming sectors." },
-          { cls: "apt-kp", name: "Kimsuky", note: "Inline VBScript via mshta documented in operations against South Korean and US targets." },
-          { cls: "apt-act", name: "Red Teams", note: "Inline mshta is a standard LOLBin abuse demonstration in red team toolkits." },
-          { cls: "apt-act", name: "Phishing Operators", note: "Inline mshta payloads in HTA email attachments documented across commodity phishing campaigns." }
+          { cls: "apt-kp", name: "Kimsuky", note: "Inline VBScript via mshta documented in operations against South Korean and US targets." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Red Teams", note: "Inline mshta is a standard LOLBin abuse demonstration in red team toolkits." },
+          { cls: "apt-mul", name: "Phishing Operators", note: "Inline mshta payloads in HTA email attachments documented across commodity phishing campaigns." }
         ],
         cite: "MITRE ATT&CK T1218.005"
       }
@@ -2709,10 +2771,14 @@ LOLBAS project:
         notes: "rundll32.exe is the most ubiquitous LOLBin in Windows - it's used constantly by legitimate Windows operations to invoke functions in system DLLs. The detection is path-focused: legitimate rundll32 calls load DLLs from System32, SysWOW64, or known vendor program directories. Rundll32 loading a DLL from AppData, Temp, ProgramData, or Public is high-confidence malicious in nearly all environments. The unsigned DLL angle via Sysmon EID 7 is a useful complement - it catches cases where the path is plausible but the DLL itself has no Microsoft or vendor signature. False positives: some legitimate vendor software does invoke rundll32 with DLLs from non-standard paths during installation, particularly older or poorly-designed installers. Build allowlists from baseline data. Pair with parent process context: rundll32 spawned by an Office app, browser, or explorer.exe with a DLL in AppData = phishing chain.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Rundll32-based DLL loaders documented across multiple sector intrusions." },
-          { cls: "apt-ru", name: "APT28", note: "Rundll32 abuse documented in operations using custom DLL payloads." },
-          { cls: "apt-mal", name: "IcedID", note: "IcedID uses rundll32 to load its main DLL component as a standard delivery pattern." },
-          { cls: "apt-mal", name: "QakBot", note: "QakBot relies heavily on rundll32 for executing its main payload DLL." },
-          { cls: "apt-act", name: "Ransomware", note: "Ransomware staging via rundll32-loaded DLLs documented across multiple families." }
+          { cls: "apt-ru", name: "APT28", note: "Rundll32 abuse documented in operations using custom DLL payloads." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "IcedID", note: "IcedID uses rundll32 to load its main DLL component as a standard delivery pattern." },
+          { cls: "apt-mul", name: "QakBot", note: "QakBot relies heavily on rundll32 for executing its main payload DLL." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Ransomware staging via rundll32-loaded DLLs documented across multiple families." }
         ],
         cite: "MITRE ATT&CK T1218.011"
       },
@@ -2802,10 +2868,12 @@ Casey Smith research:
   execution as a category`,
         notes: "The javascript: protocol abuse via rundll32 is conceptually similar to mshta inline script execution - both rely on a Microsoft-signed binary loading the MSHTML or scripting engine and executing attacker-supplied code inline. Detection is straightforward because the pattern has no legitimate use: rundll32.exe with javascript: in the command line is high-confidence malicious. The technique is less common than mshta inline scripts in commodity malware but appears in environments where the operator suspects mshta is blocked or heavily monitored. Pair with outbound network detection: rundll32 making HTTP/HTTPS connections after a javascript: invocation typically means the inline code is fetching a second-stage scriptlet.",
         apt: [
-          { cls: "apt-act", name: "Casey Smith Research", note: "Originally documented as part of LOLBin abuse demonstrations." },
-          { cls: "apt-act", name: "Red Teams", note: "Standard alternative to mshta inline scripts when mshta is blocked or monitored." },
-          { cls: "apt-cn", name: "APT41", note: "rundll32 javascript: variant documented in some intrusion reports." },
-          { cls: "apt-act", name: "Commodity Malware", note: "Used by some loader families as a mshta alternative." }
+          { cls: "apt-cn", name: "APT41", note: "rundll32 javascript: variant documented in some intrusion reports." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Casey Smith Research", note: "Originally documented as part of LOLBin abuse demonstrations." },
+          { cls: "apt-mul", name: "Red Teams", note: "Standard alternative to mshta inline scripts when mshta is blocked or monitored." },
+          { cls: "apt-mul", name: "Commodity Malware", note: "Used by some loader families as a mshta alternative." }
         ],
         cite: "MITRE ATT&CK T1218.011"
       },
@@ -2927,11 +2995,15 @@ Get-InjectedThread (Jared Atkinson):
   don't generate EID 8)`,
         notes: "rundll32.exe with no command-line arguments is one of the highest-fidelity Cobalt Strike Beacon indicators in default configurations. Cobalt Strike's spawnto setting defaults to rundll32 with no arguments because rundll32 is signed, ubiquitous, and unexpected to run long-term - exactly what an adversary wants in an injection host. Legitimate rundll32 invocations always carry arguments (the DLL path and export function); empty rundll32 has effectively zero legitimate use cases. Sophisticated operators change Cobalt Strike's spawnto to a different binary (notepad.exe, conhost.exe, etc.) for evasion - the broader detection technique is signed Microsoft binaries running unexpectedly long with no arguments, but rundll32 specifically remains the most common default. Pair with Sysmon EID 8 (CreateRemoteThread targeting rundll32) and EID 10 (ProcessAccess with write masks to rundll32) for the full injection chain: empty rundll32 spawn followed by remote thread injection from the parent or another process = Cobalt Strike spawnto pattern.",
         apt: [
-          { cls: "apt-mal", name: "Cobalt Strike", note: "Default spawnto behavior - empty rundll32 is the classic Cobalt Strike Beacon process indicator." },
           { cls: "apt-ru", name: "APT29", note: "Cobalt Strike usage with default spawnto documented in SolarWinds and other operations." },
-          { cls: "apt-act", name: "Ransomware", note: "Cobalt Strike Beacon use across ransomware operations means empty rundll32 is a common ransomware staging indicator." },
-          { cls: "apt-cn", name: "APT41", note: "Cobalt Strike and custom rundll32-based injection documented across operations." },
-          { cls: "apt-act", name: "Red Teams", note: "Default Cobalt Strike configurations make this a near-universal red team operator IOC." }
+          { cls: "apt-cn", name: "APT41", note: "Cobalt Strike and custom rundll32-based injection documented across operations." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Default spawnto behavior - empty rundll32 is the classic Cobalt Strike Beacon process indicator." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Cobalt Strike Beacon use across ransomware operations means empty rundll32 is a common ransomware staging indicator." },
+          { cls: "apt-mul", name: "Red Teams", note: "Default Cobalt Strike configurations make this a near-universal red team operator IOC." }
         ],
         cite: "MITRE ATT&CK T1218.011, T1055"
       }
@@ -3088,11 +3160,13 @@ Casey Smith (subTee):
 - Foundational reference for LOLBin abuse category`,
         notes: "Squiblydoo is one of the most well-documented LOLBin techniques and remains effective in environments where AppLocker or WDAC has not been specifically tuned to block regsvr32 with remote scriptlet arguments. The technique works because regsvr32.exe is Microsoft-signed, scrobj.dll is Microsoft-signed, and the inline scriptlet content runs inside regsvr32's process context - none of the default Application Whitelisting checks catch this chain. The detection is high-fidelity because legitimate regsvr32 usage virtually never involves the /i: flag with a URL or scrobj.dll. The classic pattern is so distinctive (URL + scrobj.dll in the same command line) that a single Sysmon EID 1 rule with no further tuning catches the vast majority of Squiblydoo invocations. Worth noting: AppLocker can be specifically configured to block this technique by denying regsvr32 outbound network access or denying scrobj.dll specifically - but most environments don't do this by default. The technique pre-dates ATT&CK itself and Casey Smith's 2016 disclosure remains the canonical reference.",
         apt: [
-          { cls: "apt-act", name: "Casey Smith Research", note: "Original Squiblydoo disclosure, 2016 - foundational LOLBin abuse research." },
-          { cls: "apt-cn", name: "APT32", note: "Squiblydoo-style regsvr32 abuse documented in Southeast Asian operations." },
-          { cls: "apt-act", name: "Commodity Malware", note: "Trickbot, IcedID, and various loaders have used regsvr32-based delivery." },
-          { cls: "apt-act", name: "Red Teams", note: "Squiblydoo remains a standard LOLBin demonstration in red team toolkits." },
-          { cls: "apt-act", name: "Phishing Operators", note: "Remote scriptlet execution via regsvr32 documented across multiple commodity phishing campaigns." }
+          { cls: "apt-cn", name: "APT32", note: "Squiblydoo-style regsvr32 abuse documented in Southeast Asian operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Casey Smith Research", note: "Original Squiblydoo disclosure, 2016 - foundational LOLBin abuse research." },
+          { cls: "apt-mul", name: "Commodity Malware", note: "Trickbot, IcedID, and various loaders have used regsvr32-based delivery." },
+          { cls: "apt-mul", name: "Red Teams", note: "Squiblydoo remains a standard LOLBin demonstration in red team toolkits." },
+          { cls: "apt-mul", name: "Phishing Operators", note: "Remote scriptlet execution via regsvr32 documented across multiple commodity phishing campaigns." }
         ],
         cite: "MITRE ATT&CK T1218.010"
       },
@@ -3209,10 +3283,12 @@ Velociraptor:
         notes: "This indicator complements the Squiblydoo detection by covering the other regsvr32 abuse patterns - local DLL registration with a malicious DllRegisterServer, /u unregistration as an execution trigger, and local scriptlet execution without remote fetch. The detection is path-focused: legitimate regsvr32 calls load DLLs from System32, SysWOW64, or known vendor program directories. Regsvr32 loading a DLL from AppData, Temp, ProgramData, or Public is high-confidence malicious. The unsigned DLL angle via Sysmon EID 7 is a useful complement. False positive consideration: some legitimate software installers use regsvr32 with DLLs from their installation directories (rarely from temp paths) - build allowlists from installer baselines. The /u flag deserves specific attention: adversaries sometimes use unregistration as the execution vector because it's slightly less monitored than registration, but both call into attacker-controlled DLL code.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Regsvr32-based DLL execution documented across multiple sector operations." },
-          { cls: "apt-ru", name: "APT28", note: "Regsvr32 abuse with malicious DLLs documented in spearphishing operations." },
-          { cls: "apt-act", name: "Commodity Malware", note: "Various loader families use regsvr32 for COM-registered or direct DLL execution." },
-          { cls: "apt-act", name: "Ransomware", note: "Regsvr32-based execution documented in some ransomware staging chains." },
-          { cls: "apt-act", name: "Red Teams", note: "Non-Squiblydoo regsvr32 abuse is standard LOLBin tradecraft." }
+          { cls: "apt-ru", name: "APT28", note: "Regsvr32 abuse with malicious DLLs documented in spearphishing operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Commodity Malware", note: "Various loader families use regsvr32 for COM-registered or direct DLL execution." },
+          { cls: "apt-mul", name: "Ransomware", note: "Regsvr32-based execution documented in some ransomware staging chains." },
+          { cls: "apt-mul", name: "Red Teams", note: "Non-Squiblydoo regsvr32 abuse is standard LOLBin tradecraft." }
         ],
         cite: "MITRE ATT&CK T1218.010"
       }
@@ -3401,10 +3477,14 @@ Dedicated injection detection tools:
         notes: "T1106 is the most detection-resistant technique in the Execution tactic because its entire value to an adversary is avoiding the artifacts that other techniques generate. The three Sysmon event IDs here (1, 8, 10) are the best available host-side telemetry, but each has significant false-positive challenges that require careful tuning. EID 8 (CreateRemoteThread) is the most actionable: legitimate software rarely injects threads into other processes, and a CreateRemoteThread event where StartModule is blank almost always indicates shellcode rather than a legitimate DLL-based operation. EID 10 (ProcessAccess) with write-capable access masks is noisier - AV and EDR products themselves open handles to other processes for scanning, so source-image allowlisting is essential. The empty command line on EID 1 is worth monitoring but generates false positives from some legitimate system processes and certain vendor software that uses Win32 CreateProcess with a NULL lpCommandLine argument. The honest detection gap to acknowledge: the most sophisticated operators use direct syscalls (Syswhispers-style) to bypass even ntdll.dll, making user-mode detection insufficient. Kernel-mode ETW (Event Tracing for Windows) sensors in modern EDR products are the frontier for that level of evasion. For most environments and most adversaries, the Sysmon EID 8 blank-StartModule detection is the highest-value single alert in this indicator.",
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Process injection via Native API documented across multiple long-dwell espionage operations." },
-          { cls: "apt-cn", name: "APT41", note: "Native API injection techniques documented in operations targeting multiple sectors." },
-          { cls: "apt-mal", name: "Cobalt Strike", note: "Multiple Native API injection techniques (CreateRemoteThread, NtMapViewOfSection, APC) built into Beacon." },
-          { cls: "apt-act", name: "Ransomware", note: "Process injection for AV evasion documented across Conti, BlackCat, and other ransomware families." },
-          { cls: "apt-act", name: "Red Teams", note: "Direct syscall techniques (Syswhispers, HellsGate) are standard modern red team evasion tradecraft." }
+          { cls: "apt-cn", name: "APT41", note: "Native API injection techniques documented in operations targeting multiple sectors." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Multiple Native API injection techniques (CreateRemoteThread, NtMapViewOfSection, APC) built into Beacon." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Process injection for AV evasion documented across Conti, BlackCat, and other ransomware families." },
+          { cls: "apt-mul", name: "Red Teams", note: "Direct syscall techniques (Syswhispers, HellsGate) are standard modern red team evasion tradecraft." }
         ],
         cite: "MITRE ATT&CK T1106, T1055"
       },
@@ -3519,8 +3599,10 @@ Velociraptor:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "In-memory ELF execution and fileless loaders used to evade Linux EDR." },
           { cls: "apt-kp", name: "Lazarus", note: "Fileless Linux payloads documented in supply-chain and financial intrusions." },
-          { cls: "apt-mul", name: "TeamTNT", note: "memfd-based fileless execution adopted in Linux cryptojacking toolkits to evade detection." },
-          { cls: "apt-act", name: "Red Team", note: "memfd_create ELF loaders (ddexec-style) are standard modern Linux EDR-evasion tradecraft." },
+          { cls: "apt-mul", name: "TeamTNT", note: "memfd-based fileless execution adopted in Linux cryptojacking toolkits to evade detection." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Red Team", note: "memfd_create ELF loaders (ddexec-style) are standard modern Linux EDR-evasion tradecraft." }
         ],
         cite: "MITRE ATT&CK T1106",
       },
@@ -3740,8 +3822,10 @@ auditd:
         apt: [
           { cls: "apt-ru", name: "Ebury", note: "Most sophisticated LD_PRELOAD rootkit documented; hooks libssl to harvest SSH credentials from millions of OpenSSH servers globally." },
           { cls: "apt-mul", name: "Rocke", note: "LD_PRELOAD process hiding used to conceal crypto mining from ps and monitoring agents on compromised cloud servers." },
-          { cls: "apt-mul", name: "8220 Gang", note: "LD_PRELOAD-based process concealment in cloud cryptomining operations." },
-          { cls: "apt-mal", name: "Azazel / Jynx2 users", note: "Open-source LD_PRELOAD rootkits used by financially motivated actors for credential harvesting and process hiding on Linux servers." }
+          { cls: "apt-mul", name: "8220 Gang", note: "LD_PRELOAD-based process concealment in cloud cryptomining operations." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Azazel / Jynx2 users", note: "Open-source LD_PRELOAD rootkits used by financially motivated actors for credential harvesting and process hiding on Linux servers." }
         ],
         cite: "MITRE ATT&CK T1106"
       }
@@ -3891,8 +3975,10 @@ LOLBAS project:
           { cls: "apt-cn", name: "APT41", note: "DLL side-loading is signature tradecraft - extensively documented across multiple sector operations." },
           { cls: "apt-cn", name: "PlugX", note: "Built around DLL side-loading via signed legitimate binaries - the canonical example of this technique." },
           { cls: "apt-cn", name: "ShadowPad", note: "Side-loading via signed binaries documented across long-running espionage operations." },
-          { cls: "apt-cn", name: "APT41", note: "Side-loading techniques shared across the broader Winnti / APT41 ecosystem." },
-          { cls: "apt-act", name: "China-nexus APTs", note: "DLL side-loading is the most common single technique signature for China-nexus APT operations." }
+          { cls: "apt-cn", name: "APT41", note: "Side-loading techniques shared across the broader Winnti / APT41 ecosystem." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "China-nexus APTs", note: "DLL side-loading is the most common single technique signature for China-nexus APT operations." }
         ],
         cite: "MITRE ATT&CK T1129, T1574.002"
       },
@@ -4048,8 +4134,10 @@ Spartacus tool:
           { cls: "apt-cn", name: "APT41", note: "DLL search order hijacking is core tradecraft - documented across virtually every APT41 campaign." },
           { cls: "apt-cn", name: "PlugX", note: "Search order hijacking with system-named DLLs is the canonical PlugX delivery pattern." },
           { cls: "apt-cn", name: "ShadowPad", note: "Documented use of DLL hijacking via signed legitimate executables." },
-          { cls: "apt-cn", name: "APT10", note: "DLL hijacking documented in operations against managed service providers." },
-          { cls: "apt-act", name: "China-nexus APTs", note: "Single most distinctive tradecraft pattern across Chinese state-sponsored intrusion campaigns." }
+          { cls: "apt-cn", name: "APT10", note: "DLL hijacking documented in operations against managed service providers." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "China-nexus APTs", note: "Single most distinctive tradecraft pattern across Chinese state-sponsored intrusion campaigns." }
         ],
         cite: "MITRE ATT&CK T1129, T1574.001"
       }
@@ -4218,11 +4306,15 @@ Velociraptor:
 - Windows.Forensics.RecentFileCache`,
         notes: "User Execution: Malicious File is the technique that captures 'the user clicked the thing.' The detection is largely about path context: execution from a mounted ISO drive letter, from a temp ZIP extraction directory, or from the Downloads folder all indicate a recently-acquired file being launched by the user. The explorer.exe parent context is essential - it confirms the user manually launched the file rather than some automated process. ISO mounting is the most important post-2022 delivery vector to understand: Windows auto-mounts ISO files when double-clicked, and files inside the mounted volume don't inherit the Zone.Identifier ADS from the outer ISO file. This means the actual payload runs without the 'Mark of the Web' warning that would otherwise prompt the user. The detection should pair container mount evidence (MountPoints2 registry key) with subsequent process execution from the mounted drive letter. False positives: legitimate ISO usage (software installers, OS recovery media) exists but is rare on user endpoints. Build allowlists from baseline behavior of your environment. This indicator is the host-side complement to T1566 Phishing in the Initial Access tactic - the network reference covers the delivery; this covers the execution.",
         apt: [
-          { cls: "apt-mal", name: "QakBot", note: "Pivoted to ISO container delivery after 2022 macro block - canonical example of this technique." },
-          { cls: "apt-mal", name: "IcedID", note: "Heavy use of ISO container with nested LNK + payload chains." },
-          { cls: "apt-mal", name: "Bumblebee", note: "ISO and ZIP-based delivery with user-click execution dominant 2022-2023." },
-          { cls: "apt-act", name: "Initial Access Brokers", note: "Container-based delivery is the standard IAB pattern post-MOTW macro block." },
-          { cls: "apt-act", name: "Phishing Operators", note: "Universal across commodity phishing operations targeting Windows endpoints." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "QakBot", note: "Pivoted to ISO container delivery after 2022 macro block - canonical example of this technique." },
+          { cls: "apt-mul", name: "IcedID", note: "Heavy use of ISO container with nested LNK + payload chains." },
+          { cls: "apt-mul", name: "Bumblebee", note: "ISO and ZIP-based delivery with user-click execution dominant 2022-2023." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Initial Access Brokers", note: "Container-based delivery is the standard IAB pattern post-MOTW macro block." },
+          { cls: "apt-mul", name: "Phishing Operators", note: "Universal across commodity phishing operations targeting Windows endpoints." }
         ],
         cite: "MITRE ATT&CK T1204.002, T1566.001"
       },
@@ -4378,11 +4470,15 @@ LECmd by Eric Zimmerman:
 - Free tool, essential for LNK forensic work`,
         notes: "LNK files are the connective tissue of modern phishing delivery chains - particularly in ISO containers where the LNK provides the user-clickable interface while the actual payload (often a script or DLL) sits hidden in the same container. The detection focuses on the execution artifact rather than the LNK file itself: when a user double-clicks a malicious LNK, Sysmon EID 1 captures the resulting process spawn with explorer.exe as the parent and the LNK's target+arguments visible in the new process's command line. This is why the explorer.exe parent context combined with risky command-line arguments (ExecutionPolicy Bypass, EncodedCommand, vbscript:, URL fetches, suspicious paths) is so high-fidelity. The live-host LNK enumeration PowerShell script is useful for IR triage: it parses every LNK in the user profile and flags ones with suspicious targets/arguments. False positives: some legitimate software ships .lnk files in user paths (Quick Launch, custom shortcuts created by installers), and developer workflows sometimes involve LNK files with command-line arguments - context matters. The strongest single signal is a LNK file in Downloads, Desktop, or a temp ZIP extraction directory with a TargetPath of cmd/powershell/wscript and an Arguments field containing payload-like content.",
         apt: [
-          { cls: "apt-mal", name: "QakBot", note: "ISO + LNK + payload chains are signature QakBot delivery pattern post-2022." },
-          { cls: "apt-mal", name: "Bumblebee", note: "LNK-based execution from ISO containers documented across loader campaigns." },
           { cls: "apt-cn", name: "Mustang Panda", note: "LNK-based phishing documented in operations targeting Southeast Asian governments." },
-          { cls: "apt-kp", name: "Lazarus", note: "LNK-based delivery documented in financial sector targeting operations." },
-          { cls: "apt-act", name: "Commodity Phishing", note: "LNK is the most common single file type in post-MOTW commodity phishing delivery." }
+          { cls: "apt-kp", name: "Lazarus", note: "LNK-based delivery documented in financial sector targeting operations." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "QakBot", note: "ISO + LNK + payload chains are signature QakBot delivery pattern post-2022." },
+          { cls: "apt-mul", name: "Bumblebee", note: "LNK-based execution from ISO containers documented across loader campaigns." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Commodity Phishing", note: "LNK is the most common single file type in post-MOTW commodity phishing delivery." }
         ],
         cite: "MITRE ATT&CK T1204.002, T1566.001"
       }
@@ -4506,7 +4602,7 @@ Other:
           { cls: "apt-cn", name: "APT41", note: "Linux shell payloads and reverse shells used extensively against Linux servers and appliances." },
           { cls: "apt-ru", name: "APT28", note: "Unix shell execution incl. reverse shells documented against Linux infrastructure targets." },
           { cls: "apt-kp", name: "Lazarus", note: "Linux shell-based loaders and reverse shells in financial/supply-chain intrusions." },
-          { cls: "apt-mul", name: "TeamTNT", note: "curl|bash droppers are the near-universal delivery for Linux coinminers and worms." },
+          { cls: "apt-mul", name: "TeamTNT", note: "curl|bash droppers are the near-universal delivery for Linux coinminers and worms." }
         ],
         cite: "MITRE ATT&CK T1059.004",
       },
@@ -4687,8 +4783,10 @@ GRR / Velociraptor:
           { cls: "apt-cn", name: "Volt Typhoon", note: "CISA-documented exploitation of internet-facing appliances; living-off-the-land shell execution post-compromise on critical infrastructure 2024-2025." },
           { cls: "apt-ir", name: "MuddyWater", note: "PHP webshells used for Linux server initial access; CGI/PHP-FPM parent to shell is characteristic." },
           { cls: "apt-ir", name: "APT34", note: "Web shell operations extensively documented against Linux web servers in Middle East targeting." },
-          { cls: "apt-ru", name: "APT28", note: "Web server exploitation against Linux infrastructure; web-spawned shell process tree documented." },
-          { cls: "apt-act", name: "Log4Shell / mass exploiters", note: "CVE-2021-44228 generated enormous volumes of java → sh → curl; many APT and criminal groups exploited this pattern." }
+          { cls: "apt-ru", name: "APT28", note: "Web server exploitation against Linux infrastructure; web-spawned shell process tree documented." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Log4Shell / mass exploiters", note: "CVE-2021-44228 generated enormous volumes of java → sh → curl; many APT and criminal groups exploited this pattern." }
         ],
         cite: "MITRE ATT&CK T1059.004"
       },
@@ -4885,8 +4983,10 @@ Shell audit note:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "History suppression documented as standard operational security across Linux intrusions; ${IFS} and eval obfuscation used in dropper scripts." },
           { cls: "apt-kp", name: "Lazarus", note: "HISTFILE manipulation and shell cleanup documented in post-exploitation stages of Linux financial sector intrusions." },
-          { cls: "apt-ru", name: "APT28", note: "Advanced obfuscation and anti-forensics including history manipulation documented across campaigns." },
-          { cls: "apt-act", name: "All interactive operators", note: "Unsetting HISTFILE is near-universal first-move tradecraft on any interactive Linux shell; applies across commodity and nation-state actors." }
+          { cls: "apt-ru", name: "APT28", note: "Advanced obfuscation and anti-forensics including history manipulation documented across campaigns." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "All interactive operators", note: "Unsetting HISTFILE is near-universal first-move tradecraft on any interactive Linux shell; applies across commodity and nation-state actors." }
         ],
         cite: "MITRE ATT&CK T1059.004"
       },
@@ -5092,9 +5192,11 @@ Auditd:
   Catches SUID executions where login UID != effective UID`,
         notes: "SUID binaries and Linux capabilities are the primary sudo-less privilege escalation paths on Linux. The key insight is that SUID execution doesn't look like privilege escalation at the process-creation level - it is a normal binary invocation. The signal is in process metadata: effective UID (euid) differs from real UID (ruid), meaning the binary ran with elevated privileges. Auditd SYSCALL records capture both uid and auid (audit UID = the original login UID), so a comparison reveals SUID execution. The GTFOBins site catalogs every Unix binary that can turn SUID into a shell, and the list is longer than most defenders expect: find, awk, vim, less, more, env, tee, and many more. Linux capabilities are the subtler variant - instead of the full SUID bit, a binary gets specific kernel capabilities (cap_setuid, cap_dac_override) that grant targeted but still dangerous privileges. Critically, these do not appear in ls -la permissions output and require getcap to discover. A python3 binary with cap_setuid+ep is functionally equivalent to SUID root but invisible to the standard SUID hunt command.",
         apt: [
-          { cls: "apt-cn", name: "Rocke", note: "Post-compromise SUID enumeration and GTFOBins abuse documented as privilege escalation step in cloud server campaigns." },
-          { cls: "apt-act", name: "Web shell operators", note: "www-data context with SUID perl or python on legacy servers grants root without any exploit; common in web exploitation post-ex chains." },
-          { cls: "apt-act", name: "Red team / pen test tooling", note: "LinPEAS, LinEnum, and Metasploit automate SUID and capabilities enumeration as standard first post-exploitation step." }
+          { cls: "apt-cn", name: "Rocke", note: "Post-compromise SUID enumeration and GTFOBins abuse documented as privilege escalation step in cloud server campaigns." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Web shell operators", note: "www-data context with SUID perl or python on legacy servers grants root without any exploit; common in web exploitation post-ex chains." },
+          { cls: "apt-mul", name: "Red team / pen test tooling", note: "LinPEAS, LinEnum, and Metasploit automate SUID and capabilities enumeration as standard first post-exploitation step." }
         ],
         cite: "MITRE ATT&CK T1059.004"
       }
@@ -5207,8 +5309,10 @@ Falco:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Python tooling and reverse shells used against Linux server estates." },
           { cls: "apt-ir", name: "MuddyWater", note: "Python-based payloads and post-exploitation documented against Linux/cross-platform targets." },
-          { cls: "apt-mul", name: "TeamTNT", note: "Python components in Linux cryptojacking and worm toolkits." },
-          { cls: "apt-act", name: "Red Team", note: "python -c reverse shells and pty.spawn upgrades are standard Linux post-ex tradecraft." },
+          { cls: "apt-mul", name: "TeamTNT", note: "Python components in Linux cryptojacking and worm toolkits." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Red Team", note: "python -c reverse shells and pty.spawn upgrades are standard Linux post-ex tradecraft." }
         ],
         cite: "MITRE ATT&CK T1059.006",
       },
@@ -5411,8 +5515,10 @@ Atomic Red Team:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Python pty.spawn documented in post-exploitation tool chains for interactive Linux server access." },
           { cls: "apt-kp", name: "Lazarus", note: "Python socket reverse shells and pty upgrade documented in Linux financial intrusion tooling." },
-          { cls: "apt-ir", name: "MuddyWater", note: "Python socket reverse shells documented in campaigns against Linux and cross-platform targets." },
-          { cls: "apt-act", name: "All interactive operators", note: "pty.spawn is documented post-exploitation tradecraft used across every interactive Linux intrusion; PentestMonkey reference shell is the most cited template." }
+          { cls: "apt-ir", name: "MuddyWater", note: "Python socket reverse shells documented in campaigns against Linux and cross-platform targets." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "All interactive operators", note: "pty.spawn is documented post-exploitation tradecraft used across every interactive Linux intrusion; PentestMonkey reference shell is the most cited template." }
         ],
         cite: "MITRE ATT&CK T1059.006"
       },
@@ -5625,8 +5731,10 @@ Velociraptor:
   Custom VQL: glob /usr/lib/python3/**/*customize*.py`,
         notes: "sitecustomize.py is a legitimate Python mechanism that executes automatically at every interpreter startup - it is designed for system administrators to customize the Python environment system-wide. An attacker with write access to this file gets code execution on every Python invocation on the host, regardless of which script is called or which user runs it. This is particularly dangerous in environments where Python is used in cron jobs, monitoring scripts, or system automation: backdoor code in sitecustomize.py runs with whatever privilege those scripts carry. The usercustomize.py variant is lower-privilege (no root needed, only affects current user) but easier to plant. The PYTHONSTARTUP variant is more limited - it fires only for interactive Python sessions, not scripted invocations - making it most useful for credential harvesting when administrators use the Python REPL. The .pth file technique is the most subtle: a .pth file with an import statement (supported in Python 2, via directory-based loading in Python 3) or an absolute path pointing to an attacker-controlled directory allows arbitrary module shadowing. Detection priority: file integrity monitoring on all Python site-packages directories, combined with package manager verification after any change - these directories should only change during dpkg/pip package installations.",
         apt: [
-          { cls: "apt-act", name: "Advanced operators", note: "sitecustomize.py persistence documented in Elastic Security Labs Linux persistence research 2024-2025; used for covert execution via system Python invocations." },
-          { cls: "apt-act", name: "Red team tooling", note: "PANIX tests sitecustomize.py injection; technique documented in multiple Linux persistence hunting guides." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Advanced operators", note: "sitecustomize.py persistence documented in Elastic Security Labs Linux persistence research 2024-2025; used for covert execution via system Python invocations." },
+          { cls: "apt-mul", name: "Red team tooling", note: "PANIX tests sitecustomize.py injection; technique documented in multiple Linux persistence hunting guides." }
         ],
         cite: "MITRE ATT&CK T1059.006"
       }
@@ -5756,7 +5864,7 @@ Velociraptor:
           { cls: "apt-ru", name: "APT28", note: "Cron persistence used to maintain access on Linux infrastructure." },
           { cls: "apt-mul", name: "TeamTNT", note: "Cron (esp. /etc/cron.d and @reboot) is the staple persistence/re-exec mechanism." },
           { cls: "apt-mul", name: "Kinsing", note: "Cron-based persistence is characteristic of Kinsing cryptojacking worm deployment." },
-          { cls: "apt-mul", name: "Rocke", note: "Cron-based re-infection loops are signature behavior for Linux coinminer crews." },
+          { cls: "apt-mul", name: "Rocke", note: "Cron-based re-infection loops are signature behavior for Linux coinminer crews." }
         ],
         cite: "MITRE ATT&CK T1053.003",
       }
@@ -5942,8 +6050,10 @@ legacy perl-heavy infrastructure.`,
         notes: "Perl reverse shells are a legacy technique that remains relevant on any Linux server where Perl is installed (which is most RHEL 6/7 and many Ubuntu systems). While Python has largely displaced Perl in modern attack tooling, Perl payloads are still encountered in exploitation of legacy CGI-era web applications, older OT-adjacent Linux systems, and situations where Python is absent but Perl is available. The canonical PentestMonkey Perl reverse shell is well-known and should be treated as a high-confidence alert: use Socket, fork, and exec /bin/sh in the same perl -e invocation with an outbound network connection is near-certain exploitation. For environments with legacy RHEL 6 or CentOS 6 systems - particularly common in OT/ICS adjacent networks - Perl webshell detection deserves priority attention because those systems often run Apache with CGI enabled and have perl in /usr/bin.",
         apt: [
           { cls: "apt-ir", name: "MuddyWater", note: "Perl post-exploitation scripts documented on compromised Linux infrastructure in multiple campaigns." },
-          { cls: "apt-kp", name: "Lazarus", note: "Older Lazarus tooling included Perl components; encountered on legacy Linux server targets." },
-          { cls: "apt-act", name: "Legacy web exploiters", note: "Perl reverse shells standard in CGI-era exploitation chains; still encountered on RHEL6/CentOS6 and legacy Apache systems." }
+          { cls: "apt-kp", name: "Lazarus", note: "Older Lazarus tooling included Perl components; encountered on legacy Linux server targets." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Legacy web exploiters", note: "Perl reverse shells standard in CGI-era exploitation chains; still encountered on RHEL6/CentOS6 and legacy Apache systems." }
         ],
         cite: "MITRE ATT&CK T1059"
       }
@@ -6173,8 +6283,10 @@ Velociraptor:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Container exec and nsenter for lateral movement in cloud-targeted operations." },
           { cls: "apt-mul", name: "TeamTNT", note: "Cloud/container threat actor; documented use of docker exec for lateral movement between containers on compromised Docker hosts." },
-          { cls: "apt-mul", name: "Kinsing", note: "Cloud-targeted cryptominers; kubectl exec and docker exec used to run payloads in container environments." },
-          { cls: "apt-act", name: "Container escape operators", note: "Privileged container exec chains (docker exec to nsenter --target 1) documented as container-to-host pivot across multiple campaigns." }
+          { cls: "apt-mul", name: "Kinsing", note: "Cloud-targeted cryptominers; kubectl exec and docker exec used to run payloads in container environments." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Container escape operators", note: "Privileged container exec chains (docker exec to nsenter --target 1) documented as container-to-host pivot across multiple campaigns." }
         ],
         cite: "MITRE ATT&CK T1059.012"
       }

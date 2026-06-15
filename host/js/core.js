@@ -140,9 +140,6 @@ function aptOrigins(apt) {
     if (a.cls === 'apt-ru') return 'RU';
     if (a.cls === 'apt-ir') return 'IR';
     if (a.cls === 'apt-kp') return 'KP';
-    if (a.cls === 'apt-mul') return 'MUL';
-    if (a.cls === 'apt-mal') return 'MAL';
-    if (a.cls === 'apt-act') return 'ACT';
     return '';
   }).join(' ');
 }
@@ -162,18 +159,12 @@ function buildRow(row, techId, rowId) {
     `<span class="apt-badge ${a.cls}">${a.name}</span>`
   ).join('');
 
-  // Include actor aliases in search index when actors.js is loaded.
-  // This lets "Fancy Bear" match an indicator attributed to "APT28".
-  const aptSearchStr = row.apt.map(a => {
-    const terms = (typeof getActorSearchTerms === 'function')
-      ? getActorSearchTerms(a.name) : a.name;
-    return terms + ' ' + (a.note || '');
-  }).join(' ');
-
   const searchText = [
     row.indicator, row.notes, row.sysmon, row.kibana, row.powershell,
     row.registry || '', row.tools || '', row.ossdetect || '',
-    aptSearchStr,
+    row.apt.map(a => a.name + ' ' + (a.note||'')).join(' '),
+    (row.malware||[]).map(a => a.name + ' ' + (a.note||'')).join(' '),
+    (row.activity||[]).map(a => a.name + ' ' + (a.note||'')).join(' '),
     row.cite || '', techId,
     (row.os === 'linux') ? 'linux unix' : 'windows win'
   ].join(' ').toLowerCase();
@@ -204,7 +195,6 @@ function buildRow(row, techId, rowId) {
     <button class="star-btn${isStarred ? ' starred' : ''}" title="Add to hunt">${isStarred ? '&#9733;' : '&#9734;'}</button>
     ${osBadge}
     <span class="ind-name">${esc(row.indicator)}</span>
-    <div class="apt-badges">${aptBadges}</div>
     <div class="quick-tools">
       <button class="qtool qt-y" title="Copy Sysmon">SYS</button>
       <button class="qtool qt-k" title="Copy Kibana">KQL</button>
@@ -289,18 +279,36 @@ function buildRow(row, techId, rowId) {
     'not': (() => { const d = document.createElement('div'); d.className = 'notes-body'; d.textContent = row.notes; return d; })(),
     'apt': (() => {
       const d = document.createElement('div');
-      row.apt.forEach(a => {
+
+      const renderEntry = (a) => {
         const item = document.createElement('div');
         item.className = 'apt-item';
-        item.innerHTML = `<span class="apt-badge ${a.cls}" style="font-size:11px">${esc(a.name)}</span>`;
+        item.innerHTML = `<span class="apt-badge ${a.cls || 'apt-mul'}" style="font-size:11px">${esc(a.name)}</span>`;
         if (a.note) {
           const note = document.createElement('div');
           note.className = 'apt-item-note';
           note.textContent = a.note;
           item.appendChild(note);
         }
-        d.appendChild(item);
-      });
+        return item;
+      };
+
+      const renderSection = (arr, label) => {
+        if (!Array.isArray(arr) || !arr.length) return;
+        if (label) {
+          const h = document.createElement('div');
+          h.className = 'apt-section-head';
+          h.textContent = label;
+          d.appendChild(h);
+        }
+        arr.forEach(a => d.appendChild(renderEntry(a)));
+      };
+
+      // Actors first (no header), then non-actor buckets clearly separated
+      renderSection(row.apt, null);
+      renderSection(row.malware, 'Malware & Tooling');
+      renderSection(row.activity, 'Activity & Roles');
+
       if (row.cite) {
         const cite = document.createElement('div');
         cite.className = 'apt-cite';
@@ -625,19 +633,7 @@ function applyFilters() {
     const aptMatch  = !activeApt  || row.dataset.apt.includes(activeApt);
     const osMatch   = !activeOs   || row.dataset.os === activeOs;
     const textMatch = !terms.length || terms.every(t => row.dataset.text.includes(t));
-    // Alias-aware actor search: resolve the query to canonical names,
-    // then check if any of those names (or the raw query) appear in text.
-    let aptTxt = true;
-    if (aq) {
-      if (row.dataset.text.includes(aq)) {
-        aptTxt = true;
-      } else if (typeof resolveActorQuery === 'function') {
-        const resolved = resolveActorQuery(aq);
-        aptTxt = resolved.some(cn => row.dataset.text.includes(cn.toLowerCase()));
-      } else {
-        aptTxt = false;
-      }
-    }
+    const aptTxt    = !aq || row.dataset.text.includes(aq);
 
     if (techMatch && aptMatch && osMatch && textMatch && aptTxt) {
       row.classList.remove('hidden');

@@ -211,9 +211,13 @@ Atomic Red Team:
           { cls: "apt-kp", name: "Lazarus", note: "Clears Windows event logs during destructive and financially motivated operations as part of anti-forensic cleanup." },
           { cls: "apt-ru", name: "APT28", note: "Event log clearing documented as standard post-exploitation anti-forensic hygiene in GRU operations." },
           { cls: "apt-ru", name: "APT29", note: "Log clearing during SolarWinds and follow-on intrusions to slow forensic timeline reconstruction." },
-          { cls: "apt-cn", name: "APT41", note: "Documented clearing Security and Sysmon logs during intrusions against technology sector targets." },
-          { cls: "apt-act", name: "Ransomware", note: "wevtutil cl and PowerShell log clearing routinely run during pre-encryption staging to slow incident response." },
-          { cls: "apt-mal", name: "Cobalt Strike", note: "Event log clearing is a standard post-exploitation playbook step across Cobalt Strike operators." }
+          { cls: "apt-cn", name: "APT41", note: "Documented clearing Security and Sysmon logs during intrusions against technology sector targets." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Event log clearing is a standard post-exploitation playbook step across Cobalt Strike operators." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "wevtutil cl and PowerShell log clearing routinely run during pre-encryption staging to slow incident response." }
         ],
         cite: "MITRE ATT&CK T1070.001"
       }
@@ -439,8 +443,10 @@ Atomic Red Team:
           { cls: "apt-ru", name: "APT28", note: "Drovorub operators clear bash history after initial deployment on compromised Linux servers." },
           { cls: "apt-cn", name: "Volt Typhoon", note: "Living-off-the-land operators clear command history to maintain stealth during infrastructure pre-positioning." },
           { cls: "apt-mul", name: "TeamTNT", note: "Clears bash history and disables logging as routine hygiene in cloud cryptojacking operations." },
-          { cls: "apt-mul", name: "Rocke", note: "History clearing combined with cloud agent uninstallation as part of standard anti-forensic cleanup." },
-          { cls: "apt-act", name: "Hands-on intruders", note: "Disabling history at session start (unset HISTFILE / set +o history) is near-universal in interactive Linux intrusions." }
+          { cls: "apt-mul", name: "Rocke", note: "History clearing combined with cloud agent uninstallation as part of standard anti-forensic cleanup." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Hands-on intruders", note: "Disabling history at session start (unset HISTFILE / set +o history) is near-universal in interactive Linux intrusions." }
         ],
         cite: "MITRE ATT&CK T1070.003"
       }
@@ -680,9 +686,11 @@ Atomic Red Team:
         notes: "Clearing system logs is the second anti-forensic step after history evasion, targeting the authentication and audit logs under /var/log that would otherwise reveal the intrusion. The techniques span a sophistication spectrum: crude bulk deletion (rm -rf /var/log/*, which is noisy and breaks logging), truncation of individual files (: > file, which leaves the inode intact but with a telltale mtime newer than the newest surviving entry), and the stealthiest approach, selective line excision via sed -i that removes only the attacker's own entries and leaves a plausible-looking log. systemd's binary journal is purged with journalctl --vacuum or --rotate. The decisive control is remote log forwarding: once events are shipped off-box to a SIEM or central collector, local clearing is pointless because the authoritative copy already exists elsewhere, and selective edits become detectable by diffing the local log against the forwarded copy. journald Forward Secure Sealing adds cryptographic tamper-evidence that journalctl --verify can check. For hunting, the high-signal indicators are zero-byte auth/audit logs on a live system, time-continuity gaps where a log jumps over a period, and a log mtime newer than its newest internal timestamp. Log clearing rarely occurs in isolation; it clusters with history evasion, audit tampering, and timestomping, and seeing that cluster together is a reliable marker of deliberate anti-forensics rather than misconfiguration.",
         apt: [
           { cls: "apt-ru", name: "Sandworm", note: "Log wiping used to slow incident response and attribution in destructive operations against Linux infrastructure." },
-          { cls: "apt-act", name: "Ransomware crews", note: "System log clearing performed pre-encryption to impede response and recovery timeline reconstruction." },
           { cls: "apt-mul", name: "TeamTNT", note: "Routine /var/log clearing as part of cloud intrusion cleanup alongside cloud agent removal." },
           { cls: "apt-mul", name: "Rocke", note: "System log clearing combined with cloud agent removal as standard anti-forensic cleanup." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware crews", note: "System log clearing performed pre-encryption to impede response and recovery timeline reconstruction." }
         ],
         cite: "MITRE ATT&CK T1070.002"
       },
@@ -900,9 +908,11 @@ Atomic Red Team:
   T1070.002 - includes utmp/wtmp manipulation coverage`,
         notes: "Login-record tampering targets the four binary accounting databases that drive who, w, last, lastb, and lastlog: utmp (current sessions), wtmp (login history), btmp (failed logins), and lastlog (last login per user). Because these are binary utmp-struct files rather than text, editing them cleanly requires utmpdump (dump to text, edit, reload) or a purpose-built wiper, which makes surgical removal of specific sessions a strong indicator of a knowledgeable, stealth-focused adversary rather than a sloppy smash-and-grab. The most reliable detection is a cross-correlation hunt that exploits a consistent attacker mistake: the same SSH login that writes a binary wtmp record also writes a text line to auth.log or secure ('Accepted publickey for ...'), and because those live in different formats and locations they are rarely cleaned in perfect sync. Counting auth.log Accepted lines against the session count from last exposes the gap, and in real time an empty who output alongside live ESTABLISHED port-22 sockets in ss is the same tell. The defensive posture is to audit all four databases with auditd (excluding the legitimate writers sshd, login, and systemd-logind), forward the text auth trail to a remote store so it survives binary-DB tampering, and treat any utmpdump round-trip or compiled binary in a writable path that strings-references utmp/wtmp as high-severity. This technique is long-standing Unix intrusion craft, more associated with hands-on operators than noisy commodity cryptomining.",
         apt: [
-          { cls: "apt-act", name: "Stealth-focused operators", note: "Surgical utmp/wtmp editing to remove specific sessions is long-standing Unix intrusion tradecraft signaling a forensics-aware adversary." },
-          { cls: "apt-cn", name: "APT41", note: "Linux intrusion toolsets include login-record and log manipulation to conceal interactive access to compromised servers." },
-          { cls: "apt-act", name: "Rootkit operators", note: "Historic and modern Linux rootkits bundle wtmp/utmp cleaners (zap/wipe lineage) to hide login accounting." }
+          { cls: "apt-cn", name: "APT41", note: "Linux intrusion toolsets include login-record and log manipulation to conceal interactive access to compromised servers." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Stealth-focused operators", note: "Surgical utmp/wtmp editing to remove specific sessions is long-standing Unix intrusion tradecraft signaling a forensics-aware adversary." },
+          { cls: "apt-mul", name: "Rootkit operators", note: "Historic and modern Linux rootkits bundle wtmp/utmp cleaners (zap/wipe lineage) to hide login accounting." }
         ],
         cite: "MITRE ATT&CK T1070.002"
       }
@@ -1133,8 +1143,10 @@ Atomic Red Team:
         notes: "Timestomping falsifies file timestamps so a malicious file blends into the filesystem and slips past timeline analysis, with the canonical move being touch -r /bin/ls /tmp/backdoor to clone a trusted binary's times onto a payload. The technique is meaningfully weaker on Linux than attackers tend to assume, and the reason is the ctime principle: touch and the utimensat syscall set only atime and mtime, but the kernel updates ctime (the inode change time) on the stomp operation itself, and ctime cannot be set from userspace without rolling the system clock. This leaves ctime newer than mtime as a near-universal structural signature of backdating, detectable by any file integrity monitor that records all three timestamps. Additional tells include an mtime predating the file's inode allocation (a high, recently-allocated inode number paired with an old date), a binary in /usr/bin whose mtime differs from its package manifest (rpm -Va shows a T flag), and clusters of files sharing one odd timestamp from a batch stomp. Advanced actors may attempt to align ctime by manipulating the system clock or using debugfs to edit the ext4 birth time directly, but clock manipulation is itself loud (NTP logs, journal time jumps) and debugfs requires raw device access, so even sophisticated stomping tends to leave a thread to pull. The strongest control is real-time file-create telemetry forwarded to a SIEM, which records the genuine creation time before any stomp can rewrite it; for retrospective work, a Sleuth Kit mactime timeline surfaces mtime/ctime disagreement immediately.",
         apt: [
           { cls: "apt-kp", name: "Lazarus", note: "Timestamp forgery on Unix/Linux implants to blend tooling into system directories and frustrate timeline analysis." },
-          { cls: "apt-cn", name: "APT41", note: "Linux implants observed with backdated timestamps to match surrounding system binaries." },
-          { cls: "apt-mal", name: "Post-exploitation frameworks", note: "touch -r / -t timestomping bundled into Meterpreter and similar Linux post-exploitation tooling." }
+          { cls: "apt-cn", name: "APT41", note: "Linux implants observed with backdated timestamps to match surrounding system binaries." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Post-exploitation frameworks", note: "touch -r / -t timestomping bundled into Meterpreter and similar Linux post-exploitation tooling." }
         ],
         cite: "MITRE ATT&CK T1070.006"
       },
@@ -1264,8 +1276,10 @@ Velociraptor:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Timestomping implants to match system binary dates; ctime anomaly is the forensic recovery path." },
           { cls: "apt-ru", name: "APT29", note: "File timestamp manipulation to blend tooling with legitimate OS files; detectable via ctime forensics." },
-          { cls: "apt-kp", name: "Lazarus", note: "Timestamp forgery on Linux implants; the ctime > mtime anomaly persists through the manipulation." },
-          { cls: "apt-act", name: "Advanced Operators", note: "Any adversary using touch -r to clone timestamps from a reference file leaves the ctime signature." }
+          { cls: "apt-kp", name: "Lazarus", note: "Timestamp forgery on Linux implants; the ctime > mtime anomaly persists through the manipulation." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Advanced Operators", note: "Any adversary using touch -r to clone timestamps from a reference file leaves the ctime signature." }
         ],
         cite: "MITRE ATT&CK T1070.006"
       }
@@ -1497,10 +1511,12 @@ Atomic Red Team:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Self-deleting loaders and staging directory cleanup after lateral movement on Linux and Windows targets." },
           { cls: "apt-ru", name: "APT29", note: "Removal of tools and staging artifacts post-operation to hinder forensic recovery." },
-          { cls: "apt-kp", name: "Lazarus", note: "Systematic deletion of tooling and temporary files during financially motivated operations." },
-          { cls: "apt-act", name: "Linux malware loaders", note: "Self-deleting droppers (write, exec, unlink self, continue in RAM) are standard in cryptominer loaders and ELF backdoors." },
-          { cls: "apt-act", name: "Hands-on intruders", note: "Bulk staging-directory cleanup (rm -rf /tmp working dirs) is near-universal as the final action before disconnect." },
-          { cls: "apt-act", name: "Anti-forensic operators", note: "shred-based unrecoverable wiping appears in deliberate operations aware of disk-carving recovery techniques." }
+          { cls: "apt-kp", name: "Lazarus", note: "Systematic deletion of tooling and temporary files during financially motivated operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Linux malware loaders", note: "Self-deleting droppers (write, exec, unlink self, continue in RAM) are standard in cryptominer loaders and ELF backdoors." },
+          { cls: "apt-mul", name: "Hands-on intruders", note: "Bulk staging-directory cleanup (rm -rf /tmp working dirs) is near-universal as the final action before disconnect." },
+          { cls: "apt-mul", name: "Anti-forensic operators", note: "shred-based unrecoverable wiping appears in deliberate operations aware of disk-carving recovery techniques." }
         ],
         cite: "MITRE ATT&CK T1070.004"
       },
@@ -1637,8 +1653,10 @@ Falco:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Self-deleting loaders documented in Linux server targeting; recoverable via /proc until process termination." },
           { cls: "apt-kp", name: "Lazarus", note: "Self-deleting droppers in financially motivated Linux campaigns." },
-          { cls: "apt-mul", name: "TeamTNT", note: "Cryptomining droppers routinely self-delete after deploying the miner process." },
-          { cls: "apt-mal", name: "Cobalt Strike", note: "Linux beacon stagers that self-delete after injection into memory." }
+          { cls: "apt-mul", name: "TeamTNT", note: "Cryptomining droppers routinely self-delete after deploying the miner process." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Linux beacon stagers that self-delete after injection into memory." }
         ],
         cite: "MITRE ATT&CK T1070.004"
       }
@@ -1894,10 +1912,12 @@ Atomic Red Team:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Documented disabling auditd on compromised Linux servers to prevent detection of interactive sessions." },
           { cls: "apt-cn", name: "Volt Typhoon", note: "Audit system manipulation as part of living-off-the-land stealth on critical infrastructure Linux hosts." },
-          { cls: "apt-ru", name: "APT28", note: "Drovorub deployment includes audit evasion to prevent kernel module and process detection." },
-          { cls: "apt-act", name: "Stealth operators", note: "Selective auditd rule pruning to blind specific detections while leaving the daemon nominally running; signals deep host-defense awareness." },
-          { cls: "apt-act", name: "Ransomware", note: "Host logging including auditd disabled pre-encryption to impede detection and response." },
-          { cls: "apt-act", name: "Cryptomining crews", note: "Audit and monitoring degradation alongside security agent removal to reduce noise during miner operation." }
+          { cls: "apt-ru", name: "APT28", note: "Drovorub deployment includes audit evasion to prevent kernel module and process detection." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Stealth operators", note: "Selective auditd rule pruning to blind specific detections while leaving the daemon nominally running; signals deep host-defense awareness." },
+          { cls: "apt-mul", name: "Ransomware", note: "Host logging including auditd disabled pre-encryption to impede detection and response." },
+          { cls: "apt-mul", name: "Cryptomining crews", note: "Audit and monitoring degradation alongside security agent removal to reduce noise during miner operation." }
         ],
         cite: "MITRE ATT&CK T1562.012"
       },
@@ -2006,8 +2026,10 @@ osquery:
         notes: "This is the complementary detection to the on-host auditd tampering indicator. The on-host indicator catches the ACT of disabling (the commands themselves are logged before they take effect). This indicator catches the RESULT (silence) from the SIEM vantage point. Together they form a complete detection pair: the on-host detection catches clumsy disablement where the act is logged before it succeeds, and the gap detection catches sophisticated disablement where the adversary kills the forwarding chain first or uses a method that avoids generating its own log entry. In practice, the gap detection is more reliable because it is independent of the method used and cannot be evaded without also maintaining fake event flow, which is significantly harder. The implementation requires SIEM-side scheduled queries or alerting rules that monitor per-host event rates and alert on anomalous drops, which is a SIEM engineering task rather than a host configuration task.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Sophisticated audit evasion including selective rule removal that requires gap-based detection from the SIEM side." },
-          { cls: "apt-cn", name: "Volt Typhoon", note: "Living-off-the-land stealth on infrastructure Linux hosts; gap detection catches methods that avoid generating their own log entry." },
-          { cls: "apt-act", name: "Advanced Operators", note: "Adversaries aware of audit logging may kill the forwarding chain before disabling auditd, making SIEM-side gap detection the last line." }
+          { cls: "apt-cn", name: "Volt Typhoon", note: "Living-off-the-land stealth on infrastructure Linux hosts; gap detection catches methods that avoid generating their own log entry." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Advanced Operators", note: "Adversaries aware of audit logging may kill the forwarding chain before disabling auditd, making SIEM-side gap detection the last line." }
         ],
         cite: "MITRE ATT&CK T1562.012"
       }
@@ -2498,9 +2520,11 @@ Atomic Red Team:
   T1562.001 - includes setenforce / SELinux disable tests`,
         notes: "SELinux and AppArmor are mandatory access control layers that confine what a process can do even after an adversary gains code execution, so disabling them removes containment before the attacker escalates, persists, or loads kernel components. On SELinux systems the one-liner setenforce 0 instantly drops to permissive mode, editing /etc/selinux/config makes the change survive reboot, and the thorough approach combines SELINUX=disabled with a GRUB selinux=0 to remove SELinux telemetry entirely. On AppArmor systems aa-teardown unloads all profiles, aa-complain flips profiles to log-only, symlinking into /etc/apparmor.d/disable/ persists the change, and apparmor_parser -R surgically removes just the profile confining the service being abused. A useful nuance is the difference between permissive and disabled: permissive mode still logs AVC denials and preserves some forensic value, while disabled produces no telemetry at all, so an attacker choosing disabled is more thorough. These actions are highly detectable because both systems emit their own audit records on state change (SELinux MAC_STATUS and MAC_CONFIG_CHANGE), the runtime state is trivially queryable with getenforce or aa-status, and the config lives in well-known files suited to file integrity monitoring. The simplest reliable control is scheduled posture monitoring that asserts getenforce equals Enforcing and AppArmor profiles are in enforce mode, alerting on any deviation. In OT, ICS-adjacent, and other regulated Linux deployments that mandate enforcing MAC, a host dropping to permissive or disabled is simultaneously a security event and a compliance violation, making it doubly worth alerting.",
         apt: [
-          { cls: "apt-act", name: "Web-shell operators", note: "setenforce 0 used to break a web process out of its SELinux domain confinement before writing payloads or escalating." },
-          { cls: "apt-act", name: "Linux intrusion playbooks", note: "MAC disablement precedes steps needing filesystem or kernel access that an enforcing policy would block, including module loading and container escape prep." },
-          { cls: "apt-act", name: "Cryptomining crews", note: "SELinux/AppArmor neutralization alongside agent removal to clear containment before miner and persistence deployment." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Web-shell operators", note: "setenforce 0 used to break a web process out of its SELinux domain confinement before writing payloads or escalating." },
+          { cls: "apt-mul", name: "Linux intrusion playbooks", note: "MAC disablement precedes steps needing filesystem or kernel access that an enforcing policy would block, including module loading and container escape prep." },
+          { cls: "apt-mul", name: "Cryptomining crews", note: "SELinux/AppArmor neutralization alongside agent removal to clear containment before miner and persistence deployment." }
         ],
         cite: "MITRE ATT&CK T1562.001"
       },
@@ -2718,9 +2742,11 @@ Atomic Red Team:
         notes: "Microsoft Defender is the default sensor on most Windows hosts, so degrading it is a near-universal early step, and the methods split into two families with very different detection profiles. The loud disables (Set-MpPreference -DisableRealtimeMonitoring and the behavior, script, and IOAV variants, sc stop WinDefend, the DisableAntiSpyware policy key, MpCmdRun -RemoveDefinitions) each produce a Defender Operational event (5001, 5007, 5010, or 5012) and a recognizable command line, and with Tamper Protection on most of these are outright blocked and logged as 5013, which is a strong attack signal in its own right. The quiet exclusions are the real watch item: Add-MpPreference -ExclusionPath, -ExclusionProcess, and -ExclusionExtension keep Defender running so every status check reports protected, but the attacker's staging directory or payload extension is now invisible to scanning, which makes exclusions the stealthy favorite precisely because they do not trip the disable hunts. The exclusion list should be treated as a first-class artifact: enumerate it with Get-MpPreference and the registry Exclusions keys, baseline it, and alert on any addition, noting that a 5007 config-change event accompanies exclusion edits. The off-box control is Microsoft Defender for Endpoint, which reports tampering, disables, and exclusion changes to its cloud console where the attacker cannot reach them, the same principle as off-box log forwarding and the external heartbeat used against Linux agent kills, while Tamper Protection blocks the registry and MpPreference disables at the kernel level and is the single highest-value hardening here. This row covers turning Defender off or blind, while the companion T1562.001 row covers neutralizing the telemetry plumbing itself (AMSI and ETW) in memory. Exclusion abuse and Defender disabling appear across ransomware affiliates, North Korean operators like Kimsuky and Lazarus, and commodity loaders, making it one of the most consistently observed defense-evasion behaviors on Windows.",
         apt: [
           { cls: "apt-kp", name: "Kimsuky", note: "Disable Defender real-time protection and add exclusions for staging directories during intrusion operations." },
-          { cls: "apt-kp", name: "Lazarus", note: "Disable Defender and add path/process exclusions during ransomware and espionage staging." },
-          { cls: "apt-act", name: "Ransomware affiliates", note: "Defender disabling and exclusion abuse are standard pre-deployment steps to allow encryptor and tooling to run unscanned." },
-          { cls: "apt-act", name: "Commodity loaders", note: "Add-MpPreference exclusions and Set-MpPreference disables built into loader and installer scripts to protect follow-on payloads." }
+          { cls: "apt-kp", name: "Lazarus", note: "Disable Defender and add path/process exclusions during ransomware and espionage staging." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware affiliates", note: "Defender disabling and exclusion abuse are standard pre-deployment steps to allow encryptor and tooling to run unscanned." },
+          { cls: "apt-mul", name: "Commodity loaders", note: "Add-MpPreference exclusions and Set-MpPreference disables built into loader and installer scripts to protect follow-on payloads." }
         ],
         cite: "MITRE ATT&CK T1562.001"
       },
@@ -2934,9 +2960,11 @@ Atomic Red Team:
   T1562.001 - AMSI bypass and ETW tampering tests`,
         notes: "AMSI bypass and ETW patching are the most surgical evasion in this chunk and the most honestly hard to detect, because rather than turning a product off (which logs), the attacker silences the plumbing the products listen to, in memory, inside their own process. AMSI is where Defender scans scripts, macros, and in-memory .NET just before they run, and the two common bypasses patch amsi.dll!AmsiScanBuffer so it always returns a clean result or flip the amsiInitFailed field via .NET reflection so AMSI is never initialized, leaving malicious PowerShell, JScript, or .NET to run unscanned. The saving grace is that PowerShell Script Block Logging records the bypass code itself independent of AMSI, so the very act of bypassing is captured in EID 4104, but only if Script Block Logging is enabled first, which makes enabling it the prerequisite control. ETW patching attacks Event Tracing for Windows, the telemetry bus many EDRs depend on, by overwriting the first bytes of ntdll!EtwEventWrite with a return instruction to stop those events at the source and blind the sensor without touching the product; this one is genuinely stealthy because there is no event for ETW being patched, and detecting it requires an EDR that periodically verifies the integrity of ntdll's exported function prologues in memory. The honest detection posture is therefore to turn on Script Block Logging first and hunt 4104 for the known signatures, watch amsi.dll loading into processes that have no business loading it, and rely on EDR userland memory integrity for the ETW prologue patch and AmsiScanBuffer patches, since classic event logs will not show them, while Constrained Language Mode and current .NET raise the cost of the script and .NET side. This is the technique that most rewards layered, off-box, and memory-aware detection over endpoint event logs, and in environments where EDR memory inspection is absent (including OT-adjacent Windows running lighter agents) ETW patching can run essentially unseen. AMSI and ETW bypasses are baked into mainstream offensive tooling like Cobalt Strike and are an assumed capability in current intrusions, pairing with the Defender row and commonly delivered via process injection.",
         apt: [
-          { cls: "apt-mal", name: "Cobalt Strike", note: "AMSI and ETW bypasses are built into mainstream commercial and cracked C2 frameworks and loaders, making them a baseline capability across intrusions." },
           { cls: "apt-cn", name: "PlugX", note: "Patch ntdll!EtwEventWrite to blind ETW-based EDR sensors before executing in-memory follow-on payloads." },
           { cls: "apt-ru", name: "APT29", note: "Use AMSI bypass to run unscanned PowerShell and .NET tradecraft as a standard pre-execution step." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "AMSI and ETW bypasses are built into mainstream commercial and cracked C2 frameworks and loaders, making them a baseline capability across intrusions." }
         ],
         cite: "MITRE ATT&CK T1562.001"
       }
@@ -3182,10 +3210,12 @@ Atomic Red Team:
         notes: "Adversaries weaken the host firewall to enable command-and-control egress, accept inbound reverse or bind shells, or open lateral-movement paths, and the action divides into two intents that call for different detection emphasis. The wide-open approach (iptables -F, nft flush ruleset, ufw disable, or default policy ACCEPT) is maximally permissive and noisy, easily caught by a posture check that asserts the default INPUT policy is DROP and the ruleset is non-empty. The targeted-hole approach inserts a single ACCEPT for the attacker's port or source IP, leaving the firewall apparently configured so it evades a coarse is-the-firewall-on check, and catching it requires reviewing individual rules for anomalies like odd high ports (4444, 1337, 31337) or specific external source IPs. The central detection challenge on modern Linux is legitimate churn: Docker, Kubernetes kube-proxy, libvirt, podman, and fail2ban rewrite iptables and nftables rules constantly as normal operation, so naive alerting on iptables execution is unusable. The reliable signal is provenance, meaning firewall changes whose parent process is an interactive shell or an unexpected process rather than a container or orchestration runtime, so the practical rule is to baseline the runtimes out and alert on the humans. Firewall posture is cheap to assert periodically, config files are good FIM targets, and the outcome often betrays the change because a new listening socket appearing together with a fresh ACCEPT rule for its port ties the firewall tampering directly to the access it enabled. Firewall opening frequently co-occurs with the rest of the T1562 cluster as part of clearing the way for a payload.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Firewall rule manipulation to enable lateral movement and C2 traffic on Linux servers." },
-          { cls: "apt-kp", name: "Lazarus", note: "Firewall modification documented during destructive operations to enable network access." },
-          { cls: "apt-act", name: "Cryptomining crews", note: "Firewall rules flushed or opened to permit mining-pool egress and inbound management of compromised Linux hosts." },
-          { cls: "apt-act", name: "Backdoor operators", note: "Targeted ACCEPT rules inserted for specific attacker ports to permit inbound reverse/bind shell access while the firewall appears configured." },
-          { cls: "apt-act", name: "Lateral-movement actors", note: "Default-ACCEPT policy or ruleset flush used to remove host-based filtering ahead of internal pivoting." }
+          { cls: "apt-kp", name: "Lazarus", note: "Firewall modification documented during destructive operations to enable network access." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Cryptomining crews", note: "Firewall rules flushed or opened to permit mining-pool egress and inbound management of compromised Linux hosts." },
+          { cls: "apt-mul", name: "Backdoor operators", note: "Targeted ACCEPT rules inserted for specific attacker ports to permit inbound reverse/bind shell access while the firewall appears configured." },
+          { cls: "apt-mul", name: "Lateral-movement actors", note: "Default-ACCEPT policy or ruleset flush used to remove host-based filtering ahead of internal pivoting." }
         ],
         cite: "MITRE ATT&CK T1562.004"
       }
@@ -3456,10 +3486,12 @@ Atomic Red Team:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Documented blocking syslog forwarding and poisoning /etc/hosts to prevent telemetry reaching SIEM infrastructure." },
           { cls: "apt-ru", name: "Turla", note: "Disruption of log forwarding to SIEM infrastructure documented in Turla Linux operations." },
-          { cls: "apt-cn", name: "Volt Typhoon", note: "Telemetry suppression as part of living-off-the-land stealth during long-dwell infrastructure access." },
-          { cls: "apt-act", name: "Stealth operators", note: "Severing host-to-SIEM log forwarding to evade central monitoring while leaving local logging apparently healthy; documented in targeted Linux intrusions." },
-          { cls: "apt-act", name: "Anti-telemetry actors", note: "Combine forwarding breakage, auditd disable, and local log wipe for comprehensive host blinding before further operations." },
-          { cls: "apt-act", name: "Collector-evasion actors", note: "/etc/hosts and DNS manipulation used to silently break delivery to the log collector while telemetry appears to be generated." }
+          { cls: "apt-cn", name: "Volt Typhoon", note: "Telemetry suppression as part of living-off-the-land stealth during long-dwell infrastructure access." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Stealth operators", note: "Severing host-to-SIEM log forwarding to evade central monitoring while leaving local logging apparently healthy; documented in targeted Linux intrusions." },
+          { cls: "apt-mul", name: "Anti-telemetry actors", note: "Combine forwarding breakage, auditd disable, and local log wipe for comprehensive host blinding before further operations." },
+          { cls: "apt-mul", name: "Collector-evasion actors", note: "/etc/hosts and DNS manipulation used to silently break delivery to the log collector while telemetry appears to be generated." }
         ],
         cite: "MITRE ATT&CK T1562.006"
       }
@@ -3694,9 +3726,13 @@ Atomic Red Team:
           { cls: "apt-ru", name: "APT29", note: "Registry modifications to disable security tools and establish fileless persistence in post-exploitation." },
           { cls: "apt-cn", name: "APT41", note: "Extensive registry manipulation for defense evasion, persistence, and fileless payload storage." },
           { cls: "apt-kp", name: "Lazarus", note: "Registry modification to disable Defender, set exclusions, and store encoded payloads." },
-          { cls: "apt-ir", name: "MuddyWater", note: "Registry-based persistence and defense evasion documented in MuddyWater campaigns." },
-          { cls: "apt-mal", name: "Kovter / Poweliks", note: "Fileless malware families that store encoded payloads and run logic in registry values to avoid leaving executables on disk." },
-          { cls: "apt-act", name: "Ransomware", note: "Disable UAC (EnableLUA=0), SmartScreen, and Defender via registry to smooth payload execution before encryption." }
+          { cls: "apt-ir", name: "MuddyWater", note: "Registry-based persistence and defense evasion documented in MuddyWater campaigns." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Kovter / Poweliks", note: "Fileless malware families that store encoded payloads and run logic in registry values to avoid leaving executables on disk." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Disable UAC (EnableLUA=0), SmartScreen, and Defender via registry to smooth payload execution before encryption." }
         ],
         cite: "MITRE ATT&CK T1112"
       },
@@ -3837,9 +3873,13 @@ Microsoft Defender for Endpoint:
           { cls: "apt-ru", name: "APT29", note: "Defender exclusion abuse and AMSI patching documented in post-SolarWinds operations." },
           { cls: "apt-cn", name: "APT41", note: "Defender disabling and exclusion setting documented across multiple intrusion campaigns." },
           { cls: "apt-kp", name: "Lazarus", note: "Defender disabling via registry and PowerShell as standard pre-deployment step." },
-          { cls: "apt-kp", name: "Kimsuky", note: "Set-MpPreference exclusion abuse documented in targeted espionage campaigns." },
-          { cls: "apt-act", name: "Ransomware", note: "Universal pre-encryption step: disable Defender or add exclusions for the encryption binary and staging directories." },
-          { cls: "apt-mal", name: "Cobalt Strike", note: "Malleable C2 profiles and execute-assembly modules routinely add Defender exclusions for beacon staging paths." }
+          { cls: "apt-kp", name: "Kimsuky", note: "Set-MpPreference exclusion abuse documented in targeted espionage campaigns." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Malleable C2 profiles and execute-assembly modules routinely add Defender exclusions for beacon staging paths." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Universal pre-encryption step: disable Defender or add exclusions for the encryption binary and staging directories." }
         ],
         cite: "MITRE ATT&CK T1112"
       }
@@ -4036,10 +4076,12 @@ Atomic Red Team:
   T1218.011 - rundll32 execution and no-args injection-host tests`,
         notes: "Rundll32 is the single most abused LOLBin because it is built to do exactly what the attacker wants: load a DLL and call one of its exports under the cover of a signed Microsoft process, and there is no patch for this since rundll32 is supposed to run DLLs, so the defender's job is to separate the legitimate ocean of rundll32 activity from the malicious drop using three axes that never involve the binary itself. The first axis is arguments: a DLL path in Temp, AppData, or Public, an ordinal-only export that hides the function name, or no arguments at all, where the empty-command-line case is special because a rundll32 with nothing to do is a classic process-injection host and the default spawnto for Cobalt Strike beacons, so an argless rundll32 that then makes network connections or spawns a shell is about as clean a beacon tell as exists. The second axis is parent: rundll32 legitimately launches from explorer, services, and control panel, not from Word, Excel, Outlook, a browser, or a script host, so an Office or script parent indicates a maldoc chain. The third axis is behavior: rundll32 reaching out to the internet or spawning cmd or powershell is anomalous for the vast majority of real uses. Rundll32 baselining pays off across the whole intrusion lifecycle because it is an execution proxy, an injection host, and a persistence launcher all at once, and a well-tuned rule set catches a large slice of commodity and APT tradecraft cheaply. On Windows engineering workstations and HMIs the baseline of legitimate rundll32 uses is narrow and stable, making anomalies stand out more than on a noisy corporate endpoint. Its use is near-universal, spanning Cobalt Strike, Russian and North Korean sets, FIN7, and essentially all ransomware affiliates, and the script and library proxy variants such as mshtml, LaunchINFSection, and the comsvcs LSASS dump are covered in the companion row.",
         apt: [
-          { cls: "apt-mal", name: "Cobalt Strike", note: "Argless rundll32.exe is the default beacon spawn-to process, making blank-command-line rundll32 with injection and C2 a high-confidence tell." },
           { cls: "apt-ru", name: "APT28", note: "Rundll32 proxy execution for DLL loading and persistence launching across espionage operations." },
           { cls: "apt-ru", name: "APT29", note: "Rundll32 used for DLL proxy execution in post-exploitation and persistence chains." },
           { cls: "apt-kp", name: "Lazarus", note: "Employs rundll32 to execute payload DLLs under a trusted signed binary as part of multi-stage loaders." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Argless rundll32.exe is the default beacon spawn-to process, making blank-command-line rundll32 with injection and C2 a high-confidence tell." }
         ],
         cite: "MITRE ATT&CK T1218.011"
       },
@@ -4213,9 +4255,11 @@ Atomic Red Team:
   T1218.011 / T1003.001 - comsvcs MiniDump and rundll32 proxy tests`,
         notes: "Beyond loading an attacker DLL, rundll32 can be pointed at in-box Microsoft libraries to proxy script execution or perform sensitive actions while remaining a signed, trusted process, and these are the LOLBAS one-liners every operator knows. The script proxies include mshtml.dll RunHTMLApplication running an inline javascript: payload, advpack and ieadvpack LaunchINFSection and setupapi InstallHinfSection executing a .inf scriptlet that often fetches a remote stage, and shell32's Control_RunDLL and ShellExec_RunDLL launching applets and commands, each detectable by its distinctive export-plus-argument string in the rundll32 command line with several reaching out to the network. The credential-access proxy is the one to prioritize: rundll32 comsvcs.dll,MiniDump with an lsass PID, an output file, and the full flag dumps LSASS memory using only signed in-box components so no third-party dumper touches disk, which makes it simultaneously a LOLBin (T1218.011) and credential theft (T1003.001). The detection is unusually clean, requiring a ProcessAccess from rundll32 to lsass.exe with read access, a .dmp appearing in Temp, and the literal comsvcs and MiniDump strings in the command line, and because legitimate software effectively never does this the false-positive rate is near zero while the severity is high. In a program the comsvcs MiniDump rule should be folded into LSASS-access detection as one of the cheapest high-fidelity credential-dump catches, while the script-proxy forms fold into the broader LOLBin command-line rule set, and since they fetch remote stages rundll32 network egress remains a strong corroborator. The comsvcs MiniDump form is a favorite of intrusion sets that prefer living-off-the-land credential theft because it avoids dropping Mimikatz, while the inf and javascript proxies appear in maldoc and loader chains across commodity and targeted operations. LSASS protection via RunAsPPL, Credential Guard, and the ASR rule blocking credential stealing from lsass raise the cost of the comsvcs path.",
         apt: [
-          { cls: "apt-act", name: "Living-off-the-land operators", note: "comsvcs.dll MiniDump is widely used to dump LSASS with only signed in-box components, avoiding a Mimikatz binary on disk." },
-          { cls: "apt-ir", name: "APT34", note: "Use rundll32 .inf and script proxy forms in loader chains, often fetching remote stages over the network." },
-          { cls: "apt-act", name: "Maldoc / loader chains", note: "mshtml RunHTMLApplication and LaunchINFSection proxy forms appear in document-borne and commodity loader execution." }
+          { cls: "apt-ir", name: "APT34", note: "Use rundll32 .inf and script proxy forms in loader chains, often fetching remote stages over the network." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Living-off-the-land operators", note: "comsvcs.dll MiniDump is widely used to dump LSASS with only signed in-box components, avoiding a Mimikatz binary on disk." },
+          { cls: "apt-mul", name: "Maldoc / loader chains", note: "mshtml RunHTMLApplication and LaunchINFSection proxy forms appear in document-borne and commodity loader execution." }
         ],
         cite: "MITRE ATT&CK T1218.011"
       }
@@ -4404,8 +4448,10 @@ Atomic Red Team:
           { cls: "apt-ru", name: "APT28", note: "Regsvr32 /s /i:url scrobj.dll (Squiblydoo) documented in APT28 operations for proxy execution." },
           { cls: "apt-cn", name: "APT41", note: "Regsvr32 proxy execution for DLL loading as application-control bypass." },
           { cls: "apt-kp", name: "Lazarus", note: "Regsvr32 proxy execution for DLL loading in financial sector intrusions." },
-          { cls: "apt-mal", name: "Cobalt Strike", note: "Squiblydoo is a common application-control bypass for fetching and running fileless scriptlet stagers under a signed binary." },
           { cls: "apt-mul", name: "FIN7", note: "Employ Squiblydoo in maldoc chains where Office spawns regsvr32 to pull a remote .sct downloader." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Squiblydoo is a common application-control bypass for fetching and running fileless scriptlet stagers under a signed binary." }
         ],
         cite: "MITRE ATT&CK T1218.010"
       }
@@ -4599,8 +4645,10 @@ Atomic Red Team:
         apt: [
           { cls: "apt-ir", name: "MuddyWater", note: "Heavy use of mshta to execute HTA-borne scripts that launch PowerShell second stages in phishing-led intrusions." },
           { cls: "apt-kp", name: "Lazarus", note: "Use mshta from maldoc chains to run inline or remote scripts under a signed binary." },
-          { cls: "apt-kp", name: "Kimsuky", note: "Mshta used in phishing chains for script proxy execution." },
-          { cls: "apt-mal", name: "Kovter / ransomware precursors", note: "mshta launches second-stage payloads from documents, a recurring commodity and pre-ransomware execution pattern." }
+          { cls: "apt-kp", name: "Kimsuky", note: "Mshta used in phishing chains for script proxy execution." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Kovter / ransomware precursors", note: "mshta launches second-stage payloads from documents, a recurring commodity and pre-ransomware execution pattern." }
         ],
         cite: "MITRE ATT&CK T1218.005"
       }
@@ -4789,9 +4837,13 @@ Atomic Red Team:
         notes: "InstallUtil is a .NET Framework command-line tool for running the installer components of an assembly, and its abuse is elegant: mark a class as an installer, put the payload in the Uninstall method, and let InstallUtil, signed by Microsoft and living in the trusted .NET directory, execute it via InstallUtil /logfile= /LogToConsole=false /U evil.exe, so application control that trusts the framework path is bypassed and no separate compiler or loader is needed. The /U uninstall path is favored because it runs even on an unregistered assembly. The discriminator is the combination of argument, path, and context: the legitimate tool runs during software install and uninstall and developer builds from admin or installer contexts and program directories, whereas the abuse runs it with /U and /LogToConsole=false against an assembly sitting in a user temp folder, often parented by a maldoc or shell, and while none of those properties is individually unique, the combination of uninstall verb plus suppressed logging plus user-path assembly plus non-dev parent is a clean signal. Corroborators help because InstallUtil is a build-time utility with little reason to spawn a command shell or open an outbound socket, so a child cmd or powershell, or network egress from the loaded assembly beaconing, raises a borderline command-line hit to high confidence. InstallUtil sits in the family of .NET and dev-tool LOLBins alongside MSBuild and RegAsm/RegSvcs that all bypass application control by executing managed code through a trusted utility, so a single rule pattern of a trusted .NET tool running managed code from a user path with a non-dev parent covers much of the family, with InstallUtil's /U plus LogToConsole=false as its specific fingerprint. On engineering workstations the .NET framework may be present but InstallUtil is rarely run interactively from temp folders, so the abuse pattern stands out well against an OT baseline. It is a staple of red-team and APT application-control bypass, used by espionage sets and criminal operators to launch managed payloads including .NET implants and Cobalt Strike loaders under a signed framework binary.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: ".NET assembly proxy execution via InstallUtil to bypass application control in tech sector intrusions." },
-          { cls: "apt-kp", name: "Lazarus", note: "Uses trusted .NET utilities to execute managed loaders under a signed framework binary." },
-          { cls: "apt-act", name: "Red-team / app-control bypass", note: "InstallUtil /U uninstall-method execution is a standard way to run managed payloads past application control that trusts the .NET directory." },
-          { cls: "apt-mal", name: "Cobalt Strike", note: "Managed loaders launched via InstallUtil to proxy execution through a Microsoft-signed build tool." }
+          { cls: "apt-kp", name: "Lazarus", note: "Uses trusted .NET utilities to execute managed loaders under a signed framework binary." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Managed loaders launched via InstallUtil to proxy execution through a Microsoft-signed build tool." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Red-team / app-control bypass", note: "InstallUtil /U uninstall-method execution is a standard way to run managed payloads past application control that trusts the .NET directory." }
         ],
         cite: "MITRE ATT&CK T1218.004"
       }
@@ -5003,9 +5055,13 @@ Atomic Red Team:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "MSBuild inline-task compilation for .NET tradecraft under a signed build tool, bypassing application control." },
           { cls: "apt-cn", name: "APT41", note: "MSBuild inline tasks for fileless execution documented in tech sector operations." },
-          { cls: "apt-kp", name: "Lazarus", note: "MSBuild abuse documented in cryptocurrency-targeted campaign chains." },
-          { cls: "apt-act", name: "Red-team / app-control bypass", note: "MSBuild compiling inline C# from a project file is a standard managed-code execution bypass for trusted-path allow-listing." },
-          { cls: "apt-mal", name: "Cobalt Strike", note: "Inline-task MSBuild projects compile and launch beacon stagers on-host without a precompiled payload to scan." }
+          { cls: "apt-kp", name: "Lazarus", note: "MSBuild abuse documented in cryptocurrency-targeted campaign chains." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Inline-task MSBuild projects compile and launch beacon stagers on-host without a precompiled payload to scan." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Red-team / app-control bypass", note: "MSBuild compiling inline C# from a project file is a standard managed-code execution bypass for trusted-path allow-listing." }
         ],
         cite: "MITRE ATT&CK T1127.001"
       }
@@ -5208,8 +5264,10 @@ Atomic Red Team:
           { cls: "apt-kp", name: "Lazarus", note: "Distributes payloads as MSI packages executed via msiexec, including remotely fetched installers, under the signed Windows Installer." },
           { cls: "apt-cn", name: "APT41", note: "Remote MSI installation for initial payload delivery in documented campaigns." },
           { cls: "apt-ir", name: "MuddyWater", note: "Msiexec used for remote payload delivery in Middle East-targeted operations." },
-          { cls: "apt-mul", name: "FIN7", note: "Use malicious MSI delivery with custom actions to run loaders through msiexec as an application-control bypass." },
-          { cls: "apt-act", name: "Commodity Malware", note: "Remote MSI installs (msiexec /q /i http) are a common delivery and execution mechanism for first-stage payloads." }
+          { cls: "apt-mul", name: "FIN7", note: "Use malicious MSI delivery with custom actions to run loaders through msiexec as an application-control bypass." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Commodity Malware", note: "Remote MSI installs (msiexec /q /i http) are a common delivery and execution mechanism for first-stage payloads." }
         ],
         cite: "MITRE ATT&CK T1218.007"
       }
@@ -5453,8 +5511,10 @@ Atomic Red Team:
         notes: "Kernel-mode LKM rootkits are the most powerful Linux rootkit class because, running in ring 0, the module rewrites what every userspace tool sees: once loaded and hooked, ps, ls, lsmod, ss, and find ask the kernel and the kernel lies, which is why naive host triage fails against a competent LKM rootkit. They hide by hooking the syscall table or using ftrace to intercept getdents64 (files), the /proc readers (PIDs), tcp_seq_show (ports), and the module-list iterator (themselves), filtering out anything matching a magic prefix or value. The hunter's response is to distrust the hooked tools and cross-check: walk /proc directly and diff against ps to find hidden PIDs, read /proc/net/tcp and diff against ss for hidden ports, diff /sys/module against lsmod for the hidden module, and check /proc/sys/kernel/tainted because loading an out-of-tree or unsigned module sets taint bits that persist until reboot and that the rootkit cannot easily hide. The strongest out-of-band truth is memory forensics, where Volatility's linux_check_syscall, linux_check_modules, and linux_hidden_modules read kernel structures the userspace hooks do not cover. The decisive early control is catching the load itself: if the init_module audit event ships off-box the instant it fires, you have proof of load even after the rootkit hides itself. This is especially relevant in OT and ICS fleets, where a single tailored .ko built for a known static kernel can be reused widely and sparse monitoring means long dwell time, making taint-flag and module-load monitoring cheap, high-value controls. This row is the rootkit/hiding lens on the same load mechanism that persistence T1547.006 covers from the persistence angle.",
         apt: [
           { cls: "apt-ru", name: "APT28", note: "GRU 85th GTsSS Linux LKM rootkit (kernel module plus agent and C2) documented in a 2020 NSA/FBI advisory; hides files, processes, and sockets." },
-          { cls: "apt-cn", name: "APT41", note: "China-nexus Linux implant family bearing kernel-mode rootkit components for stealthy server persistence." },
-          { cls: "apt-mal", name: "Diamorphine / Reptile users", note: "Open-source LKM rootkits repeatedly bolted onto commodity cryptomining and ELF-backdoor intrusions for process/file/port hiding." }
+          { cls: "apt-cn", name: "APT41", note: "China-nexus Linux implant family bearing kernel-mode rootkit components for stealthy server persistence." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Diamorphine / Reptile users", note: "Open-source LKM rootkits repeatedly bolted onto commodity cryptomining and ELF-backdoor intrusions for process/file/port hiding." }
         ],
         cite: "MITRE ATT&CK T1014"
       },
@@ -5705,9 +5765,11 @@ Atomic Red Team:
   T1014 / T1574.006 - ld.so.preload abuse tests`,
         notes: "Userland LD_PRELOAD rootkits are the accessible cousin of the LKM rootkit: instead of touching the kernel, the attacker drops a shared object and registers it in /etc/ld.so.preload (or exports LD_PRELOAD), and the dynamic linker injects it into every dynamically-linked process where it overrides libc calls to hide files, processes, and network activity. It needs no kernel headers and works on hardened signed-module-only kernels, which is exactly why it is popular, and the two vectors are the system-wide /etc/ld.so.preload (the primary tell, since that file usually does not exist on a clean system) and the per-process LD_PRELOAD variable set in shell rc files or /etc/environment. The technique's strength is that it hides from all the standard dynamically-linked tools an analyst reaches for, but its corresponding weakness defines the entire detection strategy: it can only hook libc, so statically-linked tools, direct syscalls, and shell builtins or globs see straight through it. The canonical hunt is a dynamic-versus-static differential, diffing ls against a statically-linked busybox ls over /tmp, /etc, and /dev/shm, where any disagreement indicates active libc hiding. Supporting hunts read daemon environments for an unexpected LD_PRELOAD and /proc/<pid>/maps for a .so loaded from a writable path. Because it sidesteps kernel module signing and works on old unpatched libc, the userland rootkit suits legacy OT Linux, where /etc/ld.so.preload is a tiny, high-value file integrity target best protected with chattr +i. Known families include Azazel, Jynx, Vlany, and beurk, while HiddenWasp is the headline China-linked campaign that bundles the userland rootkit with a backdoor and deployment script. This row is the persistent system-wide hiding use of the same preload files that execution T1106 and privesc T1574.006 abuse for injection and escalation.",
         apt: [
-          { cls: "apt-cn", name: "HiddenWasp", note: "China-linked campaign combining an LD_PRELOAD userland rootkit with a trojan and deployment script for stealthy Linux persistence." },
-          { cls: "apt-mal", name: "Azazel / Jynx lineage", note: "Open-source userland rootkits using ld.so.preload to hook libc and hide files, processes, and connections; reused across intrusions." },
-          { cls: "apt-mal", name: "Symbiote", note: "Pairs LD_PRELOAD-based hiding with an eBPF hook for credential capture and C2; targeted Latin American financial sector." }
+          { cls: "apt-cn", name: "HiddenWasp", note: "China-linked campaign combining an LD_PRELOAD userland rootkit with a trojan and deployment script for stealthy Linux persistence." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Azazel / Jynx lineage", note: "Open-source userland rootkits using ld.so.preload to hook libc and hide files, processes, and connections; reused across intrusions." },
+          { cls: "apt-mul", name: "Symbiote", note: "Pairs LD_PRELOAD-based hiding with an eBPF hook for credential capture and C2; targeted Latin American financial sector." }
         ],
         cite: "MITRE ATT&CK T1014"
       },
@@ -5981,9 +6043,11 @@ Atomic Red Team / PoC harnesses:
   bpf-load detections in a lab`,
         notes: "eBPF rootkits and backdoors are the most modern and most evasive Linux rootkit class because eBPF is a legitimate built-in kernel feature that defenders themselves rely on (Falco, Tetragon, Cilium, and many EDRs are eBPF), and attackers realized the same primitive hides activity and backdoors hosts with no kernel module and often no disk artifact, defeating every LKM-oriented hunt at once. What makes it so hard is that lsmod and /proc/modules stay clean, the loader can run from memfd and self-delete to be fileless, and the program lives in kernel memory attached to a kprobe, tracepoint, XDP hook, or socket filter. The defining example, BPFDoor, opens no listening port at all: it passively sniffs with a BPF filter on a raw socket and wakes only on an attacker-crafted magic packet, so nmap, netstat, and netflow-only approaches show nothing to find, which is how it achieved documented multi-year dwell in telecommunications and ISP networks. The detection strategy inverts the usual approach: since the customary artifacts are absent, you hunt the eBPF subsystem directly with bpftool prog show, map show, and net show to enumerate everything loaded, then ask whether each program is owned by a tool you deployed, baselining the legitimate eBPF (the EDR, the CNI) and treating unexplained kprobe, socket-filter, or XDP programs as suspect. For BPFDoor-class backdoors the host-side tell is a process holding an AF_PACKET raw socket with a BPF filter that is not a known sniffer, found via ss -0 or /proc/net/packet rather than port scanning. The decisive early control is auditing the bpf() syscall so program loads are recorded as they happen and, shipped off-box, survive the fileless loader's self-deletion. This class is especially relevant to OT and ICS because portless, quiet backdoors are ideal for the long low-noise dwell that OT-targeting actors prefer and they sit below the application layer where ICS monitoring rarely looks, making baselining of loaded BPF programs and disabling unprivileged BPF proportionate controls. BPFDoor often masquerades its process name, cross-referencing T1036.005.",
         apt: [
-          { cls: "apt-cn", name: "BPFDoor", note: "China-nexus passive eBPF backdoor using a BPF packet filter and magic-packet C2 with no open port; multi-year stealthy dwell in telco and ISP Linux servers." },
-          { cls: "apt-mal", name: "Symbiote", note: "Combines eBPF traffic hiding and credential capture with LD_PRELOAD-based concealment; targeted Latin American financial institutions." },
-          { cls: "apt-mal", name: "TripleCross / ebpfkit (PoC)", note: "Research eBPF rootkits demonstrating syscall hooking, userspace tampering via bpf_probe_write_user, and magic-packet C2; lower the bar for the technique." }
+          { cls: "apt-cn", name: "BPFDoor", note: "China-nexus passive eBPF backdoor using a BPF packet filter and magic-packet C2 with no open port; multi-year stealthy dwell in telco and ISP Linux servers." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Symbiote", note: "Combines eBPF traffic hiding and credential capture with LD_PRELOAD-based concealment; targeted Latin American financial institutions." },
+          { cls: "apt-mul", name: "TripleCross / ebpfkit (PoC)", note: "Research eBPF rootkits demonstrating syscall hooking, userspace tampering via bpf_probe_write_user, and magic-packet C2; lower the bar for the technique." }
         ],
         cite: "MITRE ATT&CK T1014"
       }
@@ -6479,9 +6543,13 @@ Atomic Red Team:
   T1036.005 - match legitimate name or location tests`,
         notes: "Matching a legitimate name or location preys on analyst trust in familiar names and trusted paths: a binary called sshd, or one sitting in /usr/sbin, reads as system to a tired responder, and the trick is often combined, sometimes with garnishes like a trailing space, unicode homoglyphs, or case changes such as crond versus cron. The countermeasures are not heuristic but two hard expectations the real system always satisfies and the fake usually cannot. The first is canonical path: every core daemon ships at a known location (genuine sshd is /usr/sbin/sshd, systemd is /lib/systemd/systemd, cron is /usr/sbin/cron or crond), so a process bearing one of these names whose /proc/<pid>/exe points anywhere else such as /tmp, /home, /dev/shm, or a working directory is fake, full stop, and this alone catches the lazy majority of name masquerades. The second is package provenance: distribution package managers know which file belongs to which package, so rpm -qf or dpkg -S on a binary in a system directory should name an owning package, and an executable in /usr/bin or /usr/sbin owned by nothing is anomalous, with rpm -Va and debsums sweeping for unowned or modified binaries. A judgement caveat is that /usr/local/bin is the sanctioned home for admin-installed tools that no package owns, expected there but suspicious in /usr/bin. Supporting tells include a daemon-named process whose parent is a shell rather than systemd or init, multiple binaries sharing a system name across the filesystem, and the garnish tricks surfaced by listing with cat -A. Because a planted binary in /usr/bin still has an mtime tell, name/location masquerade is routinely finished with a touch -r to clone a neighbor binary's timestamp (T1070.006), so checking both ownership and time exposes the pairing. This is the on-disk sibling of the in-memory kernel-thread disguise, and T1036.004 applies the same idea to systemd and cron entries.",
         apt: [
-          { cls: "apt-mal", name: "ELF backdoor operators", note: "Implants renamed to system-daemon names (sshd, crond, dbus-daemon) and dropped into system paths to blend into process and file listings." },
-          { cls: "apt-act", name: "Cryptomining crews", note: "Miners impersonate system services by name and location, frequently paired with timestomping of the planted binary." },
-          { cls: "apt-mal", name: "Kobalos", note: "Linux/Unix backdoor using blend-in naming as part of its stealth against high-performance computing and server targets." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "ELF backdoor operators", note: "Implants renamed to system-daemon names (sshd, crond, dbus-daemon) and dropped into system paths to blend into process and file listings." },
+          { cls: "apt-mul", name: "Kobalos", note: "Linux/Unix backdoor using blend-in naming as part of its stealth against high-performance computing and server targets." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Cryptomining crews", note: "Miners impersonate system services by name and location, frequently paired with timestomping of the planted binary." }
         ],
         cite: "MITRE ATT&CK T1036.005"
       }
@@ -6737,8 +6805,10 @@ Atomic Red Team:
           { cls: "apt-cn", name: "APT41", note: "Systemd services named to mimic legitimate daemons (systemd-update, dbus-org) for persistence stealth on Linux targets." },
           { cls: "apt-kp", name: "Kimsuky", note: "Gomir backdoor installs as masqueraded systemd service on Linux targets." },
           { cls: "apt-mul", name: "Kinsing", note: "Creates system-sounding systemd services and cron entries pointing at miner and loader payloads to survive inventory review." },
-          { cls: "apt-mul", name: "TeamTNT", note: "Names persistence units and cron jobs to imitate legitimate system components while ExecStart targets payloads in writable paths." },
-          { cls: "apt-act", name: "Targeted Linux operators", note: "Service/timer naming chosen to blend into the system unit set, chained with binary name/location masquerade and timestomping." }
+          { cls: "apt-mul", name: "TeamTNT", note: "Names persistence units and cron jobs to imitate legitimate system components while ExecStart targets payloads in writable paths." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Targeted Linux operators", note: "Service/timer naming chosen to blend into the system unit set, chained with binary name/location masquerade and timestomping." }
         ],
         cite: "MITRE ATT&CK T1036.004"
       }

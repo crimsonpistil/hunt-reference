@@ -1,281 +1,82 @@
-// ── HOST REFERENCE - actors.js ──
-// Threat actor catalog with alias resolution for host-based detection.
-// Loaded before core.js. Provides THREAT_ACTORS map and resolveActorQuery().
+// TONK actor reference - canonical names, MITRE G-IDs, and aliases.
+// Source: MITRE ATT&CK Groups (enterprise).
+//
+// Canonical naming: TONK keeps its own working name as canonical.
+// ONLY when TONK uses multiple names for the SAME MITRE group do those names
+// collapse to the MITRE-primary name, so attribution never splits one actor.
+// The MITRE G-number (mitre field) is the true identity anchor - names can be
+// renamed upstream, G-numbers do not change.
+//
+// Scope: only NAMED actors TONK tracks that resolve to a MITRE group. Generic/
+// commodity buckets (Ransomware, Cobalt Strike, Emotet...) are excluded by design.
+//
+// Shape: ACTORS[canonicalName] = { mitre, cls, aliases[] }
+// resolveActor(anyName)   -> canonical name (or input unchanged if unknown)
+// actorMitreId(anyName)   -> "Gxxxx" or null
+// actorLabel(anyName)     -> "Canonical (Gxxxx)" for display, or input if unknown
 
-const THREAT_ACTORS = {
-
-  // ═══════════════════════════════════════════════
-  //  RUSSIA (apt-ru)
-  // ═══════════════════════════════════════════════
-
-  "APT28": {
-    aliases: ["Fancy Bear","STRONTIUM","Forest Blizzard","Sofacy","Sednit","Pawn Storm","TG-4127","Group 74","Tsar Team","ITG05","TAG-0700","BlueDelta","GruesomeLarch"],
-    cls: "apt-ru",
-    mitre: "G0007",
-    origin: "Russia (GRU Unit 26165)"
-  },
-  "APT29": {
-    aliases: ["Cozy Bear","NOBELIUM","Midnight Blizzard","The Dukes","YTTRIUM","CozyDuke","Dark Halo","StellarParticle","UNC2452","Cloaked Ursa","BlueBravo","ITG11","TAG-0102"],
-    cls: "apt-ru",
-    mitre: "G0016",
-    origin: "Russia (SVR)"
-  },
-  "Sandworm": {
-    aliases: ["Voodoo Bear","IRIDIUM","Seashell Blizzard","Telebots","ELECTRUM","Iron Viking","BlackEnergy Group","Sandworm Team","UAC-0082","APT44"],
-    cls: "apt-ru",
-    mitre: "G0034",
-    origin: "Russia (GRU Unit 74455)"
-  },
-  "Turla": {
-    aliases: ["Snake","Venomous Bear","KRYPTON","Secret Blizzard","Uroburos","Waterbug","WhiteBear","Iron Hunter","Pensive Ursa","ITG12","TAG-0530","Group 88"],
-    cls: "apt-ru",
-    mitre: "G0010",
-    origin: "Russia (FSB Center 16)"
-  },
-  "Gamaredon": {
-    aliases: ["Primitive Bear","ACTINIUM","Aqua Blizzard","Armageddon","Shuckworm","UAC-0010","SectorC08","BlueAlpha","TAG-0631"],
-    cls: "apt-ru",
-    mitre: "G0047",
-    origin: "Russia (FSB Crimea)"
-  },
-
-  // ═══════════════════════════════════════════════
-  //  CHINA (apt-cn)
-  // ═══════════════════════════════════════════════
-
-  "APT41": {
-    aliases: ["Winnti","Double Dragon","BARIUM","Brass Typhoon","Wicked Panda","TG-2633","RedGolf","Earth Baku","TAG-0822","Blackfly"],
-    cls: "apt-cn",
-    mitre: "G0096",
-    origin: "China (MSS / Chengdu 404)"
-  },
-  "APT10": {
-    aliases: ["Stone Panda","POTASSIUM","Cicada","MenuPass","Red Apollo","CVNX","Cloud Hopper","ITG01","TAG-0457"],
-    cls: "apt-cn",
-    mitre: "G0045",
-    origin: "China (MSS Tianjin)"
-  },
-  "APT1": {
-    aliases: ["Comment Crew","COPPER","PLA Unit 61398","Comment Panda","TG-8223","GIF89a","BrownFox"],
-    cls: "apt-cn",
-    mitre: "G0006",
-    origin: "China (PLA Unit 61398)"
-  },
-  "Mustang Panda": {
-    aliases: ["BRONZE PRESIDENT","Stately Taurus","RedDelta","Earth Preta","TA416","LuminousMoth","Camaro Dragon","TAG-0622"],
-    cls: "apt-cn",
-    mitre: "G0129",
-    origin: "China"
-  },
-  "APT5": {
-    aliases: ["Keyhole Panda","MANGANESE","Mulberry Typhoon","UNC2630","TAG-0501"],
-    cls: "apt-cn",
-    mitre: "G1023",
-    origin: "China (MSS)"
-  },
-  "APT32": {
-    aliases: ["OceanLotus","SeaLotus","BISMUTH","Canvas Cyclone","APT-C-00","Ocean Buffalo","TAG-0424"],
-    cls: "apt-cn",
-    mitre: "G0050",
-    origin: "Vietnam"
-  },
-  "Volt Typhoon": {
-    aliases: ["BRONZE SILHOUETTE","Vanguard Panda","DEV-0391","Insidious Taurus","UNC3236","TAG-0897"],
-    cls: "apt-cn",
-    mitre: "G1017",
-    origin: "China (PLA)"
-  },
-  "Salt Typhoon": {
-    aliases: ["GhostEmperor","FamousSparrow","Earth Estries","UNC2286","TAG-0956"],
-    cls: "apt-cn",
-    mitre: "G1045",
-    origin: "China (MSS)"
-  },
-  "HAFNIUM": {
-    aliases: ["Silk Typhoon","UNC26198","TAG-0438"],
-    cls: "apt-cn",
-    mitre: "G0125",
-    origin: "China"
-  },
-  "Flax Typhoon": {
-    aliases: ["Ethereal Panda","Storm-0919","TAG-0951"],
-    cls: "apt-cn",
-    mitre: "G1042",
-    origin: "China"
-  },
-
-  // ═══════════════════════════════════════════════
-  //  NORTH KOREA (apt-kp)
-  // ═══════════════════════════════════════════════
-
-  "Lazarus": {
-    aliases: ["Lazarus Group","HIDDEN COBRA","Diamond Sleet","ZINC","Labyrinth Chollima","APT38","BeagleBoyz","BlueNoroff","Sapphire Sleet","Citrine Sleet","Moonstone Sleet","Jade Sleet","TraderTraitor","UNC4736","TAG-0711"],
-    cls: "apt-kp",
-    mitre: "G0032",
-    origin: "North Korea (RGB)"
-  },
-  "Kimsuky": {
-    aliases: ["Velvet Chollima","THALLIUM","Emerald Sleet","APT43","Springtail","Black Banshee","TA427","ITG16","TAG-0782","Gomir"],
-    cls: "apt-kp",
-    mitre: "G0094",
-    origin: "North Korea (RGB)"
-  },
-  "Andariel": {
-    aliases: ["Stonefly","Onyx Sleet","PLUTONIUM","Silent Chollima","DarkSeoul","TAG-0783"],
-    cls: "apt-kp",
-    mitre: "G0138",
-    origin: "North Korea (RGB 3rd Bureau)"
-  },
-
-  // ═══════════════════════════════════════════════
-  //  IRAN (apt-ir)
-  // ═══════════════════════════════════════════════
-
-  "APT33": {
-    aliases: ["Elfin","HOLMIUM","Peach Sandstorm","Refined Kitten","Magnallium","TAG-0335"],
-    cls: "apt-ir",
-    mitre: "G0064",
-    origin: "Iran (IRGC)"
-  },
-  "APT34": {
-    aliases: ["OilRig","CHRYSENE","Hazel Sandstorm","Helix Kitten","IRN2","Crambus","ITG13","TAG-0341","Earth Simnavaz"],
-    cls: "apt-ir",
-    mitre: "G0049",
-    origin: "Iran (MOIS)"
-  },
-  "APT35": {
-    aliases: ["Charming Kitten","PHOSPHORUS","Mint Sandstorm","Newscaster","Ajax Security Team","TA453","ITG18","TAG-0356"],
-    cls: "apt-ir",
-    mitre: "G0059",
-    origin: "Iran (IRGC-IO)"
-  },
-  "APT39": {
-    aliases: ["Chafer","REMIX KITTEN","Rana Intelligence","TAG-0391"],
-    cls: "apt-ir",
-    mitre: "G0087",
-    origin: "Iran (MOIS)"
-  },
-  "MuddyWater": {
-    aliases: ["MERCURY","Mango Sandstorm","Static Kitten","Seedworm","TEMP.Zagros","Earth Vetala","ITG17","TAG-0411"],
-    cls: "apt-ir",
-    mitre: "G0069",
-    origin: "Iran (MOIS)"
-  },
-  "CyberAv3ngers": {
-    aliases: ["IRGC-CEC","Storm-0784"],
-    cls: "apt-ir",
-    mitre: "",
-    origin: "Iran (IRGC-CEC)"
-  },
-
-  // ═══════════════════════════════════════════════
-  //  CRIMINAL / MULTI (apt-mul)
-  // ═══════════════════════════════════════════════
-
-  "FIN6": {
-    aliases: ["Skeleton Spider","ITG08","Magecart Group 6","TAG-0661"],
-    cls: "apt-mul",
-    mitre: "G0037",
-    origin: "Criminal"
-  },
-  "FIN7": {
-    aliases: ["Sangria Tempest","GOLD NIAGARA","Carbon Spider","ITG14","Carbanak Group","TAG-0672"],
-    cls: "apt-mul",
-    mitre: "G0046",
-    origin: "Criminal"
-  },
-  "TA505": {
-    aliases: ["GOLD TAHOE","Hive0065","SectorJ04","Graceful Spider","CL0P operators"],
-    cls: "apt-mul",
-    mitre: "G0092",
-    origin: "Criminal"
-  },
-  "TeamTNT": {
-    aliases: ["TNT","Hildegard operators"],
-    cls: "apt-mul",
-    mitre: "",
-    origin: "Criminal (cloud/container)"
-  },
-  "Scattered Spider": {
-    aliases: ["Roasted 0ktapus","UNC3944","Star Fraud","Octo Tempest","Scatter Swine","Muddled Libra"],
-    cls: "apt-mul",
-    mitre: "G1015",
-    origin: "Criminal"
-  },
-
-  // ═══════════════════════════════════════════════
-  //  MALWARE / TOOLS (searchable as actors)
-  // ═══════════════════════════════════════════════
-
-  "PlugX": {
-    aliases: ["Korplug","Destroy RAT","Sogu","THOR"],
-    cls: "apt-cn",
-    mitre: "S0013",
-    origin: "China-nexus tooling"
-  },
-  "ShadowPad": {
-    aliases: ["PoisonPlug"],
-    cls: "apt-cn",
-    mitre: "S0596",
-    origin: "China-nexus tooling"
-  },
-  "Cobalt Strike": {
-    aliases: ["CobaltStrike","CS Beacon","Beacon"],
-    cls: "apt-mal",
-    mitre: "S0154",
-    origin: "Red team / criminal tooling"
-  },
-  "BPFDoor": {
-    aliases: ["Red Menshen","Red Dev 18","JustForFun"],
-    cls: "apt-cn",
-    mitre: "",
-    origin: "China-nexus backdoor"
-  },
-  "Ebury": {
-    aliases: ["Windigo","Operation Windigo"],
-    cls: "apt-ru",
-    mitre: "",
-    origin: "Russian criminal (credential theft)"
-  }
+const ACTORS = {
+  "APT10": { mitre: "G0045", cls: "apt-cn", aliases: ["Cicada", "POTASSIUM", "Stone Panda", "Red Apollo", "CVNX", "HOGFISH", "BRONZE RIVERSIDE", "menuPass"] },
+  "APT28": { mitre: "G0007", cls: "apt-ru", aliases: ["IRON TWILIGHT", "SNAKEMACKEREL", "Swallowtail", "Group 74", "Sednit", "Sofacy", "Pawn Storm", "Fancy Bear", "STRONTIUM", "Tsar Team", "Threat Group-4127", "TG-4127", "Forest Blizzard", "FROZENLAKE", "GruesomeLarch"] },
+  "APT29": { mitre: "G0016", cls: "apt-ru", aliases: ["IRON RITUAL", "IRON HEMLOCK", "NobleBaron", "Dark Halo", "NOBELIUM", "UNC2452", "YTTRIUM", "The Dukes", "Cozy Bear", "CozyDuke", "SolarStorm", "Blue Kitsune", "UNC3524", "Midnight Blizzard"] },
+  "APT32": { mitre: "G0050", cls: "apt-cn", aliases: ["OceanLotus", "SeaLotus", "BISMUTH", "Canvas Cyclone", "APT-C-00", "Ocean Buffalo"] },
+  "APT33": { mitre: "G0064", cls: "apt-ir", aliases: ["HOLMIUM", "Elfin", "Peach Sandstorm"] },
+  "APT41": { mitre: "G0096", cls: "apt-cn", aliases: ["Wicked Panda", "Brass Typhoon", "BARIUM"] },
+  "APT5": { mitre: "G1023", cls: "apt-cn", aliases: ["Keyhole Panda", "MANGANESE", "Mulberry Typhoon"] },
+  "BPFDoor": { mitre: null, cls: "apt-cn", aliases: ["Red Menshen", "Red Dev 18", "JustForFun"] },
+  "Ebury": { mitre: null, cls: "apt-ru", aliases: ["Windigo", "Operation Windigo"] },
+  "FIN6": { mitre: "G0037", cls: "apt-mul", aliases: ["Skeleton Spider", "ITG08", "Magecart Group 6"] },
+  "FIN7": { mitre: "G0046", cls: "apt-mul", aliases: ["GOLD NIAGARA", "ITG14", "Carbon Spider", "ELBRUS", "Sangria Tempest"] },
+  "Gamaredon": { mitre: "G0047", cls: "apt-ru", aliases: ["Primitive Bear", "ACTINIUM", "Aqua Blizzard", "Armageddon", "Shuckworm"] },
+  "HAFNIUM": { mitre: "G0125", cls: "apt-cn", aliases: ["Operation Exchange Marauder", "Silk Typhoon"] },
+  "Kimsuky": { mitre: "G0094", cls: "apt-kp", aliases: ["Black Banshee", "Velvet Chollima", "Emerald Sleet", "THALLIUM", "APT43", "TA427", "Springtail", "Earth Kumiho", "Gomir"] },
+  "Lazarus": { mitre: "G0032", cls: "apt-kp", aliases: ["Labyrinth Chollima", "HIDDEN COBRA", "Guardians of Peace", "ZINC", "NICKEL ACADEMY", "Diamond Sleet", "Lazarus Group", "APT38", "BeagleBoyz", "BlueNoroff"] },
+  "Magic Hound": { mitre: "G0059", cls: "apt-ir", aliases: ["TA453", "COBALT ILLUSION", "Charming Kitten", "ITG18", "Phosphorus", "Newscaster", "APT35", "Mint Sandstorm"] },
+  "MuddyWater": { mitre: "G0069", cls: "apt-ir", aliases: ["Earth Vetala", "MERCURY", "Static Kitten", "Seedworm", "TEMP.Zagros", "Mango Sandstorm", "TA450"] },
+  "Mustang Panda": { mitre: "G0129", cls: "apt-cn", aliases: ["TA416", "RedDelta", "BRONZE PRESIDENT", "STATELY TAURUS", "EARTH PRETA", "TWILL TYPHOON", "LUMINOUS MOTH"] },
+  "OilRig": { mitre: "G0049", cls: "apt-ir", aliases: ["COBALT GYPSY", "IRN2", "APT34", "Helix Kitten", "Evasive Serpens", "Hazel Sandstorm", "EUROPIUM", "ITG13", "Earth Simnavaz", "Crambus"] },
+  "APT39": { mitre: "G0087", cls: "apt-ir", aliases: ["Chafer", "REMIX KITTEN", "Rana Intelligence"] },
+  "Salt Typhoon": { mitre: "G1045", cls: "apt-cn", aliases: ["GhostEmperor", "FamousSparrow", "Earth Estries"] },
+  "Sandworm": { mitre: "G0034", cls: "apt-ru", aliases: ["ELECTRUM", "Telebots", "IRON VIKING", "BlackEnergy (Group)", "Quedagh", "Voodoo Bear", "IRIDIUM", "Seashell Blizzard", "FROZENBARENTS", "APT44", "Sandworm Team"] },
+  "Scattered Spider": { mitre: "G1015", cls: "apt-mul", aliases: ["Roasted 0ktapus", "Octo Tempest", "Storm-0875", "UNC3944"] },
+  "TA505": { mitre: "G0092", cls: "apt-mul", aliases: ["GOLD TAHOE", "Hive0065", "SectorJ04", "Graceful Spider"] },
+  "TeamTNT": { mitre: null, cls: "apt-mul", aliases: ["TNT", "Hildegard operators"] },
+  "Turla": { mitre: "G0010", cls: "apt-ru", aliases: ["IRON HUNTER", "Group 88", "Waterbug", "WhiteBear", "Snake", "Krypton", "Venomous Bear", "Secret Blizzard", "BELUGASTURGEON"] },
+  "Volt Typhoon": { mitre: "G1017", cls: "apt-cn", aliases: ["BRONZE SILHOUETTE", "Vanguard Panda", "DEV-0391", "UNC3236", "Voltzite", "Insidious Taurus", "DazedToad"] },
+  "Winnti": { mitre: "G0044", cls: "apt-cn", aliases: ["Blackfly", "Winnti Group"] },
+  "Andariel": { mitre: "G0138", cls: "apt-kp", aliases: ["Stonefly", "Onyx Sleet", "PLUTONIUM", "Silent Chollima"] },
 };
 
-// ── REVERSE INDEX ──
-// Maps every alias (lowercased) back to its canonical name.
-const ACTOR_ALIAS_MAP = {};
-Object.entries(THREAT_ACTORS).forEach(([canonical, info]) => {
-  const lc = canonical.toLowerCase();
-  ACTOR_ALIAS_MAP[lc] = canonical;
-  (info.aliases || []).forEach(alias => {
-    ACTOR_ALIAS_MAP[alias.toLowerCase()] = canonical;
-  });
-});
-
-/**
- * Given a search query fragment, return all canonical actor names
- * whose name or any alias contains the query (case-insensitive).
- * Used by core.js to expand apt-search matches.
- */
-function resolveActorQuery(query) {
-  if (!query) return [];
-  const q = query.toLowerCase().trim();
-  if (!q) return [];
-  const hits = new Set();
-  for (const [alias, canonical] of Object.entries(ACTOR_ALIAS_MAP)) {
-    if (alias.includes(q)) {
-      hits.add(canonical);
-    }
+// Reverse index: normalized alias/name -> canonical. Built at load.
+const ACTOR_ALIAS = (() => {
+  const idx = {};
+  const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
+  for (const [canon, rec] of Object.entries(ACTORS)) {
+    idx[norm(canon)] = canon;
+    for (const a of rec.aliases) idx[norm(a)] = canon;
   }
-  return [...hits];
+  return idx;
+})();
+
+function resolveActor(name) {
+  if (!name) return name;
+  const key = String(name).toLowerCase().replace(/[^a-z0-9]/g, "");
+  return ACTOR_ALIAS[key] || name;
 }
 
-/**
- * Given a canonical actor name from an apt[] entry, return all
- * searchable strings (canonical + aliases) for indexing.
- * Used by core.js when building the searchText dataset.
- */
-function getActorSearchTerms(name) {
-  if (!name) return '';
-  const info = THREAT_ACTORS[name];
-  if (!info) return name;
-  return [name, ...(info.aliases || [])].join(' ');
+// MITRE G-number for any name/alias, or null if not a tracked named actor.
+function actorMitreId(name) {
+  const c = resolveActor(name);
+  return (ACTORS[c] && ACTORS[c].mitre) || null;
+}
+
+// Display label: "Canonical (Gxxxx)" when known, else the input unchanged.
+function actorLabel(name) {
+  const c = resolveActor(name);
+  const rec = ACTORS[c];
+  return rec ? c + " (" + rec.mitre + ")" : name;
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { ACTORS, ACTOR_ALIAS, resolveActor, actorMitreId, actorLabel };
 }

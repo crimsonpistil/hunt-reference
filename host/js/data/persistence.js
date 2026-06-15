@@ -181,9 +181,11 @@ Sysinternals autoruns.exe:
           { cls: "apt-ru", name: "APT29", note: "Registry Run key persistence documented across SolarWinds and other operations." },
           { cls: "apt-cn", name: "APT41", note: "Run key and Winlogon variant persistence documented across operations." },
           { cls: "apt-ir", name: "APT35", note: "Run key persistence documented in CISA advisories on Iranian operations." },
-          { cls: "apt-kp", name: "Lazarus", note: "Registry Run key persistence documented across DPRK-attributed operations." },
-          { cls: "apt-act", name: "Commodity Malware", note: "Universal - Emotet, TrickBot, IcedID, QakBot, Agent Tesla, and most RAT families use Run keys." },
-          { cls: "apt-act", name: "Ransomware", note: "Run key persistence documented across nearly all ransomware families." }
+          { cls: "apt-kp", name: "Lazarus", note: "Registry Run key persistence documented across DPRK-attributed operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Commodity Malware", note: "Universal - Emotet, TrickBot, IcedID, QakBot, Agent Tesla, and most RAT families use Run keys." },
+          { cls: "apt-mul", name: "Ransomware", note: "Run key persistence documented across nearly all ransomware families." }
         ],
         cite: "MITRE ATT&CK T1547.001"
       },
@@ -384,10 +386,12 @@ Reference: SANS poster
 - Good single-page reference for the technique surface`,
         notes: "Hunting established autostart persistence is one of the most fundamental Windows IR skills - if a host is suspected of being compromised, this sweep is almost always the first or second step. Sysinternals autoruns.exe is the canonical tool because Microsoft maintains its list of autostart locations and it covers 200+ extension points that PowerShell scripts miss. The PowerShell script above covers the high-value subset and is useful when you can't or shouldn't deploy autoruns.exe to a host (forensic preservation, locked-down environments, remote IR via WinRM where pushing a binary is awkward). The baseline-and-diff approach is the highest-fidelity hunting method: capture autoruns output on a known-good reference image, then diff against suspect hosts to surface only the entries that don't appear in the baseline. This collapses a 200-entry autoruns output into 5-10 entries worth investigating. The LastWriteTime trick for registry keys is genuinely useful in incident timelining - it tells you when the persistence was established, which often correlates with initial compromise or lateral movement events visible in other logs.",
         apt: [
-          { cls: "apt-act", name: "Universal", note: "Autostart persistence hunting catches virtually every malware family that survives reboots." },
           { cls: "apt-ru", name: "APT29", note: "Long-dwell operations require persistence hunting for full eviction - SolarWinds investigations relied heavily on autoruns-style sweeps." },
-          { cls: "apt-cn", name: "APT41", note: "Multi-stage operations with multiple persistence layers - hunting required to find all of them." },
-          { cls: "apt-act", name: "Red Teams", note: "Red team assessments commonly use established autostart locations - hunting is part of standard defensive validation." }
+          { cls: "apt-cn", name: "APT41", note: "Multi-stage operations with multiple persistence layers - hunting required to find all of them." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Universal", note: "Autostart persistence hunting catches virtually every malware family that survives reboots." },
+          { cls: "apt-mul", name: "Red Teams", note: "Red team assessments commonly use established autostart locations - hunting is part of standard defensive validation." }
         ],
         cite: "MITRE ATT&CK T1547.001"
       },
@@ -589,11 +593,13 @@ Reference: SANS DFIR
 - Comprehensive coverage of Run key abuse patterns`,
         notes: "Value name analysis is a behavioral fingerprinting approach to autostart hunting - it asks 'does this entry look like something a legitimate vendor would create, or does it look like an adversary's attempt to blend in?' The detection is necessarily fuzzy because legitimate software does occasionally use random-looking or generic value names, and adversaries with good opsec choose names that match the actual installed software on the target host. The strongest signals combine multiple flags: a Microsoft-sounding value name pointing to a binary in AppData is high-confidence malicious; a Microsoft-sounding value name pointing to a binary in C:\\Program Files\\Microsoft is probably legitimate. The 'name spoof + path mismatch' pattern is the highest-value single check because legitimate Microsoft software is consistently installed under Program Files paths, never in user-writable directories. Pair this hunt with the previous indicator's general autostart sweep - this indicator adds the spoofing/naming dimension that pure path-based detection might miss. False positives are inherent here - run this as a triage prioritizer, not a final alert.",
         apt: [
-          { cls: "apt-act", name: "Commodity Malware", note: "Most malware families use spoofed value names - product-name impersonation is universal tradecraft." },
           { cls: "apt-kp", name: "Lazarus", note: "Documented use of spoofed Microsoft / Adobe value names for Run key persistence." },
           { cls: "apt-cn", name: "APT41", note: "Value name spoofing documented across operations - matched to target environment's installed software." },
-          { cls: "apt-ir", name: "APT35", note: "Spoofed legitimate software names documented in CISA advisories on Iranian operations." },
-          { cls: "apt-act", name: "Red Teams", note: "Custom value naming to blend with target environment is standard red team persistence opsec." }
+          { cls: "apt-ir", name: "APT35", note: "Spoofed legitimate software names documented in CISA advisories on Iranian operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Commodity Malware", note: "Most malware families use spoofed value names - product-name impersonation is universal tradecraft." },
+          { cls: "apt-mul", name: "Red Teams", note: "Custom value naming to blend with target environment is standard red team persistence opsec." }
         ],
         cite: "MITRE ATT&CK T1547.001"
       }
@@ -808,8 +814,10 @@ MITRE / community references:
           { cls: "apt-ru", name: "APT29", note: "WMI subscription persistence documented across long-dwell espionage operations including SolarWinds." },
           { cls: "apt-cn", name: "APT41", note: "WMI event subscriptions used for persistence across multiple sector intrusions." },
           { cls: "apt-ru", name: "Turla", note: "Heavy use of WMI persistence documented in long-term espionage campaigns." },
-          { cls: "apt-mul", name: "FIN6", note: "WMI subscription persistence documented in financial sector intrusions." },
-          { cls: "apt-act", name: "Red Teams", note: "WMI subscription is standard red team persistence due to forensic evasiveness." }
+          { cls: "apt-mul", name: "FIN6", note: "WMI subscription persistence documented in financial sector intrusions." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Red Teams", note: "WMI subscription is standard red team persistence due to forensic evasiveness." }
         ],
         cite: "MITRE ATT&CK T1546.003"
       },
@@ -1021,8 +1029,10 @@ DEF CON / Black Hat talks:
           { cls: "apt-ru", name: "APT29", note: "Persistence-intent WMI subscriptions with boot triggers documented across long-dwell operations." },
           { cls: "apt-cn", name: "APT41", note: "WMI subscription with boot/logon triggers documented in sector-targeting intrusions." },
           { cls: "apt-ru", name: "Turla", note: "Sophisticated WMI subscription persistence documented across espionage campaigns." },
-          { cls: "apt-mul", name: "FIN6", note: "WMI persistence with CommandLineEventConsumer documented in financial sector cases." },
-          { cls: "apt-act", name: "Red Teams", note: "Boot-trigger + interpreter consumer is the canonical WMI persistence pattern - standard tradecraft." }
+          { cls: "apt-mul", name: "FIN6", note: "WMI persistence with CommandLineEventConsumer documented in financial sector cases." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Red Teams", note: "Boot-trigger + interpreter consumer is the canonical WMI persistence pattern - standard tradecraft." }
         ],
         cite: "MITRE ATT&CK T1546.003"
       }
@@ -1261,9 +1271,13 @@ Microsoft documentation:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Service-based persistence with custom binaries documented across espionage operations." },
           { cls: "apt-cn", name: "APT41", note: "Service persistence with binaries in non-standard paths documented in multiple intrusions." },
-          { cls: "apt-kp", name: "Lazarus", note: "Malicious service installation documented in CISA advisories on DPRK operations." },
-          { cls: "apt-act", name: "Ransomware", note: "Service persistence for propagation and re-encryption documented across Ryuk, Conti, BlackCat, LockBit families." },
-          { cls: "apt-mal", name: "Cobalt Strike", note: "Service-based persistence is built-in - common across red team and APT operations using the framework." }
+          { cls: "apt-kp", name: "Lazarus", note: "Malicious service installation documented in CISA advisories on DPRK operations." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Service-based persistence is built-in - common across red team and APT operations using the framework." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Service persistence for propagation and re-encryption documented across Ryuk, Conti, BlackCat, LockBit families." }
         ],
         cite: "MITRE ATT&CK T1543.003"
       },
@@ -1450,8 +1464,10 @@ Threat hunting references:
           { cls: "apt-cn", name: "APT41", note: "ServiceDll hijack documented across multiple sector intrusions - signature tradecraft." },
           { cls: "apt-cn", name: "ShadowPad", note: "ServiceDll-based persistence via svchost - canonical malware family for this technique." },
           { cls: "apt-cn", name: "PlugX", note: "Heavy use of svchost ServiceDll persistence - one of the most well-documented examples." },
-          { cls: "apt-cn", name: "APT41", note: "ServiceDll hijack documented across the broader APT41 / Winnti ecosystem." },
-          { cls: "apt-act", name: "Advanced Operators", note: "ServiceDll persistence indicates capable operators - rare in commodity malware, common in APT operations." }
+          { cls: "apt-cn", name: "APT41", note: "ServiceDll hijack documented across the broader APT41 / Winnti ecosystem." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Advanced Operators", note: "ServiceDll persistence indicates capable operators - rare in commodity malware, common in APT operations." }
         ],
         cite: "MITRE ATT&CK T1543.003"
       },
@@ -1660,9 +1676,11 @@ Manual workflow:
         notes: "Service hiding via security descriptor manipulation is one of the more sophisticated persistence techniques in Windows - it specifically targets the gap between how services are stored (registry) and how they're typically enumerated (Service Control Manager via sc.exe). The technique works because Windows allows arbitrary ACLs on service registry keys, and the standard enumeration tools respect those ACLs - so if the ACL denies your account read access, the service appears not to exist from your perspective. The registry-vs-SCM diff approach is the most reliable detection because it bypasses the ACL entirely: you're reading the registry directly and comparing against what the SCM returns. Any service in the registry that doesn't appear in the SCM enumeration is either hidden, broken, or in an unusual state - all warrant investigation. This is a relatively rare technique - more common in APT-level operations than commodity malware - so finding it is a strong signal of deliberate compromise. Pair with the ServiceDll hijack indicator: an adversary using ServiceDll hijack AND hiding the service via SD manipulation has built a particularly stealthy persistence layer that defeats most standard defender workflows. Velociraptor's Windows.System.Services artifact reads directly from the registry and is the best fleet-wide tool for surfacing this technique.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Service hiding via SD manipulation documented in long-dwell intrusion reports." },
-          { cls: "apt-cn", name: "APT41", note: "Service hiding tradecraft associated with capable operators - documented across multiple campaigns." },
-          { cls: "apt-act", name: "Advanced Operators", note: "Service hiding indicates deliberate evasion focus - rare in opportunistic intrusions." },
-          { cls: "apt-act", name: "Red Teams", note: "Custom implants supporting service hiding documented in red team toolkits." }
+          { cls: "apt-cn", name: "APT41", note: "Service hiding tradecraft associated with capable operators - documented across multiple campaigns." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Advanced Operators", note: "Service hiding indicates deliberate evasion focus - rare in opportunistic intrusions." },
+          { cls: "apt-mul", name: "Red Teams", note: "Custom implants supporting service hiding documented in red team toolkits." }
         ],
         cite: "MITRE ATT&CK T1543.003"
       }
@@ -1907,9 +1925,13 @@ PowerShell native (the script above):
         apt: [
           { cls: "apt-ru", name: "APT29", note: "OnLogon scheduled tasks documented across long-dwell operations." },
           { cls: "apt-cn", name: "APT41", note: "Scheduled task persistence with OnLogon and OnEvent triggers documented across multiple sector intrusions." },
-          { cls: "apt-kp", name: "Lazarus", note: "Persistence-intent scheduled tasks documented in CISA advisories on DPRK operations." },
-          { cls: "apt-act", name: "Ransomware", note: "Pre-encryption persistence via OnLogon tasks documented across Ryuk, Conti, BlackCat families." },
-          { cls: "apt-mal", name: "Cobalt Strike", note: "Default task persistence module uses OnLogon trigger - common across red team and APT operations." }
+          { cls: "apt-kp", name: "Lazarus", note: "Persistence-intent scheduled tasks documented in CISA advisories on DPRK operations." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "Default task persistence module uses OnLogon trigger - common across red team and APT operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Pre-encryption persistence via OnLogon tasks documented across Ryuk, Conti, BlackCat families." }
         ],
         cite: "MITRE ATT&CK T1053.005"
       },
@@ -2149,9 +2171,11 @@ KAPE (Eric Zimmerman):
         notes: "Hidden scheduled tasks via SD manipulation came to mainstream attention in April 2022 when Microsoft disclosed the Tarrask malware family used by HAFNIUM (China-nexus). The technique exploits the gap between how tasks are stored (filesystem XML + registry TaskCache mirror) and how they're typically enumerated (schtasks.exe and Get-ScheduledTask use the registry). By modifying or deleting the security descriptor on the TaskCache\\Tree registry entry, the adversary makes the task invisible to standard tools while leaving the XML in place so it still runs. The filesystem-vs-SCM diff in the PowerShell script is the most reliable detection because it bypasses the registry entirely - if the XML exists in C:\\Windows\\System32\\Tasks but Get-ScheduledTask doesn't list it, something is hiding it. This is one of those techniques that's rare enough that most defenders don't actively look for it, which makes it disproportionately valuable for adversaries who do use it. Tarrask persisted in HAFNIUM intrusions for months in some cases before being detected. Pair this hunt with the standard task enumeration in the previous indicator: together they cover both visible-but-suspicious tasks and tasks that have been deliberately hidden. Velociraptor's Windows.System.ScheduledTasks is the best fleet-wide tool because it reads XML directly rather than depending on the registry path.",
         apt: [
           { cls: "apt-cn", name: "HAFNIUM", note: "Tarrask malware - documented use of SD manipulation to hide scheduled tasks across long-dwell intrusions." },
-          { cls: "apt-cn", name: "APT41", note: "Hidden task tradecraft documented in sector-targeting operations." },
-          { cls: "apt-act", name: "Advanced Operators", note: "Hidden tasks indicate deliberate evasion focus - rare in commodity malware, common in APT operations." },
-          { cls: "apt-act", name: "Red Teams", note: "Custom implants supporting hidden task creation documented in advanced red team toolkits." }
+          { cls: "apt-cn", name: "APT41", note: "Hidden task tradecraft documented in sector-targeting operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Advanced Operators", note: "Hidden tasks indicate deliberate evasion focus - rare in commodity malware, common in APT operations." },
+          { cls: "apt-mul", name: "Red Teams", note: "Custom implants supporting hidden task creation documented in advanced red team toolkits." }
         ],
         cite: "MITRE ATT&CK T1053.005"
       }
@@ -2410,11 +2434,13 @@ LECmd by Eric Zimmerman:
   a forensic image rather than live host`,
         notes: "Startup folder persistence is the filesystem complement to Run key persistence - same effect (run at logon), different mechanism. The technique is universal: virtually every commodity malware family uses either Run keys, Startup folder LNKs, or both. The detection focus is twofold: real-time file creation in Startup paths (Sysmon EID 11) and hunting established LNKs with suspicious targets. The PowerShell LNK parser in the script is genuinely useful - it reads every LNK in every Startup path, parses the COM-accessible properties (TargetPath, Arguments, WorkingDirectory), and flags ones that point to interpreters or user-writable paths. Per-user Startup is more common than all-users because it requires no admin privileges - any compromised user account can persist itself. The non-LNK file check matters: while most adversary persistence uses LNK shortcuts, some malware drops .vbs or .bat files directly into the Startup folder. Any non-LNK file in a Startup folder is worth investigating because legitimate software almost always uses LNK shortcuts for startup entries. False positives: legitimate vendor software does create LNKs in the all-users Startup folder during install - signature checking on the LNK target binary helps filter these out.",
         apt: [
-          { cls: "apt-act", name: "Commodity Malware", note: "Universal across Emotet, IcedID, QakBot, AgentTesla, RemcosRAT, NjRAT, and most RAT families." },
           { cls: "apt-ru", name: "APT28", note: "Startup folder LNK persistence documented in spearphishing campaigns." },
           { cls: "apt-cn", name: "APT41", note: "Startup folder persistence documented across multiple sector intrusions." },
-          { cls: "apt-kp", name: "Lazarus", note: "LNK-based startup persistence documented in CISA advisories on DPRK operations." },
-          { cls: "apt-act", name: "Ransomware", note: "Persistence via Startup folder documented across most ransomware families." }
+          { cls: "apt-kp", name: "Lazarus", note: "LNK-based startup persistence documented in CISA advisories on DPRK operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Commodity Malware", note: "Universal across Emotet, IcedID, QakBot, AgentTesla, RemcosRAT, NjRAT, and most RAT families." },
+          { cls: "apt-mul", name: "Ransomware", note: "Persistence via Startup folder documented across most ransomware families." }
         ],
         cite: "MITRE ATT&CK T1547.009"
       },
@@ -2677,9 +2703,11 @@ Reference:
         notes: "LNK hijacking is the more sophisticated cousin of Startup folder LNK persistence. Instead of dropping a new shortcut in Startup, the adversary modifies a pre-existing shortcut the user already clicks regularly (browser, email client, IDE on the desktop or taskbar). The hijack triggers every time the user clicks that shortcut, providing persistence without a scheduled task or registry entry. The detection challenge: legitimate software occasionally modifies existing LNKs during updates (updating the target path when the binary moves to a versioned subdirectory), so 'any LNK modification' is too noisy. The PowerShell hunt focuses on suspicious target characteristics (interpreter, user-writable path, risky arguments) and icon-vs-target mismatch which is a strong indicator of the wrapper-and-launch hijack pattern - the LNK still has Chrome's icon but the target is now wrapper.exe. The technique is less common than Startup folder LNK persistence because it requires reading-and-modifying an existing file rather than just dropping a new one, but when found it's higher-confidence malicious because legitimate software very rarely targets pre-existing user shortcuts for modification. Pair this hunt with T1204.002 (User Execution) which covers the execution side when the user clicks the hijacked LNK.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "LNK modification documented in operations targeting multiple sectors." },
-          { cls: "apt-cn", name: "Mustang Panda", note: "LNK-based persistence including modification of existing shortcuts documented in operations against Southeast Asian governments." },
-          { cls: "apt-act", name: "Advanced Operators", note: "LNK hijacking indicates deliberate operator presence - rare in commodity malware, more common in targeted operations." },
-          { cls: "apt-act", name: "Red Teams", note: "Existing LNK hijacking documented in red team toolkits for evasive persistence." }
+          { cls: "apt-cn", name: "Mustang Panda", note: "LNK-based persistence including modification of existing shortcuts documented in operations against Southeast Asian governments." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Advanced Operators", note: "LNK hijacking indicates deliberate operator presence - rare in commodity malware, more common in targeted operations." },
+          { cls: "apt-mul", name: "Red Teams", note: "Existing LNK hijacking documented in red team toolkits for evasive persistence." }
         ],
         cite: "MITRE ATT&CK T1547.009"
       }
@@ -2878,9 +2906,11 @@ Sysinternals autoruns.exe:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Logon script persistence documented across multiple sector intrusions." },
           { cls: "apt-ru", name: "APT29", note: "Winlogon-family persistence documented in long-dwell espionage operations." },
-          { cls: "apt-kp", name: "Lazarus", note: "Userinit-family persistence documented in CISA advisories on DPRK operations." },
-          { cls: "apt-act", name: "Advanced Operators", note: "Less-known persistence locations preferred over common Run keys for evasion." },
-          { cls: "apt-act", name: "Red Teams", note: "Empire and SharPersist support these locations - standard advanced red team persistence." }
+          { cls: "apt-kp", name: "Lazarus", note: "Userinit-family persistence documented in CISA advisories on DPRK operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Advanced Operators", note: "Less-known persistence locations preferred over common Run keys for evasion." },
+          { cls: "apt-mul", name: "Red Teams", note: "Empire and SharPersist support these locations - standard advanced red team persistence." }
         ],
         cite: "MITRE ATT&CK T1037.001"
       },
@@ -3141,9 +3171,11 @@ Critical reference - SANS:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "GPO-based persistence documented in SolarWinds and other long-dwell operations." },
           { cls: "apt-cn", name: "APT41", note: "GPO modification for persistence documented across sector-targeting operations." },
-          { cls: "apt-act", name: "Ransomware", note: "GPO logon script deployment is a standard ransomware mass-deployment mechanism - documented across Ryuk, Conti, BlackCat, LockBit, REvil." },
-          { cls: "apt-mul", name: "FIN6", note: "Domain-level persistence including GPO abuse documented in financial sector intrusions." },
-          { cls: "apt-act", name: "Red Teams", note: "SharpGPOAbuse and BloodHound-driven attack paths make this standard advanced red team tradecraft after domain admin." }
+          { cls: "apt-mul", name: "FIN6", note: "Domain-level persistence including GPO abuse documented in financial sector intrusions." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "GPO logon script deployment is a standard ransomware mass-deployment mechanism - documented across Ryuk, Conti, BlackCat, LockBit, REvil." },
+          { cls: "apt-mul", name: "Red Teams", note: "SharpGPOAbuse and BloodHound-driven attack paths make this standard advanced red team tradecraft after domain admin." }
         ],
         cite: "MITRE ATT&CK T1037.003, T1484.001"
       }
@@ -3378,9 +3410,11 @@ Microsoft Defender for Identity (if licensed):
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Account manipulation for persistence documented extensively across SolarWinds follow-on activity." },
           { cls: "apt-cn", name: "APT41", note: "Privilege group additions and backdoor account creation documented across multiple sector intrusions." },
-          { cls: "apt-act", name: "Ransomware", note: "Privileged group additions standard tradecraft before encryption deployment - documented across Ryuk, Conti, BlackCat, LockBit." },
-          { cls: "apt-act", name: "Red Teams", note: "BloodHound-identified privilege paths + manual group additions are standard advanced red team tradecraft." },
           { cls: "apt-ir", name: "APT34", note: "Account manipulation for persistence documented in operations against Middle East targets." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Privileged group additions standard tradecraft before encryption deployment - documented across Ryuk, Conti, BlackCat, LockBit." },
+          { cls: "apt-mul", name: "Red Teams", note: "BloodHound-identified privilege paths + manual group additions are standard advanced red team tradecraft." }
         ],
         cite: "MITRE ATT&CK T1098, T1098.007"
       },
@@ -3613,9 +3647,11 @@ Reference:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Account manipulation and credential persistence documented across long-dwell espionage operations." },
           { cls: "apt-cn", name: "APT41", note: "Service account password manipulation documented across sector-targeting operations." },
-          { cls: "apt-act", name: "Ransomware", note: "Service account takeover for lateral movement standard across Ryuk, Conti, BlackCat operations." },
-          { cls: "apt-act", name: "Golden Ticket Operators", note: "Krbtgt manipulation for long-term Kerberos persistence documented across multiple advanced groups." },
           { cls: "apt-ir", name: "APT34", note: "Account credential manipulation documented in operations targeting Middle East infrastructure." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Service account takeover for lateral movement standard across Ryuk, Conti, BlackCat operations." },
+          { cls: "apt-mul", name: "Golden Ticket Operators", note: "Krbtgt manipulation for long-term Kerberos persistence documented across multiple advanced groups." }
         ],
         cite: "MITRE ATT&CK T1098"
       }
@@ -3854,9 +3890,11 @@ Microsoft Defender:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Local and domain account creation for persistence documented across espionage operations." },
           { cls: "apt-cn", name: "APT41", note: "Backdoor account creation documented across multiple sector intrusions." },
-          { cls: "apt-act", name: "Ransomware", note: "Backdoor admin account creation standard pre-encryption tradecraft across most ransomware operations." },
-          { cls: "apt-kp", name: "Lazarus", note: "Local account creation for persistence documented in CISA advisories on DPRK operations." },
-          { cls: "apt-act", name: "Red Teams", note: "Account creation with mimicry naming standard advanced red team persistence." }
+          { cls: "apt-kp", name: "Lazarus", note: "Local account creation for persistence documented in CISA advisories on DPRK operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Backdoor admin account creation standard pre-encryption tradecraft across most ransomware operations." },
+          { cls: "apt-mul", name: "Red Teams", note: "Account creation with mimicry naming standard advanced red team persistence." }
         ],
         cite: "MITRE ATT&CK T1136.001"
       },
@@ -4113,9 +4151,11 @@ Microsoft documentation:
         apt: [
           { cls: "apt-ru", name: "APT29", note: "Domain account creation for persistence documented across SolarWinds and long-dwell operations." },
           { cls: "apt-cn", name: "APT41", note: "Backdoor domain accounts documented across sector-targeting operations." },
-          { cls: "apt-act", name: "Ransomware", note: "Domain admin account creation standard pre-encryption tradecraft across most ransomware operations." },
           { cls: "apt-mul", name: "FIN6", note: "Domain account creation documented in financial sector intrusions." },
           { cls: "apt-ir", name: "APT34", note: "Domain account manipulation documented in operations against Middle East infrastructure." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Domain admin account creation standard pre-encryption tradecraft across most ransomware operations." }
         ],
         cite: "MITRE ATT&CK T1136.002, T1136.003"
       }
@@ -4390,9 +4430,11 @@ Reference research:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "COM hijacking documented across multiple sector intrusions - canonical advanced persistence example." },
           { cls: "apt-cn", name: "ZxShell", note: "COM hijack-based persistence is signature tradecraft for this malware family." },
-          { cls: "apt-cn", name: "Cobalt Group", note: "COM hijacking documented in financial sector operations." },
-          { cls: "apt-act", name: "Advanced Operators", note: "COM hijacking indicates deliberate sophisticated tradecraft - rare in commodity malware, common in capable APT operations." },
-          { cls: "apt-act", name: "Red Teams", note: "Empire and SharPersist COM hijack modules make this standard advanced red team tradecraft." }
+          { cls: "apt-cn", name: "Cobalt Group", note: "COM hijacking documented in financial sector operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Advanced Operators", note: "COM hijacking indicates deliberate sophisticated tradecraft - rare in commodity malware, common in capable APT operations." },
+          { cls: "apt-mul", name: "Red Teams", note: "Empire and SharPersist COM hijack modules make this standard advanced red team tradecraft." }
         ],
         cite: "MITRE ATT&CK T1546.015"
       },
@@ -4653,9 +4695,11 @@ procmon (Sysinternals):
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Phantom and shadow COM hijack variants documented across long-dwell operations." },
           { cls: "apt-cn", name: "ShadowPad", note: "COM hijacking documented as one persistence mechanism alongside service-based persistence." },
-          { cls: "apt-cn", name: "APT41", note: "TreatAs and phantom variants documented in capable operator operations." },
-          { cls: "apt-act", name: "Advanced Operators", note: "Multi-variant COM hijacking indicates deliberate sophisticated tradecraft - very rare in commodity malware." },
-          { cls: "apt-act", name: "Red Teams", note: "Phantom and TreatAs variants documented in advanced red team toolkits for evasive persistence." }
+          { cls: "apt-cn", name: "APT41", note: "TreatAs and phantom variants documented in capable operator operations." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Advanced Operators", note: "Multi-variant COM hijacking indicates deliberate sophisticated tradecraft - very rare in commodity malware." },
+          { cls: "apt-mul", name: "Red Teams", note: "Phantom and TreatAs variants documented in advanced red team toolkits for evasive persistence." }
         ],
         cite: "MITRE ATT&CK T1546.015"
       }
@@ -5083,8 +5127,10 @@ Sigma:
         notes: "The sweep approach is essential when you cannot trust that real-time detection caught every persistence write - either because auditd wasn't running or because the adversary disabled logging temporarily. Key anomalies to prioritize: (1) @reboot entries not associated with a known package installation, (2) entries with paths in /tmp, /dev/shm, /var/tmp, or user home directories, (3) entries with download commands (curl, wget, python -c), (4) frequency higher than daily for root-owned entries (legitimate system jobs almost never need every-minute execution), (5) cron entries that reference files with names mimicking system components (systemd-update, network-manager, atd). The cron.allow / cron.deny pair is frequently overlooked: if cron.deny is deleted and cron.allow does not exist, ALL users can create crontabs. Adversaries who gain a low-privilege shell may delete cron.deny to allow their compromised user account to schedule tasks. Baseline the existence and content of both files.",
         apt: [
           { cls: "apt-cn", name: "Rocke", note: "Uses /etc/cron.d entries with spoofed names (apache, sshd) containing curl|bash payloads; found via sweep not real-time detection." },
-          { cls: "apt-mul", name: "TeamTNT", note: "Cloud-focused actor; cron entries survive container restarts and host reboots, often missed during incident cleanup." },
-          { cls: "apt-act", name: "Cryptomining families", note: "Commodity cryptominers universally use cron for re-infection resilience; sweep is required to find all instances after partial remediation." }
+          { cls: "apt-mul", name: "TeamTNT", note: "Cloud-focused actor; cron entries survive container restarts and host reboots, often missed during incident cleanup." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Cryptomining families", note: "Commodity cryptominers universally use cron for re-infection resilience; sweep is required to find all instances after partial remediation." }
         ],
         cite: "MITRE ATT&CK T1053.003"
       }
@@ -5527,9 +5573,11 @@ auditd + ausearch:
         apt: [
           { cls: "apt-cn", name: "APT41", note: ".bashrc and profile.d injection documented in long-dwell Linux operations for user-session persistence." },
           { cls: "apt-kp", name: "Lazarus", note: "Shell RC modifications documented for credential harvesting and callback persistence on Linux targets." },
-          { cls: "apt-act", name: "Commodity Linux malware", note: "Shell RC modification is universally used across Linux malware for user-session persistence; lower sophistication actors use this before systemd/cron." },
-          { cls: "apt-act", name: "Web shell operators", note: "Threat actors with initial access via web shell frequently drop /etc/profile.d scripts for persistent root shell access." },
           { cls: "apt-ru", name: "Ebury", note: "SSH credential harvesting malware targeting hosting providers; shell config modification documented as secondary persistence." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Commodity Linux malware", note: "Shell RC modification is universally used across Linux malware for user-session persistence; lower sophistication actors use this before systemd/cron." },
+          { cls: "apt-mul", name: "Web shell operators", note: "Threat actors with initial access via web shell frequently drop /etc/profile.d scripts for persistent root shell access." }
         ],
         cite: "MITRE ATT&CK T1546.004"
       }
@@ -5760,8 +5808,10 @@ Package verify (check for sshd_config tampering):
           { cls: "apt-cn", name: "Volt Typhoon", note: "SSH authorized key planting documented during critical infrastructure pre-positioning operations." },
           { cls: "apt-cn", name: "UNC3524", note: "SSH key injection documented in long-dwell espionage operations; keys survived password resets because defenders focused on accounts, not key files." },
           { cls: "apt-ir", name: "APT39", note: "Iranian espionage group; SSH key injection documented for persistent access to compromised Linux servers." },
-          { cls: "apt-mul", name: "TeamTNT", note: "Cloud-targeted threat actor; injects SSH keys into compromised Docker hosts and cloud VMs as part of persistence chain." },
-          { cls: "apt-mal", name: "Skidmap", note: "Linux cryptomining malware with rootkit capability; SSH key injection documented alongside LKM rootkit for defense-in-depth persistence." }
+          { cls: "apt-mul", name: "TeamTNT", note: "Cloud-targeted threat actor; injects SSH keys into compromised Docker hosts and cloud VMs as part of persistence chain." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Skidmap", note: "Linux cryptomining malware with rootkit capability; SSH key injection documented alongside LKM rootkit for defense-in-depth persistence." }
         ],
         cite: "MITRE ATT&CK T1098.004"
       },
@@ -6127,10 +6177,14 @@ Volatility3 Linux plugins:
         notes: "Kernel module rootkits are the highest-severity Linux persistence mechanism - once loaded, they operate at Ring 0 (kernel privilege level) and can subvert all userland detection tools, including the auditd daemon that's supposed to catch them. The critical detection window is the module load event itself: once a rootkit is running, it can hide its own syscall table hooks, file entries, and module list presence. This makes init_module/finit_module syscall alerting (via auditd) the most important real-time signal - it fires before the rootkit can establish its hooks. The discrepancy technique for hunt mode is powerful: compare lsmod output against /sys/module/ directory listing. Some rootkits remove themselves from the module doubly-linked list (which lsmod reads) but cannot remove their /sys/module/ directory entry without kernel modification. The kernel taint flag in /proc/sys/kernel/tainted is another quick check: any value other than 0 indicates a module loaded that the kernel considers non-clean (unsigned, out-of-tree, or flagged). For investigations on potentially compromised hosts, do not trust userland tools if you suspect an active rootkit - collect a memory image using a trusted binary (AVML, LiME) from a separate storage path and analyze offline with Volatility.",
         apt: [
           { cls: "apt-ru", name: "APT28", note: "Drovorub includes a kernel module rootkit for persistence and concealment on Linux; documented in 2020 NSA/FBI advisory." },
-          { cls: "apt-ru", name: "Turla", note: "MITRE ATT&CK documents Turla using LKM components for long-term persistence and covert C2 communications on Linux servers." },
+          { cls: "apt-ru", name: "Turla", note: "MITRE ATT&CK documents Turla using LKM components for long-term persistence and covert C2 communications on Linux servers." }
+        ],
+        malware: [
           { cls: "apt-cn", name: "Skidmap", note: "Chinese-linked cryptominer with LKM rootkit component; replaces kernel module stat hooks to hide miner processes and network connections." },
-          { cls: "apt-mal", name: "Diamorphine / Reptile users", note: "Open-source LKM rootkits used by multiple financially motivated actors; self-removes from lsmod output to evade casual inspection." },
-          { cls: "apt-act", name: "Advanced ransomware operators", note: "Enterprise Linux ransomware operators have used LKM persistence to prevent defenders from identifying or removing the staging implant before encryption begins." }
+          { cls: "apt-mul", name: "Diamorphine / Reptile users", note: "Open-source LKM rootkits used by multiple financially motivated actors; self-removes from lsmod output to evade casual inspection." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Advanced ransomware operators", note: "Enterprise Linux ransomware operators have used LKM persistence to prevent defenders from identifying or removing the staging implant before encryption begins." }
         ],
         cite: "MITRE ATT&CK T1547.006"
       }
@@ -6376,10 +6430,14 @@ Wazuh:
         notes: "PAM backdoors are among the most dangerous Linux persistence mechanisms because they sit directly in the authentication path for every service on the host - SSH, sudo, su, login, and any PAM-aware application. A backdoored pam_unix.so with a master password gives an attacker authentication bypass that survives password resets, account deletions, and service restarts. What makes this especially insidious is that the authentication still succeeds for legitimate users - the backdoor adds an additional credential that works alongside normal credentials, so defenders see no authentication failures and no anomalous access patterns. The credential harvesting variant is equally dangerous: since PAM receives plaintext passwords before hashing, a malicious PAM module can log every password entered on the system, capturing admin credentials for lateral movement. Primary detection approach: file integrity monitoring on PAM module directories plus package manager verification after any suspicious system change. If dpkg --verify libpam-modules or rpm -V pam returns a '5' flag (checksum mismatch) on pam_unix.so, treat as critical compromise until proven otherwise. For the config-only variant (adding pam_permit.so to /etc/pam.d/sudo or common-auth), the file integrity alert on /etc/pam.d/ is your primary signal.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "PAM module replacement documented for credential harvesting and authentication bypass on Linux infrastructure." },
-          { cls: "apt-ru", name: "Ebury", note: "Most sophisticated PAM backdoor documented in the wild; targeted hosting providers globally for over a decade; harvests SSH credentials as plaintext via PAM hooks." },
+          { cls: "apt-ru", name: "Ebury", note: "Most sophisticated PAM backdoor documented in the wild; targeted hosting providers globally for over a decade; harvests SSH credentials as plaintext via PAM hooks." }
+        ],
+        malware: [
           { cls: "apt-cn", name: "Skidmap", note: "Linux cryptominer with PAM manipulation component alongside LKM rootkit; modifies pam_unix.so to accept a master password while maintaining normal authentication." },
-          { cls: "apt-mal", name: "linux-pam-backdoor", note: "Openly available PoC tool (github.com/zephrax) that patches pam_unix.so; used by financially motivated actors with Linux server access." },
-          { cls: "apt-act", name: "Advanced operators", note: "PAM backdoors document in campaigns targeting cloud server infrastructure; used for long-term credential access and persistence simultaneously." }
+          { cls: "apt-mul", name: "linux-pam-backdoor", note: "Openly available PoC tool (github.com/zephrax) that patches pam_unix.so; used by financially motivated actors with Linux server access." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Advanced operators", note: "PAM backdoors document in campaigns targeting cloud server infrastructure; used for long-term credential access and persistence simultaneously." }
         ],
         cite: "MITRE ATT&CK T1556.003"
       }
@@ -6628,9 +6686,13 @@ auditd + ausearch:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "rc.local modification for boot persistence on Linux and ESXi targets in documented campaigns." },
           { cls: "apt-cn", name: "UNC3524", note: "China-nexus actor (Mandiant); documented rc.local persistence on Linux mail infrastructure; used alongside SSH key injection for 18+ month dwell." },
-          { cls: "apt-ru", name: "Sandworm", note: "Russian GRU-linked actor; init.d scripts used on Linux hosts adjacent to ICS infrastructure in Ukraine-targeted operations." },
-          { cls: "apt-mal", name: "ESXiArgs ransomware", note: "VMware ESXi ransomware used /etc/rc.local.d/ persistence; Asher Langton documented custom Python backdoor via this mechanism (December 2022)." },
-          { cls: "apt-act", name: "Various Linux server actors", note: "rc.local is a favored low-noise persistence mechanism on older RHEL/CentOS server infrastructure targeted by espionage and financial actors." }
+          { cls: "apt-ru", name: "Sandworm", note: "Russian GRU-linked actor; init.d scripts used on Linux hosts adjacent to ICS infrastructure in Ukraine-targeted operations." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "ESXiArgs ransomware", note: "VMware ESXi ransomware used /etc/rc.local.d/ persistence; Asher Langton documented custom Python backdoor via this mechanism (December 2022)." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Various Linux server actors", note: "rc.local is a favored low-noise persistence mechanism on older RHEL/CentOS server infrastructure targeted by espionage and financial actors." }
         ],
         cite: "MITRE ATT&CK T1037.004"
       }
