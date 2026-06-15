@@ -62,8 +62,7 @@ hunt-reference/             # served at hunt.6b74.dev (one origin)
 ---
 
 ## Running it
-
-Serve the repo root over HTTP and open the landing page:
+Access the live site at `hunt.6b74.dev` or serve the repo root over HTTP and open the landing page:
 
 ```
 cd hunt-reference
