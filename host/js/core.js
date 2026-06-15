@@ -159,10 +159,18 @@ function buildRow(row, techId, rowId) {
     `<span class="apt-badge ${a.cls}">${a.name}</span>`
   ).join('');
 
+  // Include actor aliases in search index when actors.js is loaded.
+  // This lets "Fancy Bear" match an indicator attributed to "APT28".
+  const aptSearchStr = row.apt.map(a => {
+    const terms = (typeof getActorSearchTerms === 'function')
+      ? getActorSearchTerms(a.name) : a.name;
+    return terms + ' ' + (a.note || '');
+  }).join(' ');
+
   const searchText = [
     row.indicator, row.notes, row.sysmon, row.kibana, row.powershell,
     row.registry || '', row.tools || '', row.ossdetect || '',
-    row.apt.map(a => a.name + ' ' + (a.note||'')).join(' '),
+    aptSearchStr,
     row.cite || '', techId,
     (row.os === 'linux') ? 'linux unix' : 'windows win'
   ].join(' ').toLowerCase();
@@ -614,7 +622,19 @@ function applyFilters() {
     const aptMatch  = !activeApt  || row.dataset.apt.includes(activeApt);
     const osMatch   = !activeOs   || row.dataset.os === activeOs;
     const textMatch = !terms.length || terms.every(t => row.dataset.text.includes(t));
-    const aptTxt    = !aq || row.dataset.text.includes(aq);
+    // Alias-aware actor search: resolve the query to canonical names,
+    // then check if any of those names (or the raw query) appear in text.
+    let aptTxt = true;
+    if (aq) {
+      if (row.dataset.text.includes(aq)) {
+        aptTxt = true;
+      } else if (typeof resolveActorQuery === 'function') {
+        const resolved = resolveActorQuery(aq);
+        aptTxt = resolved.some(cn => row.dataset.text.includes(cn.toLowerCase()));
+      } else {
+        aptTxt = false;
+      }
+    }
 
     if (techMatch && aptMatch && osMatch && textMatch && aptTxt) {
       row.classList.remove('hidden');

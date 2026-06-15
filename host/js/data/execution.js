@@ -3738,8 +3738,9 @@ auditd:
   ausearch -k ldso_conf_write --start today`,
         notes: "/etc/ld.so.preload is the highest-severity LD_PRELOAD artifact: any library listed there is injected into every process that starts on the system, giving an attacker simultaneous hooks in sshd, sudo, cron, and every other daemon. On a clean system this file should not exist at all - its mere presence is a critical indicator warranting immediate investigation. The LD_PRELOAD environment variable variant is more targeted: it affects only processes launched from the shell where the variable is set, making it less persistent but harder to detect because it leaves no on-disk configuration artifact beyond a shell config modification. The detection counter is /proc/<pid>/environ, which preserves each running process's environment - scanning all running processes for LD_PRELOAD pointing to non-standard paths catches active exploitation. For the Ebury/Windigo family specifically: it targets the libssl shared library, hooking authentication functions to capture SSH credentials in plaintext from every SSH connection the server processes. This is not just persistence - it is a credential harvesting mechanism that affects every user authenticating through the compromised server. File integrity monitoring on /etc/ld.so.preload and package manager verification of core libraries (libc6, libssl) are the primary controls.",
         apt: [
-          { cls: "apt-ru", name: "Ebury / Windigo", note: "Most sophisticated LD_PRELOAD rootkit documented; hooks libssl to harvest SSH credentials from millions of OpenSSH servers globally." },
-          { cls: "apt-cn", name: "Rocke / 8220 Gang", note: "LD_PRELOAD process hiding used to conceal crypto mining from ps and monitoring agents on compromised cloud servers." },
+          { cls: "apt-ru", name: "Ebury", note: "Most sophisticated LD_PRELOAD rootkit documented; hooks libssl to harvest SSH credentials from millions of OpenSSH servers globally." },
+          { cls: "apt-mul", name: "Rocke", note: "LD_PRELOAD process hiding used to conceal crypto mining from ps and monitoring agents on compromised cloud servers." },
+          { cls: "apt-mul", name: "8220 Gang", note: "LD_PRELOAD-based process concealment in cloud cryptomining operations." },
           { cls: "apt-mul", name: "Azazel / Jynx2 users", note: "Open-source LD_PRELOAD rootkits used by financially motivated actors for credential harvesting and process hiding on Linux servers." }
         ],
         cite: "MITRE ATT&CK T1106"
@@ -3890,7 +3891,7 @@ LOLBAS project:
           { cls: "apt-cn", name: "APT41", note: "DLL side-loading is signature tradecraft - extensively documented across multiple sector operations." },
           { cls: "apt-cn", name: "PlugX", note: "Built around DLL side-loading via signed legitimate binaries - the canonical example of this technique." },
           { cls: "apt-cn", name: "ShadowPad", note: "Side-loading via signed binaries documented across long-running espionage operations." },
-          { cls: "apt-cn", name: "Winnti", note: "Side-loading techniques shared across the broader Winnti / APT41 ecosystem." },
+          { cls: "apt-cn", name: "APT41", note: "Side-loading techniques shared across the broader Winnti / APT41 ecosystem." },
           { cls: "apt-mul", name: "China-nexus APTs", note: "DLL side-loading is the most common single technique signature for China-nexus APT operations." }
         ],
         cite: "MITRE ATT&CK T1129, T1574.002"
@@ -4505,7 +4506,7 @@ Other:
           { cls: "apt-cn", name: "APT41", note: "Linux shell payloads and reverse shells used extensively against Linux servers and appliances." },
           { cls: "apt-ru", name: "APT28", note: "Unix shell execution incl. reverse shells documented against Linux infrastructure targets." },
           { cls: "apt-kp", name: "Lazarus", note: "Linux shell-based loaders and reverse shells in financial/supply-chain intrusions." },
-          { cls: "apt-mul", name: "Cryptojacking / TeamTNT", note: "curl|bash droppers are the near-universal delivery for Linux coinminers and worms." },
+          { cls: "apt-mul", name: "TeamTNT", note: "curl|bash droppers are the near-universal delivery for Linux coinminers and worms." },
         ],
         cite: "MITRE ATT&CK T1059.004",
       },
@@ -4682,8 +4683,10 @@ GRR / Velociraptor:
         notes: "Web server process spawning a shell is the single highest-confidence RCE indicator on Linux servers. nginx, Apache, PHP-FPM, and Java application servers have no legitimate reason to spawn an interactive shell. When you see httpd → bash or php-fpm → sh → wget in your process tree, you are looking at webshell execution or direct web vulnerability exploitation. The detection is straightforward to implement and extremely low false-positive: the parent process set (web workers) is small and well-defined, and any shell child is anomalous. Correlate with web access logs to identify the exploited endpoint: look for POST requests to small PHP files or unusual URL patterns in the seconds before the shell spawn. The CGI pattern (httpd directly spawning a shell) is less common on modern stacks but still appears on legacy systems. The modern pattern is php-fpm → dash → curl/wget/python, or java (Tomcat/Spring/Log4j) → sh → payload. Falco provides this detection as a built-in rule with near-zero tuning required. Deploy it or the equivalent Sigma/Elastic rule as a high-severity alert on any Linux server hosting web applications.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Exploits internet-facing applications (Log4j, Confluence, Citrix, F5) for initial access; web process → bash shell tree is the signature artifact." },
-          { cls: "apt-cn", name: "Salt/Volt Typhoon", note: "CISA-documented exploitation of internet-facing appliances; web process shell spawn observed in multiple advisories 2024-2025." },
-          { cls: "apt-ir", name: "MuddyWater / APT34", note: "PHP webshells used extensively for Linux server initial access; CGI/PHP-FPM parent → shell is characteristic." },
+          { cls: "apt-cn", name: "Salt Typhoon", note: "CISA-documented exploitation of internet-facing appliances; web process shell spawn observed in telecom targeting." },
+          { cls: "apt-cn", name: "Volt Typhoon", note: "CISA-documented exploitation of internet-facing appliances; living-off-the-land shell execution post-compromise on critical infrastructure 2024-2025." },
+          { cls: "apt-ir", name: "MuddyWater", note: "PHP webshells used for Linux server initial access; CGI/PHP-FPM parent to shell is characteristic." },
+          { cls: "apt-ir", name: "APT34", note: "Web shell operations extensively documented against Linux web servers in Middle East targeting." },
           { cls: "apt-ru", name: "APT28", note: "Web server exploitation against Linux infrastructure; web-spawned shell process tree documented." },
           { cls: "apt-mul", name: "Log4Shell / mass exploiters", note: "CVE-2021-44228 generated enormous volumes of java → sh → curl; many APT and criminal groups exploited this pattern." }
         ],
@@ -4882,7 +4885,7 @@ Shell audit note:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "History suppression documented as standard operational security across Linux intrusions; ${IFS} and eval obfuscation used in dropper scripts." },
           { cls: "apt-kp", name: "Lazarus", note: "HISTFILE manipulation and shell cleanup documented in post-exploitation stages of Linux financial sector intrusions." },
-          { cls: "apt-ru", name: "APT28 / Equation Group", note: "Advanced obfuscation and anti-forensics including history manipulation documented across campaigns." },
+          { cls: "apt-ru", name: "APT28", note: "Advanced obfuscation and anti-forensics including history manipulation documented across campaigns." },
           { cls: "apt-mul", name: "All interactive operators", note: "Unsetting HISTFILE is near-universal first-move tradecraft on any interactive Linux shell; applies across commodity and nation-state actors." }
         ],
         cite: "MITRE ATT&CK T1059.004"
@@ -5089,7 +5092,7 @@ Auditd:
   Catches SUID executions where login UID != effective UID`,
         notes: "SUID binaries and Linux capabilities are the primary sudo-less privilege escalation paths on Linux. The key insight is that SUID execution doesn't look like privilege escalation at the process-creation level - it is a normal binary invocation. The signal is in process metadata: effective UID (euid) differs from real UID (ruid), meaning the binary ran with elevated privileges. Auditd SYSCALL records capture both uid and auid (audit UID = the original login UID), so a comparison reveals SUID execution. The GTFOBins site catalogs every Unix binary that can turn SUID into a shell, and the list is longer than most defenders expect: find, awk, vim, less, more, env, tee, and many more. Linux capabilities are the subtler variant - instead of the full SUID bit, a binary gets specific kernel capabilities (cap_setuid, cap_dac_override) that grant targeted but still dangerous privileges. Critically, these do not appear in ls -la permissions output and require getcap to discover. A python3 binary with cap_setuid+ep is functionally equivalent to SUID root but invisible to the standard SUID hunt command.",
         apt: [
-          { cls: "apt-cn", name: "Rocke / 8220 Gang", note: "Post-compromise SUID enumeration and GTFOBins abuse documented as privilege escalation step in cloud server campaigns." },
+          { cls: "apt-cn", name: "Rocke", note: "Post-compromise SUID enumeration and GTFOBins abuse documented as privilege escalation step in cloud server campaigns." },
           { cls: "apt-mul", name: "Web shell operators", note: "www-data context with SUID perl or python on legacy servers grants root without any exploit; common in web exploitation post-ex chains." },
           { cls: "apt-mul", name: "Red team / pen test tooling", note: "LinPEAS, LinEnum, and Metasploit automate SUID and capabilities enumeration as standard first post-exploitation step." }
         ],
@@ -5751,8 +5754,9 @@ Velociraptor:
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Cron-based execution and persistence on compromised Linux servers documented across operations." },
           { cls: "apt-ru", name: "APT28", note: "Cron persistence used to maintain access on Linux infrastructure." },
-          { cls: "apt-mul", name: "TeamTNT / Kinsing", note: "Cron (esp. /etc/cron.d and @reboot) is the staple persistence/re-exec for Linux cryptojacking worms." },
-          { cls: "apt-mul", name: "Rocke / 8220 Gang", note: "Cron-based re-infection loops are signature behavior for Linux coinminer crews." },
+          { cls: "apt-mul", name: "TeamTNT", note: "Cron (esp. /etc/cron.d and @reboot) is the staple persistence/re-exec mechanism." },
+          { cls: "apt-mul", name: "Kinsing", note: "Cron-based persistence is characteristic of Kinsing cryptojacking worm deployment." },
+          { cls: "apt-mul", name: "Rocke", note: "Cron-based re-infection loops are signature behavior for Linux coinminer crews." },
         ],
         cite: "MITRE ATT&CK T1053.003",
       }
@@ -5937,7 +5941,7 @@ Custom Sigma rules are recommended for environments with
 legacy perl-heavy infrastructure.`,
         notes: "Perl reverse shells are a legacy technique that remains relevant on any Linux server where Perl is installed (which is most RHEL 6/7 and many Ubuntu systems). While Python has largely displaced Perl in modern attack tooling, Perl payloads are still encountered in exploitation of legacy CGI-era web applications, older OT-adjacent Linux systems, and situations where Python is absent but Perl is available. The canonical PentestMonkey Perl reverse shell is well-known and should be treated as a high-confidence alert: use Socket, fork, and exec /bin/sh in the same perl -e invocation with an outbound network connection is near-certain exploitation. For environments with legacy RHEL 6 or CentOS 6 systems - particularly common in OT/ICS adjacent networks - Perl webshell detection deserves priority attention because those systems often run Apache with CGI enabled and have perl in /usr/bin.",
         apt: [
-          { cls: "apt-ir", name: "Iran-nexus actors", note: "Perl post-exploitation scripts documented on compromised Linux infrastructure in multiple campaigns." },
+          { cls: "apt-ir", name: "MuddyWater", note: "Perl post-exploitation scripts documented on compromised Linux infrastructure in multiple campaigns." },
           { cls: "apt-kp", name: "Lazarus", note: "Older Lazarus tooling included Perl components; encountered on legacy Linux server targets." },
           { cls: "apt-mul", name: "Legacy web exploiters", note: "Perl reverse shells standard in CGI-era exploitation chains; still encountered on RHEL6/CentOS6 and legacy Apache systems." }
         ],
@@ -6167,9 +6171,10 @@ Velociraptor:
   Custom VQL for docker exec events`,
         notes: "Container administration exec commands (docker exec, kubectl exec, nsenter) are legitimate DevOps tools that also serve as primary lateral movement and post-exploitation mechanisms in containerized environments. The detection challenge is distinguishing authorized administrator use from attacker use: both generate identical process artifacts. Context is the key discriminator - alert on docker exec spawning a shell (bash/sh/dash) outside of expected maintenance windows, from unexpected source IPs or users, or targeting containers that should not have interactive sessions (databases, queue workers, monitoring agents). nsenter is especially powerful for attackers on the host: it allows entering a container's namespaces directly using the container's PID, bypassing the container runtime entirely, and requires only root or CAP_SYS_ADMIN on the host. The most dangerous scenario for detection purposes is a privileged container: any host-side exec into a privileged container, combined with nsenter --target 1 inside it, achieves full host root access. Falco provides the best real-time detection for container-side shell spawn; the Kubernetes audit log is the authoritative source for kubectl exec events.",
         apt: [
+          { cls: "apt-cn", name: "APT41", note: "Container exec and nsenter for lateral movement in cloud-targeted operations." },
           { cls: "apt-mul", name: "TeamTNT", note: "Cloud/container threat actor; documented use of docker exec for lateral movement between containers on compromised Docker hosts." },
-          { cls: "apt-mul", name: "Kinsing / Hildegard", note: "Cloud-targeted cryptominers; kubectl exec and docker exec used to run payloads in container environments." },
-          { cls: "apt-mul", name: "Container escape operators", note: "Privileged container exec chains (docker exec → nsenter --target 1) documented as container-to-host pivot across multiple campaigns." }
+          { cls: "apt-mul", name: "Kinsing", note: "Cloud-targeted cryptominers; kubectl exec and docker exec used to run payloads in container environments." },
+          { cls: "apt-mul", name: "Container escape operators", note: "Privileged container exec chains (docker exec to nsenter --target 1) documented as container-to-host pivot across multiple campaigns." }
         ],
         cite: "MITRE ATT&CK T1059.012"
       }

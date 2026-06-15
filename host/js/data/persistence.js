@@ -1450,7 +1450,7 @@ Threat hunting references:
           { cls: "apt-cn", name: "APT41", note: "ServiceDll hijack documented across multiple sector intrusions - signature tradecraft." },
           { cls: "apt-cn", name: "ShadowPad", note: "ServiceDll-based persistence via svchost - canonical malware family for this technique." },
           { cls: "apt-cn", name: "PlugX", note: "Heavy use of svchost ServiceDll persistence - one of the most well-documented examples." },
-          { cls: "apt-cn", name: "Winnti", note: "ServiceDll hijack documented across the broader APT41 / Winnti ecosystem." },
+          { cls: "apt-cn", name: "APT41", note: "ServiceDll hijack documented across the broader APT41 / Winnti ecosystem." },
           { cls: "apt-mul", name: "Advanced Operators", note: "ServiceDll persistence indicates capable operators - rare in commodity malware, common in APT operations." }
         ],
         cite: "MITRE ATT&CK T1543.003"
@@ -1660,7 +1660,7 @@ Manual workflow:
         notes: "Service hiding via security descriptor manipulation is one of the more sophisticated persistence techniques in Windows - it specifically targets the gap between how services are stored (registry) and how they're typically enumerated (Service Control Manager via sc.exe). The technique works because Windows allows arbitrary ACLs on service registry keys, and the standard enumeration tools respect those ACLs - so if the ACL denies your account read access, the service appears not to exist from your perspective. The registry-vs-SCM diff approach is the most reliable detection because it bypasses the ACL entirely: you're reading the registry directly and comparing against what the SCM returns. Any service in the registry that doesn't appear in the SCM enumeration is either hidden, broken, or in an unusual state - all warrant investigation. This is a relatively rare technique - more common in APT-level operations than commodity malware - so finding it is a strong signal of deliberate compromise. Pair with the ServiceDll hijack indicator: an adversary using ServiceDll hijack AND hiding the service via SD manipulation has built a particularly stealthy persistence layer that defeats most standard defender workflows. Velociraptor's Windows.System.Services artifact reads directly from the registry and is the best fleet-wide tool for surfacing this technique.",
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Service hiding via SD manipulation documented in long-dwell intrusion reports." },
-          { cls: "apt-cn", name: "Advanced China-nexus", note: "Service hiding tradecraft associated with capable operators - documented across multiple campaigns." },
+          { cls: "apt-cn", name: "APT41", note: "Service hiding tradecraft associated with capable operators - documented across multiple campaigns." },
           { cls: "apt-mul", name: "Advanced Operators", note: "Service hiding indicates deliberate evasion focus - rare in opportunistic intrusions." },
           { cls: "apt-mul", name: "Red Teams", note: "Custom implants supporting service hiding documented in red team toolkits." }
         ],
@@ -4653,7 +4653,7 @@ procmon (Sysinternals):
         apt: [
           { cls: "apt-cn", name: "APT41", note: "Phantom and shadow COM hijack variants documented across long-dwell operations." },
           { cls: "apt-cn", name: "ShadowPad", note: "COM hijacking documented as one persistence mechanism alongside service-based persistence." },
-          { cls: "apt-cn", name: "Advanced China-nexus", note: "TreatAs and phantom variants documented in capable operator operations." },
+          { cls: "apt-cn", name: "APT41", note: "TreatAs and phantom variants documented in capable operator operations." },
           { cls: "apt-mul", name: "Advanced Operators", note: "Multi-variant COM hijacking indicates deliberate sophisticated tradecraft - very rare in commodity malware." },
           { cls: "apt-mul", name: "Red Teams", note: "Phantom and TreatAs variants documented in advanced red team toolkits for evasive persistence." }
         ],
@@ -4891,10 +4891,10 @@ rkhunter / chkrootkit:
         apt: [
           { cls: "apt-cn", name: "Rocke", note: "Cryptocurrency mining group; installs cron jobs that re-download payloads from C2 every minute or hour across cloud server campaigns." },
           { cls: "apt-cn", name: "APT5", note: "NSA 2022 advisory documented APT5 modifying cron in /var/cron/tabs/ on compromised Citrix ADC appliances." },
-          { cls: "apt-kp", name: "APT38/BeagleBoyz", note: "FASTCash 2.0 campaign used scheduled cron commands to time ATM dispense operations; CISA/DISA advisory 2020." },
+          { cls: "apt-kp", name: "Lazarus", note: "FASTCash 2.0 campaign used scheduled cron commands to time ATM dispense operations; CISA/DISA advisory 2020." },
           { cls: "apt-ru", name: "GoldMax", note: "Linux variant of Sunburst-era RU tooling used @reboot crontab directive for boot persistence during long-dwell espionage." },
           { cls: "apt-mul", name: "TeamTNT", note: "Cloud-targeted credential theft and mining group; cron used for re-infection and C2 callbacks on compromised Docker/K8s instances." },
-          { cls: "apt-mul", name: "Kinsing / ESXiArgs", note: "Kinsing installs every-minute cron for re-download resilience; ESXiArgs ransomware used direct cron writes on VMware ESXi hosts." }
+          { cls: "apt-mul", name: "Kinsing", note: "Kinsing installs every-minute cron for re-download resilience; ESXiArgs ransomware used direct cron writes on VMware ESXi hosts." }
         ],
         cite: "MITRE ATT&CK T1053.003"
       },
@@ -5299,9 +5299,11 @@ Pepe Berba blog series:
 - Required reading for generator-based persistence`,
         notes: "Systemd service persistence is the Linux equivalent of creating a Windows service - it requires root for system-level units but only a valid user account for user-level units in ~/.config/systemd/user. The asymmetry matters: system services run as root and start at boot; user services run as the owning user and start at user login. Attackers frequently use system services for the stronger persistence guarantee. The ExecStart path is the primary IOC: legitimate system services almost never point to /tmp, /dev/shm, or home directories. The Restart=always directive is a second-order IOC - it ensures the payload respawns if killed, exactly what a defender would do during remediation. For detection, the strongest signal is a new .service file appearing in /etc/systemd/system that was not created by a package manager (apt, yum, dpkg, rpm). Diff the mtime of all .service files against the last known package installation timestamp. Systemd generators are an advanced and underdetected variant: executables placed in generator directories run at boot before normal services and can dynamically create additional unit files, making them a persistent foothold that survives even removal of the visible .service artifact.",
         apt: [
+          { cls: "apt-cn", name: "APT41", note: "Systemd unit persistence for long-term backdoor access on Linux infrastructure in documented campaigns." },
+          { cls: "apt-ru", name: "Turla", note: "Penguin Turla Linux operations use systemd service persistence for covert long-dwell access." },
           { cls: "apt-cn", name: "Rocke", note: "Installs systemd service files named to mimic system daemons (irqbalanced, sshd-sync); ExecStart points to miner binary in /usr/local/bin." },
           { cls: "apt-cn", name: "UNC3524", note: "Mandiant documented 18-month dwell on Linux servers; systemd service used as one of several persistence mechanisms." },
-          { cls: "apt-kp", name: "Gomir/Kimsuky", note: "Linux implant deployed as systemd service with spoofed ExecStart path to bypass casual review." },
+          { cls: "apt-kp", name: "Kimsuky", note: "Linux implant deployed as systemd service with spoofed ExecStart path to bypass casual review." },
           { cls: "apt-ru", name: "Ebury", note: "OpenSSH backdoor; uses systemd service for persistence on Linux servers globally, targeting hosting providers." },
           { cls: "apt-mul", name: "TeamTNT", note: "Cloud/container threat actor; drops systemd service files as part of post-exploitation persistence chain." }
         ],
@@ -5523,9 +5525,11 @@ auditd + ausearch:
 - ausearch --file /etc/profile.d/ --start today`,
         notes: "Shell configuration backdoors are among the simplest and hardest-to-notice Linux persistence mechanisms because the files are always present and frequently modified by legitimate package managers and users. The detection challenge is identifying unauthorized modifications rather than the files themselves. The /etc/profile.d directory is the highest-impact target - a single .sh file there runs for every user on every login, making it functionally equivalent to a local group policy startup script. It is also one of the most overlooked directories because administrators focus on /etc/profile rather than its fragments directory. Critical case to understand: ~/.bash_logout is frequently used specifically to clear bash history (unset HISTFILE; history -c; rm -f ~/.bash_history) - if you see this in a user's .bash_logout and it wasn't there in the baseline, the attacker is covering tracks. This wipe happens on clean logout, not kill/crash, so it runs on normal SSH session end. For detection in environments without file integrity monitoring, look at shell config file mtimes against the last known legitimate modification (package install, user home creation); unexpected mtime changes post-deployment are strong indicators.",
         apt: [
+          { cls: "apt-cn", name: "APT41", note: ".bashrc and profile.d injection documented in long-dwell Linux operations for user-session persistence." },
+          { cls: "apt-kp", name: "Lazarus", note: "Shell RC modifications documented for credential harvesting and callback persistence on Linux targets." },
           { cls: "apt-mul", name: "Commodity Linux malware", note: "Shell RC modification is universally used across Linux malware for user-session persistence; lower sophistication actors use this before systemd/cron." },
           { cls: "apt-mul", name: "Web shell operators", note: "Threat actors with initial access via web shell frequently drop /etc/profile.d scripts for persistent root shell access." },
-          { cls: "apt-ru", name: "Ebury / Windigo", note: "SSH credential harvesting malware targeting hosting providers; shell config modification documented as secondary persistence." }
+          { cls: "apt-ru", name: "Ebury", note: "SSH credential harvesting malware targeting hosting providers; shell config modification documented as secondary persistence." }
         ],
         cite: "MITRE ATT&CK T1546.004"
       }
@@ -5752,10 +5756,135 @@ Package verify (check for sshd_config tampering):
   (M flag = modified content; 5 = checksum mismatch)`,
         notes: "SSH authorized_keys injection is one of the most effective and durable Linux persistence mechanisms because it grants interactive shell access that survives password resets, account locks, and even service restarts (sshd reads authorized_keys on each connection attempt). A key injected in an obscure user account's authorized_keys file may persist for months or years if defenders focus remediation only on the primary compromised account. Two underdetected variants deserve special attention: (1) AuthorizedKeysCommand - sshd can be configured to execute a binary to determine authorized keys instead of reading a file; adversaries can set this to a script that always returns their key; (2) AuthorizedKeysFile pointing to an unconventional path - setting this in sshd_config to a world-readable file or a path the adversary controls means key injection persists even if ~/.ssh/ is cleaned. For cloud environments, the attack surface extends to metadata API abuse: AWS SSM, GCP OS Login, and Azure VM extensions can all push SSH public keys to authorized_keys from the control plane, bypassing host-side security controls entirely. Baseline the fingerprints of all authorized keys across your fleet and alert on any unrecognized fingerprint appearing.",
         apt: [
-          { cls: "apt-cn", name: "UNC3524 / Typhoon actors", note: "SSH key injection documented in long-dwell espionage operations; keys survived password resets because defenders focused on accounts, not key files." },
-          { cls: "apt-ir", name: "APT39 / Charming Kitten", note: "Iranian espionage group; SSH key injection documented for persistent access to compromised Linux servers." },
+          { cls: "apt-cn", name: "APT41", note: "SSH key injection for persistent backdoor access to compromised Linux servers in tech sector targeting." },
+          { cls: "apt-cn", name: "Volt Typhoon", note: "SSH authorized key planting documented during critical infrastructure pre-positioning operations." },
+          { cls: "apt-cn", name: "UNC3524", note: "SSH key injection documented in long-dwell espionage operations; keys survived password resets because defenders focused on accounts, not key files." },
+          { cls: "apt-ir", name: "APT39", note: "Iranian espionage group; SSH key injection documented for persistent access to compromised Linux servers." },
           { cls: "apt-mul", name: "TeamTNT", note: "Cloud-targeted threat actor; injects SSH keys into compromised Docker hosts and cloud VMs as part of persistence chain." },
-          { cls: "apt-mul", name: "Skidmap / cryptominers", note: "Linux cryptomining malware with rootkit capability; SSH key injection documented alongside LKM rootkit for defense-in-depth persistence." }
+          { cls: "apt-mul", name: "Skidmap", note: "Linux cryptomining malware with rootkit capability; SSH key injection documented alongside LKM rootkit for defense-in-depth persistence." }
+        ],
+        cite: "MITRE ATT&CK T1098.004"
+      },
+      {
+        sub: "T1098.004 - sshd_config Manipulation and Key Baseline Deviation",
+        os: "linux",
+        indicator: "Modifications to sshd_config enabling unauthorized access: PermitRootLogin changed to yes, AuthorizedKeysFile redirected to attacker-controlled path, AuthorizedKeysCommand set to fetch keys dynamically, or PubkeyAuthentication enabled where it was disabled, combined with authorized_keys files containing keys not present in the deployment baseline",
+        sysmon: `# Auditd rules - sshd_config and authorized_keys writes
+# These should already be in a security-hardened audit ruleset
+
+# sshd_config modification (any write)
+-w /etc/ssh/sshd_config -p wa -k sshd_config_write
+-w /etc/ssh/sshd_config.d/ -p wa -k sshd_config_write
+
+# authorized_keys writes across all user homes
+-w /root/.ssh/authorized_keys -p wa -k ssh_key_write
+-w /home/ -p wa -k ssh_key_write
+
+# Sysmon for Linux EID 11 (FileCreate) - new authorized_keys
+TargetFilename matches: *authorized_keys*
+  OR *authorized_keys2*
+  OR */etc/ssh/sshd_config*
+
+# sshd reload/restart after config change (the activation)
+Image=(*/systemctl OR */service) CommandLine=(*restart* OR *reload*) AND *sshd*`,
+        kibana: `// sshd_config writes
+file.path: "/etc/ssh/sshd_config" AND event.action: ("opened-for-write-by" OR "modified")
+
+// authorized_keys writes - any user
+file.path: *authorized_keys* AND event.action: ("opened-for-write-by" OR "modified")
+
+// sshd service reload (config activation)
+process.name: ("systemctl" OR "service")
+AND process.args: ("restart" OR "reload")
+AND process.args: "sshd"
+
+// Failed key-based auth followed by successful (key testing)
+system.auth.ssh.event: ("Failed" OR "Accepted")
+AND system.auth.ssh.method: "publickey"
+
+// Cloud metadata API access (EC2/GCE key injection vector)
+process.args: ("169.254.169.254" OR "metadata.google.internal")
+AND process.args: ("ssh" OR "keys" OR "authorized")`,
+        powershell: `# SSH key and sshd_config audit
+# Run as root on target Linux hosts
+
+echo "[*] === sshd_config Security Settings ==="
+grep -E '^(PermitRootLogin|AuthorizedKeysFile|AuthorizedKeysCommand|PubkeyAuthentication|PasswordAuthentication)' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null
+
+echo "[*] === All authorized_keys files ==="
+find / -name "authorized_keys*" -type f 2>/dev/null | while read f; do
+  echo "--- $f ($(stat -c '%U %a %y' "$f")) ---"
+  wc -l < "$f"
+  # Show key comments (the label at the end of each key line)
+  awk '{print NR": "$NF}' "$f"
+done
+
+echo "[*] === Recent sshd_config changes (mtime) ==="
+stat -c '%y %n' /etc/ssh/sshd_config
+find /etc/ssh/sshd_config.d/ -newer /etc/ssh/sshd_config -type f 2>/dev/null
+
+echo "[*] === Auditd records for ssh key writes ==="
+ausearch -k ssh_key_write -ts recent 2>/dev/null | head -30
+ausearch -k sshd_config_write -ts recent 2>/dev/null | head -30
+
+echo "[*] === Active SSH sessions ==="
+ss -tnp | grep ':22'
+who -a | grep 'pts/'`,
+        registry: `No registry artifact (Linux technique).
+
+Investigation pivots for sshd_config tampering:
+- PermitRootLogin yes: direct root login enabled, eliminates
+  the sudo audit trail an attacker would normally leave
+- AuthorizedKeysFile /path/to/attacker/file: redirects key
+  lookup away from the standard ~/.ssh/authorized_keys path,
+  allowing persistence invisible to standard key audits
+- AuthorizedKeysCommand /script: runs a command to dynamically
+  fetch authorized keys, can pull from cloud metadata or C2
+- PubkeyAuthentication yes + PasswordAuthentication no: locks
+  out legitimate users who don't have key-based access while
+  preserving attacker access via their injected key
+
+Key injection via cloud metadata API:
+- On AWS: curl http://169.254.169.254/latest/meta-data/public-keys/
+- Some malware fetches attacker keys from cloud metadata
+  endpoints after compromising the instance role`,
+        tools: `osquery:
+  SELECT * FROM authorized_keys;  (enumerates all keys across all users)
+  SELECT * FROM ssh_configs WHERE key IN
+    ('PermitRootLogin','AuthorizedKeysFile','AuthorizedKeysCommand');
+
+Lynis:
+  SSH hardening audit includes key file permission checks
+
+ssh-audit:
+  Protocol and configuration security assessment
+
+Ansible/Puppet baseline:
+  Drift detection for authorized_keys against deployment state
+
+Wazuh:
+  FIM rules for /etc/ssh/ and ~/.ssh/ directories`,
+        ossdetect: `Sigma:
+- lnx_auditd_sshd_config_modification.yml
+- lnx_auditd_ssh_authorized_keys_modification.yml
+
+Elastic Detection Rules:
+- SSH Authorized Keys File Modified
+- SSH Configuration Modification
+
+Wazuh:
+- Rule 5710: sshd configuration change
+- FIM alert on authorized_keys modification
+
+osquery:
+- Scheduled: authorized_keys row count change per user
+- Scheduled: ssh_configs value changes`,
+        notes: "The sshd_config manipulation angle is the stealth evolution of SSH key persistence. Basic SSH key injection (adding a key to authorized_keys) is now well-monitored by FIM tools and osquery, so sophisticated operators have shifted to more subtle approaches. Redirecting AuthorizedKeysFile to a non-standard path (/etc/ssh/admin_keys, /var/lib/sshd/.keys) means the keys won't appear in standard authorized_keys audits. Setting AuthorizedKeysCommand to a script that dynamically fetches keys means the persistence survives even if the authorized_keys file is cleaned. Enabling PermitRootLogin is the simplest high-impact change because it eliminates the sudo/su audit trail that connects actions to a named user account. The sshd_config changes require a service reload to take effect, so the sshd restart event is a useful correlation point. For cloud environments, key injection via instance metadata API compromise is an additional vector where the key never touches authorized_keys directly but instead appears through the cloud provider's key management integration.",
+        apt: [
+          { cls: "apt-cn", name: "APT41", note: "sshd_config manipulation and key injection for persistent Linux server access in documented campaigns." },
+          { cls: "apt-cn", name: "Volt Typhoon", note: "SSH configuration changes for persistent access during long-dwell critical infrastructure operations." },
+          { cls: "apt-cn", name: "UNC3524", note: "SSH key persistence survived password resets during 18-month dwell because defenders audited accounts, not key files." },
+          { cls: "apt-mul", name: "TeamTNT", note: "Authorized key injection plus sshd_config PermitRootLogin changes in cloud cryptojacking campaigns." }
         ],
         cite: "MITRE ATT&CK T1098.004"
       }
@@ -5997,7 +6126,8 @@ Volatility3 Linux plugins:
   linux.pslist          - find processes hidden from ps`,
         notes: "Kernel module rootkits are the highest-severity Linux persistence mechanism - once loaded, they operate at Ring 0 (kernel privilege level) and can subvert all userland detection tools, including the auditd daemon that's supposed to catch them. The critical detection window is the module load event itself: once a rootkit is running, it can hide its own syscall table hooks, file entries, and module list presence. This makes init_module/finit_module syscall alerting (via auditd) the most important real-time signal - it fires before the rootkit can establish its hooks. The discrepancy technique for hunt mode is powerful: compare lsmod output against /sys/module/ directory listing. Some rootkits remove themselves from the module doubly-linked list (which lsmod reads) but cannot remove their /sys/module/ directory entry without kernel modification. The kernel taint flag in /proc/sys/kernel/tainted is another quick check: any value other than 0 indicates a module loaded that the kernel considers non-clean (unsigned, out-of-tree, or flagged). For investigations on potentially compromised hosts, do not trust userland tools if you suspect an active rootkit - collect a memory image using a trusted binary (AVML, LiME) from a separate storage path and analyze offline with Volatility.",
         apt: [
-          { cls: "apt-ru", name: "Snake/Turla", note: "MITRE ATT&CK documents Turla using LKM components for long-term persistence and covert C2 communications on Linux servers." },
+          { cls: "apt-ru", name: "APT28", note: "Drovorub includes a kernel module rootkit for persistence and concealment on Linux; documented in 2020 NSA/FBI advisory." },
+          { cls: "apt-ru", name: "Turla", note: "MITRE ATT&CK documents Turla using LKM components for long-term persistence and covert C2 communications on Linux servers." },
           { cls: "apt-cn", name: "Skidmap", note: "Chinese-linked cryptominer with LKM rootkit component; replaces kernel module stat hooks to hide miner processes and network connections." },
           { cls: "apt-mul", name: "Diamorphine / Reptile users", note: "Open-source LKM rootkits used by multiple financially motivated actors; self-removes from lsmod output to evade casual inspection." },
           { cls: "apt-mul", name: "Advanced ransomware operators", note: "Enterprise Linux ransomware operators have used LKM persistence to prevent defenders from identifying or removing the staging implant before encryption begins." }
@@ -6245,7 +6375,8 @@ Wazuh:
   Triggers file integrity alert on any change`,
         notes: "PAM backdoors are among the most dangerous Linux persistence mechanisms because they sit directly in the authentication path for every service on the host - SSH, sudo, su, login, and any PAM-aware application. A backdoored pam_unix.so with a master password gives an attacker authentication bypass that survives password resets, account deletions, and service restarts. What makes this especially insidious is that the authentication still succeeds for legitimate users - the backdoor adds an additional credential that works alongside normal credentials, so defenders see no authentication failures and no anomalous access patterns. The credential harvesting variant is equally dangerous: since PAM receives plaintext passwords before hashing, a malicious PAM module can log every password entered on the system, capturing admin credentials for lateral movement. Primary detection approach: file integrity monitoring on PAM module directories plus package manager verification after any suspicious system change. If dpkg --verify libpam-modules or rpm -V pam returns a '5' flag (checksum mismatch) on pam_unix.so, treat as critical compromise until proven otherwise. For the config-only variant (adding pam_permit.so to /etc/pam.d/sudo or common-auth), the file integrity alert on /etc/pam.d/ is your primary signal.",
         apt: [
-          { cls: "apt-ru", name: "Ebury / Windigo", note: "Most sophisticated PAM backdoor documented in the wild; targeted hosting providers globally for over a decade; harvests SSH credentials as plaintext via PAM hooks." },
+          { cls: "apt-cn", name: "APT41", note: "PAM module replacement documented for credential harvesting and authentication bypass on Linux infrastructure." },
+          { cls: "apt-ru", name: "Ebury", note: "Most sophisticated PAM backdoor documented in the wild; targeted hosting providers globally for over a decade; harvests SSH credentials as plaintext via PAM hooks." },
           { cls: "apt-cn", name: "Skidmap", note: "Linux cryptominer with PAM manipulation component alongside LKM rootkit; modifies pam_unix.so to accept a master password while maintaining normal authentication." },
           { cls: "apt-mul", name: "linux-pam-backdoor", note: "Openly available PoC tool (github.com/zephrax) that patches pam_unix.so; used by financially motivated actors with Linux server access." },
           { cls: "apt-mul", name: "Advanced operators", note: "PAM backdoors document in campaigns targeting cloud server infrastructure; used for long-term credential access and persistence simultaneously." }
@@ -6495,8 +6626,9 @@ auditd + ausearch:
   ausearch -k initd_write --start today`,
         notes: "RC scripts are a legacy persistence mechanism that remains highly relevant because /etc/rc.local is still present and functional on most modern Linux distributions (typically bridged through the systemd rc-local.service compatibility unit). Unlike systemd services, rc.local requires no service file, no systemctl enable, and generates minimal audit artifacts if auditd isn't watching the file. On many default installations, /etc/rc.local exists but is empty or absent, making any new content immediately suspicious. The two-step detection: (1) watch for writes to /etc/rc.local and /etc/init.d/* in real time via auditd or file integrity monitoring; (2) sweep for anomalous content (especially payloads in /tmp, curl/wget, background processes with &) in any existing init scripts. SysV init.d scripts are slightly more complex because they require both the script file and rcN.d symlinks for autostart - however, the update-rc.d binary execution is a high-confidence signal, especially if invoked by a non-root user or a suspicious parent process. On ESXi, /etc/rc.local.d/*.sh is the equivalent and has been exploited by ransomware operators. Verify ESXi init scripts against VMware's published baseline or your golden image.",
         apt: [
+          { cls: "apt-cn", name: "APT41", note: "rc.local modification for boot persistence on Linux and ESXi targets in documented campaigns." },
           { cls: "apt-cn", name: "UNC3524", note: "China-nexus actor (Mandiant); documented rc.local persistence on Linux mail infrastructure; used alongside SSH key injection for 18+ month dwell." },
-          { cls: "apt-ru", name: "Sandworm / GRU", note: "Russian GRU-linked actor; init.d scripts used on Linux hosts adjacent to ICS infrastructure in Ukraine-targeted operations." },
+          { cls: "apt-ru", name: "Sandworm", note: "Russian GRU-linked actor; init.d scripts used on Linux hosts adjacent to ICS infrastructure in Ukraine-targeted operations." },
           { cls: "apt-mul", name: "ESXiArgs ransomware", note: "VMware ESXi ransomware used /etc/rc.local.d/ persistence; Asher Langton documented custom Python backdoor via this mechanism (December 2022)." },
           { cls: "apt-mul", name: "Various Linux server actors", note: "rc.local is a favored low-noise persistence mechanism on older RHEL/CentOS server infrastructure targeted by espionage and financial actors." }
         ],
