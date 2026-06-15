@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[Host] Persistence Hunt Ref (TA0003)</title>
+<title>[Host] Lateral Movement Hunt Ref (TA0008)</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
     <span class="switcher-side active">HOST</span>
     <a class="switcher-side" href="/attribution/">ATTRIB</a>
   </div>
-  <span class="tactic-badge" style="color:#39d353;border-color:#39d35340;background:#39d35312">TA0003 - Persistence</span>
+  <span class="tactic-badge" style="color:#da3633;border-color:#da363340;background:#da363312">TA0008 - Lateral Movement</span>
   <div class="search-row">
     <div class="search-box">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
@@ -28,25 +28,15 @@
   <div class="filter-row">
     <span class="filter-label">TTP</span>
     <button class="fbtn active" data-tech="all">All</button>
-    <button class="fbtn" data-tech="T1547.001">T1547.001</button>
-    <button class="fbtn" data-tech="T1546.003">T1546.003</button>
-    <button class="fbtn" data-tech="T1543.003">T1543.003</button>
-    <button class="fbtn" data-tech="T1053.005">T1053.005</button>
-    <button class="fbtn" data-tech="T1547.009">T1547.009</button>
-    <button class="fbtn" data-tech="T1037">T1037</button>
-    <button class="fbtn" data-tech="T1098">T1098</button>
-    <button class="fbtn" data-tech="T1136">T1136</button>
-    <button class="fbtn" data-tech="T1546.015">T1546.015</button>
+    <button class="fbtn" data-tech="T1021.002">T1021.002</button>
+    <button class="fbtn" data-tech="T1021.001">T1021.001</button>
+    <button class="fbtn" data-tech="T1021.004">T1021.004</button>
+    <button class="fbtn" data-tech="T1021.006">T1021.006</button>
+    <button class="fbtn" data-tech="T1550.002">T1550.002</button>
   </div>
   <div class="filter-row">
     <span class="filter-label" style="color:var(--green)">Linux</span>
-    <button class="fbtn" data-tech="T1053.003">T1053.003</button>
-    <button class="fbtn" data-tech="T1543.002">T1543.002</button>
-    <button class="fbtn" data-tech="T1546.004">T1546.004</button>
-    <button class="fbtn" data-tech="T1098.004">T1098.004</button>
-    <button class="fbtn" data-tech="T1547.006">T1547.006</button>
-    <button class="fbtn" data-tech="T1556.003">T1556.003</button>
-    <button class="fbtn" data-tech="T1037.004">T1037.004</button>
+    <button class="fbtn" data-tech="T1021.004">T1021.004</button>
   </div>
   <div class="filter-row">
     <span class="filter-label">Origin</span>
@@ -68,14 +58,13 @@
 </header>
 
 <nav class="tactic-nav">
-  <a href="execution.html" style="color:#a371f7">TA0002 - Execution</a>
-  <a href="persistence.html" class="current" style="color:#39d353">TA0003 - Persistence</a>
+  <a href="execution.html" style="color:#da3633">TA0008 - Lateral Movement</a>
+  <a href="persistence.html" style="color:#39d353">TA0003 - Persistence</a>
   <a href="privilege_escalation.html" style="color:#f85149">TA0004 - Privilege Escalation</a>
   <a href="defense_evasion.html" style="color:#58a6ff">TA0005 - Defense Evasion</a>
   <a href="credential_access.html" style="color:#f0883e">TA0006 - Credential Access</a>
-  <a href="lateral_movement.html" style="color:#da3633">TA0008 - Lateral Movement</a>
+  <a href="lateral_movement.html" class="current" style="color:#da3633">TA0008 - Lateral Movement</a>
   <a href="impact.html" style="color:#f97583">TA0040 - Impact</a>
-  
 </nav>
 
 <div id="hunt-panel">
@@ -111,7 +100,7 @@
 <!-- mobile floating toggle -->
 <button class="mobile-sidebar-btn" id="mobile-sidebar-btn">&#9776; Techniques</button>
 
-<script src="js/data/persistence.js"></script>
+<script src="js/data/lateral_movement.js"></script>
 <script src="js/actors.js"></script>
 <script src="js/core.js"></script>
 </body>
