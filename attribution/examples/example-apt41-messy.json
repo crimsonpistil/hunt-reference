@@ -1,0 +1,445 @@
+{
+  "_format": "tonk-attribution-state",
+  "_v": 1,
+  "exported": "2026-06-10T15:12:00.000Z",
+  "source": "example hunt — APT41 leads but contested (realistic)",
+  "indicatorCount": 11,
+  "items": {
+    "T1573_2": {
+      "indicator": "[OFF-NET TRIPWIRE] JA4 fingerprint inconsistent with claimed User-Agent - TLS client lying about browser identity",
+      "techId": "T1573",
+      "severity": "high",
+      "addedAt": 1781100000000,
+      "row": {
+        "sub": "T1573 - JA3/JA4 Client Fingerprint",
+        "indicator": "[OFF-NET TRIPWIRE] JA4 fingerprint inconsistent with claimed User-Agent - TLS client lying about browser identity",
+        "arkime": "ip.src == $MPNET\n&& protocols == [tls && http]\n&& http.user-agent == \"*Mozilla*\"\n&& tls.ja3 != $BROWSER_JA3_RANGE\n// JA3 covers most known-malicious implant fingerprints. See Suricata column for\n// JA4 if your sensor supports it.",
+        "kibana": "source.ip: $MPNET\nAND user_agent.original: *Mozilla*\nAND _exists_: tls.client.ja4\nAND NOT tls.client.ja4: $BROWSER_JA4_RANGE",
+        "suricata": "alert tls $HOME_NET any\n  -> $EXTERNAL_NET 443\n  (msg:\"TA0011 T1573 JA4 / UA\n    mismatch claimed browser TLS\n    fingerprint inconsistent\";\n  flow:established,to_server;\n  ja3.hash;\n  classtype:trojan-activity;\n  sid:9157303; rev:1;)",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Many implants spoof their User-Agent to look like a browser (Mozilla/5.0 with realistic browser version strings) but use a non-browser TLS library underneath, producing a JA4 fingerprint that doesn't match any real browser. The mismatch - claimed Chrome UA + non-Chrome JA4 - is a strong signal. Build $BROWSER_JA4_RANGE from current major browser fingerprints (Chrome, Firefox, Safari, Edge by version) - FoxIO publishes these. Then alert on any host claiming a browser UA but presenting a JA4 outside that range. Especially powerful against Python requests, Go http, and curl-based implants that try to blend in with browser-style UAs.",
+        "apt": [
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Documented use of spoofed browser UAs combined with non-browser TLS clients."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "JA3/JA4-vs-UA correlation is documented in Mandiant, Corelight, and FoxIO threat hunting research."
+          }
+        ],
+        "malware": [
+          {
+            "cls": "apt-mul",
+            "name": "Stealer",
+            "note": "Many stealer families use Python or Go HTTP libraries with spoofed Chrome UAs."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1573, T1071, FoxIO research"
+      }
+    },
+    "T1071_0": {
+      "indicator": "[OFF-NET TRIPWIRE] HTTP beacon - periodic GET to same URI with low jitter, characteristic of Cobalt Strike, Sliver, Mythic, Havoc",
+      "techId": "T1071",
+      "severity": "high",
+      "addedAt": 1781100073000,
+      "row": {
+        "sub": "T1071.001 - Web Protocols",
+        "indicator": "[OFF-NET TRIPWIRE] HTTP beacon - periodic GET to same URI with low jitter, characteristic of Cobalt Strike, Sliver, Mythic, Havoc",
+        "arkime": "ip.src == $MPNET\n&& protocols == http\n&& http.method == GET\n&& http.uri == [\"*/ca\", \"*/dpixel\", \"*/fwlink\", \"*/pixel\", \"*/__utm.gif\", \"*/jquery-3.3.1.min.js\", \"*/load\", \"*/api/x\"]\n&& session.length > 60\n&& packets.src < 50",
+        "kibana": "source.ip: $MPNET\nAND http.request.method: GET\nAND url.path: (\n  */ca OR */dpixel\n  OR */fwlink OR */pixel\n  OR */__utm.gif\n  OR */jquery-3.3.1.min.js\n  OR */load OR */api/x\n)\nAND network.packets < 50",
+        "suricata": "alert http $HOME_NET any\n  -> $EXTERNAL_NET any\n  (msg:\"TA0011 T1071.001 HTTP\n    beacon Cobalt Strike default\n    profile URI\";\n  flow:established,to_server;\n  content:\"GET\"; http.method;\n  pcre:\"/^\\/(ca|dpixel|fwlink|\n    pixel|__utm\\.gif|\n    jquery-3\\.3\\.1\\.min\\.js|\n    load|api\\/x)(\\?|$)/i\";\n  http.uri;\n  threshold:type both,\n    track by_src,\n    count 5, seconds 3600;\n  classtype:trojan-activity;\n  sid:9107101; rev:1;)",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Default Cobalt Strike malleable profiles use predictable URIs - /ca, /dpixel, /fwlink, /pixel, /__utm.gif (mimics Google Analytics), /jquery-3.3.1.min.js (mimics CDN). Customized profiles change these but most operators don't. Beacon periodicity is the more general signal: same internal-to-external pair with low jitter (sleep + small jitter window) over hours. Build per-pair session timing histograms in Kibana - periodic patterns stick out clearly. Pair with low databytes.src (beacon check-in is usually a few hundred bytes max) and low databytes.dst (no commands queued = small response).",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "APT29",
+            "note": "Uses Cobalt Strike extensively, documented in CISA and NSA advisories on Russian SVR operations."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Uses Cobalt Strike with custom malleable profiles in operations against technology, healthcare, and gaming sectors."
+          },
+          {
+            "cls": "apt-kp",
+            "name": "Lazarus",
+            "note": "Uses Cobalt Strike alongside custom implants in financial sector targeting."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Cobalt Strike is the most widely abused commercial C2 framework - leaked and cracked versions are used by the majority of ransomware affiliates."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1071.001, S0154 Cobalt Strike, industry reporting"
+      }
+    },
+    "T1602.002_0": {
+      "indicator": "SNMP bulk walk of CISCO-CONFIG-COPY-MIB - config dump via SNMP",
+      "techId": "T1602.002",
+      "severity": "high",
+      "addedAt": 1781100146000,
+      "row": {
+        "sub": "T1602.002 - SNMP Config Walk",
+        "indicator": "SNMP bulk walk of CISCO-CONFIG-COPY-MIB - config dump via SNMP",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 161\nAND snmp.oid: (1.3.6.1.4.1.9.9.96.* OR 1.3.6.1.4.1.9.2.1.55.*)",
+        "suricata": "alert udp $HOME_NET any\n  -> $NETWORK_DEVICES 161\n  (msg:\"TA0009 T1602.002 SNMP\n    CISCO-CONFIG-COPY-MIB walk\n    config dump\";\n  content:\"|2b 06 01 04 01 09 09 60|\";\n  classtype:trojan-activity;\n  sid:9160202; rev:1;)",
+        "notes": "CISCO-CONFIG-COPY-MIB (1.3.6.1.4.1.9.9.96) and OLD-CISCO-SYSTEM-MIB (1.3.6.1.4.1.9.2.1.55) both allow remote dumping of running and startup configurations via SNMP - typically to a TFTP server. Adversaries with SNMP write community strings (or read-only on misconfigured devices) can pull configs containing: enable secrets (often weakly hashed), VPN preshared keys, BGP/OSPF auth keys, ACL contents, NAT rules. Volt Typhoon and other infrastructure-focused threats heavily target Cisco IOS, Juniper, Fortinet config extraction. Detection: SNMP getbulk/getnext walks of these specific OIDs, particularly from sources outside the $NETWORK_ADMINS allowlist. Pair with subsequent TFTP transfer (UDP/69) or SCP from network device to attacker - the config copy operation often uses TFTP put. Modern best practice: SNMPv3 with auth/priv (replacing SNMPv1/v2c community strings), restrict SNMP source IPs at device ACL, monitor SNMP set operations.",
+        "apt": [
+          {
+            "cls": "apt-cn",
+            "name": "Salt Typhoon",
+            "note": "Dumps network device configurations to acquire credentials (weakly-encrypted enable secrets, VPN PSKs), then cracks them offline - the foothold for their telecom intrusions (CISA AA25-... Salt Typhoon advisory)."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "Volt Typhoon",
+            "note": "Network device config theft documented heavily in CISA AA23-144A targeting US critical infrastructure."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Network device targeting in operations against telecom and ISP targets."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "Historical targeting of network device configs in espionage operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Configs reveal architecture, secrets, and ACLs for follow-on operations."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Network-focused threats",
+            "note": "Living-off-the-land approach using device's own config-copy mechanisms."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1602.002, CISA AA23-144A"
+      }
+    },
+    "T1003.001_0": {
+      "indicator": "SMB write of memory dump files - exfiltrating LSASS dumps",
+      "techId": "T1003.001",
+      "severity": "high",
+      "addedAt": 1781100219000,
+      "row": {
+        "sub": "T1003.001 - LSASS Dump Exfiltration",
+        "indicator": "SMB write of memory dump files - exfiltrating LSASS dumps",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 445\nAND file.name: (*lsass*.dmp* OR *.dmp OR *memory.dmp)\nAND file.size > 10485760",
+        "suricata": "alert tcp $HOME_NET any\n  -> $HOME_NET 445\n  (msg:\"TA0006 T1003.001 SMB write\n    of memory dump file LSASS\n    exfiltration\";\n  flow:established,to_server;\n  pcre:\"/(lsass\\.dmp|memory\\.dmp|\n    \\.dmp)/i\";\n  classtype:trojan-activity;\n  sid:9100301; rev:1;)",
+        "notes": "If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. LSASS memory dumping (Mimikatz, ProcDump, Task Manager, comsvcs.dll MiniDump, custom tools) produces a .dmp file (typically 50-150MB for LSASS). Adversaries then exfiltrate the dump for offline credential extraction with pypykatz or Mimikatz. Network signal at the exfiltration step: SMB write of large .dmp files. The 10MB minimum threshold filters out small unrelated dumps. False positives: legitimate crash dumps being moved by IT, Windows Error Reporting (WER) artifacts - both should originate from sanctioned crash-collection servers ($CRASH_DUMP_SERVERS allowlist). After exclusions, large .dmp file movement is typically credential exfiltration. Pair with subsequent activity that suggests offline credential cracking: outbound traffic to attacker infrastructure, downloads of Mimikatz tools.",
+        "apt": [
+          {
+            "cls": "apt-cn",
+            "name": "Volt Typhoon",
+            "note": "Downloaded an outdated comsvcs.dll to a compromised domain controller in a non-standard folder to MiniDump LSASS, then accessed the hashed credentials (CISA AA24-038A)."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Scattered Spider",
+            "note": "LSASS dumping documented in CISA AA23-320A operations."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT29",
+            "note": "LSASS dumps used in SolarWinds compromise."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "LSASS dumping in operations across multiple sectors."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "Universal in ransomware operations for credential harvesting before encryption."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented across virtually all advanced threat operations."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1003.001, CISA AA23-320A, CISA AA24-038A"
+      }
+    },
+    "T1018_4": {
+      "indicator": "Reverse DNS PTR queries against internal ranges - host enumeration via DNS",
+      "techId": "T1018",
+      "severity": "high",
+      "addedAt": 1781100292000,
+      "row": {
+        "sub": "T1018 - DNS-Based Host Discovery",
+        "indicator": "Reverse DNS PTR queries against internal ranges - host enumeration via DNS",
+        "arkime": "ip.src == $MPNET\n&& ip.src != $DNS_SERVERS\n&& protocols == dns\n&& dns.query.type == PTR\n&& host.dns == \"*.in-addr.arpa\"",
+        "kibana": "source.ip: $MPNET\nAND NOT source.ip: $DNS_SERVERS\nAND dns.question.type: \"PTR\"\nAND dns.question.name: *in-addr.arpa",
+        "suricata": "alert dns $HOME_NET any\n  -> any 53\n  (msg:\"TA0007 T1018 Reverse DNS\n    PTR query burst internal\n    host enumeration\";\n  flow:stateless;\n  dns.query;\n  pcre:\"/in-addr\\.arpa$/\";\n  threshold:type both,\n    track by_src,\n    count 50, seconds 300;\n  classtype:attempted-recon;\n  sid:9101804; rev:1;)",
+        "notes": "Reverse DNS lookups (PTR queries against in-addr.arpa) resolve IP addresses to hostnames. Adversaries enumerate internal hostnames by issuing PTR queries against every IP in a target range - much stealthier than ICMP sweeps because DNS traffic is universally allowed and rarely scrutinized. Tools: nslookup loops, dnsrecon, custom PowerShell. The signal: a non-DNS-server internal host issuing 50+ PTR queries against in-addr.arpa zones in 5 minutes. DNS servers themselves do this legitimately when handling client lookups - exclude $DNS_SERVERS. Workstations and application servers should rarely issue bulk PTR queries. The query stream looks like 1.0.10.in-addr.arpa, 2.0.10.in-addr.arpa, 3.0.10.in-addr.arpa, etc. - easy pattern to spot in Zeek dns.log. Combine with EDR for nslookup.exe/PowerShell process attribution.",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "APT29",
+            "note": "DNS-based reconnaissance documented in espionage operations."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "DNS-based host enumeration in technology sector operations."
+          },
+          {
+            "cls": "apt-kp",
+            "name": "Lazarus",
+            "note": "DNS PTR enumeration in financial sector targeting."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Stealth alternative to ICMP sweeps - particularly useful in environments with strict ICMP egress filtering. Documented in MITRE ATT&CK and SANS threat hunting guidance."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1018, SANS hunting"
+      }
+    },
+    "T1041_2": {
+      "indicator": "DNS tunneling exfiltration - high-volume TXT/A query patterns to single domain",
+      "techId": "T1041",
+      "severity": "high",
+      "addedAt": 1781100365000,
+      "row": {
+        "sub": "T1041 - DNS Tunneling Exfil",
+        "indicator": "DNS tunneling exfiltration - high-volume TXT/A query patterns to single domain",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 53\nAND dns.question.name.length > 50",
+        "suricata": "alert udp $HOME_NET any\n  -> any 53\n  (msg:\"TA0010 T1041 DNS tunneling\n    exfil high subdomain unique\n    count single parent domain\";\n  content:\"|01 00 00 01|\"; depth:8;\n  threshold:type both,\n    track by_src,\n    count 100, seconds 600;\n  classtype:trojan-activity;\n  sid:9104102; rev:1;)",
+        "notes": "DNS tunneling encodes data into DNS queries - typically as base32/base64-encoded subdomains under an attacker-controlled parent domain. Each query exfils a small chunk; thousands of queries exfil a meaningful payload. Tools: dnscat2, iodine, DNSExfiltrator, custom. Pattern: many unique subdomains under one parent domain, queries longer than typical (50+ characters), high query rate from one source. Detection: aggregate unique subdomain count per (source, parent_domain) - legitimate DNS rarely exceeds 20-30 unique subdomains under one parent in a 10-minute window. Some legitimate services trigger false positives (CDNs, security products with DNS-based reputation lookups, email anti-spam services) - build allowlists for known-good parent domains. Zeek's dns.log captures all of this beautifully; SIEM aggregation queries are the right detection layer. DNS tunneling is slow but extraordinarily stealthy - many environments don't egress-monitor DNS at all, making it a preferred channel for high-stealth operations.",
+        "apt": [
+          {
+            "cls": "apt-ir",
+            "name": "APT34",
+            "note": "DNS tunneling documented in OilRig operations against Middle Eastern targets."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "DNS-based C2/exfil in sustained operations."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "Turla",
+            "note": "DNS tunneling extensively used in espionage operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented across advanced persistent threats requiring covert exfiltration."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Stealth Operators",
+            "note": "Preferred for high-stealth long-term collection."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1041, T1071.004"
+      }
+    },
+    "T1071_4": {
+      "indicator": "[OFF-NET TRIPWIRE] Outbound FTP from non-file-server host - interactive FTP session for C2 or staging",
+      "techId": "T1071",
+      "severity": "high",
+      "addedAt": 1781100438000,
+      "row": {
+        "sub": "T1071.002 - File Transfer Protocols",
+        "indicator": "[OFF-NET TRIPWIRE] Outbound FTP from non-file-server host - interactive FTP session for C2 or staging",
+        "arkime": "ip.src == $MPNET\n&& ip.src != $FILE_SERVERS\n&& protocols == ftp\n&& port.dst == 21\n&& ip.dst != $ALLOWED_DEFAULTS\n&& session.length > 30",
+        "kibana": "source.ip: $MPNET\nAND NOT source.ip: $FILE_SERVERS\nAND destination.port: 21\nAND network.protocol: ftp\nAND NOT destination.ip: $ALLOWED_DEFAULTS",
+        "suricata": "alert tcp $HOME_NET any\n  -> $EXTERNAL_NET 21\n  (msg:\"TA0011 T1071.002 Outbound\n    FTP from non-file-server host\n    possible C2\";\n  flow:established,to_server;\n  content:\"USER \"; depth:5;\n  classtype:trojan-activity;\n  sid:9107105; rev:1;)",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. FTP (TCP/21) is largely deprecated for legitimate use - SFTP, FTPS, and HTTPS file transfer have replaced it. End-user workstations and application servers shouldn't initiate outbound FTP. When they do, it's often legacy systems pulling from internal mirrors (legitimate but should be on internal IPs only) or implants using FTP as a low-sophistication C2/exfil channel. The USER command at the start of the session reveals the username being used - adversary credentials often appear here in cleartext. Zeek ftp.log captures the full transaction including filenames transferred. FTP data channel uses dynamic ports (passive mode) - the control channel on 21 is what's reliably visible.",
+        "apt": [
+          {
+            "cls": "apt-ir",
+            "name": "APT33",
+            "note": "Has used FTP for C2 and exfiltration in operations against energy sector targets."
+          },
+          {
+            "cls": "apt-kp",
+            "name": "Lazarus",
+            "note": "Has used FTP-based exfiltration in financial sector operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "FTP-based C2 is documented in older campaign reporting and remains in use by some criminal actors as a low-sophistication channel."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1071.002, industry reporting"
+      }
+    },
+    "T1114.002_0": {
+      "indicator": "[OFF-NET TRIPWIRE] EWS FindItem / GetItem burst - bulk email enumeration via Exchange Web Services",
+      "techId": "T1114.002",
+      "severity": "high",
+      "addedAt": 1781100511000,
+      "row": {
+        "sub": "T1114.002 - EWS Bulk Enumeration",
+        "indicator": "[OFF-NET TRIPWIRE] EWS FindItem / GetItem burst - bulk email enumeration via Exchange Web Services",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 443\nAND url.path: */EWS/Exchange.asmx*\nAND http.request.method: \"POST\"\nAND http.request.body: (*FindItem* OR *GetItem* OR *ExportItems*)",
+        "suricata": "alert tcp $HOME_NET any\n  -> $EXCHANGE_HOSTS 443\n  (msg:\"TA0009 T1114.002 EWS bulk\n    item enumeration email\n    collection burst\";\n  flow:established,to_server;\n  content:\"/EWS/Exchange.asmx\";\n  http_uri;\n  pcre:\"/(<m:FindItem|<m:GetItem|\n    <t:ExportItems)/i\";\n  threshold:type both,\n    track by_src,\n    count 100, seconds 600;\n  classtype:trojan-activity;\n  sid:9111402; rev:1;)",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects connections to off-MPNet infrastructure that should be unreachable from an air-gapped environment. Any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Exchange Web Services (EWS) at /EWS/Exchange.asmx is the SOAP API used by Outlook for Mac, mobile clients, and many third-party tools. It's also the API used by adversary tools like MailSniper, FireEye's RuleSnoop, and custom Python/PowerShell scripts. FindItem enumerates mailbox contents; GetItem retrieves specific items; ExportItems pulls items in bulk. The high-volume detection threshold (100 calls in 10 min) tunes for normal heavy mail clients; adjust per environment. Particularly important for on-prem Exchange or hybrid deployments. For M365 Exchange Online, much of this traffic terminates at outlook.office365.com - detection moves to M365 audit logs (mailbox audit, particularly MailItemsAccessed events for E5 licenses). Graph API equivalents at graph.microsoft.com/v1.0/me/messages produce similar network patterns.",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "APT29",
+            "note": "Bulk email collection via EWS heavily documented in operations against government and tech targets."
+          },
+          {
+            "cls": "apt-ir",
+            "name": "APT34",
+            "note": "MailSniper-like tooling against Exchange in Middle East operations."
+          },
+          {
+            "cls": "apt-kp",
+            "name": "Lazarus",
+            "note": "Executive email targeting for financial intelligence."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented across espionage operations targeting Exchange/M365 environments."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1114.002"
+      }
+    },
+    "T1558.003_0": {
+      "indicator": "Kerberos TGS-REQ with RC4-HMAC etype - Kerberoasting signature",
+      "techId": "T1558.003",
+      "severity": "high",
+      "addedAt": 1781100584000,
+      "row": {
+        "sub": "T1558.003 - RC4 Ticket Requests",
+        "indicator": "Kerberos TGS-REQ with RC4-HMAC etype - Kerberoasting signature",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 88\nAND kerberos.msg_type: \"tgs-req\"\nAND kerberos.cipher: \"rc4-hmac\"\nAND NOT kerberos.cname: krbtgt",
+        "suricata": "alert tcp $HOME_NET any\n  -> $DOMAIN_CONTROLLERS 88\n  (msg:\"TA0006 T1558.003 Kerberos\n    TGS-REQ with RC4-HMAC etype\n    Kerberoasting signature\";\n  flow:established,to_server;\n  content:\"|a0 03 02 01 05|\"; depth:5;\n  content:\"|a1 03 02 01 0c|\"; within:20;\n  content:\"|a0 03 02 01 17|\";\n  classtype:trojan-activity;\n  sid:9155801; rev:1;)",
+        "notes": "In modern AD environments (2008 R2+), Kerberos defaults to AES256 for service tickets when both client and server support it. RC4-HMAC (etype 23, encoded as 0x17 in ASN.1) is requested explicitly by Kerberoasting tools to produce crackable hashes. Detection: TGS-REQ messages where etype includes RC4 but doesn't include AES, or where the requested service is anomalous. Tools: Rubeus (kerberoast command), Impacket GetUserSPNs.py, PowerView Invoke-Kerberoast, BloodHound's roastable users query. The msg-type=12 = TGS-REQ; cipher=rc4-hmac in Zeek's kerberos.log is the canonical detection field. Modern environments should set 'msDS-SupportedEncryptionTypes' on service accounts to AES-only - accounts still permitting RC4 are the roastable targets. Pair with subsequent service ticket use (rare for Kerberoasting since the goal is offline cracking) for full-chain.",
+        "apt": [
+          {
+            "cls": "apt-mul",
+            "name": "Scattered Spider",
+            "note": "Documented in CISA AA23-320A operations."
+          },
+          {
+            "cls": "apt-ir",
+            "name": "APT34",
+            "note": "Kerberoasting in operations against Middle Eastern government and energy targets."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "Universal in ransomware affiliate playbooks for service account credential compromise."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented across virtually all advanced threat actor operations targeting AD environments."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Red Team",
+            "note": "Kerberoasting is universal in red team operations - first thing every operator runs after gaining domain user access."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1558.003, CISA AA23-320A"
+      }
+    },
+    "T1018_3": {
+      "indicator": "NetBIOS Name Service queries - broadcast NBNS scanning for hostname enumeration",
+      "techId": "T1018",
+      "severity": "high",
+      "addedAt": 1781100657000,
+      "row": {
+        "sub": "T1018 - ARP & NetBIOS Discovery",
+        "indicator": "NetBIOS Name Service queries - broadcast NBNS scanning for hostname enumeration",
+        "arkime": "ip.src == $MPNET\n&& port.dst == 137\n&& protocols == nbns",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 137\nAND network.protocol: netbios-ns",
+        "suricata": "alert udp $HOME_NET any\n  -> $HOME_NET 137\n  (msg:\"TA0007 T1018 NetBIOS NBNS\n    name service query burst\n    host enumeration\";\n  flow:to_server;\n  threshold:type both,\n    track by_src,\n    count 30, seconds 60;\n  classtype:attempted-recon;\n  sid:9101803; rev:1;)",
+        "notes": "NetBIOS Name Service (NBNS, UDP/137) is a legacy Windows hostname-resolution protocol. Adversaries use it for two reconnaissance patterns: (1) NBNS broadcasts to enumerate Windows hostnames in the local broadcast domain - nbtstat, nmap NSE scripts, custom tools (2) NBNS queries to specific IPs to retrieve their NetBIOS name - building a hostname/IP map. NBNS is mostly deprecated in modern AD environments (replaced by DNS) but still active in many networks for legacy compatibility. Workstation behavior: occasional NBNS queries during normal operation. Adversary behavior: rapid-fire NBNS to many distinct targets. Build per-source NBNS query rate baselines - adversary scans stand out clearly. Pair with LLMNR query analysis (UDP/5355) for the modern equivalent.",
+        "apt": [
+          {
+            "cls": "apt-cn",
+            "name": "APT10",
+            "note": "NBNS scanning during Cloud Hopper operations against MSPs."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "NetBIOS enumeration for AD reconnaissance documented in espionage operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "NBNS enumeration appears in many ransomware affiliate playbooks targeting legacy environments."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented in MITRE ATT&CK and in standard pentest tooling (nbtscan, nmap nbstat NSE script)."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1018, MITRE ATT&CK T1135"
+      }
+    },
+    "T1041_1": {
+      "indicator": "[OFF-NET TRIPWIRE] HTTPS POST volume burst - sustained large POST requests to single destination",
+      "techId": "T1041",
+      "severity": "high",
+      "addedAt": 1781100730000,
+      "row": {
+        "sub": "T1041 - HTTPS POST Burst",
+        "indicator": "[OFF-NET TRIPWIRE] HTTPS POST volume burst - sustained large POST requests to single destination",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 443\nAND http.request.method: \"POST\"\nAND http.request.body.bytes > 1048576",
+        "suricata": "alert tls $HOME_NET any\n  -> $EXTERNAL_NET 443\n  (msg:\"TA0010 T1041 HTTPS POST\n    burst large bodies sustained\n    exfiltration over C2\";\n  flow:established,to_server;\n  threshold:type both,\n    track by_src,\n    count 50, seconds 600;\n  classtype:trojan-activity;\n  sid:9104101; rev:1;)",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Many C2 frameworks (Cobalt Strike, Sliver, Mythic, Brute Ratel) chunk exfil data into POST requests with bodies in the 1-5MB range to avoid triggering single-large-flow detections. The pattern: 50+ POST requests to the same destination within 10 minutes, each with bodies >1MB. This is rarely legitimate behavior - even file uploads to legitimate services (Google Drive, Dropbox) typically use multipart upload protocols that produce different patterns. Detection at the POST count + body size aggregate is high-confidence. Pair with destination IP reputation and TLS certificate/SNI patterns from C2 detection (TA0011) - exfil over already-classified C2 destinations is essentially confirmed exfil. For TLS-decrypted environments, the body content itself can reveal archive headers (PK for ZIP, Rar! for RAR) - high-fidelity content match.",
+        "apt": [
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "Standard pattern in Cobalt Strike-based ransomware operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Scattered Spider",
+            "note": "Documented in CISA AA23-320A operations."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT29",
+            "note": "HTTPS POST chunking documented in espionage operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented across virtually all modern C2 framework operations."
+          }
+        ],
+        "malware": [
+          {
+            "cls": "apt-mul",
+            "name": "Cobalt Strike Operators",
+            "note": "Standard Cobalt Strike profile exfil pattern."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1041"
+      }
+    }
+  }
+}

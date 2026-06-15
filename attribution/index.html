@@ -70,6 +70,7 @@ header{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 
 .src-file{color:var(--accent);background:rgba(88,166,255,.12);border:1px solid rgba(88,166,255,.3)}
 .src-csv{color:var(--purple);background:rgba(188,140,255,.12);border:1px solid rgba(188,140,255,.3)}
 .src-none{color:var(--text3);background:var(--bg3);border:1px solid var(--border2)}
+.src-example{color:var(--amber);background:rgba(210,153,34,.12);border:1px solid rgba(210,153,34,.3)}
 
 /* RANKING */
 .rank-row{margin-bottom:12px}
@@ -138,6 +139,17 @@ header{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 
 .empty-title{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px}
 .empty-text{font-size:12px;line-height:1.7;max-width:420px;margin:0 auto 16px}
 .empty-text code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5px;border-radius:3px;color:var(--text2)}
+.empty-examples{max-width:480px;margin:8px auto 0;border-top:1px solid var(--border);padding-top:18px}
+.empty-ex-label{font-size:12px;color:var(--text2);margin-bottom:12px}
+.empty-ex-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ex-btn{display:flex;flex-direction:column;align-items:flex-start;gap:3px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:9px 12px;cursor:pointer;text-align:left;transition:border-color .15s,background .15s;font-family:var(--sans)}
+.ex-btn:hover{border-color:var(--amber);background:var(--bg2)}
+.ex-actor{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text)}
+.ex-kind{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.ex-strong{color:var(--green)}
+.ex-weak{color:var(--amber)}
+.empty-ex-foot{font-size:11px;color:var(--text3);margin-top:12px}
+.empty-ex-foot code{font-family:var(--mono);font-size:10px;background:var(--bg3);padding:1px 5px;border-radius:3px;color:var(--text2)}
 
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:20px}
@@ -462,6 +474,7 @@ function renderSource(){
     live:{cls:'src-live',txt:'live: hunt tool'},
     file:{cls:'src-file',txt:'loaded: state file'},
     csv:{cls:'src-csv',txt:'imported: csv'},
+    example:{cls:'src-example',txt:'example hunt'},
     none:{cls:'src-none',txt:'no evidence'}
   };
   const m = map[source] || map.none;
@@ -485,6 +498,16 @@ function renderRanking(s){
       <div class="empty-icon">&#9733;</div>
       <div class="empty-title">No evidence yet</div>
       <div class="empty-text">Star indicators in the <a href="/net/" style="color:var(--accent)">NET</a> tool as you work, then return here. Your evidence loads automatically.<br><br>Or use <code>&#8593; load state</code> / <code>&#8593; csv</code> to bring in a hunt from another machine.</div>
+      <div class="empty-examples">
+        <div class="empty-ex-label">New here? Load an example hunt to see how attribution reads:</div>
+        <div class="empty-ex-grid">
+          <button class="ex-btn" onclick="loadExample('examples/example-apt28-clean.json')"><span class="ex-actor">APT28</span><span class="ex-kind ex-strong">clean &middot; strong lean</span></button>
+          <button class="ex-btn" onclick="loadExample('examples/example-apt28-messy.json')"><span class="ex-actor">APT28</span><span class="ex-kind ex-weak">contested &middot; weak lean</span></button>
+          <button class="ex-btn" onclick="loadExample('examples/example-apt41-clean.json')"><span class="ex-actor">APT41</span><span class="ex-kind ex-strong">clean &middot; strong lean</span></button>
+          <button class="ex-btn" onclick="loadExample('examples/example-apt41-messy.json')"><span class="ex-actor">APT41</span><span class="ex-kind ex-weak">contested &middot; moderate lean</span></button>
+        </div>
+        <div class="empty-ex-foot">Examples load read-only into the engine. Use <code>&#8593; clear</code> to reset.</div>
+      </div>
     </div>`;
     return;
   }
@@ -653,6 +676,27 @@ function loadStateFile(input){
   };
   reader.readAsText(file);
   input.value = '';
+}
+
+// ── EXAMPLE HUNTS (reference loads, shown only on the empty state) ──
+// Fetches a bundled example state and loads it through the same path as a
+// state file. Tagged source 'example' so the badge never reads as real
+// evidence. Replace-with-guard still applies if somehow loaded while dirty.
+function loadExample(path){
+  fetch(path)
+    .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(data => {
+      if(data._format !== 'tonk-attribution-state' || !data.items){
+        throw new Error('Unrecognized example format');
+      }
+      const proceed = () => { applyEvidence(data.items, 'example'); toast('Example hunt loaded','ok'); };
+      if(dirty && Object.keys(evidence).length){
+        showGuard('load this example', proceed);
+      }else{
+        proceed();
+      }
+    })
+    .catch(e => { console.error(e); toast('Could not load example: '+e.message,'err'); });
 }
 
 // ── CONTINUITY: CSV IMPORT (fallback) ──

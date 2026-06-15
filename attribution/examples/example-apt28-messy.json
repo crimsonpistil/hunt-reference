@@ -1,0 +1,437 @@
+{
+  "_format": "tonk-attribution-state",
+  "_v": 1,
+  "exported": "2026-06-10T15:12:00.000Z",
+  "source": "example hunt — APT28 leads but contested (realistic)",
+  "indicatorCount": 11,
+  "items": {
+    "T1071_5": {
+      "indicator": "[OFF-NET TRIPWIRE] SMB outbound to internet - C2 channel abusing SMB protocol over external connection",
+      "techId": "T1071",
+      "severity": "high",
+      "addedAt": 1781100000000,
+      "row": {
+        "sub": "T1071.002 - File Transfer Protocols",
+        "indicator": "[OFF-NET TRIPWIRE] SMB outbound to internet - C2 channel abusing SMB protocol over external connection",
+        "arkime": "ip.src == $MPNET\n&& port.dst == 445\n&& protocols == smb\n&& ip.dst != $MPNET\n&& ip.dst != $ALLOWED_PARTNERS",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 445\nAND network.protocol: smb\nAND NOT destination.ip: $MPNET\nAND NOT destination.ip: $ALLOWED_PARTNERS",
+        "suricata": "alert tcp $HOME_NET any\n  -> $EXTERNAL_NET 445\n  (msg:\"TA0011 T1071.002 Outbound\n    SMB to internet possible C2\n    or hash relay\";\n  flow:established,to_server;\n  content:\"|ff 53 4d 42|\"; depth:5;\n  classtype:trojan-activity;\n  sid:9107106; rev:1;)",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. SMB to external destinations is essentially never legitimate - outbound TCP/445 to the internet should be blocked at the perimeter as a basic hygiene control. When it bypasses controls (egress firewall misconfiguration), implants can use SMB for both C2 and credential theft (responder-style hash capture against attacker-controlled SMB servers). The classic indicator: a UNC path injection (\\\\attacker.com\\share) in an Office document or browser that triggers an outbound SMB authentication attempt, leaking the user's NTLM hash to the adversary. Block outbound 445 at the perimeter and alert on any attempt - there's no legitimate reason to allow it.",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "Has used outbound SMB for credential theft via UNC path injection in document-based phishing operations."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT10",
+            "note": "Used outbound SMB for credential capture in MSP targeting during Cloud Hopper."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Outbound SMB exploitation for credential theft and C2 is documented in CISA and NSA advisories on AD security."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1071.002, T1187, CISA advisories"
+      }
+    },
+    "T1187_1": {
+      "indicator": "PrinterBug - MS-RPRN RpcRemoteFindFirstPrinterChangeNotificationEx",
+      "techId": "T1187",
+      "severity": "high",
+      "addedAt": 1781100073000,
+      "row": {
+        "sub": "T1187 - PrinterBug",
+        "indicator": "PrinterBug - MS-RPRN RpcRemoteFindFirstPrinterChangeNotificationEx",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 445\nAND dcerpc.interface_uuid: \"12345678-1234-abcd-ef00-0123456789ab\"\nAND dcerpc.opnum: 65",
+        "suricata": "alert tcp $HOME_NET any\n  -> $HOME_NET 445\n  (msg:\"TA0006 T1187 PrinterBug\n    MS-RPRN spooler coercion\";\n  flow:established,to_server;\n  content:\"|78 56 34 12 34 12 cd ab|\";\n  content:\"|41 00 00 00|\"; within:50;\n  classtype:trojan-activity;\n  sid:9118702; rev:1;)",
+        "notes": "MS-RPRN (Print System Remote Protocol, UUID 12345678-1234-abcd-ef00-0123456789ab) - RpcRemoteFindFirstPrinterChangeNotificationEx (opnum 65) accepts an arbitrary UNC path for the change-notification destination, causing the target system to authenticate to the path. Discovered as 'PrinterBug' by Lee Christensen (SpecterOps, 2018) and documented in the original SpoolService research. Particularly devastating against domain controllers because the spooler service runs by default on DCs (until disabled per modern hardening guidance). Combined with AD CS Web Enrollment relay, PrinterBug → DA is a one-shot attack. Modern environments should disable the Print Spooler service on DCs (CIS benchmark recommendation). Detection at the spooler RPC opnum is high-confidence; legitimate use of opnum 65 is rare.",
+        "apt": [
+          {
+            "cls": "apt-mul",
+            "name": "Scattered Spider",
+            "note": "Coercion attacks documented in CISA AA23-320A."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "PrinterBug exploitation in some operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented in extensive offensive security research. SpecterOps Lee Christensen original research."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Red Team",
+            "note": "PrinterBug + AD CS relay = one-shot Domain Admin in unhardened environments."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1187"
+      }
+    },
+    "T1018_3": {
+      "indicator": "NetBIOS Name Service queries - broadcast NBNS scanning for hostname enumeration",
+      "techId": "T1018",
+      "severity": "high",
+      "addedAt": 1781100146000,
+      "row": {
+        "sub": "T1018 - ARP & NetBIOS Discovery",
+        "indicator": "NetBIOS Name Service queries - broadcast NBNS scanning for hostname enumeration",
+        "arkime": "ip.src == $MPNET\n&& port.dst == 137\n&& protocols == nbns",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 137\nAND network.protocol: netbios-ns",
+        "suricata": "alert udp $HOME_NET any\n  -> $HOME_NET 137\n  (msg:\"TA0007 T1018 NetBIOS NBNS\n    name service query burst\n    host enumeration\";\n  flow:to_server;\n  threshold:type both,\n    track by_src,\n    count 30, seconds 60;\n  classtype:attempted-recon;\n  sid:9101803; rev:1;)",
+        "notes": "NetBIOS Name Service (NBNS, UDP/137) is a legacy Windows hostname-resolution protocol. Adversaries use it for two reconnaissance patterns: (1) NBNS broadcasts to enumerate Windows hostnames in the local broadcast domain - nbtstat, nmap NSE scripts, custom tools (2) NBNS queries to specific IPs to retrieve their NetBIOS name - building a hostname/IP map. NBNS is mostly deprecated in modern AD environments (replaced by DNS) but still active in many networks for legacy compatibility. Workstation behavior: occasional NBNS queries during normal operation. Adversary behavior: rapid-fire NBNS to many distinct targets. Build per-source NBNS query rate baselines - adversary scans stand out clearly. Pair with LLMNR query analysis (UDP/5355) for the modern equivalent.",
+        "apt": [
+          {
+            "cls": "apt-cn",
+            "name": "APT10",
+            "note": "NBNS scanning during Cloud Hopper operations against MSPs."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "NetBIOS enumeration for AD reconnaissance documented in espionage operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "NBNS enumeration appears in many ransomware affiliate playbooks targeting legacy environments."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented in MITRE ATT&CK and in standard pentest tooling (nbtscan, nmap nbstat NSE script)."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1018, MITRE ATT&CK T1135"
+      }
+    },
+    "T1048.003_1": {
+      "indicator": "[OFF-NET TRIPWIRE] Outbound SMB - TCP/445 to external destination",
+      "techId": "T1048.003",
+      "severity": "high",
+      "addedAt": 1781100219000,
+      "row": {
+        "sub": "T1048.003 - Outbound SMB",
+        "indicator": "[OFF-NET TRIPWIRE] Outbound SMB - TCP/445 to external destination",
+        "arkime": "ip.src == $MPNET\n&& ip.dst == $EXTERNAL\n&& port.dst == 445\n&& protocols == smb",
+        "kibana": "source.ip: $MPNET\nAND destination.ip: NOT $MPNET\nAND destination.port: 445",
+        "suricata": "alert tcp $HOME_NET any\n  -> $EXTERNAL_NET 445\n  (msg:\"TA0010 T1048.003 outbound\n    SMB to external destination\n    extremely anomalous\";\n  flow:established,to_server;\n  content:\"|fe|SMB\"; depth:4;\n  classtype:trojan-activity;\n  sid:9104804; rev:1;)",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Outbound SMB to the internet is essentially always either malicious or misconfigured. Legitimate SMB traffic stays internal - even cloud storage providers (Azure Files, AWS FSx) typically front their SMB endpoints with VPN/private link, not raw internet exposure. Detection: any TCP/445 to non-internal destinations. Common scenarios: (1) NTLM hash capture by external attacker (file:// URL in phishing email triggers SMB connect to attacker server), (2) deliberate SMB-as-exfil (rare but used by some operators for data transfer to attacker SMB servers), (3) misconfigured app trying to connect to attacker-typo'd hostname. Modern best practice: BLOCK outbound SMB at the firewall - it's near-zero false positive impact and shuts down a whole class of attacks. If you can't block, this detection is essentially zero-false-positive in most environments. Pair with destination reputation: residential IPs, hosting providers, and recently-registered domains with SMB ports open are high-priority.",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "Outbound SMB used historically for NTLM relay and credential capture."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented across phishing campaigns leveraging file:// URLs and external SMB servers."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Phishing Operators",
+            "note": "file:// URL phishing triggers outbound SMB to attacker server for hash capture."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "NTLM Hash Capturers",
+            "note": "Standard external Net-NTLMv2 capture vector."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1048.003, T1187"
+      }
+    },
+    "T1071_0": {
+      "indicator": "[OFF-NET TRIPWIRE] HTTP beacon - periodic GET to same URI with low jitter, characteristic of Cobalt Strike, Sliver, Mythic, Havoc",
+      "techId": "T1071",
+      "severity": "high",
+      "addedAt": 1781100292000,
+      "row": {
+        "sub": "T1071.001 - Web Protocols",
+        "indicator": "[OFF-NET TRIPWIRE] HTTP beacon - periodic GET to same URI with low jitter, characteristic of Cobalt Strike, Sliver, Mythic, Havoc",
+        "arkime": "ip.src == $MPNET\n&& protocols == http\n&& http.method == GET\n&& http.uri == [\"*/ca\", \"*/dpixel\", \"*/fwlink\", \"*/pixel\", \"*/__utm.gif\", \"*/jquery-3.3.1.min.js\", \"*/load\", \"*/api/x\"]\n&& session.length > 60\n&& packets.src < 50",
+        "kibana": "source.ip: $MPNET\nAND http.request.method: GET\nAND url.path: (\n  */ca OR */dpixel\n  OR */fwlink OR */pixel\n  OR */__utm.gif\n  OR */jquery-3.3.1.min.js\n  OR */load OR */api/x\n)\nAND network.packets < 50",
+        "suricata": "alert http $HOME_NET any\n  -> $EXTERNAL_NET any\n  (msg:\"TA0011 T1071.001 HTTP\n    beacon Cobalt Strike default\n    profile URI\";\n  flow:established,to_server;\n  content:\"GET\"; http.method;\n  pcre:\"/^\\/(ca|dpixel|fwlink|\n    pixel|__utm\\.gif|\n    jquery-3\\.3\\.1\\.min\\.js|\n    load|api\\/x)(\\?|$)/i\";\n  http.uri;\n  threshold:type both,\n    track by_src,\n    count 5, seconds 3600;\n  classtype:trojan-activity;\n  sid:9107101; rev:1;)",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Default Cobalt Strike malleable profiles use predictable URIs - /ca, /dpixel, /fwlink, /pixel, /__utm.gif (mimics Google Analytics), /jquery-3.3.1.min.js (mimics CDN). Customized profiles change these but most operators don't. Beacon periodicity is the more general signal: same internal-to-external pair with low jitter (sleep + small jitter window) over hours. Build per-pair session timing histograms in Kibana - periodic patterns stick out clearly. Pair with low databytes.src (beacon check-in is usually a few hundred bytes max) and low databytes.dst (no commands queued = small response).",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "APT29",
+            "note": "Uses Cobalt Strike extensively, documented in CISA and NSA advisories on Russian SVR operations."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Uses Cobalt Strike with custom malleable profiles in operations against technology, healthcare, and gaming sectors."
+          },
+          {
+            "cls": "apt-kp",
+            "name": "Lazarus",
+            "note": "Uses Cobalt Strike alongside custom implants in financial sector targeting."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Cobalt Strike is the most widely abused commercial C2 framework - leaked and cracked versions are used by the majority of ransomware affiliates."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1071.001, S0154 Cobalt Strike, industry reporting"
+      }
+    },
+    "T1039_0": {
+      "indicator": "SMB read burst - single source reading many files across many directories",
+      "techId": "T1039",
+      "severity": "high",
+      "addedAt": 1781100365000,
+      "row": {
+        "sub": "T1039 - Bulk Read Patterns",
+        "indicator": "SMB read burst - single source reading many files across many directories",
+        "arkime": "ip.src == $MPNET\n&& ip.src != $ALLOWED_SMB_CLIENTS\n&& port.dst == 445\n&& protocols == smb\n&& databytes.dst > 0",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 445\nAND _exists_: file.path",
+        "suricata": "alert tcp $HOME_NET any\n  -> $FILE_SERVERS 445\n  (msg:\"TA0009 T1039 SMB bulk read\n    burst single source many files\n    network share collection\";\n  flow:established,to_server;\n  content:\"|fe|SMB\"; depth:4;\n  content:\"|08 00|\"; offset:12;\n  threshold:type both,\n    track by_src,\n    count 50, seconds 300;\n  classtype:trojan-activity;\n  sid:9103901; rev:1;)",
+        "notes": "Source-scope this query with ip.src != $ALLOWED_SMB_CLIENTS (operator-maintained list of expected SMB-reading hosts e.g. backup servers, monitoring agents) - the default query catches all SMB traffic which will be noisy. If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. Normal user file access patterns are characterized by depth, not breadth - they open a project folder, read 5-10 related files, work for a while, occasionally open another related folder. Adversary collection is the inverse: shallow but wide reads across many directories within minutes. Detection: count unique file paths AND unique parent directories per source IP per 5-minute window. Threshold of 50 files across 10+ directories is a starting point - tune based on your environment (developers and analysts may legitimately hit higher baselines for code/data folders). Build per-role baselines if you can: HR users access HR shares, finance users access finance shares; cross-role access is highly anomalous. Zeek's smb_files.log is the primary data source; pair with smb_mapping.log to see which shares the source first connected to.",
+        "apt": [
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "Bulk SMB reads universal in ransomware double-extortion (read-then-encrypt) operations."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Documented in operations against tech sector and gaming companies."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT29",
+            "note": "Heavy file server collection in SolarWinds and ongoing operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Scattered Spider",
+            "note": "Documented in CISA AA23-320A operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented across virtually all data theft operations."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1039, CISA AA23-320A"
+      }
+    },
+    "T1558.003_0": {
+      "indicator": "Kerberos TGS-REQ with RC4-HMAC etype - Kerberoasting signature",
+      "techId": "T1558.003",
+      "severity": "high",
+      "addedAt": 1781100438000,
+      "row": {
+        "sub": "T1558.003 - RC4 Ticket Requests",
+        "indicator": "Kerberos TGS-REQ with RC4-HMAC etype - Kerberoasting signature",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 88\nAND kerberos.msg_type: \"tgs-req\"\nAND kerberos.cipher: \"rc4-hmac\"\nAND NOT kerberos.cname: krbtgt",
+        "suricata": "alert tcp $HOME_NET any\n  -> $DOMAIN_CONTROLLERS 88\n  (msg:\"TA0006 T1558.003 Kerberos\n    TGS-REQ with RC4-HMAC etype\n    Kerberoasting signature\";\n  flow:established,to_server;\n  content:\"|a0 03 02 01 05|\"; depth:5;\n  content:\"|a1 03 02 01 0c|\"; within:20;\n  content:\"|a0 03 02 01 17|\";\n  classtype:trojan-activity;\n  sid:9155801; rev:1;)",
+        "notes": "In modern AD environments (2008 R2+), Kerberos defaults to AES256 for service tickets when both client and server support it. RC4-HMAC (etype 23, encoded as 0x17 in ASN.1) is requested explicitly by Kerberoasting tools to produce crackable hashes. Detection: TGS-REQ messages where etype includes RC4 but doesn't include AES, or where the requested service is anomalous. Tools: Rubeus (kerberoast command), Impacket GetUserSPNs.py, PowerView Invoke-Kerberoast, BloodHound's roastable users query. The msg-type=12 = TGS-REQ; cipher=rc4-hmac in Zeek's kerberos.log is the canonical detection field. Modern environments should set 'msDS-SupportedEncryptionTypes' on service accounts to AES-only - accounts still permitting RC4 are the roastable targets. Pair with subsequent service ticket use (rare for Kerberoasting since the goal is offline cracking) for full-chain.",
+        "apt": [
+          {
+            "cls": "apt-mul",
+            "name": "Scattered Spider",
+            "note": "Documented in CISA AA23-320A operations."
+          },
+          {
+            "cls": "apt-ir",
+            "name": "APT34",
+            "note": "Kerberoasting in operations against Middle Eastern government and energy targets."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "Universal in ransomware affiliate playbooks for service account credential compromise."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented across virtually all advanced threat actor operations targeting AD environments."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Red Team",
+            "note": "Kerberoasting is universal in red team operations - first thing every operator runs after gaining domain user access."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1558.003, CISA AA23-320A"
+      }
+    },
+    "T1018_0": {
+      "indicator": "ICMP echo sweep - single source pinging many internal hosts in a short window",
+      "techId": "T1018",
+      "severity": "high",
+      "addedAt": 1781100511000,
+      "row": {
+        "sub": "T1018 - ICMP Sweeps",
+        "indicator": "ICMP echo sweep - single source pinging many internal hosts in a short window",
+        "arkime": "ip.src == $MPNET\n&& protocols == icmp\n&& icmp.type == 8\n&& ip.dst == $MPNET",
+        "kibana": "source.ip: $MPNET\nAND destination.ip: $MPNET\nAND network.protocol: icmp\nAND icmp.type: 8",
+        "suricata": "alert icmp $HOME_NET any\n  -> $HOME_NET any\n  (msg:\"TA0007 T1018 ICMP echo\n    sweep many internal hosts\n    discovery\";\n  itype:8;\n  threshold:type both,\n    track by_src,\n    count 20, seconds 60;\n  classtype:attempted-recon;\n  sid:9101801; rev:1;)",
+        "notes": "The classic host-discovery primitive: ping every IP in a subnet, see who responds. nmap -sn, fping, PowerShell Test-Connection loops, custom scanners all produce this pattern. Suricata's `track by_src, count 20, seconds 60` aggregates by source - alerting only when one host pings 20+ distinct destinations in a minute. Tune the threshold to your environment: monitoring tools (Smokeping, sanctioned scanners) may legitimately ping many hosts and should be in $MONITORING_HOSTS exclusion. Workstations and servers shouldn't initiate ICMP sweeps. The detection is noisy in environments with active monitoring infrastructure - invest the time to build a clean exclusion list. Pair with EDR for definitive process attribution (ping.exe, nmap.exe, PowerShell, Python).",
+        "apt": [
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "ICMP host enumeration documented across operations against technology and gaming sectors."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT29",
+            "note": "ICMP sweeps documented in espionage operations including SolarWinds compromise."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "ICMP sweeps universal in ransomware affiliate operations during pre-encryption network mapping."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented in MITRE ATT&CK and in virtually every major incident report covering the discovery phase."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Red Team",
+            "note": "Standard red team and pen test reconnaissance methodology."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1018, industry reporting"
+      }
+    },
+    "T1041_0": {
+      "indicator": "[OFF-NET TRIPWIRE] Outbound TLS session - extreme bytes-out / bytes-in ratio",
+      "techId": "T1041",
+      "severity": "high",
+      "addedAt": 1781100584000,
+      "row": {
+        "sub": "T1041 - Volume Ratio Anomaly",
+        "indicator": "[OFF-NET TRIPWIRE] Outbound TLS session - extreme bytes-out / bytes-in ratio",
+        "arkime": "ip.src == $MPNET\n&& ip.dst == $EXTERNAL\n&& port.dst == 443\n&& databytes.src > 104857600\n&& databytes.src / databytes.dst > 50",
+        "kibana": "source.ip: $MPNET\nAND destination.ip: NOT $MPNET\nAND destination.port: 443\nAND source.bytes > 104857600\nAND ratio_calc: source.bytes/destination.bytes > 50",
+        "suricata": "[Suricata can flag total bytes per\nflow, but bytes-out:bytes-in ratio\ncalculation across long flows is\ntypically done in Zeek (conn.log\norig_bytes vs resp_bytes ratio)\nor in SIEM aggregation queries.]\nUse Zeek + SIEM for ratio detection.",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Normal HTTPS browsing has bytes-in HEAVILY exceeding bytes-out - you download web pages, images, video; you upload tiny request headers and the occasional form submission. Typical legitimate ratio is 1:10 to 1:100 (out:in). Exfiltration over HTTPS inverts this: you're sending data to a server that's just acknowledging receipt with small responses. Detection: outbound flows with bytes_out > 100MB AND bytes_out > 50× bytes_in over the session lifetime. Tunable threshold - adjust based on your environment's normal upload patterns (cloud backup users, content creators, video uploaders all skew higher upload volumes legitimately). Pair with destination reputation: known-good destinations (Google Drive, Dropbox, OneDrive when sanctioned) are allowlist; ratios to unknown destinations are high-priority alerts. Zeek's conn.log has orig_bytes and resp_bytes fields - aggregate across flows per source IP per destination IP per hour for clean ratio detection.",
+        "apt": [
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "Ransomware double-extortion typically exfils through HTTPS C2 before encryption."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT29",
+            "note": "Documented in SolarWinds and ongoing operations."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "HTTPS-based exfil in operations against multiple sectors."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Scattered Spider",
+            "note": "Documented in CISA AA23-320A operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Universal across modern operations using HTTPS C2 infrastructure."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1041, CISA AA23-320A"
+      }
+    },
+    "T1078_0": {
+      "indicator": "Default credential attempt on network device / appliance management interface",
+      "techId": "T1078",
+      "severity": "high",
+      "addedAt": 1781100657000,
+      "row": {
+        "sub": "T1078.001 - Default Accounts",
+        "indicator": "Default credential attempt on network device / appliance management interface",
+        "arkime": "ip.src != $MPNET\n&& protocols == http\n&& http.method == POST\n&& http.uri == [\"*/login*\", \"*/auth*\", \"*/cgi-bin/luci*\", \"*/api/v1/auth*\", \"*/admin*\"]\n&& http.reqbody == [\"*admin=admin*\", \"*username=admin&password=admin*\", \"*user=admin&pass=admin*\", \"*username=root&password=root*\", \"*password=1234*\", \"*password=default*\", \"*password=password*\", \"*\\\"password\\\":\\\"admin\\\"*\", \"*\\\"password\\\":\\\"root\\\"*\", \"*\\\"password\\\":\\\"password\\\"*\", \"*\\\"password\\\":\\\"1234\\\"*\", \"*\\\"password\\\":\\\"default\\\"*\", \"*\\\"username\\\":\\\"admin\\\"*\", \"*\\\"user\\\":\\\"admin\\\"*\"]",
+        "kibana": "NOT source.ip: $MPNET\nAND http.request.method: POST\nAND url.path: (\n  *login* OR *auth*\n  OR *cgi-bin/luci*\n  OR *api/v1/auth*\n  OR *admin*\n)\nAND http.request.body: (\n  *admin=admin*\n  OR *username=admin*\n  OR *password=1234*\n  OR *password=default*\n  OR *password=password*\n  OR *\"password\":\"admin\"*\n  OR *\"password\":\"root\"*\n  OR *\"password\":\"password\"*\n  OR *\"password\":\"1234\"*\n  OR *\"password\":\"default\"*\n  OR *\"username\":\"admin\"*\n)",
+        "suricata": "alert http $EXTERNAL_NET any\n  -> $HOME_NET any\n  (msg:\"TA0001 T1078.001 Default\n    credential attempt network\n    device management\";\n  flow:established,to_server;\n  content:\"POST\"; http.method;\n  pcre:\"/(username|user|login)=\n    (admin|root|administrator)\n    .{0,20}(password|pass|pwd)=\n    (admin|root|1234|default|\n    password|123456)/i\";\n  http.request_body;\n  classtype:attempted-user;\n  sid:9107801; rev:1;)",
+        "notes": "Default credentials on network devices, IP cameras, NAS, routers, and management interfaces are trivially exploited - admin/admin, admin/password, root/root, admin/1234 cover the majority of default credential sets. Focus on management interface paths from external IPs. A 200 response with a session token or redirect to a dashboard = successful default credential login. Maintain an inventory of devices with known default credentials and change them - detection is a backstop, not the primary control.",
+        "apt": [
+          {
+            "cls": "apt-cn",
+            "name": "Volt Typhoon",
+            "note": "Exploits default credentials on SOHO routers and network appliances to establish LOTL infrastructure within US critical infrastructure networks."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "Sandworm",
+            "note": "Uses default credentials on industrial control system components and network devices in targeting of Ukrainian and European infrastructure."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Default credential exploitation requires zero sophistication and is effective against a large percentage of deployed network devices."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1078.001, CISA advisories, industry reporting"
+      }
+    },
+    "T1021.001_0": {
+      "indicator": "Workstation-to-workstation RDP - peer lateral movement pattern",
+      "techId": "T1021.001",
+      "severity": "high",
+      "addedAt": 1781100730000,
+      "row": {
+        "sub": "T1021.001 - Source/Destination Anomalies",
+        "indicator": "Workstation-to-workstation RDP - peer lateral movement pattern",
+        "arkime": "ip.src == $WORKSTATIONS\n&& ip.dst == $WORKSTATIONS\n&& port.dst == 3389\n&& protocols == rdp\n&& ip.src != $RDP_JUMP_HOSTS",
+        "kibana": "source.ip: $WORKSTATIONS\nAND destination.ip: $WORKSTATIONS\nAND destination.port: 3389\nAND NOT source.ip: $RDP_JUMP_HOSTS",
+        "suricata": "alert tcp $WORKSTATIONS any\n  -> $WORKSTATIONS 3389\n  (msg:\"TA0008 T1021.001 Workstation\n    to workstation RDP unusual\n    lateral movement\";\n  flow:established,to_server;\n  classtype:trojan-activity;\n  sid:9100101; rev:1;)",
+        "notes": "In healthy networks, RDP flows from admin workstations and jump hosts to servers - not between user workstations. Workstation-to-workstation RDP is a strong lateral movement indicator. Build $RDP_JUMP_HOSTS allowlist from your sanctioned admin sources (PAW devices, jump servers, IT support workstations). Build $WORKSTATIONS from your VLAN allocation. After exclusions, peer RDP is essentially always either an unsanctioned IT shortcut or active lateral movement. Particularly powerful when combined with EDR - the source process initiating mstsc.exe or RDP-related WMI calls confirms the activity. Pair with subsequent network traffic from the destination workstation (does it start probing more hosts? exfiltrating data?) for full kill-chain correlation.",
+        "apt": [
+          {
+            "cls": "apt-mul",
+            "name": "Scattered Spider",
+            "note": "Workstation-to-workstation RDP documented in CISA AA23-320A operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "Universal pre-encryption lateral movement pattern across ransomware affiliate operations."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "RDP lateral movement in operations against technology and gaming sectors."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT29",
+            "note": "RDP lateral movement in espionage operations including SolarWinds compromise."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented in CISA Scattered Spider advisory and across virtually every ransomware incident report. The pattern is essentially universal in lateral movement playbooks."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1021.001, CISA AA23-320A"
+      }
+    }
+  }
+}

@@ -12,7 +12,7 @@ Because all three live under one origin, the **My Hunts** evidence list is share
 
 ## Overview
 
-TONK is meant to live somewhere a network analyst can actually reach it: a hardened jump host, a lab VM, an air-gapped box. NET is the reference you reach for when you have an indicator on the wire and need the query, the context, and the threat-actor association. HOST is the same idea moved onto the endpoint: what the adversary does *inside* the box, and where to hunt it. ATTRIB is the analysis layer: once you have evidence on the board from either surface, it works backward from what you found to who is likely behind it. Together they cover "look it up fast on the wire," "look it up fast on the host," and "figure out who it is."
+TONK is meant to live somewhere an analyst can actually reach it: a hardened jump host, a lab VM, an air-gapped box. NET is the reference you reach for when you have an indicator on the wire and need the query, the context, and the threat-actor association. HOST is the same idea moved onto the endpoint: what the adversary does *inside* the box, and where to hunt it. ATTRIB is the analysis layer: once you have evidence on the board from either surface, it works backward from what you found to who is likely behind it. Together they cover "look it up fast on the wire," "look it up fast on the host," and "figure out who it is."
 
 Everything is plain HTML, CSS, and vanilla JavaScript. There is no transpiler, bundler, package manager, or runtime dependency.
 

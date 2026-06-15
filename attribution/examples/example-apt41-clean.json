@@ -1,0 +1,414 @@
+{
+  "_format": "tonk-attribution-state",
+  "_v": 1,
+  "exported": "2026-06-10T15:12:00.000Z",
+  "source": "example hunt — APT41 (clean lean)",
+  "indicatorCount": 11,
+  "items": {
+    "T1573_2": {
+      "indicator": "[OFF-NET TRIPWIRE] JA4 fingerprint inconsistent with claimed User-Agent - TLS client lying about browser identity",
+      "techId": "T1573",
+      "severity": "high",
+      "addedAt": 1781100000000,
+      "row": {
+        "sub": "T1573 - JA3/JA4 Client Fingerprint",
+        "indicator": "[OFF-NET TRIPWIRE] JA4 fingerprint inconsistent with claimed User-Agent - TLS client lying about browser identity",
+        "arkime": "ip.src == $MPNET\n&& protocols == [tls && http]\n&& http.user-agent == \"*Mozilla*\"\n&& tls.ja3 != $BROWSER_JA3_RANGE\n// JA3 covers most known-malicious implant fingerprints. See Suricata column for\n// JA4 if your sensor supports it.",
+        "kibana": "source.ip: $MPNET\nAND user_agent.original: *Mozilla*\nAND _exists_: tls.client.ja4\nAND NOT tls.client.ja4: $BROWSER_JA4_RANGE",
+        "suricata": "alert tls $HOME_NET any\n  -> $EXTERNAL_NET 443\n  (msg:\"TA0011 T1573 JA4 / UA\n    mismatch claimed browser TLS\n    fingerprint inconsistent\";\n  flow:established,to_server;\n  ja3.hash;\n  classtype:trojan-activity;\n  sid:9157303; rev:1;)",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Many implants spoof their User-Agent to look like a browser (Mozilla/5.0 with realistic browser version strings) but use a non-browser TLS library underneath, producing a JA4 fingerprint that doesn't match any real browser. The mismatch - claimed Chrome UA + non-Chrome JA4 - is a strong signal. Build $BROWSER_JA4_RANGE from current major browser fingerprints (Chrome, Firefox, Safari, Edge by version) - FoxIO publishes these. Then alert on any host claiming a browser UA but presenting a JA4 outside that range. Especially powerful against Python requests, Go http, and curl-based implants that try to blend in with browser-style UAs.",
+        "apt": [
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Documented use of spoofed browser UAs combined with non-browser TLS clients."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "JA3/JA4-vs-UA correlation is documented in Mandiant, Corelight, and FoxIO threat hunting research."
+          }
+        ],
+        "malware": [
+          {
+            "cls": "apt-mul",
+            "name": "Stealer",
+            "note": "Many stealer families use Python or Go HTTP libraries with spoofed Chrome UAs."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1573, T1071, FoxIO research"
+      }
+    },
+    "T1039_2": {
+      "indicator": "SMB read of high-sensitivity filename patterns - credentials, financials, secrets in file paths",
+      "techId": "T1039",
+      "severity": "high",
+      "addedAt": 1781100073000,
+      "row": {
+        "sub": "T1039 - High-Sensitivity Filenames",
+        "indicator": "SMB read of high-sensitivity filename patterns - credentials, financials, secrets in file paths",
+        "arkime": "ip.src == $MPNET\n&& port.dst == 445\n&& protocols == smb\n&& smb.fn == [\"*password*\", \"*passwd*\", \"*secret*\", \"*credential*\", \"*confidential*\", \"*payroll*\", \"*salary*\", \"*ssn*\", \"*tax*\", \"*merger*\", \"*acquisition*\", \"*financial*statement*\"]",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 445\nAND file.name: (*password* OR *passwd* OR *secret* OR *credential* OR *confidential* OR *payroll* OR *salary* OR *ssn* OR *tax* OR *merger* OR *acquisition*)",
+        "suricata": "alert tcp $HOME_NET any\n  -> $FILE_SERVERS 445\n  (msg:\"TA0009 T1039 SMB access\n    high-sensitivity filename\n    collection target\";\n  flow:established,to_server;\n  pcre:\"/(password|passwd|secret|\n    credential|confidential|\n    payroll|salary|ssn|tax|\n    merger|acquisition)/i\";\n  classtype:trojan-activity;\n  sid:9103903; rev:1;)",
+        "notes": "Adversaries doing targeted collection often grep filename listings for high-value keywords before bulk reading. Filename patterns containing 'password', 'secret', 'credential', 'confidential', 'payroll', 'salary', 'ssn', 'tax', 'merger', 'acquisition' are common collection targets. False positives: legitimate access by users whose job involves these files (HR, finance, M&A teams). Build $FINANCE_USERS / $HR_USERS allowlists or scope detection to off-role access. Particularly high-confidence when the source is a developer or sales workstation accessing finance share filenames. Pair with the bulk read pattern (sid 9103901) - bulk reads PLUS high-sensitivity filename matches is essentially diagnostic of collection. Note: this catches naive collection; sophisticated operators stage less obviously named files. Treat absence of these hits as 'we didn't catch them this way' rather than 'they didn't collect.'",
+        "apt": [
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "Filename targeting universal in ransomware double-extortion operations."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Documented in operations targeting tech and finance sectors."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented across data-theft operations targeting financial/M&A data."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Industrial espionage",
+            "note": "Targeted filename access for M&A and strategic data."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1039, T1083"
+      }
+    },
+    "T1046_2": {
+      "indicator": "Common-port-set probe - nmap default top-1000-ports scan signature",
+      "techId": "T1046",
+      "severity": "high",
+      "addedAt": 1781100146000,
+      "row": {
+        "sub": "T1046 - TCP Port Scans",
+        "indicator": "Common-port-set probe - nmap default top-1000-ports scan signature",
+        "kibana": "source.ip: $MPNET\nAND NOT source.ip: $SCAN_SOURCES\nAND tcp.flags: \"S\"",
+        "suricata": "alert tcp $HOME_NET any\n  -> $HOME_NET any\n  (msg:\"TA0007 T1046 Likely nmap\n    top ports scan many ports\n    single host\";\n  flow:to_server;\n  flags:S;\n  threshold:type both,\n    track by_src,\n    count 100, seconds 120;\n  classtype:attempted-recon;\n  sid:9104603; rev:1;)",
+        "notes": "nmap's default scan probes the 'top 1000' most common ports - a specific list defined in nmap's services file. The set has characteristic patterns: dense in the 1-1024 range, includes common service ports (445, 3389, 1433, 5985), specific high ports (8080, 8443, 27017, 50000). Detection at the port-set level (rather than just count) increases confidence - the probability of legitimate traffic touching exactly nmap's top-1000 set is essentially zero. Implementation in Zeek via custom scripts or in your SIEM via aggregation+set-membership analysis. Suricata's threshold-based approach is simpler but noisier - 100+ SYN connections to one host in 120 seconds catches the volume signature. Pair with Zeek conn.log for the precise port set.",
+        "apt": [
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "Default nmap scans appear in lower-sophistication ransomware affiliate operations."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Documented use of nmap with default parameters in some operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Sophisticated nation-state operators typically use customized scan parameters but nmap defaults still appear regularly in incident response."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Red Team",
+            "note": "Default nmap scans common in red team operations."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1046, industry tooling"
+      }
+    },
+    "T1195_6": {
+      "indicator": "Hardware management interface phoning home to non-vendor infrastructure - IPMI/iLO/iDRAC backdoor",
+      "techId": "T1195",
+      "severity": "high",
+      "addedAt": 1781100219000,
+      "row": {
+        "sub": "T1195.003 - Compromise Hardware Supply Chain",
+        "indicator": "Hardware management interface phoning home to non-vendor infrastructure - IPMI/iLO/iDRAC backdoor",
+        "arkime": "ip.src == $MGMT_VLAN\n&& protocols != [http, https, dns, ntp, syslog, snmp]\n&& ip.dst != $ALLOWED_VENDOR_INFRA\n&& ip.dst != $MPNET\n&& port.dst == [443, 80, 8443, 4444, 6666]",
+        "kibana": "source.ip: $MGMT_VLAN\nAND NOT destination.ip: (\n  $ALLOWED_VENDOR_INFRA OR $MPNET\n)\nAND destination.port: (\n  443 OR 80 OR 8443\n  OR 4444 OR 6666\n)",
+        "suricata": "alert tcp $MGMT_VLAN any\n  -> $EXTERNAL_NET\n  [80,443,8443,4444,6666]\n  (msg:\"TA0001 T1195.003 Hardware\n    mgmt interface outbound to\n    non-vendor infrastructure\";\n  flow:established,to_server;\n  threshold:type both,\n    track by_src,\n    count 1, seconds 60;\n  classtype:trojan-activity;\n  sid:9119507; rev:1;)",
+        "notes": "Hardware management interfaces (IPMI, iLO, iDRAC, BMC) operate below the OS - they have their own network stack, IP address, and TLS implementation. A compromised BMC can persist across OS reinstalls and is invisible to host-based security tools. Network detection is the only reliable signal for BMC-level compromise. Maintain a separate VLAN for BMC interfaces ($MGMT_VLAN) and alert on any outbound connection from those IPs to non-vendor infrastructure. Legitimate BMC outbound: vendor health monitoring, firmware update servers, NTP, syslog. Anything else from a BMC = critical investigation. Hardware supply chain attacks against BMCs are documented (Bloomberg's 'The Big Hack' allegations 2018, multiple academic demonstrations of malicious BMC firmware).",
+        "apt": [
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Has been associated with hardware-level operations against technology sector supply chains."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Hardware supply chain compromise targeting BMCs and management interfaces is documented in academic security research and vendor advisories. While direct nation-state attribution is limited in public reporting, the technical capability is well-documented and the attack surface is significant."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1195.003, industry reporting"
+      }
+    },
+    "T1021.001_2": {
+      "indicator": "RDP from external source - internet-facing RDP exposure abuse",
+      "techId": "T1021.001",
+      "severity": "high",
+      "addedAt": 1781100292000,
+      "row": {
+        "sub": "T1021.001 - Source/Destination Anomalies",
+        "indicator": "RDP from external source - internet-facing RDP exposure abuse",
+        "arkime": "ip.src == $EXTERNAL\n&& ip.src != $RDP_GATEWAY_ALLOWLIST\n&& port.dst == 3389\n&& protocols == rdp\n&& ip.dst == $MPNET\n&& session.length > 30",
+        "kibana": "source.ip: NOT $MPNET\nAND NOT source.ip: $RDP_GATEWAY_ALLOWLIST\nAND destination.port: 3389\nAND destination.ip: $MPNET",
+        "suricata": "alert tcp $EXTERNAL_NET any\n  -> $HOME_NET 3389\n  (msg:\"TA0008 T1021.001 External\n    RDP connection internet-exposed\n    RDP abuse\";\n  flow:established,to_server;\n  classtype:trojan-activity;\n  sid:9100103; rev:1;)",
+        "notes": "Internet-facing RDP is one of the top initial access vectors for ransomware - exposed RDP servers get credential-sprayed within hours of going online (Shodan-discoverable). Adversaries who succeed often use the same RDP access for lateral movement once inside. Detection: any external IP connecting to internal RDP that isn't your sanctioned RDP gateway (CloudFlare, Citrix Gateway, RD Gateway, AWS Session Manager). The detection IS the alert - there should be NO direct external RDP to your internal network. If you find any, you have a perimeter exposure problem regardless of whether the connection is malicious. Many environments inherit these exposures from M&A activity or shadow IT - periodic scanning of your own external IP space (Shodan, custom port scans) catches them.",
+        "apt": [
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "External RDP is one of the top ransomware initial access vectors per CISA, FBI, and industry reporting."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "External RDP abuse documented in some technology sector operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented in numerous incident reports as primary ransomware initial access vector."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Initial Access Brokers",
+            "note": "IABs specifically target Shodan-discoverable RDP for credential spray attacks."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1021.001, T1133, CISA ransomware advisories"
+      }
+    },
+    "T1558.001_0": {
+      "indicator": "Kerberos TGS-REQ from session lacking AS-REQ predecessor - forged TGT use",
+      "techId": "T1558.001",
+      "severity": "high",
+      "addedAt": 1781100365000,
+      "row": {
+        "sub": "T1558.001 - Forged TGT Use",
+        "indicator": "Kerberos TGS-REQ from session lacking AS-REQ predecessor - forged TGT use",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 88\nAND kerberos.msg_type: \"tgs-req\"\nAND NOT _exists_: previous_as_req_correlation",
+        "suricata": "[Network detection of forged\nGolden Tickets requires session\ncorrelation across AS-REQ and\nTGS-REQ messages. Suricata's\nstateless model cannot do this\nacross long timeframes. Detection\nvia Zeek scripts that track\nAS-REQ/TGS-REQ pairs, or via\nhost-side Event ID 4769 with\nunusual ticket characteristics.]\nN/A pure Suricata",
+        "notes": "Golden Tickets are forged TGTs encrypted with the krbtgt account's NT hash (obtained via DCSync). The forged ticket can claim any user identity, any group membership, any expiration. Network signature: TGS-REQ messages where no prior AS-REQ exists for the same client principal - the 'TGT' came from nowhere on the wire. Zeek-based correlation can detect this (track AS-REQ events, alert on TGS-REQ without preceding AS-REQ within reasonable timeframe). Other detection signatures: ticket lifetimes anomalously long (10 years+ default in Mimikatz), ticket encryption type RC4 when AES is expected, account names that don't exist in AD. Rotating krbtgt password twice (12-hour spacing) invalidates all existing Golden Tickets - recommended whenever DCSync is observed. Particularly important to detect because Golden Tickets persist across user/admin password resets.",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "APT29",
+            "note": "Golden Ticket persistence documented in SolarWinds compromise - survived initial remediation."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Golden Tickets in long-term operations against technology and gaming sectors."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "Golden Tickets in some ransomware operations targeting AD environments."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented in advanced threat operations including APT29 (SolarWinds). Persistence mechanism preferred when full domain compromise is achieved."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Red Team",
+            "note": "Golden Tickets in advanced red team operations - preferred persistence after full domain compromise."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1558.001"
+      }
+    },
+    "T1041_0": {
+      "indicator": "[OFF-NET TRIPWIRE] Outbound TLS session - extreme bytes-out / bytes-in ratio",
+      "techId": "T1041",
+      "severity": "high",
+      "addedAt": 1781100438000,
+      "row": {
+        "sub": "T1041 - Volume Ratio Anomaly",
+        "indicator": "[OFF-NET TRIPWIRE] Outbound TLS session - extreme bytes-out / bytes-in ratio",
+        "arkime": "ip.src == $MPNET\n&& ip.dst == $EXTERNAL\n&& port.dst == 443\n&& databytes.src > 104857600\n&& databytes.src / databytes.dst > 50",
+        "kibana": "source.ip: $MPNET\nAND destination.ip: NOT $MPNET\nAND destination.port: 443\nAND source.bytes > 104857600\nAND ratio_calc: source.bytes/destination.bytes > 50",
+        "suricata": "[Suricata can flag total bytes per\nflow, but bytes-out:bytes-in ratio\ncalculation across long flows is\ntypically done in Zeek (conn.log\norig_bytes vs resp_bytes ratio)\nor in SIEM aggregation queries.]\nUse Zeek + SIEM for ratio detection.",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Normal HTTPS browsing has bytes-in HEAVILY exceeding bytes-out - you download web pages, images, video; you upload tiny request headers and the occasional form submission. Typical legitimate ratio is 1:10 to 1:100 (out:in). Exfiltration over HTTPS inverts this: you're sending data to a server that's just acknowledging receipt with small responses. Detection: outbound flows with bytes_out > 100MB AND bytes_out > 50× bytes_in over the session lifetime. Tunable threshold - adjust based on your environment's normal upload patterns (cloud backup users, content creators, video uploaders all skew higher upload volumes legitimately). Pair with destination reputation: known-good destinations (Google Drive, Dropbox, OneDrive when sanctioned) are allowlist; ratios to unknown destinations are high-priority alerts. Zeek's conn.log has orig_bytes and resp_bytes fields - aggregate across flows per source IP per destination IP per hour for clean ratio detection.",
+        "apt": [
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "Ransomware double-extortion typically exfils through HTTPS C2 before encryption."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT29",
+            "note": "Documented in SolarWinds and ongoing operations."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "HTTPS-based exfil in operations against multiple sectors."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Scattered Spider",
+            "note": "Documented in CISA AA23-320A operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Universal across modern operations using HTTPS C2 infrastructure."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1041, CISA AA23-320A"
+      }
+    },
+    "T1590_3": {
+      "indicator": "CDP / LLDP passive topology leakage",
+      "techId": "T1590",
+      "severity": "high",
+      "addedAt": 1781100511000,
+      "row": {
+        "sub": "T1590.003 - Network Trust Dependencies",
+        "indicator": "CDP / LLDP passive topology leakage",
+        "arkime": "ip.src == $MPNET\n&& protocols == [cdp, lldp]",
+        "kibana": "source.ip: $MPNET\nAND network.protocol: (\n  \"cdp\" OR \"lldp\"\n)\nAND destination.mac: (\n  \"01:00:0c:cc:cc:cc\"\n  OR \"01:80:c2:00:00:0e\"\n)",
+        "suricata": "alert pkthdr any any -> any any\n  (msg:\"RECON T1590.003 CDP/LLDP\n    topology leakage\";\n  content:\"|AA AA 03 00 00 0C|\";\n  offset:0; depth:6;\n  classtype:policy-violation;\n  sid:9159008; rev:1;)",
+        "notes": "CDP/LLDP broadcasts device vendor, model, IOS version, management IP, VLAN, and port ID to every adjacent host. Adversary with any segment foothold can passively capture these - zero active probes, no IDS alerts. Disable on all access-facing ports. Zeek CDP/LLDP analyzer is cleaner than Suricata for this detection. Presence implies adversary is already on segment.",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "Sandworm",
+            "note": "Passively captured CDP/LLDP to map Layer 2/3 topology of Ukrainian ICS networks before destructive operations."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Passive L2 enumeration post-initial-access to plan lateral movement paths."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Post-compromise indicator - requires existing foothold."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1590.003, ICS-CERT, industry reporting"
+      }
+    },
+    "T1572_3": {
+      "indicator": "[OFF-NET TRIPWIRE] SSH client banner anomaly - non-OpenSSH client or modified version string",
+      "techId": "T1572",
+      "severity": "high",
+      "addedAt": 1781100584000,
+      "row": {
+        "sub": "T1572 - SSH Tunneling",
+        "indicator": "[OFF-NET TRIPWIRE] SSH client banner anomaly - non-OpenSSH client or modified version string",
+        "kibana": "network.protocol: ssh\nAND source.ip: $MPNET\nAND ssh.client: NOT (\n  *OpenSSH* OR *PuTTY*\n  OR *libssh* OR *Cisco-*\n  OR *dropbear*\n)",
+        "suricata": "alert tcp $HOME_NET any\n  -> $EXTERNAL_NET 22\n  (msg:\"TA0011 T1572 Non-standard\n    SSH client banner possible\n    custom tunnel tool\";\n  flow:established,from_client;\n  content:\"SSH-\"; depth:4;\n  pcre:!\"/^SSH-2\\.0-(OpenSSH|\n    PuTTY|libssh|Cisco|dropbear)/\";\n  classtype:trojan-activity;\n  sid:9157203; rev:1;)",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. SSH client banners (sent in cleartext during handshake before encryption begins) reveal the implementation: OpenSSH_8.9p1, PuTTY_Release_0.78, libssh_0.10.4, Cisco-1.25, dropbear_2022.83. Custom tunneling tools (Chisel, FRP, ngrok-style tunnels using SSH transport) often have characteristic banners or modified versions. Some tunneling tools mimic OpenSSH banners exactly to evade this detection - but many don't. Zeek ssh.log captures both client and server banners. Build a $ALLOWED_SSH_CLIENTS allowlist of banners observed legitimately in your environment and alert on first-seen banners. New SSH tunneling tools appear regularly - Hexshell, Chisel, Wireguard-over-SSH, Cloudflare Tunnel - keep the allowlist tight and investigate new banners.",
+        "apt": [
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Has used custom SSH-based tunneling tools."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Banner-based detection documented in offensive security training and Corelight Zeek SSH analyzer documentation."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Red Team",
+            "note": "Custom SSH-based tunneling tools (Chisel, FRP, ngrok) are documented red team and threat actor tooling."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1572, Corelight documentation"
+      }
+    },
+    "T1213.001_0": {
+      "indicator": "Confluence REST API search burst - single user, many distinct queries",
+      "techId": "T1213.001",
+      "severity": "high",
+      "addedAt": 1781100657000,
+      "row": {
+        "sub": "T1213.001 - Confluence Search Burst",
+        "indicator": "Confluence REST API search burst - single user, many distinct queries",
+        "arkime": "ip.src == $MPNET\n&& port.dst == [80, 443, 8090]\n&& http.uri == \"*/rest/api/content/search*\"",
+        "kibana": "source.ip: $MPNET\nAND destination.port: (80 OR 443 OR 8090)\nAND url.path: */rest/api/content/search*",
+        "suricata": "alert tcp $HOME_NET any\n  -> $CONFLUENCE_HOSTS [80,443,8090]\n  (msg:\"TA0009 T1213.001 Confluence\n    REST API search burst single\n    user many queries collection\";\n  flow:established,to_server;\n  content:\"/rest/api/content/search\";\n  http_uri;\n  threshold:type both,\n    track by_src,\n    count 20, seconds 600;\n  classtype:trojan-activity;\n  sid:9121301; rev:1;)",
+        "notes": "Confluence's REST API at /rest/api/content/search accepts CQL (Confluence Query Language) queries - adversaries use this to grep across all spaces for keywords like 'password', 'api_key', 'credentials', 'AWS', 'jenkins'. Tools: confluence-dump, internal pentesting frameworks, custom scripts. Pattern: 20+ distinct search queries from one source within 10 minutes. The Confluence web UI does periodic search but humans rarely fire 20+ distinct CQL queries in a short window. The REST endpoint pattern is high-confidence - UI search uses different paths. Pair with bulk content downloads (/rest/api/content/{id}?expand=body) for full collection chain. If Confluence is hosted internally, build $CONFLUENCE_HOSTS allowlist; if cloud (Atlassian Cloud), this detection moves to cloud-side audit logs (Atlassian Audit API).",
+        "apt": [
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Wiki/Confluence collection in operations targeting tech sector."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Scattered Spider",
+            "note": "Documented in CISA AA23-320A operations against SaaS environments."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Particularly heavy in operations targeting tech sector companies."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Red Team",
+            "note": "Confluence enumeration is a standard red team data-discovery step in modern engagements."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1213.001"
+      }
+    },
+    "T1135_1": {
+      "indicator": "SMB tree connect to many distinct share names - share enumeration via tree connect attempts",
+      "techId": "T1135",
+      "severity": "high",
+      "addedAt": 1781100730000,
+      "row": {
+        "sub": "T1135 - SMB Tree Connect Enumeration",
+        "indicator": "SMB tree connect to many distinct share names - share enumeration via tree connect attempts",
+        "arkime": "ip.src == $MPNET\n&& ip.src != $ALLOWED_SMB_CLIENTS\n&& port.dst == 445\n&& protocols == smb",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 445",
+        "suricata": "alert tcp $HOME_NET any\n  -> $HOME_NET 445\n  (msg:\"TA0007 T1135 SMB tree\n    connect burst many shares\n    enumeration attempt\";\n  flow:established,to_server;\n  content:\"|ff 53 4d 42 75|\";\n  threshold:type both,\n    track by_src,\n    count 5, seconds 60;\n  classtype:attempted-recon;\n  sid:9113502; rev:1;)",
+        "notes": "Source-scope this query with ip.src != $ALLOWED_SMB_CLIENTS (operator-maintained list of expected SMB-reading hosts e.g. backup servers, monitoring agents) - the default query catches all SMB traffic which will be noisy. If you ship Zeek logs to Kibana, you can sharpen this KQL by adding zeek.smb_files.action or zeek.smb_cmd.command filters (e.g. \"SMB_FILE_READ\" / \"SMB_FILE_WRITE\" / \"get_dfs_referral\") - the baseline KQL above falls back to port/protocol since Zeek shipping is not assumed. Some share enumeration tools work by attempting tree connects to common share names (ADMIN$, C$, IPC$, NETLOGON, SYSVOL, plus dictionary-based guesses like 'shared', 'public', 'data', 'backup'). The pattern: rapid sequence of tree_connect attempts with different UNC paths from one source to one target. Successful connects indicate accessible shares; access denied responses indicate the share exists but isn't accessible. Both responses are useful intelligence to the adversary. Zeek smb_files.log and smb.log capture tree connect operations. The signal is per-(src,dst) share count - 5+ distinct shares in a minute is anomalous (legitimate users typically connect to known shares, not enumerate many). Combine with successful-vs-denied response distribution: many denied = brute-force enumeration.",
+        "apt": [
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "Tree connect enumeration in ransomware operations identifying writable shares for staging."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Share probing in technology sector operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Various PowerShell enumeration scripts. CrackMapExec --shares produces this pattern."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Red Team",
+            "note": "Standard red team enumeration via CrackMapExec --shares."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1135, industry reporting"
+      }
+    }
+  }
+}

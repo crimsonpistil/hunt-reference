@@ -1,0 +1,375 @@
+{
+  "_format": "tonk-attribution-state",
+  "_v": 1,
+  "exported": "2026-06-10T15:12:00.000Z",
+  "source": "example hunt — APT28 (clean lean)",
+  "indicatorCount": 11,
+  "items": {
+    "T1200_4": {
+      "indicator": "Rogue access point - beaconing SSID matching corporate name from unauthorized BSSID",
+      "techId": "T1200",
+      "severity": "high",
+      "addedAt": 1781100000000,
+      "row": {
+        "sub": "T1200 - Rogue Wi-Fi",
+        "indicator": "Rogue access point - beaconing SSID matching corporate name from unauthorized BSSID",
+        "kibana": "network.protocol: \"802.11\"\nAND wireless.ssid: $CORP_SSIDS\nAND NOT wireless.bssid:\n  $AUTHORIZED_BSSIDS",
+        "suricata": "alert udp any any\n  -> any any\n  (msg:\"TA0001 T1200 Rogue AP\n    beaconing corp SSID from\n    unauthorized BSSID\";\n  pkt_data;\n  content:\"|80 00|\"; depth:2;\n  classtype:policy-violation;\n  sid:9120005; rev:1;)",
+        "notes": "Rogue access points beacon a corporate SSID (your Wi-Fi network name) from an unauthorized BSSID (MAC of the AP) to lure users into connecting through adversary-controlled infrastructure for credential harvesting and AiTM. Detection requires wireless monitoring infrastructure - most enterprise WLAN controllers (Cisco WLC, Aruba ClearPass, Meraki, Juniper Mist) include Wireless Intrusion Prevention (WIPS) that automatically detects rogue APs and impersonators. Maintain $AUTHORIZED_BSSIDS as your full enterprise AP MAC list. WiFi Pineapple and similar tools generate distinct beacon patterns. WIPS triggers should pipe to your SIEM. Pair with 802.1X EAP-TLS to make rogue AP exploitation harder (requires stolen client certs).",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "GRU operatives were detained in The Hague in 2018 attempting close-access wireless attacks against the OPCW with a Wi-Fi Pineapple-style device hidden in a vehicle in the parking lot. Documented by Dutch military intelligence."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Insider",
+            "note": "Rogue AP attacks are documented in NSA and CISA wireless security guidance as a primary close-access initial access vector."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1200, T1557, Dutch MIVD reporting"
+      }
+    },
+    "T1187_1": {
+      "indicator": "PrinterBug - MS-RPRN RpcRemoteFindFirstPrinterChangeNotificationEx",
+      "techId": "T1187",
+      "severity": "high",
+      "addedAt": 1781100073000,
+      "row": {
+        "sub": "T1187 - PrinterBug",
+        "indicator": "PrinterBug - MS-RPRN RpcRemoteFindFirstPrinterChangeNotificationEx",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 445\nAND dcerpc.interface_uuid: \"12345678-1234-abcd-ef00-0123456789ab\"\nAND dcerpc.opnum: 65",
+        "suricata": "alert tcp $HOME_NET any\n  -> $HOME_NET 445\n  (msg:\"TA0006 T1187 PrinterBug\n    MS-RPRN spooler coercion\";\n  flow:established,to_server;\n  content:\"|78 56 34 12 34 12 cd ab|\";\n  content:\"|41 00 00 00|\"; within:50;\n  classtype:trojan-activity;\n  sid:9118702; rev:1;)",
+        "notes": "MS-RPRN (Print System Remote Protocol, UUID 12345678-1234-abcd-ef00-0123456789ab) - RpcRemoteFindFirstPrinterChangeNotificationEx (opnum 65) accepts an arbitrary UNC path for the change-notification destination, causing the target system to authenticate to the path. Discovered as 'PrinterBug' by Lee Christensen (SpecterOps, 2018) and documented in the original SpoolService research. Particularly devastating against domain controllers because the spooler service runs by default on DCs (until disabled per modern hardening guidance). Combined with AD CS Web Enrollment relay, PrinterBug → DA is a one-shot attack. Modern environments should disable the Print Spooler service on DCs (CIS benchmark recommendation). Detection at the spooler RPC opnum is high-confidence; legitimate use of opnum 65 is rare.",
+        "apt": [
+          {
+            "cls": "apt-mul",
+            "name": "Scattered Spider",
+            "note": "Coercion attacks documented in CISA AA23-320A."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "PrinterBug exploitation in some operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented in extensive offensive security research. SpecterOps Lee Christensen original research."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Red Team",
+            "note": "PrinterBug + AD CS relay = one-shot Domain Admin in unhardened environments."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1187"
+      }
+    },
+    "T1048.003_1": {
+      "indicator": "[OFF-NET TRIPWIRE] Outbound SMB - TCP/445 to external destination",
+      "techId": "T1048.003",
+      "severity": "high",
+      "addedAt": 1781100146000,
+      "row": {
+        "sub": "T1048.003 - Outbound SMB",
+        "indicator": "[OFF-NET TRIPWIRE] Outbound SMB - TCP/445 to external destination",
+        "arkime": "ip.src == $MPNET\n&& ip.dst == $EXTERNAL\n&& port.dst == 445\n&& protocols == smb",
+        "kibana": "source.ip: $MPNET\nAND destination.ip: NOT $MPNET\nAND destination.port: 445",
+        "suricata": "alert tcp $HOME_NET any\n  -> $EXTERNAL_NET 445\n  (msg:\"TA0010 T1048.003 outbound\n    SMB to external destination\n    extremely anomalous\";\n  flow:established,to_server;\n  content:\"|fe|SMB\"; depth:4;\n  classtype:trojan-activity;\n  sid:9104804; rev:1;)",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Outbound SMB to the internet is essentially always either malicious or misconfigured. Legitimate SMB traffic stays internal - even cloud storage providers (Azure Files, AWS FSx) typically front their SMB endpoints with VPN/private link, not raw internet exposure. Detection: any TCP/445 to non-internal destinations. Common scenarios: (1) NTLM hash capture by external attacker (file:// URL in phishing email triggers SMB connect to attacker server), (2) deliberate SMB-as-exfil (rare but used by some operators for data transfer to attacker SMB servers), (3) misconfigured app trying to connect to attacker-typo'd hostname. Modern best practice: BLOCK outbound SMB at the firewall - it's near-zero false positive impact and shuts down a whole class of attacks. If you can't block, this detection is essentially zero-false-positive in most environments. Pair with destination reputation: residential IPs, hosting providers, and recently-registered domains with SMB ports open are high-priority.",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "Outbound SMB used historically for NTLM relay and credential capture."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented across phishing campaigns leveraging file:// URLs and external SMB servers."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Phishing Operators",
+            "note": "file:// URL phishing triggers outbound SMB to attacker server for hash capture."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "NTLM Hash Capturers",
+            "note": "Standard external Net-NTLMv2 capture vector."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1048.003, T1187"
+      }
+    },
+    "T1021.001_4": {
+      "indicator": "RDP NLA negotiation downgrade - CredSSP downgrade attempt",
+      "techId": "T1021.001",
+      "severity": "high",
+      "addedAt": 1781100219000,
+      "row": {
+        "sub": "T1021.001 - Authentication Patterns",
+        "indicator": "RDP NLA negotiation downgrade - CredSSP downgrade attempt",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 3389\nAND rdp.cookie: *mstshash*\nAND rdp.security_protocol: \"standard\"",
+        "suricata": "alert tcp $HOME_NET any\n  -> $HOME_NET 3389\n  (msg:\"TA0008 T1021.001 RDP\n    Standard Security downgrade\n    NLA bypass attempt\";\n  flow:established,to_server;\n  content:\"Cookie|3a| mstshash=\";\n  content:!\"|01 00 08 00|\"; within:50;\n  classtype:trojan-activity;\n  sid:9100105; rev:1;)",
+        "notes": "RDP supports multiple security layers: Standard RDP Security (legacy, weak, vulnerable to MITM), TLS, and CredSSP/NLA (Network Level Authentication - most secure, requires authentication BEFORE session establishment). NLA is the modern default and adversaries sometimes try to downgrade to weaker security to bypass MITM defenses or exploit older vulnerabilities. The Standard Security protocol negotiation pattern is visible in cleartext during the RDP X.224 connection request. Modern environments should require NLA - workstations attempting Standard Security RDP are either misconfigured or attempting downgrade. Maintain $LEGACY_RDP_CLIENTS for known-legitimate sources (older systems, embedded devices). Combine with subsequent CredSSP negotiation absence - if a session goes from Standard Security request directly to RDP data without the NLA exchange, that's a successful downgrade.",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "RDP downgrade attacks documented in some operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "RDP security downgrade attacks are documented in offensive security research and in some advanced threat actor operations targeting environments with mixed legacy infrastructure."
+          }
+        ],
+        "activity": [
+          {
+            "cls": "apt-mul",
+            "name": "Red Team",
+            "note": "Documented in offensive security research."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1021.001, industry research"
+      }
+    },
+    "T1592_21": {
+      "indicator": "WPAD / PAC file request - network proxy configuration disclosure",
+      "techId": "T1592",
+      "severity": "high",
+      "addedAt": 1781100292000,
+      "row": {
+        "sub": "T1592.004 - Client Configurations",
+        "indicator": "WPAD / PAC file request - network proxy configuration disclosure",
+        "arkime": "ip.src != $MPNET\n&& protocols == http\n&& http.method == GET\n&& http.uri == [\"*/wpad.dat*\", \"*/proxy.pac*\", \"*/wpad/wpad.dat*\"]",
+        "kibana": "NOT source.ip: $MPNET\nAND http.request.method: GET\nAND url.path: (\n  *wpad.dat*\n  OR *proxy.pac*\n  OR *wpad/wpad.dat*\n)",
+        "suricata": "alert http $EXTERNAL_NET any\n  -> $HTTP_SERVERS any\n  (msg:\"RECON T1592.004 WPAD PAC\n    proxy config disclosure\";\n  flow:established,to_server;\n  content:\"GET\"; http.method;\n  pcre:\"/(wpad\\.dat|\n    proxy\\.pac|\n    wpad\\/wpad\\.dat)/ix\";\n  http.uri;\n  classtype:attempted-recon;\n  sid:9159223; rev:1;)",
+        "notes": "WPAD requests reveal that the client uses automatic proxy detection - and if your PAC file is served, it discloses internal proxy hostnames, IP ranges, and bypass lists. External requests for wpad.dat should never reach your web servers. WPAD poisoning via Responder is a documented credential harvesting technique - internal clients broadcasting WPAD requests are vulnerable. Disable WPAD on all clients or configure proxy settings explicitly.",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "Exploited WPAD broadcast requests using Responder-equivalent tooling to serve malicious PAC files, redirecting traffic through adversary-controlled proxies."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "WPAD poisoning via NBNS/mDNS is documented in multiple penetration testing frameworks and commonly observed in post-compromise lateral movement."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1592.004, T1557, industry reporting"
+      }
+    },
+    "T1071_5": {
+      "indicator": "[OFF-NET TRIPWIRE] SMB outbound to internet - C2 channel abusing SMB protocol over external connection",
+      "techId": "T1071",
+      "severity": "high",
+      "addedAt": 1781100365000,
+      "row": {
+        "sub": "T1071.002 - File Transfer Protocols",
+        "indicator": "[OFF-NET TRIPWIRE] SMB outbound to internet - C2 channel abusing SMB protocol over external connection",
+        "arkime": "ip.src == $MPNET\n&& port.dst == 445\n&& protocols == smb\n&& ip.dst != $MPNET\n&& ip.dst != $ALLOWED_PARTNERS",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 445\nAND network.protocol: smb\nAND NOT destination.ip: $MPNET\nAND NOT destination.ip: $ALLOWED_PARTNERS",
+        "suricata": "alert tcp $HOME_NET any\n  -> $EXTERNAL_NET 445\n  (msg:\"TA0011 T1071.002 Outbound\n    SMB to internet possible C2\n    or hash relay\";\n  flow:established,to_server;\n  content:\"|ff 53 4d 42|\"; depth:5;\n  classtype:trojan-activity;\n  sid:9107106; rev:1;)",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. SMB to external destinations is essentially never legitimate - outbound TCP/445 to the internet should be blocked at the perimeter as a basic hygiene control. When it bypasses controls (egress firewall misconfiguration), implants can use SMB for both C2 and credential theft (responder-style hash capture against attacker-controlled SMB servers). The classic indicator: a UNC path injection (\\\\attacker.com\\share) in an Office document or browser that triggers an outbound SMB authentication attempt, leaking the user's NTLM hash to the adversary. Block outbound 445 at the perimeter and alert on any attempt - there's no legitimate reason to allow it.",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "Has used outbound SMB for credential theft via UNC path injection in document-based phishing operations."
+          },
+          {
+            "cls": "apt-cn",
+            "name": "APT10",
+            "note": "Used outbound SMB for credential capture in MSP targeting during Cloud Hopper."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Outbound SMB exploitation for credential theft and C2 is documented in CISA and NSA advisories on AD security."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1071.002, T1187, CISA advisories"
+      }
+    },
+    "T1018_3": {
+      "indicator": "NetBIOS Name Service queries - broadcast NBNS scanning for hostname enumeration",
+      "techId": "T1018",
+      "severity": "high",
+      "addedAt": 1781100438000,
+      "row": {
+        "sub": "T1018 - ARP & NetBIOS Discovery",
+        "indicator": "NetBIOS Name Service queries - broadcast NBNS scanning for hostname enumeration",
+        "arkime": "ip.src == $MPNET\n&& port.dst == 137\n&& protocols == nbns",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 137\nAND network.protocol: netbios-ns",
+        "suricata": "alert udp $HOME_NET any\n  -> $HOME_NET 137\n  (msg:\"TA0007 T1018 NetBIOS NBNS\n    name service query burst\n    host enumeration\";\n  flow:to_server;\n  threshold:type both,\n    track by_src,\n    count 30, seconds 60;\n  classtype:attempted-recon;\n  sid:9101803; rev:1;)",
+        "notes": "NetBIOS Name Service (NBNS, UDP/137) is a legacy Windows hostname-resolution protocol. Adversaries use it for two reconnaissance patterns: (1) NBNS broadcasts to enumerate Windows hostnames in the local broadcast domain - nbtstat, nmap NSE scripts, custom tools (2) NBNS queries to specific IPs to retrieve their NetBIOS name - building a hostname/IP map. NBNS is mostly deprecated in modern AD environments (replaced by DNS) but still active in many networks for legacy compatibility. Workstation behavior: occasional NBNS queries during normal operation. Adversary behavior: rapid-fire NBNS to many distinct targets. Build per-source NBNS query rate baselines - adversary scans stand out clearly. Pair with LLMNR query analysis (UDP/5355) for the modern equivalent.",
+        "apt": [
+          {
+            "cls": "apt-cn",
+            "name": "APT10",
+            "note": "NBNS scanning during Cloud Hopper operations against MSPs."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "NetBIOS enumeration for AD reconnaissance documented in espionage operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "NBNS enumeration appears in many ransomware affiliate playbooks targeting legacy environments."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented in MITRE ATT&CK and in standard pentest tooling (nbtscan, nmap nbstat NSE script)."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1018, MITRE ATT&CK T1135"
+      }
+    },
+    "T1189_2": {
+      "indicator": "[OFF-NET TRIPWIRE] Browser plugin / capability enumeration request - exploit kit victim profiling",
+      "techId": "T1189",
+      "severity": "high",
+      "addedAt": 1781100511000,
+      "row": {
+        "sub": "T1189 - Exploit Kit Profiling",
+        "indicator": "[OFF-NET TRIPWIRE] Browser plugin / capability enumeration request - exploit kit victim profiling",
+        "arkime": "ip.src == $MPNET\n&& protocols == http\n&& http.method == GET\n&& http.uri == [\"*detect.js*\", \"*check.js*\", \"*scan.php*\", \"*gate.php*\", \"*land.php*\", \"*count.php*\", \"*click.php*\", \"*go.php*\"]\n&& http.user-agent == [\"*Mozilla*\", \"*Chrome*\"]\n&& databytes.dst > 500\n&& ip.dst != $ALLOWED_DEFAULTS",
+        "kibana": "source.ip: $MPNET\nAND http.request.method: GET\nAND url.path: (\n  *detect.js* OR *check.js*\n  OR *scan.php* OR *gate.php*\n  OR *land.php* OR *count.php*\n  OR *click.php* OR *go.php*\n)\nAND NOT destination.ip: $ALLOWED_DEFAULTS",
+        "suricata": "alert http $HOME_NET any\n  -> $EXTERNAL_NET any\n  (msg:\"TA0001 T1189 Exploit kit\n    victim profiling URI pattern\";\n  flow:established,to_server;\n  content:\"GET\"; http.method;\n  pcre:\"/(detect|check|scan|gate|\n    land|count|click|go)\n    \\.(php|js)\\b/i\";\n  http.uri;\n  classtype:trojan-activity;\n  sid:9118903; rev:1;)",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. Exploit kits serve a profiling script before delivering the exploit - this script fingerprints the victim's browser, plugins (Java, Flash, PDF reader), OS version, and screen resolution to select the appropriate exploit. Common filenames are detect.js, check.php, gate.php, and similar generic names. The response contains JavaScript that enumerates capabilities and returns them to the kit. Combine with the source domain reputation and whether it appears in redirect chain context - profiling scripts on their own are low-confidence, but in combination with a redirect chain entry and a subsequent PE/exploit delivery they form a strong kill chain narrative.",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "Used victim profiling scripts in watering hole operations against government and defense sector targets to fingerprint visiting browsers and deliver targeted exploits based on plugin version."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Criminal exploit kit operations (Angler, RIG, Magnitude) universally use victim profiling as the first step in the delivery chain."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1189, industry reporting"
+      }
+    },
+    "T1210_2": {
+      "indicator": "PrintNightmare exploit - RpcAddPrinterDriverEx with malicious driver path",
+      "techId": "T1210",
+      "severity": "high",
+      "addedAt": 1781100584000,
+      "row": {
+        "sub": "T1210 - PrintNightmare",
+        "indicator": "PrintNightmare exploit - RpcAddPrinterDriverEx with malicious driver path",
+        "kibana": "source.ip: $MPNET\nAND destination.port: 445\nAND dcerpc.interface_uuid: \"12345678-1234-abcd-ef00-0123456789ab\"\nAND dcerpc.opnum: 89",
+        "suricata": "alert tcp $HOME_NET any\n  -> $HOME_NET 445\n  (msg:\"TA0008 T1210 PrintNightmare\n    RpcAddPrinterDriverEx exploit\";\n  flow:established,to_server;\n  content:\"|78 56 34 12 34 12 cd ab|\";\n  pcre:\"/(\\\\\\?\\\\UNC\\\\|\n    \\\\\\\\[^\\x00]+\\.dll)/i\";\n  classtype:trojan-activity;\n  sid:9121003; rev:1;)",
+        "notes": "PrintNightmare (CVE-2021-1675, CVE-2021-34527) is a vulnerability in the Windows Print Spooler service - RpcAddPrinterDriverEx (opnum 89 in the spoolss interface) accepts a driver path that the spooler loads with SYSTEM privileges, allowing arbitrary code execution. Exploits provide UNC paths to remote DLLs (\\\\attacker\\share\\evil.dll) that get loaded as printer drivers. Network signature: RpcAddPrinterDriverEx calls with UNC paths or .dll references in the parameters. Detection challenge: legitimate printer driver installation uses this same RPC - but only from sanctioned print servers (SCCM, your print management infrastructure). Build $PRINT_SERVERS allowlist; alert on RpcAddPrinterDriverEx from anywhere else. Microsoft has issued multiple patches; many environments still have unpatched systems particularly in OT and healthcare networks.",
+        "apt": [
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "PrintNightmare exploitation in espionage operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Ransomware",
+            "note": "Used by Conti, Vice Society, and other ransomware operators for privilege escalation and lateral movement."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Vice Society",
+            "note": "PrintNightmare in operations targeting education sector."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Conti",
+            "note": "PrintNightmare for SYSTEM-level execution in pre-encryption phase."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented in CISA alerts and extensive industry reporting since 2021."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1210, CVE-2021-34527, CISA Alerts"
+      }
+    },
+    "T1592_0": {
+      "indicator": "NetBIOS Name Service (NBNS) enumeration - external host querying your broadcast domain",
+      "techId": "T1592",
+      "severity": "high",
+      "addedAt": 1781100657000,
+      "row": {
+        "sub": "T1592.001 - Hardware",
+        "indicator": "NetBIOS Name Service (NBNS) enumeration - external host querying your broadcast domain",
+        "arkime": "ip.src != $MPNET\n&& port.dst == 137\n&& protocols == udp\n&& databytes.src > 0",
+        "kibana": "NOT source.ip: $MPNET\nAND destination.port: 137\nAND network.transport: udp",
+        "suricata": "alert udp $EXTERNAL_NET any\n  -> $HOME_NET 137\n  (msg:\"RECON T1592.001 External\n    NBNS name query\";\n  content:\"|00 00|\";\n  offset:2; depth:2;\n  classtype:attempted-recon;\n  sid:9159201; rev:1;)",
+        "notes": "NBNS (UDP/137) resolves NetBIOS names to IPs and returns the NetBIOS name, workgroup/domain name, and MAC address. External NBNS should never reach internal hosts. Internally, watch for non-Windows hosts generating NBNS queries in bulk - Responder generates distinctive query patterns visible in Zeek nbns.log.",
+        "apt": [
+          {
+            "cls": "apt-cn",
+            "name": "APT10",
+            "note": "Used NetBIOS enumeration for MSP network host discovery during Cloud Hopper, mapping workstation and server names without touching AD."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "Used NBNS and SMB enumeration to identify host hardware configurations and domain membership in government network targeting."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Documented in multiple CISA advisories as a standard network discovery technique used post-initial-access."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1592.001, CISA advisories, industry reporting"
+      }
+    },
+    "T1090_4": {
+      "indicator": "[OFF-NET TRIPWIRE] HTTP CONNECT method outbound - open proxy abuse for tunneling",
+      "techId": "T1090",
+      "severity": "high",
+      "addedAt": 1781100730000,
+      "row": {
+        "sub": "T1090.002 - External Proxy",
+        "indicator": "[OFF-NET TRIPWIRE] HTTP CONNECT method outbound - open proxy abuse for tunneling",
+        "arkime": "ip.src == $MPNET\n&& protocols == http\n&& http.method == CONNECT\n&& ip.dst != $MPNET_PROXIES\n&& ip.dst != $ALLOWED_DEFAULTS",
+        "kibana": "source.ip: $MPNET\nAND http.request.method: CONNECT\nAND NOT destination.ip: $MPNET_PROXIES\nAND NOT destination.ip: $ALLOWED_DEFAULTS",
+        "suricata": "alert http $HOME_NET any\n  -> $EXTERNAL_NET any\n  (msg:\"TA0011 T1090.002 HTTP\n    CONNECT method to external\n    open proxy abuse\";\n  flow:established,to_server;\n  content:\"CONNECT \"; depth:8;\n  classtype:trojan-activity;\n  sid:9109004; rev:1;)",
+        "notes": "[AIR-GAP TRIPWIRE] This indicator detects outbound traffic from MPNET to off-MPNET infrastructure. In a properly air-gapped environment this query should never produce hits; any hit indicates a likely air-gap violation: bridged USB tether, rogue cellular modem, vendor/maintenance laptop bridging networks, supply-chain implant calling home, or misconfigured perimeter device. Treat as priority-1 escalation; do not dismiss as false positive without thorough investigation. HTTP CONNECT is used by web proxies to establish tunnels (typically HTTPS through a forward proxy). Legitimate use: clients configured with $MPNET_PROXIES tunneling out via your sanctioned forward proxy. Anomalous use: a workstation issuing CONNECT to an external IP that isn't your proxy - indicates either misconfigured client or implant using an external open proxy as a relay. Open proxies (free, anonymous proxy lists) are heavily abused for adversary anonymization. The CONNECT method is rarely seen in normal HTTP traffic; when it appears outbound to non-corporate-proxy destinations it's a strong signal. Zeek http.log captures the method explicitly.",
+        "apt": [
+          {
+            "cls": "apt-cn",
+            "name": "APT41",
+            "note": "Has used open proxy infrastructure in operations."
+          },
+          {
+            "cls": "apt-ru",
+            "name": "APT28",
+            "note": "Has used proxy chains in espionage operations."
+          },
+          {
+            "cls": "apt-mul",
+            "name": "Multi",
+            "note": "Open proxy abuse is documented in numerous threat intel reports - public proxy lists are routinely used by criminal actors and some nation-state operations."
+          }
+        ],
+        "cite": "MITRE ATT&CK T1090.002, industry reporting"
+      }
+    }
+  }
+}
