@@ -2,7 +2,7 @@
 // Shared UI logic for all tactic pages.
 // DATA must be loaded before this file via a tactic-specific data/*.js script tag.
 
-// ── CASE TEMPLATES ──
+// ── CMS TEMPLATES ──
 const CMS_TEMPLATES = {
   T1595: { title:'T1595 - Active Scanning', body:`## TAG - RECON\n### Technique: Active Scanning, T1595\n- Time:\n- Source IP:\n- Destination IP(s):\n- Port(s):\n\nNotes:` },
   T1589: { title:'T1589 - Gather Victim Identity Information', body:`## TAG - RECON\n### Technique: Gather Victim Identity Information, T1589\n- Time:\n- Source IP:\n- Destination IP(s):\n- Port(s):\n- Type of Info Gathered: (Usernames, Emails, Employee Names, Credentials, etc.)\n\nNotes:` },
@@ -221,13 +221,11 @@ function copyText(text, btn, label) {
 
 // ── BUILD ROW ──
 function buildRow(row, techId, rowId) {
-  const aptBadges = row.apt.map(a =>
-    `<span class="apt-badge ${a.cls}">${a.name}</span>`
-  ).join('');
-
   const searchText = [
     row.indicator, row.notes, row.arkime, row.kibana, row.suricata,
     row.apt.map(a => a.name + ' ' + (a.note||'')).join(' '),
+    (row.malware||[]).map(a => a.name + ' ' + (a.note||'')).join(' '),
+    (row.activity||[]).map(a => a.name + ' ' + (a.note||'')).join(' '),
     row.cite || '', techId
   ].join(' ').toLowerCase();
 
@@ -250,7 +248,6 @@ function buildRow(row, techId, rowId) {
     <input type="checkbox" class="row-check" title="Select for export">
     <button class="star-btn${isStarred ? ' starred' : ''}" title="Add to hunt">${isStarred ? '&#9733;' : '&#9734;'}</button>
     <span class="ind-name">${esc(displayIndicator(row))}</span>
-    <div class="apt-badges">${aptBadges}</div>
     <div class="quick-tools">
       ${row.arkime ? '<button class="qtool qt-a" title="Copy Arkime">ARK</button>' : ''}
       <button class="qtool qt-k" title="Copy Kibana">KQL</button>
@@ -293,7 +290,7 @@ function buildRow(row, techId, rowId) {
     ['t-sur', 'Suricata',     true],
     ['t-not', 'Notes',        true],
     ['t-apt', 'APT',          true],
-    ['t-cms', 'Case Template', true],
+    ['t-cms', 'CMS Template', true],
   ];
   const tabBar = document.createElement('div');
   tabBar.className = 'tab-bar';
@@ -337,18 +334,40 @@ function buildRow(row, techId, rowId) {
     'not': (() => { const d = document.createElement('div'); d.className = 'notes-body'; d.textContent = displayNotes(row); return d; })(),
     'apt': (() => {
       const d = document.createElement('div');
-      row.apt.forEach(a => {
+
+      // Render one association entry (name badge + optional note).
+      const renderEntry = (a) => {
         const item = document.createElement('div');
         item.className = 'apt-item';
-        item.innerHTML = `<span class="apt-badge ${a.cls}" style="font-size:11px">${esc(a.name)}</span>`;
+        item.innerHTML = `<span class="apt-badge ${a.cls || 'apt-mul'}" style="font-size:11px">${esc(a.name)}</span>`;
         if (a.note) {
           const note = document.createElement('div');
           note.className = 'apt-item-note';
           note.textContent = a.note;
           item.appendChild(note);
         }
-        d.appendChild(item);
-      });
+        return item;
+      };
+
+      // Render a labeled section for a bucket, only if it has entries.
+      const renderSection = (arr, label) => {
+        if (!Array.isArray(arr) || !arr.length) return;
+        if (label) {
+          const h = document.createElement('div');
+          h.className = 'apt-section-head';
+          h.textContent = label;
+          d.appendChild(h);
+        }
+        arr.forEach(a => d.appendChild(renderEntry(a)));
+      };
+
+      // Actors first (no header - the primary attribution), then the
+      // non-actor buckets clearly separated so they are never mistaken for
+      // threat-group attribution.
+      renderSection(row.apt, null);
+      renderSection(row.malware, 'Malware & Tooling');
+      renderSection(row.activity, 'Activity & Roles');
+
       if (row.cite) {
         const cite = document.createElement('div');
         cite.className = 'apt-cite';
@@ -379,7 +398,7 @@ function buildRow(row, techId, rowId) {
         d.appendChild(hdr);
         d.appendChild(pre);
       } else {
-        d.innerHTML = '<span style="color:var(--text3);font-size:12px">No case template for this technique yet.</span>';
+        d.innerHTML = '<span style="color:var(--text3);font-size:12px">No CMS template for this technique yet.</span>';
       }
       return d;
     })(),

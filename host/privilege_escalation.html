@@ -3,17 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[Net] Credential Access Hunt Ref (TA0006)</title>
+<title>[Host] Privilege Escalation Hunt Ref (TA0004)</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <header>
-  <a href="index.html" class="logo">ATT&amp;CK <span>Hunt Reference</span></a>
+  <a href="index.html" class="logo">ATT&amp;CK <span>Host Reference</span></a>
   <div class="site-switcher">
-    <span class="switcher-side active">NETWORK</span>
-    <a href="https://host.6b74.dev" class="switcher-side">HOST</a>
+    <a class="switcher-side" href="/net/">NET</a>
+    <span class="switcher-side active">HOST</span>
+    <a class="switcher-side" href="/attribution/">ATTRIB</a>
   </div>
-  <span class="tactic-badge" style="color:#f85149;border-color:#f8514940;background:#f8514912">TA0006 - Credential Access</span>
+  <span class="tactic-badge" style="color:#ffa600;border-color:#ffa60040;background:#ffa60012">TA0004 - Privilege Escalation</span>
   <div class="search-row">
     <div class="search-box">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
@@ -27,18 +28,27 @@
   <div class="filter-row">
     <span class="filter-label">TTP</span>
     <button class="fbtn active" data-tech="all">All</button>
-    <button class="fbtn" data-tech="T1558.003">T1558.003</button>
-    <button class="fbtn" data-tech="T1558.004">T1558.004</button>
-    <button class="fbtn" data-tech="T1003.006">T1003.006</button>
-    <button class="fbtn" data-tech="T1110.003">T1110.003</button>
-    <button class="fbtn" data-tech="T1187">T1187</button>
-    <button class="fbtn" data-tech="T1557.001">T1557.001</button>
-    <button class="fbtn" data-tech="T1558.001">T1558.001</button>
-    <button class="fbtn" data-tech="T1558.002">T1558.002</button>
-    <button class="fbtn" data-tech="T1110.004">T1110.004</button>
-    <button class="fbtn" data-tech="T1552.004">T1552.004</button>
-    <button class="fbtn" data-tech="T1003.001">T1003.001</button>
-    <button class="fbtn" data-tech="T1556.006">T1556.006</button>
+    <button class="fbtn" data-tech="T1548.002">T1548.002</button>
+    <button class="fbtn" data-tech="T1134">T1134</button>
+    <button class="fbtn" data-tech="T1055">T1055</button>
+    <button class="fbtn" data-tech="T1068">T1068</button>
+    <button class="fbtn" data-tech="T1574.011">T1574.011</button>
+    <button class="fbtn" data-tech="T1574.005">T1574.005</button>
+    <button class="fbtn" data-tech="T1134.005">T1134.005</button>
+    <button class="fbtn" data-tech="T1546.008">T1546.008</button>
+    <button class="fbtn" data-tech="T1546.012">T1546.012</button>
+    <button class="fbtn" data-tech="T1574.001">T1574.001</button>
+    <button class="fbtn" data-tech="T1484.001">T1484.001</button>
+    <button class="fbtn" data-tech="T1611">T1611</button>
+    <button class="fbtn" data-tech="T1098">T1098</button>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label" style="color:var(--green)">Linux</span>
+    <button class="fbtn" data-tech="T1548.001">T1548.001</button>
+    <button class="fbtn" data-tech="T1548.003">T1548.003</button>
+    <button class="fbtn" data-tech="T1068">T1068</button>
+    <button class="fbtn" data-tech="T1611">T1611</button>
+    <button class="fbtn" data-tech="T1574.006">T1574.006</button>
   </div>
   <div class="filter-row">
     <span class="filter-label">Origin</span>
@@ -46,6 +56,11 @@
     <button class="fbtn" data-apt="RU">RU</button>
     <button class="fbtn" data-apt="IR">IR</button>
     <button class="fbtn" data-apt="KP">KP</button>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">OS</span>
+    <button class="fbtn" data-os="win">Windows</button>
+    <button class="fbtn" data-os="linux">Linux</button>
   </div>
   <div class="header-right">
     <span class="stat" id="stats">Loading...</span>
@@ -55,14 +70,12 @@
 </header>
 
 <nav class="tactic-nav">
-  <a href="recon.html">TA0043: Reconnaissance</a>
-  <a href="initial_access.html">TA0001: Initial Access</a>
-  <a href="c2.html">TA0011: Command & Control</a>
-  <a href="credential.html" class="current" style="color:#f85149">TA0006: Credential Access</a>
-  <a href="discovery.html">TA0007: Discovery</a>
-  <a href="lateral.html">TA0008: Lateral Movement</a>
-  <a href="collection.html">TA0009: Collection</a>
-  <a href="exfil.html">TA0010: Exfiltration</a>
+  <a href="execution.html" class="current" style="color:#a371f7">TA0002 - Execution</a>
+  <a href="persistence.html" style="color:#39d353">TA0003 - Persistence</a>
+  <span style="color:var(--text3);opacity:.5">TA0004 - Privilege Escalation (planned)</span>
+  <span style="color:var(--text3);opacity:.5">TA0005 - Defense Evasion (planned)</span>
+  <span style="color:var(--text3);opacity:.5">TA0006 - Credential Access (planned)</span>
+  <span style="color:var(--text3);opacity:.5">TA0007 - Discovery (planned)</span>
 </nav>
 
 <div id="hunt-panel">
@@ -98,7 +111,7 @@
 <!-- mobile floating toggle -->
 <button class="mobile-sidebar-btn" id="mobile-sidebar-btn">&#9776; Techniques</button>
 
-<script src="js/data/credential.js"></script>
+<script src="js/data/privilege_escalation.js"></script>
 <script src="js/core.js"></script>
 </body>
 </html>

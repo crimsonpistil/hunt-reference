@@ -3,17 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[Net] Discovery Hunt Ref (TA0007)</title>
+<title>[TONK] C2 Hunt Ref (TA0011)</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <header>
-  <a href="index.html" class="logo">ATT&amp;CK <span>Hunt Reference</span></a>
+  <a href="index.html" class="logo">TONK<span> • hunt ref</span></a>
   <div class="site-switcher">
-    <span class="switcher-side active">NETWORK</span>
-    <a href="https://host.6b74.dev" class="switcher-side">HOST</a>
+    <span class="switcher-side active">NET</span>
+    <a class="switcher-side" href="/host/">HOST</a>
+    <a class="switcher-side" href="/attribution/">ATTRIB</a>
   </div>
-  <span class="tactic-badge" style="color:#d29922;border-color:#d2992240;background:#d2992212">TA0007 - Discovery</span>
+  </div>
+  <span class="tactic-badge" style="color:#bc8cff;border-color:#bc8cff40;background:#bc8cff12">TA0011 - Command & Control</span>
   <div class="search-row">
     <div class="search-box">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
@@ -27,16 +29,16 @@
   <div class="filter-row">
     <span class="filter-label">TTP</span>
     <button class="fbtn active" data-tech="all">All</button>
-    <button class="fbtn" data-tech="T1018">T1018</button>
-    <button class="fbtn" data-tech="T1046">T1046</button>
-    <button class="fbtn" data-tech="T1135">T1135</button>
-    <button class="fbtn" data-tech="T1087">T1087</button>
-    <button class="fbtn" data-tech="T1069">T1069</button>
-    <button class="fbtn" data-tech="T1482">T1482</button>
-    <button class="fbtn" data-tech="T1083">T1083</button>
-    <button class="fbtn" data-tech="T1016">T1016</button>
-    <button class="fbtn" data-tech="T1049">T1049</button>
-    <button class="fbtn" data-tech="T1033">T1033</button>
+    <button class="fbtn" data-tech="T1071">T1071</button>
+    <button class="fbtn" data-tech="T1568">T1568</button>
+    <button class="fbtn" data-tech="T1102">T1102</button>
+    <button class="fbtn" data-tech="T1573">T1573</button>
+    <button class="fbtn" data-tech="T1095">T1095</button>
+    <button class="fbtn" data-tech="T1090">T1090</button>
+    <button class="fbtn" data-tech="T1572">T1572</button>
+    <button class="fbtn" data-tech="T1105">T1105</button>
+    <button class="fbtn" data-tech="T1571">T1571</button>
+    <button class="fbtn" data-tech="T1219">T1219</button>
   </div>
   <div class="filter-row">
     <span class="filter-label">Origin</span>
@@ -55,9 +57,9 @@
 <nav class="tactic-nav">
   <a href="recon.html">TA0043: Reconnaissance</a>
   <a href="initial_access.html">TA0001: Initial Access</a>
-  <a href="c2.html">TA0011: Command & Control</a>
+  <a href="c2.html" class="current" style="color:#bc8cff">TA0011: Command & Control</a>
   <a href="credential.html">TA0006: Credential Access</a>
-  <a href="discovery.html" class="current" style="color:#d29922">TA0007: Discovery</a>
+  <a href="discovery.html">TA0007: Discovery</a>
   <a href="lateral.html">TA0008: Lateral Movement</a>
   <a href="collection.html">TA0009: Collection</a>
   <a href="exfil.html">TA0010: Exfiltration</a>
@@ -96,7 +98,7 @@
 <!-- mobile floating toggle -->
 <button class="mobile-sidebar-btn" id="mobile-sidebar-btn">&#9776; Techniques</button>
 
-<script src="js/data/discovery.js"></script>
+<script src="js/data/c2.js"></script>
 <script src="js/core.js"></script>
 </body>
 </html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TONK • Threat Observation & Network Kill-chain</title>
+<meta name="description" content="MITRE ATT&CK network-based detection reference. Kibana, Arkime, Suricata filters/queries. APT Correlation. OSINT Notes.">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+  .index-hero { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 40px 20px; text-align: center; position: relative; }
+  .index-title { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+  .index-sub { font-size: 13px; color: var(--text3); margin-bottom: 24px; }
+  .index-search-wrap { max-width: 480px; margin: 0 auto; position: relative; }
+  .index-search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+  #tactic-search { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 10px 14px 10px 36px; outline: none; transition: border-color .15s; }
+  #tactic-search:focus { border-color: var(--accent2); }
+  #tactic-search::placeholder { color: var(--text3); }
+  .section-label { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; padding: 20px 20px 8px; max-width: 1200px; margin: 0 auto; display: block; }
+  .tactic-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 0 20px 28px; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 900px) { .tactic-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px) { .tactic-grid { grid-template-columns: 1fr; } }
+  .tactic-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; text-decoration: none; transition: all .2s; display: block; }
+  .tactic-card:hover { background: var(--bg3); transform: translateY(-2px); }
+  .tactic-card.soon { opacity: .4; pointer-events: none; }
+  .card-id { font-family: var(--mono); font-size: 11px; font-weight: 700; margin-bottom: 6px; }
+  .card-name { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .card-desc { font-size: 11px; color: var(--text3); line-height: 1.6; margin-bottom: 12px; }
+  .card-count { font-family: var(--mono); font-size: 10px; color: var(--text2); }
+  .card-pill { display: inline-block; font-family: var(--mono); font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px; margin-bottom: 10px; }
+
+  .info-section { max-width: 1400px; margin: 16px auto 0; padding: 0 20px 32px; }
+  .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  @media (max-width: 900px) { .info-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px) { .info-grid { grid-template-columns: 1fr; } }
+  .info-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+  .info-card h3 { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; }
+  .info-card p { font-size: 12px; color: var(--text2); line-height: 1.65; margin: 0 0 8px; }
+  .info-card p:last-child { margin-bottom: 0; }
+  .info-card ul { margin: 0; padding: 0 0 0 16px; font-size: 12px; color: var(--text2); line-height: 1.7; }
+  .info-card ul li { margin-bottom: 4px; }
+  .info-card code { font-family: var(--mono); font-size: 11px; background: var(--bg3); padding: 1px 5px; border-radius: 3px; color: var(--text); }
+  .info-callout { background: var(--bg3); border-left: 2px solid var(--accent2); padding: 10px 14px; border-radius: 0 4px 4px 0; font-size: 11px; color: var(--text2); line-height: 1.6; margin-top: 10px; }
+  .info-callout code { background: var(--bg2); }
+
+  footer.site-footer { margin-top: auto; padding: 22px 20px; border-top: 1px solid var(--border); background: var(--bg2); text-align: center; }
+  footer.site-footer p { font-size: 11px; color: var(--text3); line-height: 1.6; margin: 0 0 4px; }
+  footer.site-footer p:last-child { margin-bottom: 0; }
+  footer.site-footer code { font-family: var(--mono); font-size: 10px; color: var(--text2); }
+
+  /* ---- global matrix search ---- */
+  .repo-search-section { max-width: 1404px; margin: 0 auto; padding: 22px 20px 4px; width: 100%; box-sizing: border-box; }
+  .rs-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .rs-title { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: .08em; }
+  .rs-hint { font-size: 12px; color: var(--text3); }
+  .rs-bar { display: flex; gap: 8px; max-width: 1404px; box-sizing: border-box;}
+  #repo-search-input { flex: 1; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 11px 14px; outline: none; transition: border-color .15s; }
+  #repo-search-input:focus { border-color: var(--accent2); }
+  #repo-search-input::placeholder { color: var(--text3); }
+  #repo-search-btn { background: var(--accent2); border: none; border-radius: 8px; color: #fff; font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .04em; padding: 0 18px; cursor: pointer; transition: filter .15s; }
+  #repo-search-btn:hover { filter: brightness(1.12); }
+
+  .rs-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
+  .rs-chip-label { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-right: 4px; }
+  .rs-chip { font-family: var(--mono); font-size: 11px; font-weight: 600; border: 1px solid var(--border2); border-radius: 20px; padding: 3px 10px; cursor: pointer; background: var(--bg3); color: var(--text2); transition: filter .15s; }
+  .rs-chip:hover { filter: brightness(1.2); }
+  .rs-chip.apt-cn { background: rgba(210,153,34,.15); color: var(--amber); border-color: rgba(210,153,34,.4); }
+  .rs-chip.apt-ru { background: rgba(248,81,73,.12); color: #ff7b72; border-color: rgba(248,81,73,.4); }
+  .rs-chip.apt-ir { background: rgba(63,185,80,.12); color: var(--green); border-color: rgba(63,185,80,.4); }
+  .rs-chip.apt-kp { background: rgba(188,140,255,.12); color: var(--purple); border-color: rgba(188,140,255,.4); }
+  .rs-chip-n { opacity: .65; font-weight: 700; }
+
+  .rs-results { margin-top: 14px; }
+  .rs-summary { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
+  .rs-summary strong { color: var(--text); }
+  .rs-empty { font-size: 13px; color: var(--text3); padding: 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; }
+  .rs-empty code { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+  .rs-group { margin-bottom: 16px; }
+  .rs-group-head { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; padding: 6px 2px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+  .rs-tac-id { opacity: .7; }
+  .rs-tac-count { margin-left: auto; background: var(--bg3); border-radius: 10px; padding: 1px 8px; font-size: 10px; color: var(--text3); }
+  .rs-row { display: block; text-decoration: none; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; transition: border-color .15s, background .15s; }
+  .rs-row:hover { border-color: var(--accent2); background: var(--bg3); }
+  .rs-row-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .rs-tech { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--accent); }
+  .rs-aptwrap { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+  .rs-apt { font-family: var(--mono); font-size: 9px; font-weight: 700; border-radius: 4px; padding: 2px 6px; }
+  .rs-apt-hot { outline: 1px solid currentColor; }
+  .rs-ind { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .rs-note { font-size: 11px; color: var(--text3); line-height: 1.5; margin-top: 5px; padding-left: 9px; border-left: 2px solid var(--border2); }
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="logo">TONK<span> • hunt ref</span></a>
+  <div class="site-switcher">
+    <span class="switcher-side active">NET</span>
+    <a class="switcher-side" href="/host/">HOST</a>
+    <a class="switcher-side" href="/attribution/">ATTRIB</a>
+  </div>
+</header>
+
+<div class="index-hero">
+  <div class="index-title">TONK • MITRE ATT&amp;CK Network Hunt Reference</div>
+  <div class="index-sub">built by net analysts, for net analysts</div>
+</div>
+
+<div class="repo-search-section">
+  <div class="rs-head">
+    <span class="rs-title">Search TONK</span>
+    <span class="rs-hint">find an APT actor or keyword across every tactic</span>
+  </div>
+  <div class="rs-bar">
+    <input id="repo-search-input" type="text" autocomplete="off" spellcheck="false"
+           placeholder="e.g. Volt Typhoon, SMB, portproxy, T1090, TFTP...">
+    <button id="repo-search-btn" type="button">Search</button>
+  </div>
+
+  <div id="repo-search-results" class="rs-results"></div>
+</div>
+
+<span class="section-label">Tactics</span>
+<div class="tactic-grid">
+  <a href="recon.html" class="tactic-card" data-tags="reconnaissance recon ta0043 scanning phishing identity network osint">
+    <div class="card-id" style="color:#58a6ff">TA0043</div>
+    <span class="card-pill" style="background:rgba(88,166,255,.12);color:#58a6ff">80 indicators · 8 techniques</span>
+    <div class="card-name">Reconnaissance</div>
+    <div class="card-desc">Pre-compromise intelligence gathering - active scanning, identity enumeration, network info, phishing for info, and OSINT collection. Arkime, Kibana, and Suricata syntax for all indicators.</div>
+    <div class="card-count">&#9654; Open reference</div>
+  </a>
+  <a href="initial_access.html" class="tactic-card" data-tags="initial access ta0001 phishing exploit supply chain valid accounts vpn rdp">
+    <div class="card-id" style="color:#3fb950">TA0001</div>
+    <span class="card-pill" style="background:rgba(63,185,80,.12);color:#3fb950">65 indicators · 9 techniques</span>
+    <div class="card-name">Initial Access</div>
+    <div class="card-desc">Gaining a foothold - valid accounts, removable media, external remote services, drive-by, public-facing app exploitation, supply chain, hardware additions, phishing, and content injection.</div>
+    <div class="card-count">&#9654; Open reference</div>
+  </a>
+  <a href="c2.html" class="tactic-card" data-tags="command control c2 ta0011 dns beacon cobalt ja3 ja4 tor proxy tunnel rmm teamviewer anydesk ngrok cloudflare">
+    <div class="card-id" style="color:#bc8cff">TA0011</div>
+    <span class="card-pill" style="background:rgba(188,140,255,.12);color:#bc8cff">74 indicators · 10 techniques</span>
+    <div class="card-name">Command &amp; Control</div>
+    <div class="card-desc">Adversary communications - application layer protocols, DGA / fast flux, web service abuse, encrypted channels (JA3/JA3s), ICMP/raw TCP, proxies, domain fronting, tunneling, ingress tool transfer, RMM tool abuse.</div>
+    <div class="card-count">&#9654; Open reference</div>
+  </a>
+  <a href="discovery.html" class="tactic-card" data-tags="discovery ta0007 enumeration host port share ldap samr kerberos bloodhound trust gmsa adminsdholder">
+    <div class="card-id" style="color:#d29922">TA0007</div>
+    <span class="card-pill" style="background:rgba(210,153,34,.12);color:#d29922">42 indicators · 10 techniques</span>
+    <div class="card-name">Discovery</div>
+    <div class="card-desc">Internal reconnaissance - host enumeration, port scans, share discovery, AD account / group / trust enumeration, BloodHound signatures, Kerberos/SAMR/LSARPC patterns, file enumeration, system info gathering.</div>
+    <div class="card-count">&#9654; Open reference</div>
+  </a>
+
+  <a href="lateral.html" class="tactic-card" data-tags="lateral movement ta0008 rdp smb winrm psexec dcom ssh bluekeep zerologon printnightmare impacket evilwinrm">
+    <div class="card-id" style="color:#ffa600">TA0008</div>
+    <span class="card-pill" style="background:rgba(255,166,0,.12);color:#ffa600">31 indicators · 8 techniques</span>
+    <div class="card-name">Lateral Movement</div>
+    <div class="card-desc">Adversary movement between hosts - RDP, SMB administrative shares (PsExec/Impacket), DCOM (MMC20.Application), SSH, WinRM/PSRemoting, lateral tool transfer, EternalBlue/ZeroLogon/PrintNightmare exploits, session hijacking.</div>
+    <div class="card-count">&#9654; Open reference</div>
+  </a>
+
+  <a href="credential.html" class="tactic-card" data-tags="credential access ta0006 kerberoasting asreproast dcsync mimikatz petitpotam printerbug dfscoerce responder llmnr ntlm relay password spray mfa fatigue golden ticket silver ticket lsass">
+    <div class="card-id" style="color:#f85149">TA0006</div>
+    <span class="card-pill" style="background:rgba(248,81,73,.12);color:#f85149">20 indicators · 12 techniques</span>
+    <div class="card-name">Credential Access</div>
+    <div class="card-desc">Stealing or extracting credentials - Kerberoasting, AS-REProasting, DCSync, password spraying, NTLM coercion (PetitPotam/PrinterBug/DFSCoerce), LLMNR poisoning + relay, Golden/Silver Tickets, credential stuffing, private key theft, LSASS dumping, MFA fatigue.</div>
+    <div class="card-count">&#9654; Open reference</div>
+  </a>
+
+  <a href="collection.html" class="tactic-card" data-tags="collection ta0009 smb network share confluence sharepoint code repository email ews graph forwarding rule cloud storage s3 azure blob snmp config dump staging archive zip rar 7z volt typhoon">
+    <div class="card-id" style="color:#39d353">TA0009</div>
+    <span class="card-pill" style="background:rgba(57,211,83,.12);color:#39d353">16 indicators · 12 techniques</span>
+    <div class="card-name">Collection</div>
+    <div class="card-desc">Gathering data for theft - bulk SMB share traversal, Confluence/SharePoint/code repo enumeration, EWS bulk email reads, forwarding rule creation, S3/Blob bulk download, network device config dumps, local/remote staging, archive creation including password-protected.</div>
+    <div class="card-count">&#9654; Open reference</div>
+  </a>
+
+  <a href="exfil.html" class="tactic-card" data-tags="exfiltration ta0010 dns tunneling https post burst c2 channel ssh ftp smb outbound mega anonfiles bunkr dropbox onedrive google drive github gitlab pastebin transfer.sh discord webhook slack scheduled transfer chunked exfil beacon timing automated">
+    <div class="card-id" style="color:#ff7b72">TA0010</div>
+    <span class="card-pill" style="background:rgba(255,123,114,.12);color:#ff7b72">15 indicators · 11 techniques</span>
+    <div class="card-name">Exfiltration</div>
+    <div class="card-desc">Moving data out - exfil over C2 channel (HTTPS POST bursts, DNS tunneling, bytes ratio), SSH/FTP/outbound SMB, exfil-friendly cloud (Mega, Bunkr) and mainstream cloud volume anomalies, code repo abuse, paste sites, Discord webhook stealer pattern, scheduled/chunked/automated timing fingerprints.</div>
+    <div class="card-count">&#9654; Open reference</div>
+  </a>
+</div>
+
+<span class="section-label">About this reference</span>
+<section class="info-section">
+  <div class="info-grid">
+
+    <div class="info-card">
+      <h3>What this is</h3>
+      <p>A network threat hunting reference covering eight MITRE ATT&amp;CK tactics across the intrusion lifecycle. Every indicator includes paste-ready query syntax for <strong>Arkime</strong> and <strong>Kibana (KQL)</strong> queries/filters and <strong>Suricata</strong> rules, plus operational notes and APT attribution context.</p>
+      <p>Use the <strong>Air-gapped / Connected</strong> toggle in each page header to set your environment; it changes how off-network indicators are presented (see tripwires card).</p>
+    </div>
+
+    <div class="info-card">
+      <h3>How to use it</h3>
+      <ul>
+        <li>Pick a tactic card above to open its reference page</li>
+        <li>Use the search box or technique filter buttons to narrow down indicators</li>
+        <li>Copy the query syntax matching your tool</li>
+        <li>Click the &#9733; star on any row to add it to your hunt list</li>
+        <li>Open <strong>My Hunts</strong> from the header to review and export your hunt as TXT or CSV with a CMS-ready template for TheHive import</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>About hunts</h3>
+      <p>Starred indicators persist across browser restarts and sync across open tabs in real-time. Hunts are stored in <code>localStorage</code> under the key <code>hunt_reference_hunts_v1</code>; nothing leaves the browser.</p>
+      <p>Each export comes pre-formatted as a CMS-ready hunt package with timestamps, technique IDs, query syntax, and notes for easy import into TheHive.</p>
+      <p>Ordering is chronological so the export reads as a hunt timeline.</p>
+    </div>
+
+    <div class="info-card" style="border-left: 2px solid var(--amber);">
+      <h3 style="color:var(--amber);">&#9888; Off-network indicators</h3>
+      <p>Indicators that detect traffic leaving your network (outbound to external infrastructure, cloud storage, paste sites, Tor, etc.) are marked with a <strong>&#9888;</strong> in <strong>Air-gapped</strong> mode.</p>
+      <p><strong>Air-gapped mode:</strong> these are tripwires - they should never fire. A hit means a likely air-gap violation (USB tether, rogue cellular modem, vendor laptop bridging, supply-chain implant). Escalate.</p>
+      <p><strong>Connected mode:</strong> the same indicators are normal detection targets - outbound C2, exfil, and beaconing are exactly what you hunt. The &#9888; marker is removed and the escalation framing drops out.</p>
+      <p>Flip between the two with the header toggle.</p>
+    </div>
+
+    <div class="info-card">
+      <h3>Variables: zones &amp; VLANs</h3>
+      <p>Variables (prefix <code>$</code>) are placeholders. Map to your environment before running.</p>
+      <p><strong>Network zones:</strong> <code>$MPNET</code>, <code>$EXTERNAL</code>, <code>$DMZ</code>.</p>
+      <p><strong>VLANs:</strong> <code>$WORKSTATIONS</code>, <code>$ADMIN</code>, <code>$MGMT</code>, etc. Generic names - map to your deployment's actual VLAN IDs and document in your hunt log.</p>
+      <p><strong>Per-division VLANs:</strong> in environments with separate VLANs per workstation pool (engineering, HR, mission cells), use the <code>_2</code>, <code>_3</code> suffix convention and update relevant indicators to cross-VLAN flow detection.</p>
+      <p><strong>Asset roles:</strong> <code>$DOMAIN_CONTROLLERS</code>, <code>$FILE_SERVERS</code>, <code>$DNS_SERVERS</code>, etc. Same <code>_2</code>, <code>_3</code> convention for multi-VLAN (e.g. <code>$DC_2</code>, <code>$FILE_SERVERS_2</code>).</p>
+    </div>
+
+    <div class="info-card">
+      <h3>Variables: allowlists &amp; fill-ins</h3>
+      <p><strong>Allowlists:</strong> <code>$ALLOWED_*</code> prefix denotes operator-maintained lists of expected/sanctioned activity (e.g. <code>$ALLOWED_UPDATE_SOURCES</code>, <code>$ALLOWED_VENDOR_INFRA</code>, <code>$ALLOWED_SMB_CLIENTS</code>).</p>
+      <p><strong>External tripwire variables:</strong> <code>$EXTERNAL_*</code> prefix. In air-gapped mode the indicators referencing them are tripwires; in connected mode they are normal detection targets.</p>
+      <p><strong>Operator-fill placeholders:</strong> tokens shown like <code style="color:#f0883e; font-weight:600;">&lt;YOUR_DOMAIN&gt;</code> in queries are values the operator must replace before running.</p>
+    </div>
+
+    <div class="info-card">
+      <h3>Arkime tools &amp; workflow</h3>
+      <p>The search-bar expression syntax used in this reference is one of several Arkime surfaces. Many detections that look like "find bursts" or "find fan-out" require pivoting into Arkime's aggregation views after the initial query.</p>
+      <p><strong>Sessions view:</strong> the default flat list of session records matching your query. Best for one-off lookups and small result sets.</p>
+      <p><strong>SPIView:</strong> aggregates the result set by any field, showing unique values and counts. Best for "find the source IP making the most distinct destinations" or "find which URI is most frequent." This is where scoping actually surfaces detections. Run the candidate query, open SPIView, sort by unique count on the field of interest.</p>
+      <p><strong>SPIGraph:</strong> visualizes session counts as a time series per node. Good for spotting periodic patterns (beaconing), unusual time-of-day activity, and bursts as visual spikes.</p>
+    </div>
+
+    <div class="info-card" style="border-left: 3px solid #d29922;">
+      <h3 style="color:#d29922;">Tuning thresholds</h3>
+      <p>Numeric thresholds in queries (<code>&gt; 60s</code>, <code>&gt; 100MB</code>, <code>&gt; 50 packets</code>) are starting points calibrated for typical environments. Tune against MPNET's normal baseline.</p>
+      <p>What counts as "anomalous" in a 50-host SCIF differs from a 500-host environment.</p>
+      <p>Before treating any indicator as a production rule: run it against your baseline traffic, look at the false-positive rate, then adjust the threshold up or down. The values shipped here are intentionally conservative-but-loose; expect to tighten.</p>
+    </div>
+
+  </div>
+</section>
+
+<footer class="site-footer">
+  <p>built on the mitre att&amp;ck<sup>&reg;</sup> framework. att&amp;ck is a registered trademark of the mitre corporation.</p>
+  <br>
+  <p>built by tsgt kt tonkin, 275cos | 2026</a></p>
+</footer>
+
+<script src="js/index.js"></script>
+<script src="js/actors.js"></script>
+<script src="js/search.js"></script>
+<script>
+  // Operating-mode toggle on the landing page (shares localStorage key with tactic pages)
+  (function () {
+    var KEY = 'cpt_hunt_mode';
+    var wrap = document.getElementById('index-mode-toggle');
+    if (!wrap) return;
+    function current() { return localStorage.getItem(KEY) === 'connected' ? 'connected' : 'airgap'; }
+    function paint() {
+      var m = current();
+      wrap.querySelectorAll('.mode-opt').forEach(function (b) {
+        b.classList.toggle('active', b.dataset.mode === m);
+      });
+    }
+    wrap.querySelectorAll('.mode-opt').forEach(function (b) {
+      b.addEventListener('click', function () {
+        localStorage.setItem(KEY, b.dataset.mode === 'connected' ? 'connected' : 'airgap');
+        paint();
+      });
+    });
+    paint();
+  })();
+</script>
+</body>
+</html>

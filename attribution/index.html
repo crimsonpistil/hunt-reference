@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TONK &middot; Attribution</title>
+<meta name="description" content="Evidence-driven adversary attribution. Reads your hunt evidence and ranks likely threat actors cross-nation.">
+<style>
+:root{
+  --bg:#0a0c10;--bg2:#0f1117;--bg3:#161b22;--bg4:#1c2230;
+  --border:#21262d;--border2:#30363d;
+  --text:#e6edf3;--text2:#8b949e;--text3:#6e7681;
+  --accent:#58a6ff;--accent2:#1f6feb;
+  --green:#3fb950;--amber:#d29922;--red:#f85149;
+  --purple:#bc8cff;--teal:#39d353;--orange:#ffa600;
+  --mono:'Cascadia Code','Fira Code','Consolas','Menlo','Courier New',monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.6;min-height:100vh;display:flex;flex-direction:column}
+
+/* HEADER */
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 20px;position:sticky;top:0;z-index:200;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.logo{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--amber);white-space:nowrap;text-decoration:none}
+.logo span{color:var(--text3);font-weight:400}
+.site-switcher{display:inline-flex;align-items:stretch;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;overflow:hidden;font-family:var(--mono);font-size:11px;font-weight:700;margin:0 12px;letter-spacing:.08em;height:28px}
+.switcher-side{display:inline-flex;align-items:center;padding:0 14px;color:var(--text3);text-decoration:none;transition:all .15s;border-right:1px solid var(--border2)}
+.switcher-side:last-child{border-right:none}
+.switcher-side:hover:not(.active){color:var(--text);background:var(--bg2)}
+.switcher-side.active{background:var(--amber);color:#0d1117;cursor:default}
+.hdr-actions{display:flex;gap:6px;align-items:center;margin-left:auto;flex-wrap:wrap}
+.hbtn{background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--text2);font-family:var(--mono);font-size:10px;font-weight:600;padding:5px 10px;cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.hbtn:hover{border-color:var(--amber);color:var(--amber)}
+.hbtn.primary{background:rgba(210,153,34,.12);border-color:rgba(210,153,34,.4);color:var(--amber)}
+.hbtn.danger:hover{border-color:var(--red);color:var(--red)}
+
+/* AUTOSAVE INDICATOR */
+.autosave-dot{font-family:var(--mono);font-size:9px;color:var(--text3);display:inline-flex;align-items:center;gap:5px;padding:0 4px}
+.autosave-dot .dot{width:6px;height:6px;border-radius:50%;background:var(--green);transition:background .3s}
+.autosave-dot.saving .dot{background:var(--amber)}
+.autosave-dot.dirty .dot{background:var(--red)}
+
+/* HERO */
+.hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:28px 20px;text-align:center}
+.hero-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--amber);margin-bottom:6px}
+.hero-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto}
+
+/* LAYOUT */
+.wrap{max-width:1300px;margin:0 auto;padding:20px;width:100%;flex:1}
+.attribution-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:980px){.attribution-grid{grid-template-columns:1fr}}
+
+/* PANEL */
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.panel-head{display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--bg3);border-bottom:1px solid var(--border)}
+.panel-title{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);flex:1;letter-spacing:.04em}
+.panel-meta{font-family:var(--mono);font-size:10px;color:var(--text3)}
+.panel-body{padding:16px}
+
+/* EVIDENCE SUMMARY */
+.ev-stats{display:flex;gap:0;border-bottom:1px solid var(--border)}
+.ev-stat{flex:1;text-align:center;padding:14px 8px;border-right:1px solid var(--border)}
+.ev-stat:last-child{border-right:none}
+.ev-stat-num{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--amber);line-height:1}
+.ev-stat-label{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:5px}
+
+/* SOURCE BADGE */
+.source-badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;letter-spacing:.06em}
+.src-live{color:var(--green);background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3)}
+.src-file{color:var(--accent);background:rgba(88,166,255,.12);border:1px solid rgba(88,166,255,.3)}
+.src-csv{color:var(--purple);background:rgba(188,140,255,.12);border:1px solid rgba(188,140,255,.3)}
+.src-none{color:var(--text3);background:var(--bg3);border:1px solid var(--border2)}
+
+/* RANKING */
+.rank-row{margin-bottom:12px}
+.rank-row:last-child{margin-bottom:0}
+.rank-head{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
+.rank-pos{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text3);min-width:20px}
+.rank-name{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);flex:1}
+.rank-nat{font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px}
+.nat-cn{color:var(--amber);background:rgba(210,153,34,.12);border:1px solid rgba(210,153,34,.3)}
+.nat-ru{color:var(--red);background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3)}
+.nat-ir{color:var(--green);background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3)}
+.nat-kp{color:var(--purple);background:rgba(188,140,255,.12);border:1px solid rgba(188,140,255,.3)}
+.nat-mul{color:var(--text3);background:var(--bg3);border:1px solid var(--border2)}
+.rank-score{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--amber)}
+.rank-bar-track{height:7px;background:var(--bg);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.rank-bar-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.bar-cn{background:var(--amber)}.bar-ru{background:var(--red)}.bar-ir{background:var(--green)}.bar-kp{background:var(--purple)}.bar-mul{background:var(--text3)}
+.rank-detail{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px}
+
+/* GENERIC NOTE */
+.generic-note{background:var(--bg3);border-left:3px solid var(--text3);border-radius:0 6px 6px 0;padding:11px 14px;margin-top:14px;font-size:12px;color:var(--text2);line-height:1.6}
+.generic-note strong{color:var(--text2);font-family:var(--mono);font-size:11px}
+
+/* TECHNIQUE BREAKDOWN */
+.tech-list{display:flex;flex-direction:column;gap:6px}
+.tech-item{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 12px}
+.tech-item-head{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.tech-tid{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent)}
+.tech-sev{font-family:var(--mono);font-size:8px;font-weight:700;padding:1px 5px;border-radius:2px;margin-left:auto}
+.sev-critical{color:var(--red);background:rgba(248,81,73,.12)}
+.sev-high{color:var(--orange);background:rgba(255,166,0,.1)}
+.sev-medium{color:var(--amber);background:rgba(210,153,34,.1)}
+.sev-low{color:var(--text3);background:var(--bg4)}
+.tech-ind{font-size:11px;color:var(--text2);line-height:1.5}
+.tech-groups{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:4px}
+
+/* LENS FILTER */
+.lens-row{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:0 16px 14px}
+.lens-label{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.lens-btn{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text2);font-family:var(--mono);font-size:10px;font-weight:600;padding:3px 9px;cursor:pointer;transition:all .15s}
+.lens-btn:hover{border-color:var(--amber);color:var(--amber)}
+.lens-btn.active{background:var(--amber);border-color:var(--amber);color:#0d1117}
+.lens-btn.cn.active{background:var(--amber);border-color:var(--amber)}
+.lens-btn.ru.active{background:var(--red);border-color:var(--red);color:#fff}
+.lens-btn.ir.active{background:var(--green);border-color:var(--green);color:#0d1117}
+.lens-btn.kp.active{background:var(--purple);border-color:var(--purple);color:#0d1117}
+.lens-btn.method{font-size:9px;letter-spacing:.04em}
+.lens-btn.method:hover{border-color:var(--accent);color:var(--accent)}
+.lens-btn.method.active{background:var(--accent2);border-color:var(--accent);color:#fff}
+
+/* CONFIDENCE / SEPARATION READOUT */
+.confidence{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:11px 14px;margin-bottom:14px}
+.conf-top{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+.conf-label{font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3)}
+.conf-verdict{font-family:var(--mono);font-size:12px;font-weight:700;margin-left:auto}
+.conf-strong{color:var(--green)}
+.conf-moderate{color:var(--amber)}
+.conf-weak{color:var(--orange)}
+.conf-tossup{color:var(--red)}
+.conf-detail{font-size:11px;color:var(--text2);line-height:1.55}
+.conf-detail strong{color:var(--text)}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty-icon{font-size:32px;margin-bottom:12px;opacity:.4}
+.empty-title{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px}
+.empty-text{font-size:12px;line-height:1.7;max-width:420px;margin:0 auto 16px}
+.empty-text code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5px;border-radius:3px;color:var(--text2)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;max-width:440px;width:100%;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.5)}
+.modal-head{padding:16px 18px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text)}
+.modal-body{padding:18px;font-size:13px;color:var(--text2);line-height:1.7}
+.modal-body code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5px;border-radius:3px;color:var(--text)}
+.modal-foot{padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.mbtn{border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 16px;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);transition:all .15s}
+.mbtn:hover{border-color:var(--text2);color:var(--text)}
+.mbtn.primary{background:rgba(210,153,34,.15);border-color:var(--amber);color:var(--amber)}
+.mbtn.primary:hover{background:rgba(210,153,34,.25)}
+.mbtn.danger{background:rgba(248,81,73,.12);border-color:var(--red);color:var(--red)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:11px 18px;font-family:var(--mono);font-size:11px;color:var(--text);z-index:600;opacity:0;transition:all .3s;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.ok{border-color:rgba(63,185,80,.4)}
+.toast.warn{border-color:rgba(210,153,34,.4)}
+.toast.err{border-color:rgba(248,81,73,.4)}
+
+footer{margin-top:auto;padding:18px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}
+footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0}
+
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="logo">TONK<span> &bull; attribution</span></a>
+  <div class="site-switcher">
+    <a class="switcher-side" href="/net/">NET</a>
+    <a class="switcher-side" href="/host/">HOST</a>
+    <span class="switcher-side active">ATTRIB</span>
+  </div>
+  <div class="hdr-actions">
+    <span class="autosave-dot" id="autosave"><span class="dot"></span><span id="autosave-txt">saved</span></span>
+    <button class="hbtn" onclick="reloadLive()" title="Re-read starred evidence from the hunt tool">&#8635; live</button>
+    <button class="hbtn primary" onclick="saveState()" title="Download full hunt state as a recovery file">&#8595; save state</button>
+    <button class="hbtn" onclick="document.getElementById('load-file').click()" title="Restore a saved hunt-state file">&#8593; load state</button>
+    <button class="hbtn" onclick="document.getElementById('csv-file').click()" title="Import a hunt_package.csv export">&#8593; csv</button>
+    <input type="file" id="load-file" accept=".json,application/json" onchange="loadStateFile(this)">
+    <input type="file" id="csv-file" accept=".csv,text/csv" onchange="loadCsvFile(this)">
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-title">Adversary Attribution</div>
+  <p class="hero-sub">Reads the evidence you've collected in HUNT and ranks likely threat actors by the attribution baked into each indicator. Evidence-driven, cross-nation, no assumed adversary.</p>
+</div>
+
+<div class="wrap">
+<div class="attribution-grid">
+
+  <!-- LEFT: RANKING -->
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">Likely Actors</span>
+      <span class="source-badge src-none" id="source-badge">no evidence</span>
+    </div>
+    <div class="lens-row">
+      <span class="lens-label">Lens:</span>
+      <button class="lens-btn active" data-lens="all" onclick="setLens('all')">ALL</button>
+      <button class="lens-btn cn" data-lens="apt-cn" onclick="setLens('apt-cn')">CHINA</button>
+      <button class="lens-btn ru" data-lens="apt-ru" onclick="setLens('apt-ru')">RUSSIA</button>
+      <button class="lens-btn ir" data-lens="apt-ir" onclick="setLens('apt-ir')">IRAN</button>
+      <button class="lens-btn kp" data-lens="apt-kp" onclick="setLens('apt-kp')">DPRK</button>
+    </div>
+    <div class="lens-row" style="padding-top:0">
+      <span class="lens-label">Scoring:</span>
+      <button class="lens-btn method active" data-method="distinct" onclick="setMethod('distinct')" title="Distinctiveness + corroboration: splits credit across co-named actors, rewards breadth across techniques">DISTINCTIVENESS</button>
+      <button class="lens-btn method" data-method="flat" onclick="setMethod('flat')" title="Flat: every named actor scores equally per indicator">FLAT</button>
+    </div>
+    <div class="panel-body" id="ranking-body">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- RIGHT: EVIDENCE -->
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">Evidence Set</span>
+      <span class="panel-meta" id="evidence-meta">0 indicators</span>
+    </div>
+    <div class="ev-stats">
+      <div class="ev-stat"><div class="ev-stat-num" id="stat-ind">0</div><div class="ev-stat-label">Indicators</div></div>
+      <div class="ev-stat"><div class="ev-stat-num" id="stat-tech">0</div><div class="ev-stat-label">Techniques</div></div>
+      <div class="ev-stat"><div class="ev-stat-num" id="stat-groups">0</div><div class="ev-stat-label">Groups Cited</div></div>
+    </div>
+    <div class="panel-body">
+      <div class="tech-list" id="tech-list"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<footer><p>tonk &middot; adversary attribution &middot; evidence-driven, cross-nation &middot; reads your hunt evidence</p></footer>
+
+<!-- GUARD MODAL -->
+<div class="modal-overlay" id="guard-modal">
+  <div class="modal">
+    <div class="modal-head" id="guard-title">Unsaved hunt evidence</div>
+    <div class="modal-body" id="guard-body"></div>
+    <div class="modal-foot" id="guard-foot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Shared actor/alias reference (one source of truth, lives in hunt/). -->
+<!-- Alias resolution degrades gracefully if this fails to load. -->
+<script src="../net/js/actors.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────
+// TONK ATTRIBUTION ENGINE v1
+// Reads hunt evidence (localStorage hunt_reference_hunts_v1), scores
+// adversaries cross-nation from each indicator's apt[] array.
+// Continuity: save/load full-state .json, CSV fallback, autosave.
+// ─────────────────────────────────────────────────────────────
+
+const HUNT_KEY = 'hunt_reference_hunts_v1';
+const HUNT_SCHEMA = 1;
+const ATTR_AUTOSAVE_KEY = 'attribution_autosave_v1';
+
+// Scoring weights
+const W_SPECIFIC = 1.0;   // named, specific group (flat model)
+const W_GENERIC  = 0.3;   // apt-mul / Multi / Ransomware / commodity
+const CORROB_PER_TECH = 0.25; // distinctiveness model: +25% per extra distinct technique
+const GENERIC_NAMES = new Set(['multi','ransomware','commodity','generic','various','unknown']);
+
+// Nation class -> label/css
+const NAT = {
+  'apt-cn': {label:'CN', css:'cn'},
+  'apt-ru': {label:'RU', css:'ru'},
+  'apt-ir': {label:'IR', css:'ir'},
+  'apt-kp': {label:'KP', css:'kp'},
+  'apt-mul':{label:'GEN', css:'mul'}
+};
+
+let evidence = {};      // rowId -> {techId, indicator, severity, addedAt, row}
+let currentLens = 'all';
+let scoreMethod = 'distinct';   // 'distinct' (distinctiveness + corroboration) | 'flat'
+let source = 'none';    // live | file | csv | none
+let dirty = false;      // unsaved changes vs last save/load
+
+// ── EVIDENCE LOADING ──
+function readLiveEvidence(){
+  try{
+    const raw = localStorage.getItem(HUNT_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || parsed._v !== HUNT_SCHEMA) return null;
+    return parsed.items || {};
+  }catch(e){ console.error('live read failed',e); return null; }
+}
+
+function reloadLive(){
+  const items = readLiveEvidence();
+  const hasLive = items && Object.keys(items).length;
+
+  // Empty hunt is a VALID state - clearing the hunt should clear attribution.
+  if(!hasLive){
+    if(!Object.keys(evidence).length){
+      // already empty, nothing to do
+      toast('No starred evidence in the hunt tool', 'warn');
+      return;
+    }
+    // we have stale evidence on screen but the hunt is now empty
+    const doClear = () => {
+      clearEvidence();
+      toast('Hunt is empty - cleared attribution', 'warn');
+    };
+    if(dirty){
+      showGuard('clear to match the empty hunt', doClear);
+    }else{
+      doClear();
+    }
+    return;
+  }
+
+  // guard if dirty
+  if(dirty){
+    showGuard('reload from live', () => { applyEvidence(items,'live'); toast('Reloaded live evidence','ok'); });
+  }else{
+    applyEvidence(items,'live');
+    toast('Reloaded live evidence','ok');
+  }
+}
+
+function applyEvidence(items, src){
+  evidence = items || {};
+  source = src;
+  dirty = false;
+  setAutosave('saved');
+  render();
+}
+
+// Clear everything and wipe the autosave checkpoint so stale evidence
+// cannot be resurrected on next page load.
+function clearEvidence(){
+  evidence = {};
+  source = 'none';
+  dirty = false;
+  try{ localStorage.removeItem(ATTR_AUTOSAVE_KEY); }catch(e){}
+  setAutosave('saved');
+  render();
+}
+
+// ── SCORING ──
+// Canonical actor resolution via the shared hunt/js/actors.js (resolveActor).
+// Collapses aliases to one name (Cozy Bear -> APT29) so they score as one
+// actor. Degrades to identity if actors.js did not load, so attribution never
+// hard-depends on it.
+function canonName(name){
+  if(typeof resolveActor === 'function') return resolveActor(name);
+  return name;
+}
+function isGeneric(cls, name){
+  if(cls === 'apt-mul') return true;
+  if(name && GENERIC_NAMES.has(name.trim().toLowerCase())) return true;
+  return false;
+}
+
+function computeScores(){
+  // group key -> {name, cls, raw, techs:Set, indicators:count}
+  const groups = {};
+  let genericHits = 0, genericIndicators = 0;
+  const techSet = new Set();
+  const allGroupNames = new Set();
+
+  Object.values(evidence).forEach(item => {
+    const row = item.row;
+    techSet.add(item.techId);
+    if(!row || !Array.isArray(row.apt)) return;
+    let hadGenericThisIndicator = false;
+
+    // Named (specific) actors on THIS indicator - needed for distinctiveness split.
+    // Resolve each to its canonical name and DEDUP within the indicator, so the
+    // same group named under two aliases (e.g. APT29 + Cozy Bear on one row)
+    // counts once - correct credit split and no double-count.
+    const namedMap = {};  // canonical key -> {name, cls}
+    row.apt.forEach(a => {
+      const cls = a.cls || 'apt-mul';
+      const rawName = (a.name || '').trim();
+      if(!rawName) return;
+      if(isGeneric(cls, rawName)){ genericHits++; hadGenericThisIndicator = true; return; }
+      const cname = canonName(rawName);
+      const key = cname.toLowerCase();
+      if(!namedMap[key]) namedMap[key] = {name: cname, cls};
+    });
+    const named = Object.values(namedMap);
+    if(hadGenericThisIndicator) genericIndicators++;
+
+    // Distinctiveness: an indicator naming N specific actors splits credit 1/N.
+    // A 1-actor indicator gives full credit; an 8-actor one gives 1/8 each.
+    // Flat model gives every named actor full credit regardless.
+    const perActorCredit = (scoreMethod === 'flat') ? W_SPECIFIC : (named.length ? 1.0 / named.length : 0);
+
+    named.forEach(({name, cls}) => {
+      allGroupNames.add(name);
+      const key = name.toLowerCase();
+      if(!groups[key]) groups[key] = {name, cls, raw:0, techs:new Set(), indicators:0};
+      groups[key].raw += perActorCredit;
+      groups[key].techs.add(item.techId);
+      groups[key].indicators++;
+    });
+  });
+
+  // Corroboration: reward breadth across DISTINCT techniques (distinct model only).
+  // Capped-gentle: +CORROB_PER_TECH per extra technique beyond the first.
+  Object.values(groups).forEach(g => {
+    if(scoreMethod === 'flat'){
+      g.score = g.raw;
+    }else{
+      const breadth = g.techs.size;
+      g.corrob = 1 + CORROB_PER_TECH * (breadth - 1);
+      g.score = g.raw * g.corrob;
+    }
+  });
+
+  let arr = Object.values(groups);
+  if(currentLens !== 'all') arr = arr.filter(g => g.cls === currentLens);
+  arr.sort((a,b) => b.score - a.score || b.techs.size - a.techs.size || a.name.localeCompare(b.name));
+
+  const maxScore = arr.length ? arr[0].score : 0;
+  // Separation: the confidence margin between the top two candidates, in
+  // normalized points (0-100). This is the analytic signal, not the raw score.
+  let separation = null;
+  if(arr.length >= 2 && maxScore > 0){
+    separation = Math.round((arr[0].score - arr[1].score) / maxScore * 100);
+  }else if(arr.length === 1){
+    separation = 100; // a lone candidate stands alone
+  }
+
+  return {
+    groups: arr,
+    genericHits,
+    genericIndicators,
+    techCount: techSet.size,
+    groupCount: allGroupNames.size,
+    indicatorCount: Object.keys(evidence).length,
+    maxScore,
+    separation,
+    method: scoreMethod
+  };
+}
+
+// ── RENDER ──
+function render(){
+  const s = computeScores();
+  renderSource();
+  renderStats(s);
+  renderRanking(s);
+  renderTechList();
+}
+
+function renderSource(){
+  const el = document.getElementById('source-badge');
+  const map = {
+    live:{cls:'src-live',txt:'live: hunt tool'},
+    file:{cls:'src-file',txt:'loaded: state file'},
+    csv:{cls:'src-csv',txt:'imported: csv'},
+    none:{cls:'src-none',txt:'no evidence'}
+  };
+  const m = map[source] || map.none;
+  el.className = 'source-badge ' + m.cls;
+  el.textContent = m.txt;
+}
+
+function renderStats(s){
+  document.getElementById('stat-ind').textContent = s.indicatorCount;
+  document.getElementById('stat-tech').textContent = s.techCount;
+  document.getElementById('stat-groups').textContent = s.groupCount;
+  document.getElementById('evidence-meta').textContent =
+    s.indicatorCount + (s.indicatorCount===1?' indicator':' indicators');
+}
+
+function renderRanking(s){
+  const body = document.getElementById('ranking-body');
+
+  if(!s.indicatorCount){
+    body.innerHTML = `<div class="empty">
+      <div class="empty-icon">&#9733;</div>
+      <div class="empty-title">No evidence yet</div>
+      <div class="empty-text">Star indicators in the <a href="/net/" style="color:var(--accent)">NET</a> tool as you work, then return here. Your evidence loads automatically.<br><br>Or use <code>&#8593; load state</code> / <code>&#8593; csv</code> to bring in a hunt from another machine.</div>
+    </div>`;
+    return;
+  }
+
+  let html = '';
+
+  if(!s.groups.length){
+    html += `<div class="empty" style="padding:24px 12px">
+      <div class="empty-title">No named actors in this lens</div>
+      <div class="empty-text">${currentLens==='all'
+        ? 'Your evidence carries only generic/commodity attribution. See the note below.'
+        : 'No '+NAT[currentLens].label+' groups are cited in your current evidence. Try the ALL lens.'}</div>
+    </div>`;
+  } else {
+    // Confidence readout: the separation margin is the analytic signal.
+    if(s.groups.length >= 2 && s.separation !== null){
+      const sep = s.separation;
+      let cls, verdict, detail;
+      const top = s.groups[0].name, second = s.groups[1].name;
+      if(sep >= 40){
+        cls='conf-strong'; verdict='STRONG LEAN';
+        detail = `<strong>${esc(top)}</strong> leads <strong>${esc(second)}</strong> by ${sep} points - a clear separation on the current evidence.`;
+      }else if(sep >= 20){
+        cls='conf-moderate'; verdict='MODERATE LEAN';
+        detail = `<strong>${esc(top)}</strong> leads <strong>${esc(second)}</strong> by ${sep} points - a discernible lean, but corroborate before committing.`;
+      }else if(sep >= 8){
+        cls='conf-weak'; verdict='WEAK LEAN';
+        detail = `<strong>${esc(top)}</strong> edges <strong>${esc(second)}</strong> by only ${sep} points - too close to call confidently.`;
+      }else{
+        cls='conf-tossup'; verdict='TOSS-UP';
+        detail = `<strong>${esc(top)}</strong> and <strong>${esc(second)}</strong> are within ${sep} points - the evidence does not separate them.`;
+      }
+      html += `<div class="confidence">
+        <div class="conf-top">
+          <span class="conf-label">Top-candidate margin</span>
+          <span class="conf-verdict ${cls}">${verdict} &middot; ${sep}pt</span>
+        </div>
+        <div class="conf-detail">${detail}</div>
+      </div>`;
+    }
+    s.groups.forEach((g,i) => {
+      const nat = NAT[g.cls] || NAT['apt-mul'];
+      const pct = s.maxScore ? Math.round((g.score / s.maxScore) * 100) : 0;
+      html += `<div class="rank-row">
+        <div class="rank-head">
+          <span class="rank-pos">${i+1}</span>
+          <span class="rank-name">${esc(g.name)}</span>
+          <span class="rank-nat nat-${nat.css}">${nat.label}</span>
+          <span class="rank-score">${pct}%</span>
+        </div>
+        <div class="rank-bar-track"><div class="rank-bar-fill bar-${nat.css}" style="width:${pct}%"></div></div>
+        <div class="rank-detail">${g.indicators} indicator${g.indicators===1?'':'s'} &middot; ${g.techs.size} technique${g.techs.size===1?'':'s'}</div>
+      </div>`;
+    });
+  }
+
+  // Generic / commodity honest line
+  if(s.genericHits > 0){
+    const ind = s.indicatorCount;
+    const ratio = ind ? Math.round((s.genericIndicators / ind) * 100) : 0;
+    let level = ratio >= 60 ? 'high' : ratio >= 30 ? 'moderate' : 'some';
+    html += `<div class="generic-note">
+      <strong>Generic / Commodity: ${level} presence.</strong><br>
+      ${s.genericIndicators} of ${ind} indicators (${ratio}%) carry generic or commodity attribution (multi-actor, ransomware, or widely-shared tradecraft). ${ratio>=60
+        ? 'This activity is <strong>not strongly attributable</strong> to a single named actor on the evidence so far. Treat named rankings above as weak signal until more distinctive indicators are confirmed.'
+        : 'Factor this into confidence: some of your evidence reflects tradecraft shared across many actors.'}
+    </div>`;
+  }
+
+  body.innerHTML = html;
+}
+
+function renderTechList(){
+  const el = document.getElementById('tech-list');
+  const keys = Object.keys(evidence);
+  if(!keys.length){
+    el.innerHTML = `<div class="empty" style="padding:24px 12px"><div class="empty-text">Starred indicators appear here as your evidence set.</div></div>`;
+    return;
+  }
+  // sort by addedAt
+  keys.sort((a,b)=> (evidence[a].addedAt||0) - (evidence[b].addedAt||0));
+  el.innerHTML = keys.map(k => {
+    const it = evidence[k];
+    const row = it.row || {};
+    const named = [...new Set(
+      (Array.isArray(row.apt)?row.apt:[])
+        .filter(a => a.name && !isGeneric(a.cls,a.name))
+        .map(a => canonName(a.name))
+    )];
+    const sev = (it.severity||'high').toLowerCase();
+    const indicator = row.indicator || it.indicator || '(indicator)';
+    return `<div class="tech-item">
+      <div class="tech-item-head">
+        <span class="tech-tid">${esc(it.techId)}</span>
+        <span class="tech-sev sev-${sev}">${sev.toUpperCase()}</span>
+      </div>
+      <div class="tech-ind">${esc(indicator)}</div>
+      ${named.length ? `<div class="tech-groups">&#8594; ${named.map(esc).join(', ')}</div>` : `<div class="tech-groups" style="opacity:.6">&#8594; generic / commodity</div>`}
+    </div>`;
+  }).join('');
+}
+
+// ── LENS ──
+function setLens(lens){
+  currentLens = lens;
+  document.querySelectorAll('.lens-btn[data-lens]').forEach(b => b.classList.toggle('active', b.dataset.lens===lens));
+  render();
+}
+
+function setMethod(method){
+  scoreMethod = method;
+  document.querySelectorAll('.lens-btn[data-method]').forEach(b => b.classList.toggle('active', b.dataset.method===method));
+  render();
+}
+
+// ── CONTINUITY: SAVE ──
+function buildStatePayload(){
+  return {
+    _format: 'tonk-attribution-state',
+    _v: 1,
+    exported: new Date().toISOString(),
+    source: source,
+    indicatorCount: Object.keys(evidence).length,
+    items: evidence
+  };
+}
+
+function saveState(){
+  if(!Object.keys(evidence).length){ toast('Nothing to save','warn'); return; }
+  const payload = buildStatePayload();
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+  const stamp = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  download(blob, `tonk-hunt-state_${stamp}.json`);
+  dirty = false;
+  setAutosave('saved');
+  toast('Hunt state saved','ok');
+}
+
+// ── CONTINUITY: LOAD STATE (replace with guard) ──
+function loadStateFile(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const data = JSON.parse(reader.result);
+      let items;
+      if(data._format === 'tonk-attribution-state' && data.items){
+        items = data.items;
+      }else if(data._v === HUNT_SCHEMA && data.items){
+        // raw hunt-tool export shape
+        items = data.items;
+      }else{
+        throw new Error('Unrecognized file format');
+      }
+      const proceed = () => { applyEvidence(items,'file'); toast('Hunt state loaded','ok'); };
+      if(dirty && Object.keys(evidence).length){
+        showGuard('load this state file', proceed);
+      }else{
+        proceed();
+      }
+    }catch(e){
+      console.error(e);
+      toast('Could not read that file: '+e.message,'err');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// ── CONTINUITY: CSV IMPORT (fallback) ──
+// CSV columns: Order,Added,Severity,Technique,Indicator,Arkime,Kibana,Suricata,Notes
+// CSV has NO apt[] data. We reconstruct attribution from live hunt data
+// (technique->groups) when available; otherwise techniques load with no
+// named attribution (generic) and the user is told why.
+function loadCsvFile(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const rows = parseCSV(reader.result);
+      if(!rows.length) throw new Error('No rows found');
+      const header = rows[0].map(h => h.trim().toLowerCase());
+      const idx = {
+        sev: header.indexOf('severity'),
+        tech: header.indexOf('technique'),
+        ind: header.indexOf('indicator'),
+        added: header.indexOf('added')
+      };
+      if(idx.tech === -1 || idx.ind === -1) throw new Error('Missing Technique/Indicator columns');
+
+      // Build technique->apt[] map from live hunt data if present
+      const liveMap = buildTechAptMap();
+
+      const items = {};
+      let recovered = 0, total = 0;
+      rows.slice(1).forEach((r,i) => {
+        if(!r.length || !r[idx.tech]) return;
+        total++;
+        const techId = r[idx.tech].trim();
+        const indicator = r[idx.ind] ? r[idx.ind].trim() : '';
+        const sev = idx.sev>-1 && r[idx.sev] ? r[idx.sev].trim().toLowerCase() : 'high';
+        const addedRaw = idx.added>-1 ? r[idx.added] : '';
+        const addedAt = addedRaw ? Date.parse(addedRaw) || (Date.now()+i) : (Date.now()+i);
+
+        // try to recover apt[] by matching technique + indicator text
+        let apt = [];
+        const cand = liveMap[techId];
+        if(cand){
+          const exact = cand.find(c => c.indicator === indicator);
+          apt = exact ? exact.apt : (cand[0] ? cand[0].apt : []);
+          if(apt.length) recovered++;
+        }
+        const rowId = techId + '_csv_' + i;
+        items[rowId] = { techId, indicator, severity:sev, addedAt, row:{ indicator, apt } };
+      });
+
+      const proceed = () => {
+        applyEvidence(items,'csv');
+        if(recovered === 0){
+          toast(`Imported ${total} indicators - no attribution recovered (open the hunt tool first for richer scoring)`,'warn');
+        }else{
+          toast(`Imported ${total} indicators - attribution recovered for ${recovered}`,'ok');
+        }
+      };
+      if(dirty && Object.keys(evidence).length){
+        showGuard('import this CSV', proceed);
+      }else{
+        proceed();
+      }
+    }catch(e){
+      console.error(e);
+      toast('CSV import failed: '+e.message,'err');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// Build {techId: [{indicator, apt[]}]} from live hunt evidence for CSV recovery
+function buildTechAptMap(){
+  const map = {};
+  const live = readLiveEvidence();
+  if(!live) return map;
+  Object.values(live).forEach(it => {
+    if(!it.row) return;
+    (map[it.techId] = map[it.techId] || []).push({
+      indicator: it.row.indicator || it.indicator || '',
+      apt: Array.isArray(it.row.apt) ? it.row.apt : []
+    });
+  });
+  return map;
+}
+
+// Minimal RFC4180-ish CSV parser (handles quoted fields, escaped quotes, newlines)
+function parseCSV(text){
+  const rows = []; let row = []; let field = ''; let i = 0; let inQ = false;
+  while(i < text.length){
+    const c = text[i];
+    if(inQ){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field+='"'; i+=2; continue; }
+        inQ = false; i++; continue;
+      }
+      field += c; i++; continue;
+    }
+    if(c === '"'){ inQ = true; i++; continue; }
+    if(c === ','){ row.push(field); field=''; i++; continue; }
+    if(c === '\r'){ i++; continue; }
+    if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; i++; continue; }
+    field += c; i++;
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.length && r.some(c => c.trim() !== ''));
+}
+
+// ── GUARD MODAL ──
+function showGuard(actionLabel, onProceed){
+  const modal = document.getElementById('guard-modal');
+  const count = Object.keys(evidence).length;
+  document.getElementById('guard-title').textContent = 'Unsaved hunt evidence';
+  document.getElementById('guard-body').innerHTML =
+    `You have <strong>${count} indicator${count===1?'':'s'}</strong> of evidence loaded that hasn't been saved to a file. To <code>${esc(actionLabel)}</code> will <strong>replace</strong> it.<br><br>Save your current evidence first?`;
+  const foot = document.getElementById('guard-foot');
+  foot.innerHTML = '';
+
+  const btnSave = mkBtn('Save, then continue','primary',() => {
+    saveState();
+    closeGuard();
+    onProceed();
+  });
+  const btnDiscard = mkBtn('Discard & continue','danger',() => { closeGuard(); onProceed(); });
+  const btnCancel = mkBtn('Cancel','',() => closeGuard());
+  foot.appendChild(btnCancel);
+  foot.appendChild(btnDiscard);
+  foot.appendChild(btnSave);
+  modal.classList.add('open');
+}
+function closeGuard(){ document.getElementById('guard-modal').classList.remove('open'); }
+function mkBtn(label, cls, fn){
+  const b = document.createElement('button');
+  b.className = 'mbtn ' + cls;
+  b.textContent = label;
+  b.addEventListener('click', fn);
+  return b;
+}
+
+// ── AUTOSAVE (checkpoint to localStorage so loss window is minutes) ──
+function autosaveCheckpoint(){
+  if(!Object.keys(evidence).length) return;
+  try{
+    localStorage.setItem(ATTR_AUTOSAVE_KEY, JSON.stringify(buildStatePayload()));
+    setAutosave('saved');
+  }catch(e){ console.warn('autosave failed',e); }
+}
+function setAutosave(state){
+  const el = document.getElementById('autosave');
+  const txt = document.getElementById('autosave-txt');
+  el.className = 'autosave-dot' + (state==='dirty'?' dirty':state==='saving'?' saving':'');
+  txt.textContent = state==='dirty'?'unsaved':state==='saving'?'saving…':'saved';
+}
+
+// recover from autosave on load if no live evidence
+function recoverAutosave(){
+  try{
+    const raw = localStorage.getItem(ATTR_AUTOSAVE_KEY);
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    if(data && data.items && Object.keys(data.items).length){
+      applyEvidence(data.items, data.source || 'file');
+      toast('Recovered evidence from autosave checkpoint','ok');
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+// ── CROSS-TAB SYNC: if hunt tool changes in another tab, mirror it ──
+// Only auto-sync when we're actively viewing live evidence; a loaded file
+// or CSV import is intentionally decoupled from the live hunt.
+window.addEventListener('storage', e => {
+  if(e.key !== HUNT_KEY) return;
+  if(source !== 'live') return;
+  const items = readLiveEvidence();
+  if(items && Object.keys(items).length){
+    applyEvidence(items,'live');
+  }else{
+    // hunt was cleared in another tab - mirror that here
+    clearEvidence();
+  }
+});
+
+// ── HELPERS ──
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function download(blobOrStr, filename){
+  const blob = blobOrStr instanceof Blob ? blobOrStr : new Blob([blobOrStr],{type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+let toastTimer;
+function toast(msg, kind){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (kind||'');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.className = 'toast ' + (kind||''), 3200);
+}
+
+// close modal on overlay click
+document.getElementById('guard-modal').addEventListener('click', e => {
+  if(e.target.id === 'guard-modal') closeGuard();
+});
+
+// ── INIT ──
+(function init(){
+  const live = readLiveEvidence();
+  if(live !== null){
+    // Hunt tool has written valid data (even if empty). It is authoritative:
+    // an empty hunt means empty attribution, and must beat any stale autosave.
+    if(Object.keys(live).length){
+      applyEvidence(live,'live');
+    }else{
+      clearEvidence();
+    }
+  }else if(!recoverAutosave()){
+    // No live hunt context at all - fall back to autosave recovery, else empty.
+    render();
+  }
+  // periodic autosave checkpoint
+  setInterval(autosaveCheckpoint, 30000);
+})();
+</script>
+</body>
+</html>
