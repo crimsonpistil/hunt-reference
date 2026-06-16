@@ -368,4 +368,217 @@ Microsoft Defender for Endpoint:
       }
     ]
   },
+,
+  {
+    id: "T1561.002",
+    name: "Disk Wipe: Disk Structure Wipe",
+    desc: "Destruction of disk partition tables, Master Boot Records (MBR), or GUID Partition Tables (GPT) to render systems unbootable. Unlike file-level wiping (T1485), disk structure wipes target the boot infrastructure itself, making recovery impossible without reimaging. This is the signature technique of nation-state destructive operations (Sandworm, Lazarus) and separates true wiper attacks from ransomware.",
+    rows: [
+      {
+        sub: "T1561.002 - MBR/GPT Overwrite and Partition Table Destruction",
+        os: "win",
+        indicator: "Direct write access to the physical disk (PhysicalDrive0) or to the first sectors of a block device, targeting the MBR (sector 0) or GPT headers, which renders the system unbootable and unrecoverable without reimaging from backup",
+        sysmon: `// Windows - Sysmon EID 9 (RawAccessRead) to PhysicalDrive
+// Direct disk reads are a precursor to disk writes.
+// Sysmon does not log raw disk WRITES, only reads.
+Device=*PhysicalDrive*
+
+// Sysmon EID 1 - known wiper tool patterns
+CommandLine=(*PhysicalDrive* OR *\\.\\PhysicalDrive*)
+OR CommandLine=(*dd*of=*\\.\\* OR *format*\\.\\*)
+
+// Sysmon EID 7 - EaseUS driver load (HermeticWiper)
+ImageLoaded=*epmntdrv* OR ImageLoaded=*empntdrv*
+
+// Windows - kernel driver loading for disk access
+// Wipers like HermeticWiper use signed drivers to get
+// kernel-level disk write access.
+// Sysmon EID 6 (DriverLoad) - unsigned or unusual drivers
+Signed=false
+
+// Linux - Auditd: dd targeting block devices
+-a always,exit -F arch=b64 -S open -F path=/dev/sda -F perm=w -k disk_write
+-a always,exit -F arch=b64 -S open -F path=/dev/nvme0n1 -F perm=w -k disk_write`,
+        kibana: `// Raw disk access (Sysmon EID 9)
+winlog.event_id: 9
+AND winlog.event_data.Device: *PhysicalDrive*
+AND NOT process.name: ("System" OR "MsMpEng.exe" OR "vssvc.exe")
+
+// Wiper tool patterns
+process.command_line: (*PhysicalDrive* OR *\\.\\PhysicalDrive*)
+
+// Suspicious driver loads (kernel-level disk access)
+winlog.event_id: 6
+AND NOT winlog.event_data.Signed: "true"
+
+// Linux: dd targeting block devices
+process.name: "dd"
+AND process.args: ("of=/dev/sda" OR "of=/dev/nvme0n1"
+  OR "of=/dev/vda" OR "of=/dev/xvda")`,
+        powershell: `# MBR/GPT wipe detection
+Write-Host "[*] === Raw disk access events (Sysmon EID 9) ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=9
+} -MaxEvents 100 -EA SilentlyContinue |
+  Select-Object TimeCreated,
+    @{n='Process';e={$_.Properties[4].Value}},
+    @{n='Device';e={$_.Properties[6].Value}}
+
+Write-Host "[*] === MBR integrity check ==="
+# Read first 512 bytes of disk and check for valid boot signature
+$disk = [IO.File]::OpenRead('\\.\PhysicalDrive0')
+$mbr = New-Object byte[] 512
+$disk.Read($mbr, 0, 512) | Out-Null
+$disk.Close()
+$sig = [BitConverter]::ToString($mbr[510..511])
+Write-Host "  Boot signature: $sig (expected: 55-AA)"
+if ($sig -ne '55-AA') { Write-Host "  WARNING: Invalid MBR signature - possible wipe" }
+
+Write-Host "[*] === Unsigned driver loads (Sysmon EID 6) ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=6
+} -MaxEvents 50 -EA SilentlyContinue |
+  Where-Object { $_.Properties[5].Value -ne 'true' } |
+  Select-Object TimeCreated, @{n='Driver';e={$_.Properties[3].Value}}`,
+        registry: `No direct registry artifact from the disk write itself.
+The system may be unbootable after the wipe completes.
+
+Known wiper disk access patterns:
+- WhisperGate: overwrites MBR with ransom note, then Stage 2
+  corrupts files (January 2022, Ukraine)
+- HermeticWiper: uses signed EaseUS partition driver
+  (empntdrv.sys) for kernel-level disk destruction
+  (February 2022, Ukraine)
+- CaddyWiper: zeros files then destroys partition table
+  using DeviceIoControl IOCTL_DISK_SET_DRIVE_LAYOUT
+  (March 2022, Ukraine)
+- Destover: direct MBR overwrite + file wipe
+  (Sony Pictures, 2014)
+- StoneDrill/Shamoon: MBR + file overwrite
+  (Saudi Arabia, 2012/2016/2018)`,
+        tools: `Sysmon (EID 9 raw disk access, EID 6 driver loads)
+Windows Defender (behavior-based wiper detection)
+Velociraptor (disk forensic artifacts)
+UEFI Secure Boot (prevents unsigned boot modification)
+Offline backups (the actual recovery path)`,
+        ossdetect: `Sigma:
+- win_sysmon_raw_disk_access.yml
+- win_driver_load_unsigned.yml
+
+Elastic Detection Rules:
+- Direct Disk Access via PhysicalDrive
+- Suspicious Driver Load
+
+Microsoft Defender for Endpoint:
+- Wiper behavior detection
+- Boot sector modification alert`,
+        notes: "MBR/GPT wipe detection is critical because it distinguishes nation-state destructive operations from commodity ransomware. Ransomware encrypts files but leaves the disk structure intact (the ransom note needs to display at boot). Wipers destroy the disk structure itself, making the system permanently unbootable. Detection is challenging because the wipe happens at the raw disk level, below the filesystem where most monitoring operates. Sysmon EID 9 (RawAccessRead) catches the precursor reads but not the writes. Kernel-level driver loads (EID 6) are the proxy signal: wipers like HermeticWiper load signed third-party drivers to get kernel disk access. UEFI Secure Boot provides some protection by preventing modified boot code from executing, but a GPT wipe still renders the system unbootable even if Secure Boot is enabled. The only real recovery is offline/immutable backups.",
+        apt: [
+          { cls: "apt-ru", name: "Sandworm", note: "WhisperGate, HermeticWiper, CaddyWiper, and multiple other disk-destructive tools deployed against Ukraine (2022-2024)." },
+          { cls: "apt-kp", name: "Lazarus", note: "Destover (Sony Pictures 2014), KillDisk (multiple campaigns), MBR overwrite in destructive operations." },
+          { cls: "apt-ir", name: "APT33", note: "Shamoon/DistTrack MBR wiper deployed against Saudi Aramco and Gulf state targets (2012, 2016, 2018)." }
+        ],
+        malware: [],
+        activity: [],
+        cite: "MITRE ATT&CK T1561.002"
+      }
+    ]
+  },
+  {
+    id: "T1529",
+    name: "System Shutdown/Reboot",
+    desc: "Forced system shutdown or reboot to complete a destructive or disruptive operation. Ransomware reboots into a modified boot screen displaying the ransom note. Wipers reboot to force the corrupted MBR/GPT to take effect. Legitimate reboots are scheduled and announced; attacker-initiated reboots are immediate and unexpected.",
+    rows: [
+      {
+        sub: "T1529 - Forced Shutdown/Reboot (immediate, unscheduled, post-attack trigger)",
+        os: "win",
+        indicator: "Execution of shutdown.exe or init with immediate/force flags (/s /f /t 0, shutdown -h now) outside of scheduled maintenance windows, particularly when preceded by shadow copy deletion, service stopping, or encryption activity, indicating the final step of a destructive or ransomware operation",
+        sysmon: `// Windows - Sysmon EID 1: forced shutdown commands
+Image=*\\shutdown.exe
+CommandLine=(*\/s*\/f* OR *\/r*\/f* OR *\/s*\/t*0* OR *\/r*\/t*0*)
+
+// PowerShell shutdown
+Image=*\\powershell.exe
+CommandLine=(*Stop-Computer*-Force* OR *Restart-Computer*-Force*)
+
+// Linux - Auditd: shutdown/reboot commands
+-a always,exit -F arch=b64 -S execve -F exe=/sbin/shutdown -k shutdown_cmd
+-a always,exit -F arch=b64 -S execve -F exe=/sbin/reboot -k shutdown_cmd
+-a always,exit -F arch=b64 -S execve -F exe=/sbin/poweroff -k shutdown_cmd
+-a always,exit -F arch=b64 -S execve -F exe=/sbin/init -k shutdown_cmd
+
+// Sysmon for Linux EID 1
+Image=(*/shutdown OR */reboot OR */poweroff OR */halt)
+CommandLine=(*-h*now* OR *-r*now* OR *--force*)`,
+        kibana: `// Windows forced shutdown
+process.name: "shutdown.exe"
+AND process.command_line: (*"/s"* AND *"/f"*) OR (*"/r"* AND *"/f"*)
+
+// PowerShell forced shutdown
+process.command_line: (*Stop-Computer*Force* OR *Restart-Computer*Force*)
+
+// Linux forced shutdown
+process.name: ("shutdown" OR "reboot" OR "poweroff" OR "halt" OR "init")
+AND process.args: ("now" OR "-h" OR "--force" OR "0" OR "6")
+
+// Security EID 1074 (System Shutdown Initiated)
+winlog.event_id: 1074`,
+        powershell: `# Shutdown detection
+Write-Host "[*] === Recent shutdown commands (Sysmon) ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=1
+} -MaxEvents 5000 -EA SilentlyContinue |
+  Where-Object { $_.Properties[4].Value -match 'shutdown|restart' -or
+    $_.Properties[10].Value -match 'Stop-Computer|Restart-Computer' } |
+  Select-Object TimeCreated,
+    @{n='Cmd';e={$_.Properties[10].Value.Substring(0,200)}}
+
+Write-Host "[*] === System shutdown events (EID 1074) ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='System'; Id=1074
+} -MaxEvents 10 -EA SilentlyContinue |
+  Select-Object TimeCreated, Message | Format-Table -Auto
+
+# Linux equivalent:
+# last -x shutdown reboot
+# journalctl --list-boots
+# ausearch -k shutdown_cmd -ts recent`,
+        registry: `Windows shutdown reason tracking:
+  Security EID 1074: System has been shutdown by a process
+    Records: process name, reason code, shutdown type
+  
+  System EID 6006: Event Log service was stopped (clean shutdown)
+  System EID 6008: Previous shutdown was unexpected (crash/forced)
+  
+  EID 6008 (unexpected shutdown) following EID 6006 absence
+  indicates a hard power-off or forced shutdown that bypassed
+  the normal shutdown sequence.`,
+        tools: `Security event log (EID 1074 shutdown initiated)
+System event log (EID 6006/6008 shutdown type)
+Sysmon (EID 1 shutdown command)
+UPS/PDU logs (correlate power events with host events)`,
+        ossdetect: `Sigma:
+- win_proc_creation_forced_shutdown.yml
+- win_system_unexpected_shutdown.yml
+
+Elastic Detection Rules:
+- System Shutdown Command Execution
+
+Wazuh:
+- Rule 18100: System shutdown
+- Auditd integration for shutdown commands`,
+        notes: "A forced shutdown or reboot is rarely the primary detection for an attack. Its value is as a CORRELATION indicator: shutdown preceded by shadow copy deletion + service stops + file encryption = confirmed ransomware completion. Shutdown preceded by MBR overwrite = confirmed wiper activation. Shutdown alone (without preceding attack indicators) is usually legitimate maintenance. The investigation workflow is: detect the shutdown event, then look BACKWARD in the timeline for the attack chain that preceded it. On Linux, 'last -x shutdown reboot' shows the reboot history, and 'journalctl --list-boots' shows each boot with timestamps, revealing gaps where the system was down.",
+        apt: [
+          { cls: "apt-ru", name: "Sandworm", note: "Forced reboot after wiper deployment to activate corrupted boot sector." },
+          { cls: "apt-kp", name: "Lazarus", note: "System shutdown as final step in destructive operations." }
+        ],
+        malware: [],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Forced reboot to display ransom note at boot screen or to complete full-disk encryption." }
+        ],
+        cite: "MITRE ATT&CK T1529"
+      }
+    ]
+  },
+
 ];

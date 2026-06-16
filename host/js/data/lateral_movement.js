@@ -472,4 +472,234 @@ Microsoft Defender for Identity:
       }
     ]
   },
+,
+  {
+    id: "T1047",
+    name: "Windows Management Instrumentation",
+    desc: "Remote code execution via WMI (wmic process call create, Invoke-WmiMethod, Impacket wmiexec). WMI lateral movement is stealthier than PsExec because it does not create a service, does not write to ADMIN$, and uses a protocol (DCOM/RPC) that blends with legitimate management traffic. The trade-off is that WMI provides no interactive session, only blind command execution, making it the preferred vector for automated lateral deployment.",
+    rows: [
+      {
+        sub: "T1047 - WMI Remote Process Creation (wmic, Invoke-WmiMethod, wmiexec)",
+        os: "win",
+        indicator: "Remote process creation via WMI where the parent process is WmiPrvSE.exe (the WMI Provider Host), indicating a process was spawned by a remote WMI call rather than local execution, the destination-side artifact that catches all WMI lateral movement tools",
+        sysmon: `// Sysmon EID 1 - process created by WmiPrvSE.exe (destination host)
+// This is THE detection: any child of WmiPrvSE is a WMI-spawned process.
+ParentImage=*\\WmiPrvSE.exe
+Image=(*\\cmd.exe OR *\\powershell.exe OR *\\mshta.exe
+  OR *\\rundll32.exe OR *\\regsvr32.exe)
+// WmiPrvSE legitimately spawns scrcons.exe (WMI script consumer)
+// and some SCCM/monitoring tools. Filter by your environment.
+
+// Source host - wmic process call create
+Image=*\\wmic.exe
+CommandLine=*process*call*create*
+
+// Source host - PowerShell WMI remote execution
+// Invoke-WmiMethod, Invoke-CimMethod with -ComputerName
+CommandLine=(*Invoke-WmiMethod* OR *Invoke-CimMethod*)
+AND CommandLine=*-ComputerName*
+
+// Sysmon EID 3 - DCOM/RPC connections (WMI transport)
+DestinationPort=135
+Image NOT IN (*\\svchost.exe, *\\WmiPrvSE.exe, *\\mmc.exe)`,
+        kibana: `// WmiPrvSE child processes (destination host - the key detection)
+process.parent.name: "WmiPrvSE.exe"
+AND process.name: ("cmd.exe" OR "powershell.exe" OR "mshta.exe"
+  OR "rundll32.exe" OR "regsvr32.exe" OR "certutil.exe")
+
+// wmic remote execution (source host)
+process.name: "wmic.exe"
+AND process.command_line: (*process* AND *call* AND *create*)
+
+// PowerShell WMI/CIM remote (source host)
+winlog.event_id: 4104
+AND script_block_text: (*Invoke-WmiMethod* OR *Invoke-CimMethod*)
+AND script_block_text: *ComputerName*
+
+// WMI Operational log - remote connection received (destination)
+winlog.channel: "Microsoft-Windows-WMI-Activity/Operational"
+AND winlog.event_id: (5857 OR 5860 OR 5861)`,
+        powershell: `# WMI lateral movement detection
+Write-Host "[*] === WmiPrvSE child processes (remote WMI execution) ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=1
+} -MaxEvents 10000 -EA SilentlyContinue |
+  Where-Object { $_.Properties[20].Value -like '*WmiPrvSE*' } |
+  Select-Object TimeCreated,
+    @{n='Child';e={$_.Properties[4].Value}},
+    @{n='CmdLine';e={$_.Properties[10].Value.Substring(0,[Math]::Min(200,$_.Properties[10].Value.Length))}} |
+  Where-Object { $_.Child -notmatch 'scrcons|WmiPrvSE|mofcomp' }
+
+Write-Host "[*] === wmic process call create commands ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=1
+} -MaxEvents 5000 -EA SilentlyContinue |
+  Where-Object { $_.Properties[10].Value -match 'wmic.*process.*call.*create' } |
+  Select-Object TimeCreated,
+    @{n='Cmd';e={$_.Properties[10].Value.Substring(0,200)}}
+
+Write-Host "[*] === WMI Operational events (remote connections) ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-WMI-Activity/Operational'; Id=5857,5860,5861
+} -MaxEvents 20 -EA SilentlyContinue |
+  Select-Object TimeCreated, Id, Message | Format-Table -Auto`,
+        registry: `WMI event subscription persistence (related but separate technique T1546.003):
+HKLM\SOFTWARE\Microsoft\WBEM\ESS\*
+  Permanent event subscriptions that survive reboot.
+
+WMI process creation leaves no direct registry artifact.
+Detection relies on:
+1. Process tree: WmiPrvSE.exe parent (Sysmon EID 1)
+2. Network: DCOM/RPC connection on port 135 (Sysmon EID 3)
+3. WMI Operational log (EID 5857, 5860, 5861)
+
+wmic.exe deprecation note:
+  Microsoft deprecated wmic.exe in Windows 11 but it remains
+  present on Server editions and older Windows versions.
+  PowerShell CIM cmdlets are the modern replacement both
+  for administration and for attacker tooling.`,
+        tools: `Sysmon (EID 1 parent-child is the primary detection)
+WMI-Activity Operational log (EID 5857/5860/5861)
+Security EID 4688 (process creation with parent tracking)
+Impacket wmiexec (the most common offensive tool)
+CrackMapExec (--wmi-exec flag)`,
+        ossdetect: `Sigma:
+- win_proc_creation_wmiprvse_child.yml
+- win_proc_creation_wmic_remote_exec.yml
+- win_wmi_activity_remote_connection.yml
+
+Elastic Detection Rules:
+- Suspicious WMI Execution
+- WMI Remote Process Creation
+
+Microsoft Defender for Endpoint:
+- Suspicious WMI activity alert`,
+        notes: "WMI lateral movement detection hinges on one artifact: the parent-child relationship. Any process whose parent is WmiPrvSE.exe was spawned by a WMI call, and if the WMI call originated remotely, that process is lateral movement. The false positive surface is manageable: legitimate remote WMI calls come from SCCM, monitoring tools (PRTG, SolarWinds), and admin scripts. Baseline your environment's legitimate WmiPrvSE children and alert on anything outside that set. Impacket's wmiexec is particularly stealthy because it uses a semi-interactive shell over WMI output objects, never writing to disk on the target. The only artifact is the WmiPrvSE -> cmd.exe parent-child edge.",
+        apt: [
+          { cls: "apt-ru", name: "APT29", note: "WMI remote execution for stealthy lateral movement in enterprise intrusions." },
+          { cls: "apt-cn", name: "APT41", note: "WMI process creation documented in technology sector lateral movement." },
+          { cls: "apt-kp", name: "Lazarus", note: "WMI-based lateral execution in financially motivated campaigns." },
+          { cls: "apt-ru", name: "APT28", note: "wmic process call create for lateral command execution." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Impacket", note: "wmiexec.py provides semi-interactive shell over WMI, the most common offensive WMI tool." },
+          { cls: "apt-mul", name: "Cobalt Strike", note: "jump wmi and remote-exec wmi for WMI-based lateral movement." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "WMI used alongside PsExec for parallel lateral deployment across domain hosts." }
+        ],
+        cite: "MITRE ATT&CK T1047"
+      }
+    ]
+  },
+  {
+    id: "T1570",
+    name: "Lateral Tool Transfer",
+    desc: "Copying attacker tools, payloads, and scripts between compromised hosts via SMB shares, admin shares (C$, ADMIN$), RDP clipboard/drive redirection, SCP/SFTP, or certutil/bitsadmin downloads from internal staging servers. This is the logistics step between gaining access to a new host and executing on it.",
+    rows: [
+      {
+        sub: "T1570 - Internal File Transfer via SMB Shares, certutil, and bitsadmin",
+        os: "win",
+        indicator: "File transfers between internal hosts using admin shares (C$, ADMIN$), certutil -urlcache, bitsadmin /transfer, or PowerShell copy operations targeting internal IPs, indicating tool staging for lateral movement execution",
+        sysmon: `// Sysmon EID 11 (FileCreate) - files written to admin shares
+TargetFilename=*\\ADMIN$\\* OR TargetFilename=*\\C$\\*
+
+// Sysmon EID 1 - certutil downloading from internal source
+Image=*\\certutil.exe
+CommandLine=*-urlcache* AND CommandLine=(*10.* OR *172.16.* OR *192.168.*)
+
+// Sysmon EID 1 - bitsadmin internal transfer
+Image=*\\bitsadmin.exe
+CommandLine=*/transfer* AND CommandLine=(*10.* OR *172.16.* OR *192.168.*)
+
+// Sysmon EID 1 - PowerShell copy to remote host
+Image=*\\powershell.exe
+CommandLine=(*Copy-Item* AND *-Path* AND *\\\\*)
+
+// Sysmon EID 3 - SMB connections to internal hosts (port 445)
+DestinationPort=445
+DestinationIp=(10.* OR 172.16.* OR 192.168.*)
+Image NOT IN (*\\System, *\\svchost.exe)`,
+        kibana: `// File writes to admin shares
+file.path: (*ADMIN$* OR *C$*)
+AND event.action: "created"
+
+// certutil internal download
+process.name: "certutil.exe"
+AND process.command_line: *urlcache*
+AND process.command_line: (10.* OR 172.16.* OR 192.168.*)
+
+// bitsadmin internal transfer
+process.name: "bitsadmin.exe"
+AND process.command_line: */transfer*
+
+// PowerShell remote copy
+process.command_line: (*Copy-Item* AND *\\\\*)
+
+// Internal SMB file operations (high volume, use for correlation)
+destination.port: 445
+AND destination.ip: (10.0.0.0/8 OR 172.16.0.0/12 OR 192.168.0.0/16)`,
+        powershell: `# Lateral tool transfer detection
+Write-Host "[*] === Files written to admin shares (Sysmon EID 11) ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=11
+} -MaxEvents 5000 -EA SilentlyContinue |
+  Where-Object { $_.Properties[5].Value -match 'ADMIN\$|C\$' } |
+  Select-Object TimeCreated,
+    @{n='File';e={$_.Properties[5].Value}},
+    @{n='Process';e={$_.Properties[4].Value}}
+
+Write-Host "[*] === certutil/bitsadmin with internal URLs ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=1
+} -MaxEvents 5000 -EA SilentlyContinue |
+  Where-Object { $_.Properties[10].Value -match '(certutil.*urlcache|bitsadmin.*/transfer).*(10\.|172\.16|192\.168)' } |
+  Select-Object TimeCreated, @{n='Cmd';e={$_.Properties[10].Value.Substring(0,200)}}
+
+Write-Host "[*] === New executables in Windows\Temp ==="
+Get-ChildItem C:\Windows\Temp\*.exe -EA SilentlyContinue |
+  Where-Object { $_.CreationTime -gt (Get-Date).AddHours(-24) }`,
+        registry: `No direct registry artifact from the file transfer itself.
+
+Common staging locations to monitor:
+  C:\Windows\Temp\
+  C:\ProgramData\
+  C:\Users\Public\
+  ADMIN$ (maps to C:\Windows)
+  C$ (maps to C:\)
+
+BITS transfer jobs persist across reboots:
+  bitsadmin /list /allusers  (enumerate active transfers)
+  PowerShell: Get-BitsTransfer -AllUsers`,
+        tools: `Sysmon (EID 11 file creation + EID 1 tool commands + EID 3 SMB)
+BITS event log (Microsoft-Windows-Bits-Client/Operational)
+Security EID 5145 (network share access audit)
+EDR file write telemetry`,
+        ossdetect: `Sigma:
+- win_proc_creation_certutil_download.yml
+- win_proc_creation_bitsadmin_download.yml
+- win_file_creation_admin_share.yml
+
+Elastic Detection Rules:
+- Certutil URL Download
+- Bitsadmin File Transfer
+- File Written to Admin Share`,
+        notes: "Lateral tool transfer is the logistics step that connects initial access to execution on a new host. The most common pattern is PsExec-style: copy the payload to ADMIN$ or C$, then execute it remotely via service creation or WMI. Detection at the file-write stage catches the attack before execution, giving defenders a window to intervene. Admin share writes (ADMIN$, C$) from non-standard processes should be baselined and alerted. certutil and bitsadmin downloading from internal IPs (not external) are strong indicators of internal staging because these tools are rarely used for legitimate internal file transfers when robocopy and Copy-Item exist.",
+        apt: [
+          { cls: "apt-cn", name: "APT41", note: "Internal tool staging via SMB shares and admin shares for lateral deployment." },
+          { cls: "apt-ru", name: "APT29", note: "Tool transfer through admin shares documented in enterprise lateral movement." },
+          { cls: "apt-kp", name: "Lazarus", note: "Payload staging on internal shares before execution across target hosts." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Cobalt Strike", note: "upload and lateral movement commands write to admin shares before execution." },
+          { cls: "apt-mul", name: "Impacket", note: "psexec and smbexec copy service binaries to ADMIN$ before creating the service." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "Mass file copy of encryption binary to C$ or ADMIN$ on all domain hosts before simultaneous execution." }
+        ],
+        cite: "MITRE ATT&CK T1570"
+      }
+    ]
+  },
+
 ];

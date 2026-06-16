@@ -11,11 +11,16 @@
   .index-hero { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 40px 20px; text-align: center; position: relative; }
   .index-title { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
   .index-sub { font-size: 13px; color: var(--text3); margin-bottom: 24px; }
-  .index-search-wrap { max-width: 480px; margin: 0 auto; position: relative; }
-  .index-search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
-  #tactic-search { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 10px 14px 10px 36px; outline: none; transition: border-color .15s; box-sizing: border-box; }
-  #tactic-search:focus { border-color: var(--accent2); }
-  #tactic-search::placeholder { color: var(--text3); }
+  .repo-search-section { max-width: 1404px; margin: 0 auto; padding: 22px 20px 4px; width: 100%; box-sizing: border-box; }
+  .rs-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .rs-title { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: .08em; }
+  .rs-hint { font-size: 12px; color: var(--text3); }
+  .rs-bar { display: flex; gap: 8px; max-width: 1404px; box-sizing: border-box; }
+  #repo-search-input { flex: 1; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 11px 14px; outline: none; transition: border-color .15s; }
+  #repo-search-input:focus { border-color: var(--accent2); }
+  #repo-search-input::placeholder { color: var(--text3); }
+  #repo-search-btn { background: var(--accent2); border: none; border-radius: 8px; color: #fff; font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .04em; padding: 0 18px; cursor: pointer; transition: filter .15s; }
+  #repo-search-btn:hover { filter: brightness(1.12); }
   .section-label { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; padding: 20px 20px 8px; max-width: 1200px; margin: 0 auto; display: block; }
   .tactic-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 0 20px 28px; max-width: 1400px; margin: 0 auto; }
   @media (max-width: 900px) { .tactic-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -59,9 +64,17 @@
 <div class="index-hero">
   <div class="index-title">[TONK] Host-Based Hunt Reference</div>
   <div class="index-sub">Threat Observation &amp; Network Kill-chain &middot; MITRE ATT&amp;CK Host Detection Reference</div>
-  <div class="index-search-wrap">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
-    <input id="tactic-search" type="text" placeholder="Filter tactics..." autocomplete="off">
+</div>
+
+<div class="repo-search-section">
+  <div class="rs-head">
+    <span class="rs-title">Search TONK</span>
+    <span class="rs-hint">find an APT actor or keyword across every tactic</span>
+  </div>
+  <div class="rs-bar">
+    <input id="repo-search-input" type="text" autocomplete="off" spellcheck="false"
+           placeholder="e.g. Lazarus, LSASS, PsExec, T1003, Kerberoast...">
+    <button id="repo-search-btn" type="button">Search</button>
   </div>
 </div>
 
@@ -118,7 +131,7 @@
 
   <a href="lateral_movement.html" class="tactic-card" data-tags="lateral movement ta0008 psexec rdp ssh winrm pass the hash smb admin shares impacket">
     <div class="card-id" style="color:#ffa600">TA0008</div>
-    <span class="card-pill" style="background:rgba(255,166,0,.12);color:#ffa600">5 indicators &middot; 5 techniques</span>
+    <span class="card-pill" style="background:rgba(255,166,0,.12);color:#ffa600">7 indicators &middot; 7 techniques</span>
     <div class="card-name">Lateral Movement</div>
     <div class="card-desc">Host-side artifacts of lateral movement. PsExec service creation, RDP logon type 10, SSH pivoting, WinRM remote sessions, Pass-the-Hash logon anomalies.</div>
     <div class="card-count">&#9654; Open reference</div>
@@ -126,7 +139,7 @@
 
   <a href="impact.html" class="tactic-card" data-tags="impact ta0040 ransomware wiper shadow copy encryption destruction service stop">
     <div class="card-id" style="color:#ff7b72">TA0040</div>
-    <span class="card-pill" style="background:rgba(255,123,114,.12);color:#ff7b72">4 indicators &middot; 4 techniques</span>
+    <span class="card-pill" style="background:rgba(255,123,114,.12);color:#ff7b72">6 indicators &middot; 6 techniques</span>
     <div class="card-name">Impact</div>
     <div class="card-desc">Destruction and disruption. Shadow copy deletion, pre-encryption service killing, data wipers, ransomware encryption behavioral indicators and canary detection.</div>
     <div class="card-count">&#9654; Open reference</div>
@@ -163,7 +176,7 @@
 
     <div class="info-card">
       <h3>Coverage</h3>
-      <p>7 built tactics, 84 techniques, 165 indicators spanning Windows and Linux endpoints. Detection fields: Sysmon event IDs, Kibana KQL queries, PowerShell hunt scripts, auditd rules, registry artifacts, open-source rule mappings (Sigma, Elastic, Wazuh, osquery, Falco).</p>
+      <p>7 built tactics, 93 techniques, 174 indicators spanning Windows and Linux endpoints. Detection fields: Sysmon event IDs, Kibana KQL queries, PowerShell hunt scripts, auditd rules, registry artifacts, open-source rule mappings (Sigma, Elastic, Wazuh, osquery, Falco).</p>
       <p>APT attribution covers 29 named threat actors across China, Russia, DPRK, Iran, and criminal groups.</p>
     </div>
 
@@ -178,16 +191,20 @@
 
 <script>
   var cards = document.querySelectorAll('.tactic-card');
-  var input = document.getElementById('tactic-search');
-  if (input) {
-    input.addEventListener('input', function () {
-      var q = this.value.toLowerCase().trim();
-      cards.forEach(function (c) {
-        var tags = (c.dataset.tags || '') + ' ' + c.textContent;
-        c.style.display = (!q || tags.toLowerCase().indexOf(q) !== -1) ? '' : 'none';
-      });
+  var input = document.getElementById('repo-search-input');
+  var btn = document.getElementById('repo-search-btn');
+  function filterCards() {
+    var q = input.value.toLowerCase().trim();
+    cards.forEach(function (c) {
+      var tags = (c.dataset.tags || '') + ' ' + c.textContent;
+      c.style.display = (!q || tags.toLowerCase().indexOf(q) !== -1) ? '' : 'none';
     });
   }
+  if (input) {
+    input.addEventListener('input', filterCards);
+    input.addEventListener('keydown', function(e) { if (e.key === 'Enter') filterCards(); });
+  }
+  if (btn) btn.addEventListener('click', filterCards);
 </script>
 </body>
 </html>
