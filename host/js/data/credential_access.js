@@ -615,4 +615,536 @@ osquery:
       }
     ]
   },
+,
+  {
+    id: "T1003.003",
+    name: "OS Credential Dumping: NTDS",
+    desc: "Extraction of the Active Directory database (ntds.dit) containing all domain account password hashes. Unlike LSASS (which holds cached credentials for recently-logged-on users), NTDS.dit contains EVERY domain account. Extraction requires either domain controller access or a volume shadow copy. A successful NTDS dump gives the attacker the keys to the entire domain.",
+    rows: [
+      {
+        sub: "T1003.003 - NTDS.dit Extraction (ntdsutil, shadow copy, volume copy)",
+        os: "win",
+        indicator: "Extraction of the ntds.dit database file via ntdsutil snapshot, volume shadow copy access, or direct file copy from a domain controller, yielding all domain account NTLM hashes for offline cracking or pass-the-hash",
+        sysmon: `// Sysmon EID 1 - ntdsutil invocations
+Image=*\\ntdsutil.exe
+CommandLine=(*activate*instance*ntds* OR *ifm* OR *create*full*)
+
+// Sysmon EID 1 - shadow copy creation targeting DC
+Image=*\\vssadmin.exe AND CommandLine=*create*shadow*
+// On a DC, this is a precursor to ntds.dit theft
+
+// Sysmon EID 1 - direct copy of ntds.dit
+CommandLine=(*ntds.dit* OR *\\Windows\\NTDS\\*)
+AND Image=(*\\cmd.exe OR *\\powershell.exe OR *\\robocopy.exe
+  OR *\\xcopy.exe OR *\\esentutl.exe)
+
+// Sysmon EID 11 - ntds.dit written outside normal path
+TargetFilename NOT IN (*\\Windows\\NTDS\\*)
+AND TargetFilename=*ntds*`,
+        kibana: `// ntdsutil IFM or snapshot
+process.name: "ntdsutil.exe"
+AND process.command_line: (*ifm* OR *activate*instance* OR *create*full*)
+
+// Shadow copy creation on DC
+process.name: "vssadmin.exe"
+AND process.command_line: *create*shadow*
+AND host.name: <DC_HOSTNAMES>
+
+// esentutl copy of ntds.dit
+process.name: "esentutl.exe"
+AND process.command_line: *ntds*
+
+// File copy of ntds.dit
+process.command_line: *ntds.dit*
+AND process.name: ("robocopy" OR "xcopy" OR "copy" OR "cmd.exe" OR "powershell.exe")
+
+// Directory Services Access (EID 4662 on DC)
+winlog.event_id: 4662
+AND winlog.event_data.Properties: *1131f6ad*`,
+        powershell: `# NTDS.dit theft detection (run on domain controllers)
+Write-Host "[*] === ntdsutil commands in Sysmon ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=1
+} -MaxEvents 5000 -EA SilentlyContinue |
+  Where-Object { $_.Properties[4].Value -like '*ntdsutil*' } |
+  Select-Object TimeCreated,
+    @{n='CmdLine';e={$_.Properties[10].Value.Substring(0,200)}}
+
+Write-Host "[*] === Shadow copies (potential ntds.dit staging) ==="
+vssadmin list shadows 2>$null
+
+Write-Host "[*] === ntds.dit file locations ==="
+Get-ChildItem -Path C:\ -Filter 'ntds.dit' -Recurse -Force -EA SilentlyContinue |
+  Where-Object { $_.DirectoryName -notmatch 'Windows\\NTDS' } |
+  Select-Object FullName, Length, LastWriteTime
+
+Write-Host "[*] === IFM snapshots ==="
+Get-ChildItem -Path C:\ -Filter 'ntds.dit' -Recurse -Force -EA SilentlyContinue |
+  Select-Object FullName, Length, LastWriteTime`,
+        registry: `No direct registry artifact from ntds.dit extraction itself.
+
+NTDS.dit location:
+  C:\Windows\NTDS\ntds.dit (locked by AD DS service)
+
+Extraction methods:
+1. ntdsutil "activate instance ntds" "ifm" "create full C:\temp"
+   - Creates an IFM (Install From Media) snapshot
+   - Includes ntds.dit + SYSTEM hive (for decryption)
+2. Volume Shadow Copy + copy from \\?\GLOBALROOT\...
+3. esentutl /y /vss C:\Windows\NTDS\ntds.dit /d C:\temp\ntds.dit
+4. Impacket secretsdump -ntds (remote, needs admin share access)
+
+All methods require Domain Admin or equivalent privileges.`,
+        tools: `Sysmon (EID 1 command detection)
+Windows Security EID 4662 (DS access audit)
+Impacket secretsdump (remote ntds extraction)
+DSInternals PowerShell module (offline ntds parsing)
+CrackMapExec (--ntds flag for mass extraction)`,
+        ossdetect: `Sigma:
+- win_proc_creation_ntdsutil_ifm.yml
+- win_proc_creation_shadow_copy_ntds.yml
+- win_proc_creation_esentutl_ntds.yml
+
+Elastic Detection Rules:
+- NTDS.dit File Access
+- Volume Shadow Copy for NTDS Extraction
+
+Microsoft Defender for Identity:
+- NTDS.dit exfiltration alert`,
+        notes: "NTDS.dit extraction is the domain-level equivalent of LSASS dumping: it yields ALL domain account hashes instead of just cached ones. The extraction always requires two files: ntds.dit (the database) and the SYSTEM registry hive (contains the boot key needed to decrypt the hashes). Any copy of ntds.dit outside its normal path (C:\Windows\NTDS\) on a DC is high-confidence credential theft. The ntdsutil IFM method is particularly dangerous because it is a legitimate AD administration tool, making it hard to block outright. The mitigation is monitoring: alert on ntdsutil execution, shadow copy creation on DCs, and any file copy targeting ntds.dit. DCSync (T1003.006) achieves the same result without touching the file at all.",
+        apt: [
+          { cls: "apt-ru", name: "APT29", note: "NTDS.dit extraction for complete domain credential access in enterprise intrusions." },
+          { cls: "apt-cn", name: "APT41", note: "NTDS theft documented in tech sector domain compromises." },
+          { cls: "apt-kp", name: "Lazarus", note: "Full domain credential harvesting in financially motivated operations." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Impacket", note: "secretsdump -ntds performs remote NTDS extraction via admin shares." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "NTDS extraction for domain-wide credential access before ransomware deployment." }
+        ],
+        cite: "MITRE ATT&CK T1003.003"
+      }
+    ]
+  },
+  {
+    id: "T1003.004",
+    name: "OS Credential Dumping: LSA Secrets",
+    desc: "Extraction of LSA Secrets from the SECURITY registry hive, which stores service account passwords (in plaintext), cached domain logon credentials, DPAPI master keys, and other sensitive authentication material. Unlike SAM (local accounts only), LSA Secrets often contain domain service account credentials and machine account passwords.",
+    rows: [
+      {
+        sub: "T1003.004 - LSA Secrets Extraction (reg save SECURITY, Mimikatz lsadump::secrets)",
+        os: "win",
+        indicator: "Extraction of the SECURITY registry hive via reg.exe save or direct API access to dump LSA Secrets, which contain service account plaintext passwords, cached domain credentials, and DPAPI keys",
+        sysmon: `// Sysmon EID 1 - reg.exe saving SECURITY hive
+Image=*\\reg.exe
+CommandLine=*save*SECURITY*
+
+// Sysmon EID 1 - Mimikatz LSA dump
+CommandLine=(*lsadump::secrets* OR *lsadump::cache* OR *lsadump::sam*)
+
+// Sysmon EID 10 - LSASS access for LSA secret extraction
+// Same pattern as T1003.001 but the tool targets secrets not logon sessions
+TargetImage=*\\lsass.exe
+GrantedAccess contains: (0x1010 OR 0x1FFFFF)
+
+// Note: LSA Secrets extraction via reg.exe also requires
+// the SYSTEM hive (for the boot key), same as SAM dumping.
+// reg save HKLM\SECURITY + reg save HKLM\SYSTEM = complete extraction`,
+        kibana: `// SECURITY hive extraction
+process.name: "reg.exe"
+AND process.command_line: (*save* AND *SECURITY*)
+
+// Mimikatz LSA dump commands
+process.command_line: (*lsadump::secrets* OR *lsadump::cache*)
+
+// Combination: SECURITY + SYSTEM hive saved together
+// (requires temporal correlation within ~60 seconds)
+process.name: "reg.exe"
+AND process.command_line: (*save* AND (*SECURITY* OR *SYSTEM*))`,
+        powershell: `# LSA Secrets detection
+Write-Host "[*] === reg save SECURITY commands ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=1
+} -MaxEvents 5000 -EA SilentlyContinue |
+  Where-Object { $_.Properties[10].Value -match 'reg.*save.*SECURITY' } |
+  Select-Object TimeCreated, @{n='Cmd';e={$_.Properties[10].Value.Substring(0,200)}}
+
+Write-Host "[*] === Cached domain credentials count ==="
+# Number of cached logons (default 10, attackers target these)
+Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name CachedLogonsCount -EA SilentlyContinue
+
+Write-Host "[*] === SECURITY hive copies in temp paths ==="
+Get-ChildItem -Path C:\Windows\Temp,C:\Temp,$env:TEMP -Recurse -EA SilentlyContinue |
+  Where-Object { $_.Name -match 'security\.(save|hiv|bak|dump)$' }`,
+        registry: `Source hive:
+HKLM\SECURITY  (requires SYSTEM access, not readable via regedit)
+
+LSA Secrets stored under:
+HKLM\SECURITY\Policy\Secrets\*
+  Contains: service account passwords, machine account password,
+  DPAPI system master keys, VPN/RAS credentials
+
+Cached domain logons:
+HKLM\SECURITY\Cache
+  NL$1 through NL$10 (default: 10 cached credentials)
+
+Decryption requires HKLM\SYSTEM (boot key).`,
+        tools: `Sysmon (EID 1 command + EID 10 LSASS access)
+Impacket secretsdump (--lsa-secrets flag)
+Mimikatz (lsadump::secrets, lsadump::cache)
+CrackMapExec (--lsa flag)
+reg.exe + offline extraction tools`,
+        ossdetect: `Sigma:
+- win_proc_creation_reg_save_security.yml
+- win_proc_creation_mimikatz_lsadump.yml
+
+Elastic Detection Rules:
+- Credential Dumping via Registry Save
+- LSA Secrets Access`,
+        notes: "LSA Secrets are often overlooked in favor of LSASS and SAM, but they can contain the most operationally valuable credentials: service account passwords stored in plaintext (not hashed), cached domain logons that work even when the DC is unreachable, and DPAPI keys that decrypt saved passwords across the system. The detection is the same pattern as SAM dumping (reg save targeting SECURITY instead of SAM), making a combined rule for 'reg save targeting any of SAM/SYSTEM/SECURITY' the most efficient approach. The cached logon count (CachedLogonsCount, default 10) determines how many domain credentials are available offline.",
+        apt: [
+          { cls: "apt-ru", name: "APT29", note: "LSA Secrets extraction for service account and cached credential access." },
+          { cls: "apt-cn", name: "APT41", note: "Registry hive extraction including SECURITY for comprehensive credential theft." }
+        ],
+        malware: [
+          { cls: "apt-mul", name: "Impacket", note: "secretsdump --lsa-secrets extracts LSA Secrets remotely." },
+          { cls: "apt-mul", name: "Cobalt Strike", note: "hashdump and logonpasswords access LSA cached credentials." }
+        ],
+        activity: [
+          { cls: "apt-mul", name: "Ransomware", note: "LSA Secrets provide service account passwords for lateral movement escalation." }
+        ],
+        cite: "MITRE ATT&CK T1003.004"
+      }
+    ]
+  },
+  {
+    id: "T1555.003",
+    name: "Credentials from Password Stores: Credentials from Web Browsers",
+    desc: "Extraction of saved passwords, cookies, and authentication tokens from web browser credential stores (Chrome Login Data, Firefox logins.json, Edge Web Data). Browser credentials often include SSO portals, cloud admin consoles, VPN portals, and internal application passwords that provide additional access beyond what the host compromise itself yields.",
+    rows: [
+      {
+        sub: "T1555.003 - Browser Credential Database Access (Chrome Login Data, Firefox logins.json)",
+        os: "win",
+        indicator: "A non-browser process reading browser credential database files (Login Data, logins.json, Web Data, Cookies) or invoking DPAPI decryption against browser-encrypted credential blobs, indicating credential harvesting from browser password stores",
+        sysmon: `// Sysmon EID 11 (FileCreate) - credential db copied to attacker staging
+TargetFilename=(*Login Data* OR *logins.json* OR *Web Data* OR *Cookies*)
+AND TargetFilename NOT IN (*\AppData\Local\Google\Chrome\*
+  OR *\AppData\Roaming\Mozilla\Firefox\*)
+
+// Sysmon EID 1 - known browser credential tools
+CommandLine=(*SharpChromium* OR *SharpWeb* OR *BrowserGather*
+  OR *HackBrowserData* OR *LaZagne* OR *ChromePass*)
+
+// Sysmon EID 1 - sqlite3 targeting browser databases
+Image=*\sqlite3.exe
+CommandLine=(*Login Data* OR *logins.json* OR *Web Data* OR *Cookies*)
+
+// Sysmon EID 10 - DPAPI CryptUnprotectData for browser decryption
+// (difficult to isolate, but browser-targeted tools load crypt32.dll)`,
+        kibana: `// Browser credential file access outside browser directories
+file.path: (*"Login Data"* OR *logins.json* OR *"Web Data"*)
+AND NOT file.path: (*Chrome\User Data* OR *Mozilla\Firefox\Profiles*)
+AND event.action: ("created" OR "modified")
+
+// Known browser credential tools
+process.command_line: (*SharpChromium* OR *SharpWeb* OR *LaZagne*
+  OR *HackBrowserData* OR *BrowserGather* OR *ChromePass*)
+
+// sqlite3 against browser databases
+process.name: "sqlite3*"
+AND process.command_line: (*Login* OR *logins* OR *Cookies*)`,
+        powershell: `# Browser credential theft detection
+Write-Host "[*] === Browser credential databases ==="
+$paths = @(
+  "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Login Data",
+  "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Login Data",
+  "$env:APPDATA\Mozilla\Firefox\Profiles"
+)
+foreach ($p in $paths) {
+  if (Test-Path $p) {
+    $item = Get-Item $p -EA SilentlyContinue
+    Write-Host "  $p"
+    Write-Host "    Last accessed: $($item.LastAccessTime)"
+  }
+}
+
+Write-Host "[*] === Processes accessing browser credential files ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=11
+} -MaxEvents 5000 -EA SilentlyContinue |
+  Where-Object { $_.Properties[5].Value -match 'Login Data|logins\.json|Web Data' -and
+    $_.Properties[5].Value -notmatch 'Chrome|Edge|Firefox' } |
+  Select-Object TimeCreated, @{n='File';e={$_.Properties[5].Value.Substring(0,150)}}
+
+Write-Host "[*] === Known browser theft tools in process history ==="
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=1
+} -MaxEvents 5000 -EA SilentlyContinue |
+  Where-Object { $_.Properties[10].Value -match 'SharpChromium|SharpWeb|LaZagne|HackBrowserData|ChromePass' } |
+  Select-Object TimeCreated, @{n='Cmd';e={$_.Properties[10].Value.Substring(0,200)}}`,
+        registry: `Chrome credential encryption:
+  Chrome 80+ uses AES-GCM with a key stored in:
+  %LOCALAPPDATA%\Google\Chrome\User Data\Local State
+  The key itself is DPAPI-encrypted, so decryption requires
+  the user's DPAPI master key (accessible to any process
+  running as the user, or extractable from LSA Secrets).
+
+Browser credential database paths:
+  Chrome: %LOCALAPPDATA%\Google\Chrome\User Data\Default\Login Data (SQLite)
+  Edge:   %LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Login Data (SQLite)
+  Firefox: %APPDATA%\Mozilla\Firefox\Profiles\<profile>\logins.json (JSON + key4.db)`,
+        tools: `Sysmon (EID 1 tool execution + EID 11 file creation)
+SharpChromium / SharpWeb (.NET browser credential dumpers)
+LaZagne (multi-browser credential extractor)
+HackBrowserData (Go-based, cross-platform)
+Nirsoft ChromePass / WebBrowserPassView`,
+        ossdetect: `Sigma:
+- win_proc_creation_browser_credential_theft.yml
+- win_file_access_browser_credential_db.yml
+
+Elastic Detection Rules:
+- Access to Browser Credential Files
+- Browser Credential Theft Tool Execution
+
+YARA:
+- LaZagne, SharpWeb, HackBrowserData string signatures`,
+        notes: "Browser credential theft is extremely common because (a) most users save passwords in their browser, (b) the credential stores are readable by any process running as the user (no elevation required), and (c) the credentials often include high-value targets like SSO portals, cloud admin consoles, and VPN credentials that extend the compromise beyond the local network. Chrome 80+ encrypts credentials with DPAPI + AES-GCM, but any process running as the user can call CryptUnprotectData to decrypt them. The most reliable detection is monitoring for non-browser processes accessing browser credential database files, which should never happen in normal operations.",
+        apt: [
+          { cls: "apt-ru", name: "APT29", note: "Browser credential harvesting documented in post-compromise operations." },
+          { cls: "apt-kp", name: "Lazarus", note: "Browser credential theft in financially motivated campaigns." },
+          { cls: "apt-kp", name: "Kimsuky", note: "Browser credential and cookie theft targeting researchers and analysts." }
+        ],
+        malware: [],
+        activity: [
+          { cls: "apt-mul", name: "Commodity Stealers", note: "RedLine, Raccoon, Vidar, and other infostealers target browser credentials as primary payload." },
+          { cls: "apt-mul", name: "Initial Access Brokers", note: "Stolen browser credentials (especially cookies) sold as access packages." }
+        ],
+        cite: "MITRE ATT&CK T1555.003"
+      }
+    ]
+  },
+  {
+    id: "T1552.001",
+    name: "Unsecured Credentials: Credentials In Files",
+    desc: "Discovery of credentials stored in configuration files, scripts, environment variables, deployment templates, and other files left on disk. Unlike active credential dumping (LSASS, SAM), this technique exploits credentials that developers or administrators embedded in files, often unaware they would be accessible to an attacker with file system access.",
+    rows: [
+      {
+        sub: "T1552.001 - Credential File Discovery (config files, scripts, env vars, cloud metadata)",
+        os: "linux",
+        indicator: "Systematic searching for credentials in configuration files, shell history, environment variables, cloud metadata endpoints, and deployment artifacts using grep/find sweeps for password patterns, API keys, connection strings, and known credential file paths",
+        sysmon: `// Auditd rules - credential file access
+-w /etc/shadow -p r -k cred_file_read
+-w /etc/ansible/ -p r -k cred_file_read
+-w /root/.aws/ -p r -k cred_file_read
+-w /root/.ssh/ -p r -k cred_file_read
+
+// Sysmon for Linux EID 1 - credential grep sweeps
+CommandLine matches:
+  *grep*-r*password* OR *grep*-r*secret* OR *grep*-r*api_key*
+  OR *grep*-r*AWS_SECRET* OR *grep*-r*PRIVATE.KEY*
+  OR *find*-name*.env* OR *find*-name*credentials*
+  OR *find*-name*.pgpass* OR *find*-name*.netrc*
+  OR *find*-name*.git-credentials*
+
+// Cloud metadata API credential theft
+CommandLine=*169.254.169.254*
+  AND (*iam* OR *credentials* OR *token* OR *secret*)`,
+        kibana: `// Credential grep sweeps
+process.name: ("grep" OR "egrep" OR "rg")
+AND process.args: ("-r" OR "-R" OR "--recursive")
+AND process.args: ("password" OR "secret" OR "api_key"
+  OR "AWS_SECRET" OR "PRIVATE" OR "token" OR "credential")
+
+// Known credential file access
+process.args: (*.env* OR *.pgpass* OR *.netrc*
+  OR *.git-credentials* OR *credentials.xml* OR *wp-config.php*)
+
+// Cloud metadata API
+process.args: "169.254.169.254"
+AND process.args: ("iam" OR "credentials" OR "token")
+
+// find sweeps for credential files
+process.name: "find"
+AND process.args: ("-name" AND ("*.env" OR "*.key" OR "*.pem"
+  OR ".pgpass" OR ".netrc" OR "credentials"))`,
+        powershell: `# Credential file discovery hunt
+echo "[*] === Common credential files ==="
+for f in \
+  /root/.aws/credentials /root/.azure/credentials \
+  /root/.config/gcloud/credentials.db \
+  /root/.pgpass /root/.netrc /root/.git-credentials \
+  /var/lib/jenkins/credentials.xml \
+  /etc/ansible/hosts /etc/ansible/group_vars/*; do
+  [ -f "$f" ] && echo "  EXISTS: $f ($(stat -c '%a %U %y' "$f" 2>/dev/null))"
+done
+
+echo ""
+echo "[*] === .env files (may contain API keys) ==="
+find / -name '.env' -o -name '*.env' -type f 2>/dev/null | head -20
+
+echo ""
+echo "[*] === Auditd records for credential file reads ==="
+ausearch -k cred_file_read -ts recent 2>/dev/null | head -20
+
+echo ""
+echo "[*] === grep commands targeting credentials (Sysmon/auditd) ==="
+ausearch -c grep -ts today 2>/dev/null | grep -i 'password\|secret\|key\|token' | head -10
+
+echo ""
+echo "[*] === Cloud metadata API access ==="
+ausearch -c curl -ts today 2>/dev/null | grep '169.254.169.254' | head -5`,
+        registry: `No registry artifact (Linux technique).
+
+High-value credential file locations:
+- ~/.aws/credentials (AWS access keys)
+- ~/.azure/credentials (Azure service principal)
+- ~/.config/gcloud/ (GCP credentials)
+- ~/.pgpass (PostgreSQL passwords)
+- ~/.netrc (FTP/HTTP credentials)
+- ~/.git-credentials (Git stored passwords)
+- /etc/ansible/hosts (may contain SSH passwords)
+- /var/lib/jenkins/credentials.xml (Jenkins secrets)
+- .env files throughout application directories
+- wp-config.php (WordPress DB credentials)
+- docker-compose.yml (embedded passwords)
+- /proc/*/environ (process environment variables)`,
+        tools: `osquery:
+  SELECT * FROM file WHERE path LIKE '%/.aws/credentials'
+    OR path LIKE '%/.pgpass' OR path LIKE '%/.netrc';
+trufflehog (secret scanning in repos and filesystems)
+gitleaks (Git repo credential scanning)
+Auditd (read-watch on known credential paths)
+Falco (sensitive file access rules)`,
+        ossdetect: `Sigma:
+- lnx_auditd_credential_file_access.yml
+- lnx_auditd_cloud_metadata_access.yml
+
+Falco:
+- Read sensitive file untrusted
+- Contact EC2 Instance Metadata Service
+
+Wazuh:
+- FIM on credential file paths
+- Auditd integration for read-access monitoring`,
+        notes: "Credential-in-file discovery is the low-hanging fruit of post-exploitation: a simple grep -r 'password' or find / -name '.env' across a development server almost always yields something usable. The cloud metadata API (169.254.169.254) is particularly dangerous because it returns IAM role credentials without authentication, turning any SSRF or web shell into cloud account access. Detection focuses on two patterns: (1) the grep/find sweep itself (process monitoring for recursive searches targeting credential keywords), and (2) direct access to known credential files (auditd read-watch). The proactive mitigation is secret management: move credentials from files to vaults (HashiCorp Vault, AWS Secrets Manager) and scan repos/filesystems for embedded secrets with trufflehog or gitleaks.",
+        apt: [
+          { cls: "apt-cn", name: "APT41", note: "Credential file harvesting across compromised Linux servers." },
+          { cls: "apt-cn", name: "Volt Typhoon", note: "Living-off-the-land credential discovery on infrastructure hosts." },
+          { cls: "apt-kp", name: "Lazarus", note: "Configuration file credential theft in server-targeting operations." }
+        ],
+        malware: [],
+        activity: [
+          { cls: "apt-mul", name: "TeamTNT", note: "Cloud credential file theft (.aws/credentials) for cryptojacking escalation." },
+          { cls: "apt-mul", name: "Hands-on intruders", note: "grep -r password and .env file sweeps are universal post-access actions." }
+        ],
+        cite: "MITRE ATT&CK T1552.001"
+      }
+    ]
+  },
+  {
+    id: "T1056.001",
+    name: "Input Capture: Keylogging",
+    desc: "Capturing user keystrokes to harvest credentials, MFA codes, and sensitive data as they are typed. Host-based keylogging ranges from simple SetWindowsHookEx API calls to kernel-level input capture. On Linux, keyloggers read from /dev/input/event* devices or use eBPF/ptrace to intercept TTY input.",
+    rows: [
+      {
+        sub: "T1056.001 - Keylogger Process Detection (API hooking, input device access, TTY interception)",
+        os: "win",
+        indicator: "A non-accessibility process setting a low-level keyboard hook (SetWindowsHookEx WH_KEYBOARD_LL), accessing raw input devices, or a suspicious process reading from /dev/input/event* on Linux, indicating keystroke capture for credential harvesting",
+        sysmon: `// Windows - Sysmon EID 1: known keylogger tools
+CommandLine=(*keylog* OR *GetAsyncKeyState* OR *SetWindowsHookEx*)
+
+// Sysmon EID 7 (ImageLoad) - user32.dll loaded by unusual process
+// SetWindowsHookEx requires user32.dll; flag loads by
+// non-standard processes (e.g., a temp directory binary loading user32)
+ImageLoaded=*\\user32.dll
+Image=(*\\Temp\\* OR *\\AppData\\* OR *\\Downloads\\*)
+
+// Linux - Auditd: /dev/input/event* access (raw input capture)
+-w /dev/input/ -p r -k keylogger
+// Only specific accessibility tools should read these devices
+
+// Linux - Sysmon EID 1: TTY keylogging tools
+CommandLine=(*script -q* OR *strace*-e*read* OR *cat*/dev/input*)`,
+        kibana: `// Windows keylogger indicators
+process.command_line: (*keylog* OR *GetAsyncKeyState* OR *SetWindowsHookEx*)
+
+// user32.dll load from suspicious path
+winlog.event_id: 7
+AND winlog.event_data.ImageLoaded: *user32.dll
+AND winlog.event_data.Image: (*Temp* OR *AppData* OR *Downloads*)
+
+// Linux /dev/input access
+file.path: /dev/input/event*
+AND event.action: "opened-for-read-by"
+AND NOT process.name: (Xorg OR gdm* OR sshd OR login)
+
+// Linux TTY capture
+process.command_line: (*script*-q* OR *strace*-e*read*write*)`,
+        powershell: `# Keylogger detection
+Write-Host "[*] === Windows: Processes with keyboard hooks ==="
+# Check for SetWindowsHookEx calls (requires API monitoring)
+# Proxy: look for suspicious processes loading user32.dll from temp
+Get-WinEvent -FilterHashtable @{
+  LogName='Microsoft-Windows-Sysmon/Operational'; Id=7
+} -MaxEvents 5000 -EA SilentlyContinue |
+  Where-Object {
+    $_.Properties[5].Value -like '*user32.dll' -and
+    $_.Properties[4].Value -match 'Temp|AppData|Downloads'
+  } |
+  Select-Object TimeCreated,
+    @{n='Image';e={$_.Properties[4].Value}},
+    @{n='DLL';e={$_.Properties[5].Value}}
+
+# Linux equivalent:
+# echo "[*] === Processes reading /dev/input/ ==="
+# fuser /dev/input/event* 2>/dev/null
+# lsof /dev/input/event* 2>/dev/null
+#
+# echo "[*] === TTY sniffing processes ==="
+# ps aux | grep -E 'script.*-q|strace.*read|ttysnoop|sshsniff'`,
+        registry: `No persistent registry artifact from keylogging itself.
+
+Windows keyboard hook mechanisms:
+- SetWindowsHookEx(WH_KEYBOARD_LL, ...) - user-mode hook
+- Raw Input API (RegisterRawInputDevices)
+- DirectInput (legacy)
+- GetAsyncKeyState polling loop
+- ETW keylogging (Microsoft-Windows-USB-USBHUB3 provider)
+
+Linux keylogging mechanisms:
+- /dev/input/eventN (raw input device, requires root)
+- xinput (X11 input monitoring)
+- eBPF (attach to keyboard interrupt handler)
+- ptrace (intercept TTY read/write syscalls)
+- script -q (TTY session recording)`,
+        tools: `Sysmon (EID 7 image loads, EID 1 tool execution)
+ETW (Microsoft-Windows-Win32k provider for input events)
+Auditd (Linux /dev/input monitoring)
+Volatility (detect keyboard hooks in memory)`,
+        ossdetect: `Sigma:
+- win_proc_creation_keylogger_indicators.yml
+- win_image_load_user32_suspicious_path.yml
+
+Elastic Detection Rules:
+- Suspicious Keyboard Hook Registration
+- Keylogging Tool Execution
+
+Falco:
+- rule: Read from /dev/input (Linux)`,
+        notes: "Keylogger detection on Windows is challenging because SetWindowsHookEx is also used by legitimate accessibility tools, input method editors, and some security products. The most reliable detection approach is behavioral: flag processes that load user32.dll from non-standard paths (temp directories, user profiles) since legitimate applications load it from System32. On Linux, /dev/input/event* access is more distinctive because only Xorg, display managers, and accessibility tools should read raw input devices. A non-X11 process (especially one running as root via SSH) reading from /dev/input is high-confidence keylogging. TTY-based capture (script -q, strace on TTY file descriptors) is a separate detection track that catches operators recording interactive sessions.",
+        apt: [
+          { cls: "apt-kp", name: "Kimsuky", note: "Keylogging implants deployed against researchers and policy analysts." },
+          { cls: "apt-cn", name: "APT41", note: "Keylogger deployment for credential harvesting in long-dwell operations." },
+          { cls: "apt-kp", name: "Lazarus", note: "Keystroke capture in financially motivated and espionage campaigns." }
+        ],
+        malware: [],
+        activity: [
+          { cls: "apt-mul", name: "Commodity Stealers", note: "Keylogging is a core capability of most infostealer malware families." }
+        ],
+        cite: "MITRE ATT&CK T1056.001"
+      }
+    ]
+  },
+
 ];
