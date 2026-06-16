@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[6B74] Host Threat Hunt Reference</title>
+<title>TONK &middot; Host Detection Reference</title>
 <meta name="description" content="MITRE ATT&CK host-based detection reference. Sysmon, Kibana, PowerShell hunts, registry artifacts, open-source detection mappings.">
 <link rel="stylesheet" href="css/style.css">
 <style>
@@ -13,7 +13,7 @@
   .index-sub { font-size: 13px; color: var(--text3); margin-bottom: 24px; }
   .index-search-wrap { max-width: 480px; margin: 0 auto; position: relative; }
   .index-search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
-  #tactic-search { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 10px 14px 10px 36px; outline: none; transition: border-color .15s; }
+  #tactic-search { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 10px 14px 10px 36px; outline: none; transition: border-color .15s; box-sizing: border-box; }
   #tactic-search:focus { border-color: var(--accent2); }
   #tactic-search::placeholder { color: var(--text3); }
   .section-label { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; padding: 20px 20px 8px; max-width: 1200px; margin: 0 auto; display: block; }
@@ -40,58 +40,13 @@
   .info-card ul { margin: 0; padding: 0 0 0 16px; font-size: 12px; color: var(--text2); line-height: 1.7; }
   .info-card ul li { margin-bottom: 4px; }
   .info-card code { font-family: var(--mono); font-size: 11px; background: var(--bg3); padding: 1px 5px; border-radius: 3px; color: var(--text); }
-  .info-callout { background: var(--bg3); border-left: 2px solid var(--accent2); padding: 10px 14px; border-radius: 0 4px 4px 0; font-size: 11px; color: var(--text2); line-height: 1.6; margin-top: 10px; }
-  .info-callout code { background: var(--bg2); }
 
   footer.site-footer { margin-top: auto; padding: 22px 20px; border-top: 1px solid var(--border); background: var(--bg2); text-align: center; }
   footer.site-footer p { font-size: 11px; color: var(--text3); line-height: 1.6; margin: 0 0 4px; }
   footer.site-footer p:last-child { margin-bottom: 0; }
-  footer.site-footer code { font-family: var(--mono); font-size: 10px; color: var(--text2); }
-
-  /* ---- global matrix search ---- */
-  .repo-search-section { max-width: 1404px; margin: 0 auto; padding: 22px 20px 4px; width: 100%; box-sizing: border-box; }
-  .rs-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-  .rs-title { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: .08em; }
-  .rs-hint { font-size: 12px; color: var(--text3); }
-  .rs-bar { display: flex; gap: 8px; max-width: 1404px; box-sizing: border-box;}
-  #repo-search-input { flex: 1; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 11px 14px; outline: none; transition: border-color .15s; }
-  #repo-search-input:focus { border-color: var(--accent2); }
-  #repo-search-input::placeholder { color: var(--text3); }
-  #repo-search-btn { background: var(--accent2); border: none; border-radius: 8px; color: #fff; font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .04em; padding: 0 18px; cursor: pointer; transition: filter .15s; }
-  #repo-search-btn:hover { filter: brightness(1.12); }
-
-  .rs-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
-  .rs-chip-label { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-right: 4px; }
-  .rs-chip { font-family: var(--mono); font-size: 11px; font-weight: 600; border: 1px solid var(--border2); border-radius: 20px; padding: 3px 10px; cursor: pointer; background: var(--bg3); color: var(--text2); transition: filter .15s; }
-  .rs-chip:hover { filter: brightness(1.2); }
-  .rs-chip.apt-cn { background: rgba(210,153,34,.15); color: var(--amber); border-color: rgba(210,153,34,.4); }
-  .rs-chip.apt-ru { background: rgba(248,81,73,.12); color: #ff7b72; border-color: rgba(248,81,73,.4); }
-  .rs-chip.apt-ir { background: rgba(63,185,80,.12); color: var(--green); border-color: rgba(63,185,80,.4); }
-  .rs-chip.apt-kp { background: rgba(188,140,255,.12); color: var(--purple); border-color: rgba(188,140,255,.4); }
-  .rs-chip-n { opacity: .65; font-weight: 700; }
-
-  .rs-results { margin-top: 14px; }
-  .rs-summary { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
-  .rs-summary strong { color: var(--text); }
-  .rs-empty { font-size: 13px; color: var(--text3); padding: 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; }
-  .rs-empty code { font-family: var(--mono); font-size: 12px; color: var(--text2); }
-  .rs-group { margin-bottom: 16px; }
-  .rs-group-head { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; padding: 6px 2px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
-  .rs-tac-id { opacity: .7; }
-  .rs-tac-count { margin-left: auto; background: var(--bg3); border-radius: 10px; padding: 1px 8px; font-size: 10px; color: var(--text3); }
-  .rs-row { display: block; text-decoration: none; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; transition: border-color .15s, background .15s; }
-  .rs-row:hover { border-color: var(--accent2); background: var(--bg3); }
-  .rs-row-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
-  .rs-tech { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--accent); }
-  .rs-aptwrap { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
-  .rs-apt { font-family: var(--mono); font-size: 9px; font-weight: 700; border-radius: 4px; padding: 2px 6px; }
-  .rs-apt-hot { outline: 1px solid currentColor; }
-  .rs-ind { font-size: 12px; color: var(--text2); line-height: 1.5; }
-  .rs-note { font-size: 11px; color: var(--text3); line-height: 1.5; margin-top: 5px; padding-left: 9px; border-left: 2px solid var(--border2); }
 </style>
 </head>
 <body>
-
 <header>
   <a href="/" class="logo">TONK<span> &bull; host ref</span></a>
   <div class="site-switcher">
@@ -103,9 +58,9 @@
 
 <div class="index-hero">
   <div class="index-title">MITRE ATT&amp;CK Host Analyst Reference</div>
-  <div class="index-sub">Host analyst threat hunting: indicators, detection syntax, and APT attribution across the attack lifecycle</div>
+  <div class="index-sub">TONK &middot; host-side detection for threat hunting</div>
   <div class="index-search-wrap">
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
     <input id="tactic-search" type="text" placeholder="Filter tactics..." autocomplete="off">
   </div>
 </div>
@@ -113,70 +68,67 @@
 <span class="section-label">Tactics</span>
 <div class="tactic-grid">
 
-  <a href="execution.html" class="tactic-card" data-tags="execution ta0002 powershell cmd vbscript jscript wmi scheduled task service mshta rundll32 regsvr32 native api shared modules user execution">
-    <div class="card-id" style="color:#a371f7">TA0002</div>
-    <span class="card-pill" style="background:rgba(163,113,247,.12);color:#a371f7">44 indicators · 18 techniques · WIN + LINUX</span>
+  <a href="execution.html" class="tactic-card" data-tags="execution ta0002 powershell cmd vbscript jscript wmi scheduled task service mshta rundll32 regsvr32 cron python perl container">
+    <div class="card-id" style="color:#58a6ff">TA0002</div>
+    <span class="card-pill" style="background:rgba(88,166,255,.12);color:#58a6ff">45 indicators &middot; 18 techniques</span>
     <div class="card-name">Execution</div>
-    <div class="card-desc">Code execution via interpreters and signed binaries. Windows (32): PowerShell, cmd, VBScript, JScript, WMI, scheduled tasks, service execution, mshta, rundll32, regsvr32, Native API, DLL side-loading, user execution. Linux (12): T1059.004 Unix Shell (curl|bash, reverse shells, service-spawned shells, HISTFILE/IFS obfuscation, SUID interpreters), T1059.006 Python (-c reverse shells, pty.spawn, sitecustomize/PYTHONSTARTUP), T1106 fileless and LD_PRELOAD execution (memfd_create, ld.so.preload), T1053.003 Cron (crontab/cron.d/systemd timers), T1059 Perl one-liners, T1059.012 container shells (docker/kubectl/nsenter exec).</div>
+    <div class="card-desc">Code execution via interpreters and signed binaries. PowerShell, cmd, VBScript, JScript, WMI, scheduled tasks, mshta, rundll32, regsvr32 on Windows. Unix shell, Python, Perl, cron, container exec on Linux.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
 
-  <a href="persistence.html" class="tactic-card" data-tags="persistence ta0003 run keys startup folder wmi subscription service scheduled task shortcut modification autostart">
-    <div class="card-id" style="color:#39d353">TA0003</div>
-    <span class="card-pill" style="background:rgba(57,211,83,.12);color:#39d353">28 indicators · 16 techniques · WIN + LINUX</span>
+  <a href="persistence.html" class="tactic-card" data-tags="persistence ta0003 systemd cron ssh authorized keys pam kernel module rc.local shell rc bashrc profile init.d">
+    <div class="card-id" style="color:#3fb950">TA0003</div>
+    <span class="card-pill" style="background:rgba(63,185,80,.12);color:#3fb950">34 indicators &middot; 16 techniques</span>
     <div class="card-name">Persistence</div>
-    <div class="card-desc">Mechanisms ensuring adversary access survives reboots and logouts. Windows (20): T1547.001 Registry Run Keys / Startup Folder (3), T1546.003 WMI Subscription Persistence Hunt (2), T1543.003 Windows Service Persistence Hunt (3), T1053.005 Scheduled Task Persistence Angle (2), T1547.009 Shortcut Modification (2), T1037 Boot/Logon Init Scripts including GPO logon scripts (2), T1098 Account Manipulation - group changes and password resets (2), T1136 Create Account - local and domain (2), T1546.015 COM Hijacking - HKCU shadow and phantom/TreatAs variants (2). Linux (8): T1053.003 Cron jobs (2), T1543.002 systemd service units (1), T1546.004 Unix shell rc/profile (1), T1098.004 SSH authorized_keys (1), T1547.006 kernel modules / LKM (1), T1556.003 PAM backdoor (1), T1037.004 RC init scripts (1). Cross-cited techniques from Execution are built with persistence-hunting-specific indicators rather than duplicating Execution coverage.</div>
+    <div class="card-desc">Survival mechanisms across reboots and sessions. Systemd services and timers, cron, SSH authorized keys, PAM backdoors, kernel modules, shell RC injection, rc.local, init.d scripts.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
 
-  <a href="privilege_escalation.html" class="tactic-card" data-tags="privilege escalation ta0004 uac bypass fodhelper token manipulation impersonation potato process injection hollowing thread hijack byovd vulnerable driver exploitation setuid sudo gtfobins pkexec pwnkit dirtypipe capabilities container escape ld_preload">
-    <div class="card-id" style="color:#ffa600">TA0004</div>
-    <span class="card-pill" style="background:rgba(255,166,0,.12);color:#ffa600">30 indicators · 16 techniques · WIN + LINUX</span>
+  <a href="privilege_escalation.html" class="tactic-card" data-tags="privilege escalation ta0004 suid sudo dll hijack service registry ifeo accessibility container escape sid history">
+    <div class="card-id" style="color:#bc8cff">TA0004</div>
+    <span class="card-pill" style="background:rgba(188,140,255,.12);color:#bc8cff">33 indicators &middot; 16 techniques</span>
     <div class="card-name">Privilege Escalation</div>
-    <div class="card-desc">Elevating from user to admin/SYSTEM/root. Windows (21): UAC bypass (T1548.002, 3), token manipulation incl. Potato + SID-history (T1134/.005, 3), process injection - remote-thread/hollowing/thread-hijack (T1055, 3), exploitation incl. BYOVD (T1068 win, 2), service registry/path/permission weaknesses (T1574.011/.005, 3), DLL search-order hijack priv-esc angle (T1574.001, 1), accessibility & IFEO triggered execution (T1546.008/.012, 2), GPO & domain-trust modification (T1484.001/.002, 2), container escape (T1611 win, 1), account manipulation / AdminSDHolder (T1098, 1). Linux (9): T1548.001 setuid/setgid + GTFOBins + Linux capabilities (2), T1548.003 sudo misconfig + sudo CVEs incl. Baron Samedit (2), T1068 pkexec PwnKit + kernel exploits DirtyPipe/DirtyCOW/Looney Tunables (2), T1611 privileged container / docker.sock / runc / cgroups escape (2), T1574.006 dynamic linker hijack via LD_PRELOAD/ld.so.preload (1).</div>
+    <div class="card-desc">Gaining higher privileges. SUID/sudo abuse, DLL hijacking, service registry manipulation, IFEO debugger, accessibility features, container escape, SID-History injection, kernel exploits.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
 
-</div>
-<div class="tactic-grid">
-
- <a href="defense_evasion.html" class="tactic-card" data-tags="defense evasion ta0005 indicator removal clear command history bash_history log clearing var log journal wtmp utmp btmp lastlog login record tampering timestomp ctime file deletion shred self-delete proc impair defenses auditd auditctl selinux apparmor setenforce firewall iptables nftables ufw firewalld disable security tools edr falco wazuh osquery clamav cloud agent aegis aliyundun yunjing indicator blocking rsyslog syslog log forwarding suppression rootkit t1014 lkm kernel module diamorphine reptile adore-ng ld_preload ld.so.preload userland azazel jynx hiddenwasp ebpf bpfdoor symbiote bpftool taint kthread masquerading t1036 kworker kthreadd fake kernel thread argv0 prctl match legitimate name location sshd crond package ownership rpm dpkg masquerade task service systemd unit cron execstart">
-    <div class="card-id" style="color:#f85149">TA0005</div>
-    <span class="card-pill" style="background:rgba(248,81,73,.12);color:#f85149">16 indicators · 11 techniques · LINUX</span>
+  <a href="defense_evasion.html" class="tactic-card" data-tags="defense evasion ta0005 log clearing timestomp audit disable firewall registry masquerade rootkit lolbin mshta rundll32 regsvr32 msbuild installutil msiexec">
+    <div class="card-id" style="color:#39d353">TA0005</div>
+    <span class="card-pill" style="background:rgba(57,211,83,.12);color:#39d353">38 indicators &middot; 19 techniques</span>
     <div class="card-name">Defense Evasion</div>
-    <div class="card-desc">Subverting and blinding host defenses and removing evidence of intrusion. Linux coverage complete (16): T1070 Indicator Removal - .003 clear command history, .002 clear system logs plus utmp/wtmp/btmp/lastlog login-record tampering, .006 timestomp, .004 file deletion plus /proc self-delete recovery. T1562 Impair Defenses - .012 disable the Linux audit system, .001 disable security agents plus SELinux/AppArmor plus the Alibaba/Tencent cloud-agent uninstall TTP, .004 disable or flush the host firewall, .006 indicator blocking. T1014 Rootkit - LKM, userland LD_PRELOAD, and eBPF, hunted by discrepancy checks, dynamic-vs-static differential, and bpftool inventory. T1036 Masquerading - .005 fake kernel threads and system-binary name/location impersonation, .004 task/service masquerade. Windows coverage is underway: T1070.001 clear event logs, T1562.001 Defender tampering, plus in-memory AMSI bypass and ETW patching, T1112 modify registry, plus the LOLBin proxy-execution set where signed trusted binaries make signature allow-listing useless and detection lives in command line, parent-child, and egress: T1218.011 rundll32 (DLL exports, the blank-command-line injection host, and comsvcs MiniDump against LSASS), T1218.010 regsvr32 Squiblydoo, T1218.005 mshta, T1218.004 InstallUtil, T1127.001 MSBuild, and T1218.007 msiexec.</div>
+    <div class="card-desc">Hiding attacker activity. Log clearing, timestomping, auditd disabling, firewall manipulation, registry modification, process masquerading, rootkits, LOLBin proxy execution.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
 
-  <a href="credential_access.html" class="tactic-card" data-tags="credential access ta0006 lsass sam ntds dcsync kerberoast shadow ssh keys mimikatz">
-    <div class="card-id" style="color:#f0883e">TA0006</div>
-    <span class="card-pill" style="background:rgba(240,136,62,.12);color:#f0883e">6 indicators &middot; 6 techniques &middot; WIN + LINUX</span>
+  <a href="credential_access.html" class="tactic-card" data-tags="credential access ta0006 lsass sam dcSync kerberoast shadow ssh keys mimikatz impacket">
+    <div class="card-id" style="color:#f85149">TA0006</div>
+    <span class="card-pill" style="background:rgba(248,81,73,.12);color:#f85149">6 indicators &middot; 6 techniques</span>
     <div class="card-name">Credential Access</div>
-    <div class="card-desc">LSASS memory dumps (Mimikatz, comsvcs, nanodump), SAM hive extraction, DCSync replication abuse, Kerberoasting, /etc/shadow harvesting, SSH private key theft. Host-side detection for credential theft across Windows and Linux endpoints.</div>
+    <div class="card-desc">Credential theft and harvesting. LSASS memory dumps, SAM hive extraction, DCSync, Kerberoasting, /etc/shadow access, SSH private key theft.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
 
-  <div class="tactic-card soon" data-tags="discovery">
-    <div class="card-id" style="color:#58a6ff">TA0007</div>
-    <span class="card-pill" style="background:rgba(88,166,255,.12);color:#58a6ff">Planned</span>
+  <div class="tactic-card soon" data-tags="discovery ta0007 enumeration whoami systeminfo net user ipconfig tasklist">
+    <div class="card-id" style="color:#d29922">TA0007</div>
+    <span class="card-pill" style="background:rgba(210,153,34,.12);color:#d29922">Planned</span>
     <div class="card-name">Discovery</div>
-    <div class="card-desc">Host enumeration commands, registry queries, network/system discovery. Complements network-side discovery detections.</div>
+    <div class="card-desc">Host enumeration commands, system/network/account discovery, security software detection. The commands every actor runs between foothold and lateral movement.</div>
     <div class="card-count">Coming soon</div>
   </div>
 
   <a href="lateral_movement.html" class="tactic-card" data-tags="lateral movement ta0008 psexec rdp ssh winrm pass the hash smb admin shares impacket">
-    <div class="card-id" style="color:#da3633">TA0008</div>
-    <span class="card-pill" style="background:rgba(218,54,51,.12);color:#da3633">5 indicators &middot; 5 techniques &middot; WIN + LINUX</span>
+    <div class="card-id" style="color:#ffa600">TA0008</div>
+    <span class="card-pill" style="background:rgba(255,166,0,.12);color:#ffa600">5 indicators &middot; 5 techniques</span>
     <div class="card-name">Lateral Movement</div>
-    <div class="card-desc">Host-side artifacts of lateral movement: PsExec service creation, RDP logon type 10, SSH lateral pivoting, WinRM remote sessions, Pass-the-Hash logon anomalies. Source and destination host detection for the artifacts the network can't see.</div>
+    <div class="card-desc">Host-side artifacts of lateral movement. PsExec service creation, RDP logon type 10, SSH pivoting, WinRM remote sessions, Pass-the-Hash logon anomalies.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
 
-  <a href="impact.html" class="tactic-card" data-tags="impact ta0040 ransomware wiper shadow copy encryption destruction">
-    <div class="card-id" style="color:#f97583">TA0040</div>
-    <span class="card-pill" style="background:rgba(249,117,131,.12);color:#f97583">4 indicators &middot; 4 techniques &middot; WIN + LINUX</span>
+  <a href="impact.html" class="tactic-card" data-tags="impact ta0040 ransomware wiper shadow copy encryption destruction service stop">
+    <div class="card-id" style="color:#ff7b72">TA0040</div>
+    <span class="card-pill" style="background:rgba(255,123,114,.12);color:#ff7b72">4 indicators &middot; 4 techniques</span>
     <div class="card-name">Impact</div>
-    <div class="card-desc">Pre-encryption and destructive operations: shadow copy deletion, bulk service stopping, data wipers, ransomware encryption behavioral indicators. Detection for the final stage of ransomware and destructive operations.</div>
+    <div class="card-desc">Destruction and disruption. Shadow copy deletion, pre-encryption service killing, data wipers, ransomware encryption behavioral indicators and canary detection.</div>
     <div class="card-count">&#9654; Open reference</div>
   </a>
 
@@ -188,47 +140,54 @@
 
     <div class="info-card">
       <h3>What this is</h3>
-      <p>The <strong>host-side</strong> companion to the <a href="/net/" style="color:var(--accent)">network threat hunt reference</a>. Where the network reference covers what adversaries do across the wire, this site covers what they do inside the endpoint: process execution, persistence, privilege escalation, host-side credential theft.</p>
-      <p>Covers both <strong>Windows</strong> and <strong>Linux</strong> endpoints. Each indicator is tagged <span style="color:var(--accent)">WIN</span> or <span style="color:#f0a020">LINUX</span>; use the OS filter in any tactic header to narrow to one platform, or leave it off to see both. Windows rows lead with Sysmon / PowerShell / registry; Linux rows lead with Sysmon for Linux / auditd / shell, with file artifacts in place of registry.</p>
-      <p>Each indicator includes detection telemetry, paste-ready Kibana KQL, hunt scripts, file/registry artifacts, adversary tool attribution, and references to open-source detection projects (Sigma, Velociraptor, Hayabusa, Falco, etc.).</p>
+      <p>The <strong>host-side</strong> companion to the <a href="/net/" style="color:var(--accent)">network threat hunt reference</a>. Where the network reference covers what adversaries do across the wire, this site covers what they do inside the endpoint: process execution, persistence, privilege escalation, credential theft, and destruction.</p>
+      <p>Every indicator includes paste-ready syntax for <strong>Sysmon</strong> and <strong>Kibana (KQL)</strong> queries, <strong>PowerShell/auditd</strong> hunt scripts, <strong>registry</strong> artifacts, and open-source detection mappings.</p>
     </div>
 
     <div class="info-card">
       <h3>How to use it</h3>
       <ul>
-        <li>Pick a tactic card to open its reference page</li>
-        <li>Search or filter to narrow indicators by technique or APT actor</li>
-        <li>Each row has tabs for Sysmon · Kibana · PowerShell · Registry/Artifacts · Tools · OSS Detections · Notes · APT</li>
-        <li>Click the &#9733; star to add to your hunt list (persisted across sessions)</li>
-        <li>Open <strong>My Hunts</strong> to review and export your hunt as TXT or CSV. A per-technique case template is also available on each row for structured note-taking.</li>
+        <li>Pick a tactic card above to open its reference page</li>
+        <li>Use the search box or technique filter buttons to narrow down indicators</li>
+        <li>Copy the query syntax matching your tool (Sysmon, KQL, PowerShell)</li>
+        <li>Click the &#9733; star on any row to add it to your hunt list</li>
+        <li>Open <strong>My Hunts</strong> from the header to review and export your hunt as TXT or CSV</li>
       </ul>
-      <div class="info-callout">
-        Use the <strong>NETWORK</strong> / <strong>HOST</strong> switcher in the header to jump to the network reference for the complementary lens on the same techniques.
-      </div>
     </div>
 
     <div class="info-card">
-      <h3>Schema notes</h3>
-      <p>The host schema differs from network because host telemetry has more dimensions. Same indicator can have evidence in: process events (Sysmon EID 1), registry modifications (EID 12/13), file creation (EID 11), network connections from process (EID 3), image loads (EID 7), and process access (EID 10).</p>
-      <p>PowerShell hunt scripts are designed to run directly against Windows event logs - useful for both proactive hunting and during incident response when you need to triage without a SIEM.</p>
+      <h3>About hunts</h3>
+      <p>Starred indicators persist across browser restarts and sync across open tabs in real-time. Hunts are stored in <code>localStorage</code> under the key <code>hunt_reference_hunts_v1</code>; nothing leaves the browser.</p>
+      <p>Starred indicators from both NET and HOST surfaces appear together in the <a href="/attribution/" style="color:var(--accent)">ATTRIB</a> engine for unified scoring.</p>
     </div>
 
     <div class="info-card">
-      <h3>Current Build Status</h3>
-      <p><strong>Execution (TA0002)</strong>, <strong>Persistence (TA0003)</strong>, and <strong>Privilege Escalation (TA0004)</strong> complete.</p>
-      <p><strong>Defense Evasion (TA0005) in progress</strong>: 10 indicators across 8 sub-techniques, Linux-focused build first.</p>
-      <p>Upcoming tactic build order: <br>&rarr;Execution <br>&rarr;Persistence <br>&rarr;Privilege Escalation<br>&rarr;Defense Evasion<br>&rarr;Credential Access<br>&rarr;Discovery<br>then completionist coverage of the rest.</p>
+      <h3>Coverage</h3>
+      <p>7 built tactics, 84 techniques, 165 indicators spanning Windows and Linux endpoints. Detection fields: Sysmon event IDs, Kibana KQL queries, PowerShell hunt scripts, auditd rules, registry artifacts, open-source rule mappings (Sigma, Elastic, Wazuh, osquery, Falco).</p>
+      <p>APT attribution covers 29 named threat actors across China, Russia, DPRK, Iran, and criminal groups.</p>
     </div>
 
   </div>
 </section>
 
 <footer class="site-footer">
-  <p>Built on the MITRE ATT&amp;CK<sup>&reg;</sup> framework. ATT&amp;CK is a registered trademark of The MITRE Corporation.</p>
+  <p>built on the mitre att&amp;ck<sup>&reg;</sup> framework. att&amp;ck is a registered trademark of the mitre corporation.</p>
   <br>
   <p>built by <a href="https://6b74.dev" style="color:var(--accent)">tonk</a></p>
 </footer>
 
-<script src="js/index.js"></script>
+<script>
+  var cards = document.querySelectorAll('.tactic-card');
+  var input = document.getElementById('tactic-search');
+  if (input) {
+    input.addEventListener('input', function () {
+      var q = this.value.toLowerCase().trim();
+      cards.forEach(function (c) {
+        var tags = (c.dataset.tags || '') + ' ' + c.textContent;
+        c.style.display = (!q || tags.toLowerCase().indexOf(q) !== -1) ? '' : 'none';
+      });
+    });
+  }
+</script>
 </body>
 </html>
