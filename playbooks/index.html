@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hunt Playbooks</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--phosphor:#7ee787;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+  a{color:inherit;text-decoration:none}
+
+  /* ── header ── */
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}
+  .logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}
+  .logo span{font-weight:400;color:var(--text3)}
+  .site-switcher{display:flex;gap:4px}
+  .switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}
+  .switcher-side:hover{background:var(--bg3)}
+  .switcher-side.active{background:var(--red);color:#fff}
+
+  /* ── hero ── */
+  .index-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:40px 20px;text-align:center}
+  .index-title{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--red);margin-bottom:6px}
+  .index-sub{font-size:13px;color:var(--text3);margin-bottom:0;max-width:620px;margin-left:auto;margin-right:auto;line-height:1.6}
+
+  /* ── sections & cards ── */
+  .section-label{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding:24px 20px 8px;max-width:1200px;margin:0 auto;display:block}
+  .card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:0 20px 28px;max-width:1200px;margin:0 auto}
+  @media(max-width:900px){.card-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:500px){.card-grid{grid-template-columns:1fr}}
+
+  .pb-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px;transition:all .2s;display:block;border-left:3px solid transparent}
+  .pb-card:hover{background:var(--bg3);transform:translateY(-2px)}
+  .pb-card.soon{opacity:.4;pointer-events:none}
+  .pb-card.actor{border-left-color:var(--red)}
+  .pb-card.environ{border-left-color:var(--accent)}
+  .pb-card.scenario{border-left-color:var(--amber)}
+
+  .pb-pill{display:inline-block;font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;margin-bottom:10px;border:1px solid}
+  .pb-pill.actor{color:var(--red);border-color:rgba(248,81,73,.4);background:rgba(248,81,73,.08)}
+  .pb-pill.environ{color:var(--accent);border-color:rgba(88,166,255,.4);background:rgba(88,166,255,.08)}
+  .pb-pill.scenario{color:var(--amber);border-color:rgba(210,153,34,.4);background:rgba(210,153,34,.08)}
+  .pb-pill.planned{color:var(--text3);border-color:rgba(110,118,129,.3);background:rgba(110,118,129,.06)}
+
+  .pb-name{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px}
+  .pb-desc{font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:10px}
+  .pb-meta{font-family:var(--mono);font-size:10px;color:var(--text3)}
+
+  /* ── info ── */
+  .info-section{max-width:1200px;margin:16px auto 0;padding:0 20px 32px}
+  .info-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px 20px}
+  .info-card h3{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px}
+  .info-card p{font-size:12px;color:var(--text2);line-height:1.65;margin:0 0 8px}
+  .info-card p:last-child{margin-bottom:0}
+
+  /* ── footer ── */
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}
+  footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="logo">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher">
+    <a class="switcher-side" href="/net/">NET</a>
+    <a class="switcher-side" href="/host/">HOST</a>
+    <a class="switcher-side" href="/attribution/">ATTRIB</a>
+    <span class="switcher-side active">PLAYBOOKS</span>
+  </div>
+</header>
+
+<div class="index-hero">
+  <div class="index-title">[TONK] Hunt Playbooks</div>
+  <div class="index-sub">Curated hunt sequences for when intel drops an actor name, a detection fires, or you need to scope an environment. Each playbook is a prioritized checklist linking into the NET and HOST detection references.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  THREAT ACTOR PLAYBOOKS                    -->
+<!-- ═══════════════════════════════════════════ -->
+
+<span class="section-label">by threat actor</span>
+<div class="card-grid">
+
+  <div class="pb-card actor soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">APT41 / Winnti</div>
+    <div class="pb-desc">China-nexus dual espionage and financial motivation. ShadowPad, PlugX side-loading, systemd persistence, Kerberoasting, SQL injection to shell. The actor most likely to show up in both IT and OT environments.</div>
+    <div class="pb-meta">CN &middot; MSS / Chengdu 404 &middot; G0096</div>
+  </div>
+
+  <div class="pb-card actor soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">APT29 / Cozy Bear</div>
+    <div class="pb-desc">Russia SVR. SolarWinds-class supply chain, WellMess, stealthy AD operations, cloud-focused post-compromise. The quietest long-dwell operator in the dataset.</div>
+    <div class="pb-meta">RU &middot; SVR &middot; G0016</div>
+  </div>
+
+  <div class="pb-card actor soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">Lazarus / HIDDEN COBRA</div>
+    <div class="pb-desc">DPRK RGB. Financially motivated and destructive. Cryptocurrency targeting, SWIFT fraud, ransomware (Maui), wipers (Destover). Crosses the espionage-crime boundary.</div>
+    <div class="pb-meta">KP &middot; RGB &middot; G0032</div>
+  </div>
+
+  <div class="pb-card actor soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">Sandworm / APT44</div>
+    <div class="pb-desc">Russia GRU Unit 74455. Destructive operations against critical infrastructure. NotPetya, Industroyer, WhisperGate, HermeticWiper. The actor most likely to cause physical-world impact.</div>
+    <div class="pb-meta">RU &middot; GRU 74455 &middot; G0034</div>
+  </div>
+
+  <div class="pb-card actor soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">Volt Typhoon</div>
+    <div class="pb-desc">China PLA. Pre-positioning on US critical infrastructure. Living-off-the-land, minimal tooling, long dwell. The hardest actor to detect because they use nothing an admin wouldn't.</div>
+    <div class="pb-meta">CN &middot; PLA &middot; G1017</div>
+  </div>
+
+  <div class="pb-card actor soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">APT28 / Fancy Bear</div>
+    <div class="pb-desc">Russia GRU Unit 26165. Drovorub Linux rootkit, credential phishing, Exchange exploitation. Noisier and faster than APT29, favors speed over stealth.</div>
+    <div class="pb-meta">RU &middot; GRU 26165 &middot; G0007</div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  ENVIRONMENT PLAYBOOKS                     -->
+<!-- ═══════════════════════════════════════════ -->
+
+<span class="section-label">by environment</span>
+<div class="card-grid">
+
+  <div class="pb-card environ soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">Air-Gapped OT / ICS</div>
+    <div class="pb-desc">Minimally connected or fully isolated industrial environments. What should never exist on the network becomes a tripwire. Host-side detection with no cloud EDR dependency.</div>
+    <div class="pb-meta">Purdue Level 2-3 &middot; no internet egress</div>
+  </div>
+
+  <div class="pb-card environ soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">Hybrid AD Enterprise</div>
+    <div class="pb-desc">On-prem Active Directory synced to Azure AD / Entra ID. Hunt sequences for the attack paths that span both environments: on-prem compromise to cloud escalation and reverse.</div>
+    <div class="pb-meta">AD + Azure AD &middot; ADFS &middot; hybrid identity</div>
+  </div>
+
+  <div class="pb-card environ soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">Linux Server Fleet</div>
+    <div class="pb-desc">All-Linux infrastructure: web servers, databases, containers, CI/CD. No Windows telemetry. Auditd and Sysmon for Linux as primary sources. SSH lateral, cron/systemd persistence, /etc/shadow targeting.</div>
+    <div class="pb-meta">auditd &middot; Sysmon for Linux &middot; osquery</div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SCENARIO PLAYBOOKS                        -->
+<!-- ═══════════════════════════════════════════ -->
+
+<span class="section-label">by scenario</span>
+<div class="card-grid">
+
+  <div class="pb-card scenario soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">Intel Warning Received</div>
+    <div class="pb-desc">"Our sector is being targeted by X." The proactive hunt: what to look for before you have evidence, prioritized by what's most likely to already be in your environment undetected.</div>
+    <div class="pb-meta">proactive &middot; no indicators yet</div>
+  </div>
+
+  <div class="pb-card scenario soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">Beacon Found</div>
+    <div class="pb-desc">"We found C2 on one host. How far did they get?" The scoping sequence: work outward from the compromised host through credential access, lateral movement, and data staging.</div>
+    <div class="pb-meta">reactive &middot; single host confirmed</div>
+  </div>
+
+  <div class="pb-card scenario soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">Ransomware on One Host</div>
+    <div class="pb-desc">"Encryption started on a workstation." The triage sequence: determine blast radius, find the deployment mechanism, identify the initial access point, and check for data exfil before encryption.</div>
+    <div class="pb-meta">reactive &middot; time-critical &middot; scope the blast</div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  ABOUT                                     -->
+<!-- ═══════════════════════════════════════════ -->
+
+<section class="info-section">
+  <div class="info-card">
+    <h3>What these playbooks will be</h3>
+    <p>Each playbook is a short, prioritized hunt sequence: what to check first, what distinguishes this actor or scenario from noise, and links into the <a href="/net/" style="color:var(--accent)">NET</a> and <a href="/host/" style="color:var(--accent)">HOST</a> references for the actual detection queries. Not a report. Not a technique list. A checklist you open when you need to know where to start.</p>
+    <p>Playbooks are hand-written from operational experience, not auto-generated from MITRE mappings. The value is in the prioritization and the distinctive tells, not the technique coverage.</p>
+  </div>
+</section>
+
+<footer>
+  <p>TONK &middot; Threat Observation &amp; Network Kill-chain</p>
+  <p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p>
+</footer>
+
+</body>
+</html>
