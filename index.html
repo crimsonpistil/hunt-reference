@@ -36,12 +36,14 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);fon
 .choice-card.intel:hover{border-left-color:var(--amber)}
 .choice-card.nav:hover{border-left-color:var(--purple)}
 .choice-card.kibana:hover{border-left-color:var(--kibana)}
+.choice-card.playbook:hover{border-left-color:var(--red)}
 .choice-pill{align-self:flex-start;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:3px 9px;border-radius:4px;margin-bottom:14px;border:1px solid}
 .choice-card.detect .choice-pill{color:var(--phosphor);border-color:rgba(126,231,135,.4);background:rgba(126,231,135,.08)}
 .choice-card.hunt .choice-pill{color:var(--accent);border-color:rgba(88,166,255,.4);background:rgba(88,166,255,.08)}
 .choice-card.intel .choice-pill{color:var(--amber);border-color:rgba(210,153,34,.4);background:rgba(210,153,34,.08)}
 .choice-card.nav .choice-pill{color:var(--purple);border-color:rgba(188,140,255,.4);background:rgba(188,140,255,.08)}
 .choice-card.kibana .choice-pill{color:var(--kibana);border-color:rgba(240,78,152,.4);background:rgba(240,78,152,.08)}
+.choice-card.playbook .choice-pill{color:var(--red);border-color:rgba(248,81,73,.4);background:rgba(248,81,73,.08)}
 .choice-name{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px}
 .choice-desc{font-size:12px;color:var(--text2);line-height:1.7;margin:0 0 18px;flex:1}
 .choice-cta{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em}
@@ -50,6 +52,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);fon
 .choice-card.intel .choice-cta{color:var(--amber)}
 .choice-card.nav .choice-cta{color:var(--purple)}
 .choice-card.kibana .choice-cta{color:var(--kibana)}
+.choice-card.playbook .choice-cta{color:var(--red)}
 
 footer.site-footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}
 footer.site-footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
@@ -96,8 +99,19 @@ footer.site-footer p{font-family:var(--mono);font-size:10px;color:var(--text3);m
   </a>
 </div>
 
+<div class="choice-group-label">references</div>
+<div class="chooser">
+  <a class="choice-card playbook" href="/playbooks/">
+    <span class="choice-pill">PLAYBOOKS</span>
+    <div class="choice-name">playbooks</div>
+    <p class="choice-desc">Curated hunt sequences by threat actor, environment type, and network architecture. Prioritized checklists for when intel drops an actor name and you need to know where to start.</p>
+    <span class="choice-cta">&#9656; open playbooks</span>
+  </a>
+</div>
+
 <footer class="site-footer">
-  <p>tonk &middot; threat observation &amp; network kill-chain</p>
+  <p>TONK &middot; Threat Observation &amp; Network Kill-chain</p>
+  <p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p>
 </footer>
 
 </body>
