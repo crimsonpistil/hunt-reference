@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Volt Typhoon</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}
+  .logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}
+  .site-switcher{display:flex;gap:4px}
+  .switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}
+  .back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}
+  .pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--red);border:1px solid rgba(248,81,73,.4);background:rgba(248,81,73,.08)}
+  .pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}
+  .pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}
+  .pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}
+  .section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}
+  .section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}
+  .check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}
+  .check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}
+  .check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}
+  .check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}
+  .note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .note-box.blue{border-left-color:var(--accent)}.note-box.blue strong{color:var(--accent)}
+  .seq-block{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin:12px 0 20px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:2}
+  .seq-block .seq-arrow{color:var(--red);font-weight:700}
+  .seq-block .seq-cmd{color:var(--text);background:var(--bg3);padding:2px 6px;border-radius:3px}
+  .seq-block .seq-label{color:var(--text3);font-size:10px;display:block;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+
+  .alias-grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 20px}
+  .alias-tag{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+
+  .cve-list{list-style:none;margin:0 0 16px;padding:0}
+  .cve-list li{padding:6px 10px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:4px;font-size:11px;color:var(--text2);line-height:1.5}
+  .cve-list li strong{color:var(--text)}
+
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}
+  footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher">
+    <a class="switcher-side" href="/net/">NET</a>
+    <a class="switcher-side" href="/host/">HOST</a>
+    <a class="switcher-side" href="/attribution/">ATTRIB</a>
+    <span class="switcher-side active">PLAYBOOKS</span>
+  </div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">THREAT ACTOR &middot; CHINA</div>
+  <div class="pb-title">Volt Typhoon</div>
+  <div class="pb-sub">PRC state-sponsored pre-positioning on US critical infrastructure. Zero custom malware. Valid credentials and built-in tools only. Multi-year dwell times. The actor that proved living-off-the-land isn't theoretical.</div>
+  <div class="pb-meta-row">MITRE G1017 &middot; PLA &middot; active 2021-present &middot; targets: water, energy, telecom, transportation</div>
+</div>
+
+<div class="content">
+
+<div class="section-head default">Also known as</div>
+<div class="alias-grid">
+  <span class="alias-tag">BRONZE SILHOUETTE</span>
+  <span class="alias-tag">Vanguard Panda</span>
+  <span class="alias-tag">DEV-0391</span>
+  <span class="alias-tag">Insidious Taurus</span>
+  <span class="alias-tag">UNC3236</span>
+  <span class="alias-tag">Voltzite</span>
+  <span class="alias-tag">DazedToad</span>
+</div>
+
+<div class="section-head red">Why this actor matters</div>
+
+<p class="prose">
+  CISA Director Jen Easterly testified to Congress in January 2024: <strong>"This threat is not theoretical. CISA teams have found and eradicated Chinese intrusions into critical infrastructure across multiple sectors. And what we've found to date is likely the tip of the iceberg."</strong>
+</p>
+<p class="prose">
+  Volt Typhoon is not conducting espionage. They are <strong>pre-positioning for disruption or destruction</strong> of US critical services in the event of military conflict. CISA confirmed compromises across communications, energy, transportation, and water systems, with documented dwell times exceeding five years. They target strategically significant locations: Guam (Andersen Air Force Base), Hawaii, West Coast ports, and Texas energy infrastructure.
+</p>
+<p class="prose">
+  What makes them operationally distinct from every other Chinese APT: <strong>they deploy no malware</strong>. No implants, no custom backdoors, no C2 beacons. Every action uses valid credentials and built-in operating system tools. Their activity is indistinguishable from legitimate administration without behavioral baselines.
+</p>
+
+<div class="section-head amber">Known initial access vectors</div>
+
+<p class="prose">Volt Typhoon gains initial access primarily through internet-facing edge devices with known vulnerabilities. They do not rely on phishing.</p>
+
+<ul class="cve-list">
+  <li><strong>CVE-2022-42475</strong> FortiOS SSL-VPN heap buffer overflow. Documented entry point in the Guam compromise. Allows RCE on FortiGate appliances without authentication.</li>
+  <li><strong>CVE-2023-27997</strong> FortiOS SSL-VPN pre-auth RCE (XORtigate). Additional FortiGate exploitation vector.</li>
+  <li><strong>CVE-2021-40539</strong> Zoho ManageEngine ADSelfService Plus. Exploited to reset domain account passwords and create new admin accounts.</li>
+  <li><strong>CVE-2021-27860</strong> FatPipe WARP/IPVPN/MPVPN. Network device exploitation for initial foothold.</li>
+  <li><strong>CVE-2023-46805 / CVE-2024-21887</strong> Ivanti Connect Secure. VPN appliance exploitation chain.</li>
+  <li><strong>End-of-life SOHO routers</strong> Cisco RV320/325, Netgear ProSafe. Default credentials and unpatched firmware. Used for the KV Botnet relay infrastructure.</li>
+</ul>
+
+<div class="note-box red">
+  <strong>The KV Botnet.</strong> Starting mid-2021, Volt Typhoon compromised hundreds of end-of-life SOHO routers to build a relay network (KV Botnet) that proxied their C2 traffic through residential IP addresses. This made their traffic appear as normal broadband activity, defeating IP reputation and geofencing controls. The FBI disrupted KV Botnet in January 2024, but Volt Typhoon rebuilt within 37 days by compromising 30% of visible Cisco RV320/325 routers.
+</div>
+
+<div class="section-head amber">Documented LOTL toolkit</div>
+
+<p class="prose">Every command below is a native Windows utility. That is the entire point. These are the specific commands CISA documented in Volt Typhoon compromises.</p>
+
+<div class="seq-block">
+  <span class="seq-label">Credential access: NTDS.dit extraction</span>
+  <span class="seq-cmd">ntdsutil "activate instance ntds" "ifm" "create full C:\Users\Public\pro"</span>
+  <br>Staging path <span class="seq-cmd">C:\Users\Public\pro</span> and <span class="seq-cmd">C:\Windows\Temp\tmp\Active Directory</span> documented by CISA
+  <br>Archive with renamed rar: <span class="seq-cmd">ronf.exe</span> (renamed rar.exe) with password-protected output
+</div>
+
+<div class="seq-block">
+  <span class="seq-label">C2 proxy: netsh port forwarding</span>
+  <span class="seq-cmd">netsh interface portproxy add v4tov4 listenport=&lt;port&gt; connectaddress=&lt;C2&gt; connectport=&lt;port&gt;</span>
+  <br>Creates a local port-forwarding rule that relays traffic to external infrastructure
+  <br>No binary, no service, no scheduled task. Just a netsh rule that survives until manually removed.
+</div>
+
+<div class="seq-block">
+  <span class="seq-label">Remote execution via WMI</span>
+  <span class="seq-cmd">wmic /node:&lt;target&gt; process call create "cmd /c ..."</span>
+  <br>Used to create staging directories and execute commands on remote hosts
+  <br>Also: <span class="seq-cmd">wmic logicaldisk get caption,description,providername</span> for drive enumeration
+</div>
+
+<div class="seq-block">
+  <span class="seq-label">Log clearing: complete evidence destruction</span>
+  <span class="seq-cmd">wevtutil cl Application</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">wevtutil cl Security</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">wevtutil cl Setup</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">wevtutil cl System</span>
+  <br>All four major Windows event logs cleared. Leaves only the EID 1102 clear record itself.
+</div>
+
+<div class="seq-block">
+  <span class="seq-label">Web shell persistence (rare, documented once)</span>
+  <span class="seq-cmd">certutil -decode encoded.txt iisstart.aspx</span>
+  <br>Base64-encoded web shell deployed to IIS web server directory
+  <br>This is the closest thing to "malware" Volt Typhoon has deployed, and it's a one-off.
+</div>
+
+<div class="section-head blue">Hunt checklist: if you suspect Volt Typhoon</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Audit all edge device patch status</strong>
+    FortiGate, Ivanti, Pulse Secure, Citrix ADC, F5 BIG-IP, Zoho ManageEngine. Any unpatched internet-facing appliance is a candidate entry point. Check for the specific CVEs listed above. If an appliance was vulnerable during the exploitation window, assume it was compromised until proven otherwise.
+    <span class="ref">NET: <a href="/net/initial_access.html">Initial Access</a></span>
+  </li>
+  <li>
+    <strong>2. Search for netsh portproxy rules</strong>
+    Run <code>netsh interface portproxy show all</code> on every Windows host. Any portproxy rule is suspicious in most environments. Volt Typhoon uses v4tov4 forwarding rules as persistent C2 relays. These survive reboots and leave no service or scheduled task artifact.
+    <span class="ref"><a href="/host/defense_evasion.html">HOST: Defense Evasion</a> &middot; NET: <a href="/net/c2.html">C2</a></span>
+  </li>
+  <li>
+    <strong>3. Hunt for ntdsutil IFM snapshots</strong>
+    Search for ntdsutil execution (Sysmon EID 1) and for ntds.dit files outside C:\Windows\NTDS\. CISA documented Volt Typhoon staging ntds.dit extractions in <code>C:\Users\Public\pro</code> and <code>C:\Windows\Temp\tmp</code>. Any ntds.dit in a non-standard path is near-certain credential theft.
+    <span class="ref"><a href="/host/credential_access.html#T1003.003">HOST: T1003.003</a> NTDS.dit</span>
+  </li>
+  <li>
+    <strong>4. Check for renamed archive utilities</strong>
+    Volt Typhoon renamed rar.exe to ronf.exe to avoid detection. Search for known archive tool hashes (rar, 7z) executing under non-standard filenames. Sysmon EID 1 OriginalFileName field reveals the true identity even when renamed.
+    <span class="ref"><a href="/host/defense_evasion.html">HOST: Defense Evasion</a> &middot; Sysmon EID 1 OriginalFileName</span>
+  </li>
+  <li>
+    <strong>5. Baseline authentication sources for privileged accounts</strong>
+    Pull 60-90 days of EID 4624 for all Domain Admin and service accounts. Build a map of normal source IPs, times, and logon types. Volt Typhoon authenticates as valid users from valid-looking sources. The anomaly is a source IP outside the baseline, particularly residential ISP addresses (SOHO router relay).
+    <span class="ref"><a href="/host/lateral_movement.html#T1550.002">HOST: T1550.002</a> Pass the Hash &middot; Security EID 4624</span>
+  </li>
+  <li>
+    <strong>6. Hunt for WMIC remote process creation</strong>
+    <code>wmic /node:&lt;target&gt; process call create</code> across your Sysmon/process creation logs. Volt Typhoon uses WMI for remote execution to create staging directories and extract credentials. On the target, this appears as WmiPrvSE.exe spawning cmd.exe.
+    <span class="ref"><a href="/host/lateral_movement.html#T1047">HOST: T1047</a> WMI &middot; <a href="/host/execution.html">HOST: Execution</a></span>
+  </li>
+  <li>
+    <strong>7. Check for event log clearing</strong>
+    Search for wevtutil cl in Sysmon EID 1, and for Security EID 1102 (log cleared). Volt Typhoon clears all four major logs (Application, Security, Setup, System) as a standard cleanup step. Clearing all four in sequence is high-confidence Volt Typhoon tradecraft.
+    <span class="ref"><a href="/host/defense_evasion.html#T1070.001">HOST: T1070.001</a> Clear Event Logs</span>
+  </li>
+  <li>
+    <strong>8. Inspect IIS web servers for web shells</strong>
+    Volt Typhoon deployed a base64-encoded web shell (iisstart.aspx) via certutil -decode. Search for: certutil -decode commands (Sysmon EID 1), new .aspx/.jspx files in web directories (Sysmon EID 11), and any iisstart.aspx that isn't the default IIS splash page.
+    <span class="ref"><a href="/host/persistence.html">HOST: Persistence</a> &middot; <a href="/host/execution.html">HOST: Execution</a></span>
+  </li>
+  <li>
+    <strong>9. Check for inbound connections from residential IPs</strong>
+    Volt Typhoon routes traffic through compromised SOHO routers. Inbound management connections (RDP, SSH, VPN) from residential ISP IP ranges (Comcast, AT&T, Verizon residential blocks) to your infrastructure, especially outside business hours, are a red flag. Cross-reference with known SOHO router IP ranges.
+    <span class="ref">NET: <a href="/net/c2.html">C2</a> &middot; Firewall/VPN logs &middot; GeoIP + ASN analysis</span>
+  </li>
+  <li>
+    <strong>10. Check for FOFA reconnaissance of your infrastructure</strong>
+    Volt Typhoon uses FOFA (fofa.info), a Chinese internet search engine, for pre-exploitation reconnaissance. Check your web server access logs for requests from FOFA scanner user-agents or FOFA's known IP ranges. This is a pre-compromise indicator.
+    <span class="ref">NET: <a href="/net/recon.html">Reconnaissance</a> &middot; Web server access logs</span>
+  </li>
+  <li>
+    <strong>11. Audit scheduled tasks and cron jobs</strong>
+    Volt Typhoon uses schtasks /create for persistence. Search for scheduled tasks created outside maintenance windows, particularly those executing PowerShell, cmd, or wmic. On Linux infrastructure, check cron.d for unpackaged entries.
+    <span class="ref"><a href="/host/persistence.html">HOST: Persistence</a> &middot; <a href="/host/discovery.html">HOST: Discovery</a></span>
+  </li>
+  <li>
+    <strong>12. Look for staging directories</strong>
+    CISA documented Volt Typhoon using: <code>C:\Users\Public\pro</code>, <code>C:\Windows\Temp\tmp</code>, <code>C:\Windows\Temp\tmp\Active Directory</code>, <code>C:\Windows\Temp\tmp\registry</code>. Search for these specific paths and for any unexpected subdirectories in Public or Temp containing .dit, .hiv, or archive files.
+    <span class="ref"><a href="/host/credential_access.html#T1003.003">HOST: T1003.003</a> NTDS &middot; Sysmon EID 11 file creation</span>
+  </li>
+</ol>
+
+<div class="section-head green">What distinguishes Volt Typhoon from other Chinese APTs</div>
+
+<p class="prose">
+  <strong>No custom tooling.</strong> APT41 deploys ShadowPad and PlugX. APT10 uses custom loaders. Mustang Panda uses PlugX variants. Volt Typhoon uses nothing that isn't already on the machine. The only documented exception is a single web shell and the use of Fast Reverse Proxy (FRP), a publicly available open-source tool.
+</p>
+<p class="prose">
+  <strong>Pre-positioning, not espionage.</strong> Other Chinese APTs steal intellectual property, government secrets, and defense data. Volt Typhoon does not exfiltrate data for intelligence purposes. They establish persistent access to infrastructure that would be operationally relevant in a military conflict: power grids, water systems, ports, telecommunications.
+</p>
+<p class="prose">
+  <strong>Dwell time measured in years.</strong> Most APTs operate in weeks to months. CISA confirmed Volt Typhoon maintained access for at least five years in some environments. Their operational tempo is patient: they check in, maintain access, and wait.
+</p>
+<p class="prose">
+  <strong>Residential IP C2.</strong> Other APTs use VPS hosting, bulletproof hosting, or cloud infrastructure for C2. Volt Typhoon routes through compromised home routers, making their traffic appear to come from residential broadband connections. This defeats every IP reputation system.
+</p>
+
+<div class="note-box">
+  <strong>The hardest detection problem in cybersecurity.</strong> Volt Typhoon proved that a patient, well-resourced actor can maintain years-long access to critical infrastructure using nothing but legitimate tools and valid credentials. There is no signature to write, no hash to block, no C2 domain to sinkhole. Detection requires behavioral baselines, authentication analytics, and the willingness to investigate activity that "looks normal" but isn't.
+</div>
+
+<div class="section-head default">CISA advisories</div>
+<p class="prose">
+  <strong>AA23-144A</strong> (May 2023): Initial disclosure. Microsoft and CISA detail Volt Typhoon's LOTL activity across US critical infrastructure.<br>
+  <strong>AA24-038A</strong> (February 2024): Major update. Five-year dwell confirmed. Detailed TTPs, staging paths, and specific commands. Supplemental LOTL detection guidance published alongside.<br>
+  <strong>FBI KV Botnet disruption</strong> (January 2024): DOJ announces court-authorized takedown of Volt Typhoon's SOHO router botnet. Infrastructure rebuilt within 37 days.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/triage/lotl.html">Living-off-the-Land Activity</a> (triage playbook for LOTL confirmation methodology)<br>
+  <a href="/playbooks/environments/airgap-ot.html">Air-Gapped OT / ICS</a> (environment playbook for the infrastructure Volt Typhoon targets)<br>
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (Volt Typhoon's primary access method is valid credential abuse)
+</p>
+
+</div>
+
+<footer>
+  <p>TONK &middot; Threat Observation &amp; Network Kill-chain</p>
+  <p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p>
+</footer>
+</body>
+</html>
