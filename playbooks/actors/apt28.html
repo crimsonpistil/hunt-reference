@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: APT28 / Fancy Bear</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}
+  .logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}
+  .site-switcher{display:flex;gap:4px}
+  .switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}
+  .back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}
+  .pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--red);border:1px solid rgba(248,81,73,.4);background:rgba(248,81,73,.08)}
+  .pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}
+  .pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}
+  .pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}
+  .section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}
+  .section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}
+  .check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}
+  .check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}
+  .check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}
+  .check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}
+  .note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .alias-grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 20px}
+  .alias-tag{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+  .cve-list{list-style:none;margin:0 0 16px;padding:0}
+  .cve-list li{padding:6px 10px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:4px;font-size:11px;color:var(--text2);line-height:1.5}
+  .cve-list li strong{color:var(--text)}
+  .tool-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+  @media(max-width:600px){.tool-grid{grid-template-columns:1fr}}
+  .tool-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px 14px}
+  .tool-card .tc-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--red);margin-bottom:4px}
+  .tool-card .tc-desc{font-size:11px;color:var(--text3);line-height:1.5}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}
+  footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher">
+    <a class="switcher-side" href="/net/">NET</a>
+    <a class="switcher-side" href="/host/">HOST</a>
+    <a class="switcher-side" href="/attribution/">ATTRIB</a>
+    <span class="switcher-side active">PLAYBOOKS</span>
+  </div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">THREAT ACTOR &middot; RUSSIA</div>
+  <div class="pb-title">APT28 / Fancy Bear</div>
+  <div class="pb-sub">GRU Unit 26165. Russia's noisiest and most prolific cyber espionage unit. Credential phishing, Exchange exploitation, custom privilege escalation tooling, and the first documented UEFI rootkit in the wild. Favors speed and aggression over stealth.</div>
+  <div class="pb-meta-row">MITRE G0007 &middot; GRU 85th GTsSS &middot; active 2004-present &middot; 2024-2025: logistics and tech companies supporting Ukraine</div>
+</div>
+
+<div class="content">
+
+<div class="section-head default">Also known as</div>
+<div class="alias-grid">
+  <span class="alias-tag">Forest Blizzard</span>
+  <span class="alias-tag">Sofacy</span>
+  <span class="alias-tag">Sednit</span>
+  <span class="alias-tag">Pawn Storm</span>
+  <span class="alias-tag">STRONTIUM</span>
+  <span class="alias-tag">BlueDelta</span>
+  <span class="alias-tag">FROZENLAKE</span>
+  <span class="alias-tag">GruesomeLarch</span>
+  <span class="alias-tag">Fighting Ursa</span>
+  <span class="alias-tag">ITG05</span>
+  <span class="alias-tag">IRON TWILIGHT</span>
+  <span class="alias-tag">Tsar Team</span>
+  <span class="alias-tag">UAC-0028</span>
+  <span class="alias-tag">TA422</span>
+</div>
+
+<div class="section-head red">Current operations (2024-2025)</div>
+
+<p class="prose">
+  Since February 2022, APT28 has focused heavily on <strong>Western logistics and technology companies coordinating aid to Ukraine</strong>. A May 2025 joint advisory from CISA and 12 allied agencies confirmed a two-year campaign targeting rail operators, air traffic control, maritime logistics, and ICS component manufacturers across NATO nations. Their objective is intelligence on supply routes and infrastructure supporting Ukrainian defense.
+</p>
+<p class="prose">
+  They continue to operate a <strong>dual-track approach</strong>: mass credential harvesting campaigns (password spraying, OAuth phishing) alongside targeted exploitation of specific vulnerabilities. In 2024, Microsoft disclosed that APT28 had been using a custom privilege escalation tool called <strong>GooseEgg</strong> since at least 2020, undetected for four years. In mid-2025, CERT-UA reported the <strong>LAMEHUG</strong> malware, the first documented APT28 tool integrating LLM capabilities for command generation.
+</p>
+
+<div class="section-head amber">Known initial access vectors</div>
+
+<p class="prose">APT28 is opportunistic and uses multiple simultaneous entry methods. They favor speed over sophistication at the initial access stage.</p>
+
+<ul class="cve-list">
+  <li><strong>CVE-2023-23397</strong> Microsoft Outlook zero-click. Sends a specially crafted calendar invite that forces the victim's Outlook client to authenticate to an attacker-controlled SMB share, leaking the NTLMv2 hash. Zero user interaction required. APT28's signature vulnerability from 2022-2023.</li>
+  <li><strong>CVE-2022-38028</strong> Windows Print Spooler. Exploited by GooseEgg for SYSTEM-level privilege escalation. Used since at least 2020, disclosed 2024.</li>
+  <li><strong>CVE-2023-38831</strong> WinRAR code execution. Malicious archives exploiting the file extension handling flaw. Used in credential harvesting operations against Ukraine.</li>
+  <li><strong>CVE-2024-11182</strong> MDaemon webmail XSS zero-day (Operation RoundPress). Cross-site scripting against webmail platforms to steal session tokens.</li>
+  <li><strong>Password spraying</strong> via compromised router botnets (MooBot, Ubiquiti edge routers). FBI disrupted the botnet in January 2024 ("Operation Dying Ember"). Spraying relayed through residential IPs to defeat rate limiting.</li>
+  <li><strong>Spearphishing</strong> with maldocs (Office macros, LNK files, RAR archives), OAuth consent phishing, and credential harvesting pages hosted on compromised infrastructure.</li>
+  <li><strong>Nearest Neighbor Attack</strong> (2022). Compromised Wi-Fi networks at organizations physically adjacent to the target to gain proximity access to the target's corporate wireless. Novel physical-proximity vector without being on-site.</li>
+</ul>
+
+<div class="section-head amber">Custom tooling</div>
+
+<p class="prose">Unlike Volt Typhoon (zero custom tools), APT28 maintains a deep custom arsenal. Identifying these tools on a host is near-certain attribution.</p>
+
+<div class="tool-grid">
+  <div class="tool-card">
+    <div class="tc-name">GooseEgg</div>
+    <div class="tc-desc">Privilege escalation launcher. Exploits CVE-2022-38028 (Print Spooler) to spawn processes as SYSTEM. Deployed via batch script, persisted as scheduled task. In use since at least 2020.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">X-Agent / Sofacy</div>
+    <div class="tc-desc">Modular implant with Windows, Linux, iOS, and Android variants. Keylogging, credential harvesting, file exfil, screenshot capture. APT28's primary C2 platform for over a decade.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Drovorub</div>
+    <div class="tc-desc">Linux rootkit. Kernel module + userland agent. Provides file hiding, process hiding, and port hiding. NSA/FBI joint advisory (August 2020). Name means "woodcutter" in Russian.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">LoJax</div>
+    <div class="tc-desc">UEFI rootkit. First documented in-the-wild UEFI implant (ESET, 2018). Survives OS reinstall and hard drive replacement. Modified Computrace LoJack agent for persistence at firmware level.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">OCEANMAP</div>
+    <div class="tc-desc">.NET backdoor using IMAP for C2. Stores commands in email drafts. Reported late 2023, targeting Ukrainian entities. Evades network detection by using legitimate email protocol traffic.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">MASEPIE / STEELHOOK</div>
+    <div class="tc-desc">Python-based downloader (MASEPIE) and PowerShell credential stealer (STEELHOOK). Deployed together in late 2023 Ukraine campaigns. STEELHOOK harvests browser passwords and Chrome encryption keys.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">CredoMap</div>
+    <div class="tc-desc">Credential stealer deployed via CVE-2022-30190 (Follina). Targets stored browser credentials and authentication tokens. Used against Ukraine and allies in 2022.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Zebrocy</div>
+    <div class="tc-desc">Multi-language downloader (Delphi, Go, C#, VB.NET variants). Performs system profiling, screenshot capture, and additional payload delivery. Used from 2015 onward.</div>
+  </div>
+</div>
+
+<div class="section-head blue">Hunt checklist: if you suspect APT28</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Check for CVE-2023-23397 exploitation</strong>
+    Search for Outlook calendar invites with UNC paths pointing to external IPs (<code>\\&lt;attacker_IP&gt;\share</code>). The exploit leaks NTLM hashes without user interaction. Check SMB traffic logs for outbound NTLM authentication to external IPs. Microsoft released a detection script: CVE-2023-23397 auditing tool.
+    <span class="ref">NET: <a href="/net/credential.html">Credential Access</a> &middot; Outlook message audit</span>
+  </li>
+  <li>
+    <strong>2. Hunt for GooseEgg artifacts</strong>
+    Search Sysmon EID 1 for <code>justice.exe</code>, <code>DefragmentSvc.exe</code>, <code>execute.bat</code>, or <code>doit.bat</code> (documented GooseEgg filenames). Check scheduled tasks for entries running these binaries. GooseEgg modifies a JavaScript constraints file in the Print Spooler directory (<code>DRIVERS\x64\3\</code>) to achieve SYSTEM execution.
+    <span class="ref"><a href="/host/privilege_escalation.html">HOST: Privilege Escalation</a> &middot; Sysmon EID 1 + EID 11</span>
+  </li>
+  <li>
+    <strong>3. Check for Drovorub on Linux hosts</strong>
+    Run <code>lsmod</code> vs <code>/sys/module/</code> discrepancy check (hidden kernel modules). Search for the Drovorub agent process and its configuration file. Drovorub hides files, processes, and network ports from userland tools. Volatile memory analysis (Volatility linux_check_modules) is the most reliable detection.
+    <span class="ref"><a href="/host/persistence.html#T1547.006">HOST: T1547.006</a> Kernel Module &middot; NSA/FBI Drovorub advisory</span>
+  </li>
+  <li>
+    <strong>4. Search for password spraying indicators</strong>
+    High-volume failed authentication (Security EID 4625) from distributed source IPs, particularly residential IP ranges (compromised router botnet). Look for spraying patterns: same password attempted against many accounts in sequence, or low-and-slow patterns (1-2 attempts per account per day to avoid lockout).
+    <span class="ref"><a href="/host/credential_access.html">HOST: Credential Access</a> &middot; Security EID 4625 &middot; VPN/Azure AD sign-in logs</span>
+  </li>
+  <li>
+    <strong>5. Audit Exchange mailbox permissions</strong>
+    APT28 modifies mailbox folder permissions to maintain persistent email access without re-authenticating. Check for: FullAccess or Editor permissions added to mailboxes, mail forwarding rules to external addresses, and OAuth app consent grants. Use <code>Get-MailboxFolderPermission</code> and <code>Get-InboxRule</code> across all mailboxes.
+    <span class="ref"><a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> playbook &middot; Exchange audit logs</span>
+  </li>
+  <li>
+    <strong>6. Check for steganography in downloaded images</strong>
+    APT28 conceals shellcode in PNG files using LSB (Least Significant Bit) encoding. Search for: PowerShell scripts that download and process image files, unusual image processing in process command lines, and PNG files in staging directories that are larger than expected for their resolution.
+    <span class="ref"><a href="/host/defense_evasion.html">HOST: Defense Evasion</a> &middot; Sysmon EID 11 (FileCreate) for .png in temp paths</span>
+  </li>
+  <li>
+    <strong>7. Hunt for OCEANMAP IMAP C2</strong>
+    OCEANMAP uses IMAP email drafts for command and control. Search for: .NET processes making persistent IMAP connections (port 993) to external mail servers, processes maintaining long-lived connections to mail infrastructure without sending visible email. The draft-based C2 generates no outbound email traffic, only IMAP session activity.
+    <span class="ref">NET: <a href="/net/c2.html">C2</a> &middot; Sysmon EID 3 to port 993</span>
+  </li>
+  <li>
+    <strong>8. Check for credential harvesting tools</strong>
+    STEELHOOK (PowerShell, targets Chrome encryption keys and passwords), CredoMap (browser credential stealer), and standard Mimikatz/LSASS access. APT28 aggressively harvests credentials early in the intrusion. Search for browser credential database access and LSASS process access.
+    <span class="ref"><a href="/host/credential_access.html#T1555.003">HOST: T1555.003</a> Browser Creds &middot; <a href="/host/credential_access.html#T1003.001">T1003.001</a> LSASS</span>
+  </li>
+  <li>
+    <strong>9. Check persistence: scheduled tasks, startup folders, COM hijacking</strong>
+    APT28 uses scheduled tasks (GooseEgg persistence), malicious LNK/BAT files in startup folders, and COM object hijacking for persistence. Check: <code>schtasks /query</code> for unusual entries, Startup folder contents, and registry COM hijack keys (HKCU\Software\Classes\CLSID).
+    <span class="ref"><a href="/host/persistence.html">HOST: Persistence</a> &middot; Sysmon EID 12/13 registry &middot; Autoruns</span>
+  </li>
+  <li>
+    <strong>10. Check for data exfiltration via cloud storage or email</strong>
+    APT28 exfiltrates via HTTPS uploads to cloud storage, PowerShell-based data preparation (Compress-Archive), and email-based C2 channels (OCEANMAP). Search for: large outbound HTTPS sessions, PowerShell archive creation targeting sensitive directories, and unusual IMAP/SMTP traffic volumes.
+    <span class="ref">NET: <a href="/net/exfil.html">Exfiltration</a> &middot; <a href="/net/c2.html">C2</a></span>
+  </li>
+</ol>
+
+<div class="section-head green">What distinguishes APT28 from other Russian actors</div>
+
+<p class="prose">
+  <strong>APT28 (GRU 26165) vs APT29 (SVR).</strong> APT28 is noisier, faster, and more aggressive. They use custom exploitation tools (GooseEgg), mass credential harvesting campaigns, and are willing to burn infrastructure for speed. APT29 is quieter, more patient, favors supply-chain access and cloud-native operations, and maintains longer dwell times. If the intrusion feels rushed and noisy with lots of credential phishing, it's more likely APT28. If it's quiet with no malware and cloud-focused, it's more likely APT29.
+</p>
+<p class="prose">
+  <strong>APT28 vs Sandworm (GRU 74455).</strong> Both are GRU but different units with different missions. APT28 does espionage. Sandworm does destruction (NotPetya, Industroyer, wipers). They occasionally collaborate (2018 WADA/OPCW operations). If the objective appears to be intelligence collection, it's APT28. If the objective is disruption or destruction of infrastructure, it's Sandworm.
+</p>
+<p class="prose">
+  <strong>Signature APT28 indicators:</strong> CVE-2023-23397 exploitation (unique to APT28 at scale), GooseEgg on disk, X-Agent/Sofacy implant, Drovorub on Linux, OCEANMAP IMAP C2, residential-IP password spraying, and steganographic PNG payloads. Any of these are high-confidence APT28.
+</p>
+
+<div class="note-box">
+  <strong>The "Nearest Neighbor" vector.</strong> In February 2022, APT28 compromised an organization's corporate Wi-Fi without being physically present. They first compromised a different organization in an adjacent building, then used that organization's Wi-Fi-connected laptop to reach the target's wireless network. This is a novel vector that bypasses all perimeter controls. If your organization is in a multi-tenant building or near government/defense/diplomatic facilities, your Wi-Fi security posture matters for a different reason.
+</p>
+</div>
+
+<div class="section-head default">Key advisories and references</div>
+<p class="prose">
+  <strong>CISA AA25-141A</strong> (May 2025): GRU Unit 26165 targeting Western logistics and technology companies.<br>
+  <strong>Microsoft GooseEgg disclosure</strong> (April 2024): Custom Print Spooler exploitation tool, in use since 2020.<br>
+  <strong>FBI Operation Dying Ember</strong> (January 2024): Disruption of MooBot/Ubiquiti router botnet used for password spraying relay.<br>
+  <strong>NSA/FBI Drovorub advisory</strong> (August 2020): Linux rootkit detection and mitigation guidance.<br>
+  <strong>ESET LoJax report</strong> (September 2018): First documented in-the-wild UEFI rootkit.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (APT28's primary initial access is credential theft)<br>
+  <a href="/playbooks/triage/c2-beacon.html">C2 Beacon Found</a> (X-Agent, OCEANMAP, and GooseEgg all establish C2 channels)<br>
+  <a href="/playbooks/triage/lotl.html">Living-off-the-Land Activity</a> (APT28's post-GooseEgg lateral movement increasingly uses native tools)<br>
+  <a href="/playbooks/actors/volt-typhoon.html">Volt Typhoon</a> (comparison: opposite operational style, same router-botnet relay concept)
+</p>
+
+</div>
+
+<footer>
+  <p>TONK &middot; Threat Observation &amp; Network Kill-chain</p>
+  <p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p>
+</footer>
+</body>
+</html>
