@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Air-Gapped OT / ICS</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--phosphor:#7ee787;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}
+  .logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}
+  .logo span{font-weight:400;color:var(--text3)}
+  .site-switcher{display:flex;gap:4px}
+  .switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}
+  .switcher-side:hover{background:var(--bg3);text-decoration:none}
+  .switcher-side.active{background:var(--red);color:#fff}
+  .back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}
+  .back-link:hover{color:var(--text2);text-decoration:none}
+
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}
+  .pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--accent);border:1px solid rgba(88,166,255,.4);background:rgba(88,166,255,.08)}
+  .pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}
+  .pb-sub{font-size:13px;color:var(--text3);max-width:640px;margin:0 auto;line-height:1.6}
+  .pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}
+
+  .section-head{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  .section-head:first-child{margin-top:0}
+  .section-head.red{color:var(--red)}
+  .section-head.amber{color:var(--amber)}
+  .section-head.green{color:var(--green)}
+
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}
+  .prose strong{color:var(--text);font-weight:600}
+
+  .check-list{list-style:none;margin:0 0 20px;padding:0}
+  .check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}
+  .check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}
+  .check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}
+  .check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+
+  .tripwire-list{list-style:none;margin:0 0 20px;padding:0}
+  .tripwire-list li{position:relative;padding:10px 14px 10px 36px;margin-bottom:6px;background:rgba(248,81,73,.04);border:1px solid rgba(248,81,73,.15);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.6}
+  .tripwire-list li::before{content:'!';position:absolute;left:12px;top:10px;width:16px;height:16px;background:rgba(248,81,73,.15);color:var(--red);font-family:var(--mono);font-size:10px;font-weight:700;text-align:center;line-height:16px;border-radius:3px}
+  .tripwire-list li strong{color:var(--text)}
+
+  .tool-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+  @media(max-width:600px){.tool-grid{grid-template-columns:1fr}}
+  .tool-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px 14px}
+  .tool-card .tc-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px}
+  .tool-card .tc-desc{font-size:11px;color:var(--text3);line-height:1.5}
+  .tool-card.unavailable{opacity:.45}
+  .tool-card.unavailable .tc-name{color:var(--red)}
+
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}
+  .note-box strong{color:var(--amber)}
+
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}
+  footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher">
+    <a class="switcher-side" href="/net/">NET</a>
+    <a class="switcher-side" href="/host/">HOST</a>
+    <a class="switcher-side" href="/attribution/">ATTRIB</a>
+    <span class="switcher-side active">PLAYBOOKS</span>
+  </div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">ENVIRONMENT</div>
+  <div class="pb-title">Air-Gapped OT / ICS</div>
+  <div class="pb-sub">Minimally connected or fully isolated industrial environments. What should never exist on the network becomes a tripwire. Host-side detection with no cloud EDR dependency.</div>
+  <div class="pb-meta-row">Purdue Level 2-3 &middot; no internet egress &middot; ICS protocol monitoring</div>
+</div>
+
+<div class="content">
+
+<!-- ═══════════════════════════════════════════ -->
+<div class="section-head">Why this environment is different</div>
+
+<p class="prose">
+  An air-gapped OT network inverts the normal detection model. On a connected enterprise network, you hunt for known-bad. On an isolated network, <strong>any external communication is the indicator</strong>. DNS to 8.8.8.8, an HTTP request to any public IP, a package manager trying to reach a repo: these should never happen and their presence is proof of either a misconfiguration or a compromise.
+</p>
+<p class="prose">
+  The constraints are real: most OT hosts can't run EDR agents. Sysmon may not be installable on HMIs or historians running legacy OS. Cloud-dependent detection (CrowdStrike, Defender for Endpoint) has no backend to call. Your telemetry sources are <strong>network captures</strong> (Zeek, Suricata, Arkime on a span port), <strong>host logs where available</strong> (Windows Event Logs, Sysmon on engineering workstations), and <strong>ICS-aware protocol inspection</strong>. Everything else is a manual check.
+</p>
+<p class="prose">
+  Change is infrequent and tightly controlled. A new binary, a new network connection, a new service, a new user account: any of these outside a scheduled maintenance window is suspicious by default. The baseline is your strongest asset because it barely moves.
+</p>
+
+<!-- ═══════════════════════════════════════════ -->
+<div class="section-head red">Tripwires: should never exist on this network</div>
+
+<p class="prose">If you see any of these on an air-gapped OT segment, stop and investigate immediately. These are not "suspicious." They are proof that the isolation assumption is broken.</p>
+
+<ul class="tripwire-list">
+  <li><strong>Any DNS query to an external resolver.</strong> Air-gapped networks use internal DNS only. A query to 8.8.8.8, 1.1.1.1, or any public resolver means something is reaching out.</li>
+  <li><strong>Any HTTP/HTTPS to a non-RFC1918 address.</strong> No host on this segment should be talking to the internet. Period. Check for proxy configs, PAC files, or WPAD that might be routing traffic out through an IT-side gateway.</li>
+  <li><strong>Cloud metadata API access (169.254.169.254).</strong> Should not exist on OT infrastructure. Presence indicates cloud-connected resources in a segment assumed to be isolated.</li>
+  <li><strong>Package manager activity.</strong> apt update, yum check-update, pip install, npm install. These reach external repos. On an air-gapped host, they should fail. If they succeed, the host has a network path out.</li>
+  <li><strong>NTP to external time servers.</strong> OT networks should use an internal time source. External NTP means a UDP path out of the segment.</li>
+  <li><strong>Windows Update / telemetry beacons.</strong> WSUS should be internal. Connections to windowsupdate.com, microsoft.com telemetry endpoints, or OCSP/CRL checks against public CAs mean the host has internet access.</li>
+  <li><strong>Any new host on the network.</strong> The asset inventory on an air-gapped OT network should be fixed. A new MAC address or IP means someone connected something without authorization.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════ -->
+<div class="section-head amber">Hunt checklist: prioritized</div>
+
+<p class="prose">Work top to bottom. The first items catch the most common intrusion paths into OT environments. Lower items catch later-stage activity or more sophisticated techniques.</p>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Engineering workstation integrity</strong>
+    The EWS is the bridge between IT and OT. If it's compromised, the attacker has a path to the controllers. Check for: unauthorized software installs, process allowlist violations (Sysmon EID 1 for anything not in the baseline), new services, new scheduled tasks, USB mount artifacts. This is the single highest-value host to audit.
+    <span class="ref"><a href="/host/execution.html">HOST: Execution</a> &middot; Persistence &middot; Discovery</span>
+  </li>
+  <li>
+    <strong>2. Removable media indicators</strong>
+    USB is the primary initial access vector for air-gapped networks (Stuxnet, Agent.BTZ, Raspberry Robin). Hunt for: new files in known USB mount paths, autorun.inf creation, executables in removable media root, Sysmon EID 11 (FileCreate) on removable volumes, Windows Event 4663 (Object Access) on removable storage.
+    <span class="ref"><a href="/host/execution.html">HOST: Execution</a> (T1204.002 User Execution)</span>
+  </li>
+  <li>
+    <strong>3. ICS protocol anomalies</strong>
+    Unauthorized commands on Modbus (write-coil, write-register from a non-EWS source), DNP3 (cold restart, firmware download), S7comm (PLC stop/start, program upload), EtherNet/IP (config changes, I/O writes from new sources). Any write command from an IP that isn't the authorized engineering workstation is high-confidence malicious.
+    <span class="ref">NET: Arkime/Zeek/Suricata ICS protocol parsers &middot; Modbus TCP/502 &middot; DNP3/20000 &middot; S7comm/102</span>
+  </li>
+  <li>
+    <strong>4. Network baseline deviation</strong>
+    New host-to-host communication pairs that didn't exist in the baseline. On an air-gapped OT network, the communication matrix is nearly static. A new connection between two hosts that have never talked before is either a misconfiguration or lateral movement. Zeek conn.log diff against baseline.
+    <span class="ref">NET: Zeek conn.log baseline comparison &middot; Arkime sessions</span>
+  </li>
+  <li>
+    <strong>5. Authentication anomalies</strong>
+    New accounts created, privilege escalation (user added to admin group), failed authentication spikes, logon type anomalies (type 10 RDP where RDP shouldn't be used, type 3 network logon from unexpected sources). On OT, the user list is small and stable. Any new account is suspicious.
+    <span class="ref"><a href="/host/credential_access.html">HOST: Credential Access</a> &middot; Privilege Escalation &middot; Security EID 4720/4632/4624</span>
+  </li>
+  <li>
+    <strong>6. Persistence mechanisms</strong>
+    New services, scheduled tasks, cron jobs, systemd units, registry Run keys. On a static OT environment, the persistence baseline doesn't change between maintenance windows. Anything new was either installed during authorized maintenance (verify against the change log) or planted by an attacker.
+    <span class="ref"><a href="/host/persistence.html">HOST: Persistence</a> (all techniques)</span>
+  </li>
+  <li>
+    <strong>7. Lateral movement between zones</strong>
+    SMB, RDP, SSH, or WMI between Purdue levels that shouldn't communicate directly. Level 3 (site operations) talking to Level 1 (basic control) without going through Level 2 (area supervisory) is a zone violation. Level 0 (process) should never see interactive logons.
+    <span class="ref"><a href="/host/lateral_movement.html">HOST: Lateral Movement</a> &middot; NET: SMB/RDP/SSH cross-zone flows</span>
+  </li>
+  <li>
+    <strong>8. PLC project file changes</strong>
+    Modification of PLC project files (.s7p, .acd, .mer, .rss) outside a maintenance window or by a non-engineering account. Sysmon EID 11 (FileCreate) or FIM on project directories. This is the canary for controller-targeting activity: if the attacker is modifying PLC logic, they're past reconnaissance and into the impact phase.
+    <span class="ref">HOST: Sysmon EID 11 FIM on project directories &middot; Impact</span>
+  </li>
+  <li>
+    <strong>9. Historian and HMI config changes</strong>
+    Unauthorized queries to PI, Wonderware, iFIX databases. HMI screen modifications, tag value overrides, or alarm suppression outside maintenance windows. Historian access from a non-authorized source IP. These changes can mask process manipulation.
+    <span class="ref">Application-specific logging &middot; Database audit logs &middot; HMI change management</span>
+  </li>
+  <li>
+    <strong>10. Data staging and collection</strong>
+    Archive creation (zip, tar, rar), large file copies to writable shares, files moved to USB mount paths. On an air-gapped network, exfiltration requires physical media. Staging to removable-accessible paths is the pre-exfil indicator.
+    <span class="ref"><a href="/host/impact.html">HOST: Impact</a> &middot; Sysmon EID 11 on removable media paths</span>
+  </li>
+</ol>
+
+<!-- ═══════════════════════════════════════════ -->
+<div class="section-head green">Available tools (no internet required)</div>
+
+<p class="prose">These work fully offline. No cloud backend, no signature updates from the internet, no license phone-home.</p>
+
+<div class="tool-grid">
+  <div class="tool-card">
+    <div class="tc-name">Zeek + Suricata</div>
+    <div class="tc-desc">Network monitoring on a span port. Zeek logs conn, dns, http, modbus, dnp3, s7comm. Suricata runs ET SCADA rules. Both are the primary detection source on air-gapped OT.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Arkime</div>
+    <div class="tc-desc">Full packet capture and indexed search. The forensic record when you need to reconstruct exactly what happened on the wire.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Sysmon (Windows)</div>
+    <div class="tc-desc">Install on engineering workstations and any Windows host that can support it. EID 1 (process), 3 (network), 7 (image load), 11 (file create), 13 (registry). Runs locally, no cloud dependency.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Auditd (Linux)</div>
+    <div class="tc-desc">Kernel-level syscall auditing. execve monitoring, file access watches on /etc/shadow and SSH keys, network socket creation. The Linux equivalent of Sysmon.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">osquery</div>
+    <div class="tc-desc">Scheduled SQL queries against the host: processes, listening ports, file integrity, kernel modules, cron jobs, authorized_keys. Runs locally, ships results to local collector.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">YARA</div>
+    <div class="tc-desc">Signature scanning of files and processes. Rules can be updated via sneakernet. Catches known malware on disk and in memory without needing a cloud AV backend.</div>
+  </div>
+  <div class="tool-card unavailable">
+    <div class="tc-name">Cloud EDR (unavailable)</div>
+    <div class="tc-desc">CrowdStrike, Defender for Endpoint, SentinelOne all require cloud connectivity for behavioral detection. They will not function on an air-gapped segment. Do not rely on them here.</div>
+  </div>
+  <div class="tool-card unavailable">
+    <div class="tc-name">Cloud SIEM (unavailable)</div>
+    <div class="tc-desc">Splunk Cloud, Elastic Cloud, Microsoft Sentinel cannot receive logs from an air-gapped network. Use local Elastic/Kibana, Security Onion, or Malcolm for log aggregation.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<div class="note-box">
+  <strong>Note on Purdue levels.</strong> This playbook targets Levels 2-3 (area supervisory and site operations), where Windows/Linux hosts exist and can run monitoring tools. Levels 0-1 (process and basic control: PLCs, RTUs, actuators) generally cannot run host-based agents. Detection at those levels is network-only: Zeek/Suricata on a span port monitoring the ICS protocol traffic. Level 4+ (IT/DMZ) has full enterprise tooling and is covered by the standard host and network playbooks.
+</div>
+
+<div class="section-head">Actors who target this environment</div>
+
+<p class="prose">
+  <strong><a href="/playbooks/actors/sandworm.html">Sandworm (APT44)</a></strong> is the primary threat to OT/ICS infrastructure. Industroyer (2016, 2022), BlackEnergy (2015), WhisperGate and HermeticWiper (2022) all targeted Ukrainian energy and critical infrastructure. Their playbook is IT compromise first, then pivot to OT through engineering workstations.
+</p>
+<p class="prose">
+  <strong><a href="/playbooks/actors/volt-typhoon.html">Volt Typhoon</a></strong> pre-positions on US critical infrastructure using living-off-the-land techniques. No custom malware, no C2 beacons, just valid credentials and native tools. The hardest actor to detect in this environment because their activity looks identical to legitimate administration.
+</p>
+<p class="prose">
+  <strong><a href="/playbooks/actors/apt41.html">APT41</a></strong> has documented dual-purpose operations across IT and OT, with particular focus on manufacturing and technology sectors where OT networks hold intellectual property and process data.
+</p>
+<p class="prose">
+  <strong>CyberAv3ngers (IRGC-CEC)</strong> targeted Unitronics PLCs at US water facilities in late 2023. Exploited default credentials on internet-exposed HMIs. Lower sophistication than Sandworm but demonstrated willingness to target Western critical infrastructure directly.
+</p>
+
+</div>
+
+<footer>
+  <p>TONK &middot; Threat Observation &amp; Network Kill-chain</p>
+  <p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p>
+</footer>
+
+</body>
+</html>

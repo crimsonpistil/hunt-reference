@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: C2 Beacon Found</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}
+  .logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}
+  .site-switcher{display:flex;gap:4px}
+  .switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}
+  .back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}
+  .pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--amber);border:1px solid rgba(210,153,34,.4);background:rgba(210,153,34,.08)}
+  .pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}
+  .pb-sub{font-size:13px;color:var(--text3);max-width:640px;margin:0 auto;line-height:1.6}
+  .pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}
+  .section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}
+  .section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}
+  .check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}
+  .check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}
+  .check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}
+  .check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}
+  .note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}
+  footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher">
+    <a class="switcher-side" href="/net/">NET</a>
+    <a class="switcher-side" href="/host/">HOST</a>
+    <a class="switcher-side" href="/attribution/">ATTRIB</a>
+    <span class="switcher-side active">PLAYBOOKS</span>
+  </div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">INCIDENT TRIAGE &middot; TIER 1</div>
+  <div class="pb-title">C2 Beacon Found</div>
+  <div class="pb-sub">"We found an implant on one host. How far did they get?" Scope outward from the confirmed compromise through credential access, lateral movement, and data staging. The host you found it on is never the only one.</div>
+  <div class="pb-meta-row">reactive &middot; single host confirmed &middot; scope the footprint</div>
+</div>
+
+<div class="content">
+
+<div class="note-box red">
+  <strong>Do not kill the beacon immediately.</strong> A running beacon gives you the C2 infrastructure (IP, domain, JA3/JA4 fingerprint, User-Agent, callback interval). Capture this information before you isolate. Network-isolate the host (block at the switch/firewall), don't power it off.
+</div>
+
+<div class="section-head red">Phase 1: Characterize the implant (first hour)</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Identify the C2 framework</strong>
+    What are you looking at? Cobalt Strike beacon (malleable C2 profile, named pipes, sleep/jitter pattern), Sliver, Brute Ratel, Mythic, Havoc, or a custom implant. The framework determines what artifacts to look for on other hosts. Check the process, its parent, loaded DLLs, network connections, and injected threads.
+    <span class="ref">NET: <a href="/net/c2.html">C2</a> &middot; Sysmon EID 1/3/7/10</span>
+  </li>
+  <li>
+    <strong>2. Extract C2 infrastructure</strong>
+    Destination IPs/domains, ports, callback interval, JA3/JA4 hash, HTTP headers and URI patterns, SSL certificate details. These become network-wide hunt indicators. Pull from Sysmon EID 3 (network), Zeek conn.log, ssl.log, http.log, and DNS logs.
+    <span class="ref">NET: <a href="/net/c2.html">C2</a> &middot; Zeek ssl.log/http.log &middot; Arkime sessions</span>
+  </li>
+  <li>
+    <strong>3. Determine how long the beacon has been active</strong>
+    First callback timestamp in network logs. Process creation time (Sysmon EID 1). File creation time of the beacon binary. Earliest DNS resolution of the C2 domain. The dwell time determines how much damage to scope for.
+    <span class="ref">Zeek conn.log earliest session to C2 IP &middot; Sysmon EID 1 process create time</span>
+  </li>
+  <li>
+    <strong>4. Determine the initial delivery mechanism</strong>
+    How did the beacon get onto this host? Check the process tree: beacon's parent process reveals the delivery chain. Office app parent = maldoc. Browser parent = drive-by or download. WmiPrvSE parent = lateral movement from another host. Service parent = PsExec deployment. This tells you whether this host is patient zero or a lateral target.
+    <span class="ref"><a href="/host/execution.html">HOST: Execution</a> &middot; Sysmon EID 1 parent chain</span>
+  </li>
+</ol>
+
+<div class="section-head amber">Phase 2: Scope outward (hours 2-8)</div>
+
+<ol class="check-list">
+  <li>
+    <strong>5. Hunt for the same C2 across the network</strong>
+    Take the C2 indicators from step 2 and sweep everything: Zeek conn.log for the destination IPs, dns.log for the domains, ssl.log for the JA3 hash, http.log for the URI pattern. Any other host talking to the same infrastructure is also compromised.
+    <span class="ref">NET: <a href="/net/c2.html">C2</a> &middot; Arkime: ip.dst == &lt;C2_IP&gt;</span>
+  </li>
+  <li>
+    <strong>6. Check for credential access on the beaconed host</strong>
+    Did they dump credentials? Sysmon EID 10 targeting lsass.exe, reg save commands for SAM/SYSTEM/SECURITY, Mimikatz command-line artifacts, Kerberos ticket requests (EID 4769). If they dumped creds, every account that was logged into this host is burned.
+    <span class="ref"><a href="/host/credential_access.html#T1003.001">HOST: T1003.001</a>  LSASS &middot; T1003.002 SAM</span>
+  </li>
+  <li>
+    <strong>7. Trace lateral movement from this host</strong>
+    Using the credentials they stole: PsExec service creation on other hosts (EID 7045), RDP type 10 logons sourced from this host's IP, WMI execution (WmiPrvSE children on targets), SSH connections to Linux hosts. Build the movement map: where did they go from here?
+    <span class="ref"><a href="/host/lateral_movement.html">HOST: Lateral Movement</a> &middot; EID 4624 source IP = beaconed host</span>
+  </li>
+  <li>
+    <strong>8. Check for persistence beyond the beacon</strong>
+    Attackers rarely rely on a single implant. Check for: additional scheduled tasks, new services, registry Run keys, SSH authorized_keys additions, WMI event subscriptions, DLL search-order hijacks. Each persistence mechanism is a separate re-entry path that survives beacon removal.
+    <span class="ref"><a href="/host/persistence.html">HOST: Persistence</a> (all techniques)</span>
+  </li>
+  <li>
+    <strong>9. Check for discovery commands run through the beacon</strong>
+    What did they learn? whoami /all, systeminfo, net group "Domain Admins", ipconfig, tasklist, net share, ADFind. The discovery commands tell you what they know and what they're planning. If they enumerated Domain Admins, expect credential targeting next.
+    <span class="ref"><a href="/host/discovery.html">HOST: Discovery</a> (all techniques)</span>
+  </li>
+  <li>
+    <strong>10. Look for data staging and exfiltration</strong>
+    Did they collect and move data? Archive creation (7z, rar), file copies to staging directories, Rclone or MEGAcmd execution, large outbound HTTPS sessions, DNS tunneling. The C2 channel itself may be the exfil path (Cobalt Strike's download command).
+    <span class="ref">NET: <a href="/net/exfil.html">Exfiltration</a> &middot; <a href="/net/collection.html">Collection</a></span>
+  </li>
+</ol>
+
+<div class="section-head green">Phase 3: Determine scope of compromise</div>
+
+<ol class="check-list">
+  <li>
+    <strong>11. Build the compromise map</strong>
+    At this point you should have: the initial access vector, the list of compromised hosts, the credentials that are burned, the persistence mechanisms across all hosts, and whether data was exfiltrated. This is the briefing: here's what they had access to, here's how long they had it, and here's what we need to reset.
+  </li>
+  <li>
+    <strong>12. Identify the actor (if possible)</strong>
+    Feed your starred indicators into <a href="/attribution/">ATTRIB</a>. The C2 framework, lateral movement tools, and specific technique choices narrow the actor pool. Even if you can't name the group, the nation-state vs. criminal distinction changes the response: criminals want money, nation-states want persistence.
+    <span class="ref"><a href="/attribution/">ATTRIB</a> engine</span>
+  </li>
+</ol>
+
+<div class="note-box">
+  <strong>The beacon you found is the one that got caught.</strong> Assume there are others you haven't found yet. Sophisticated operators deploy multiple C2 channels using different frameworks, different infrastructure, and different persistence mechanisms specifically so that losing one beacon doesn't lose access. After you scope the known implant, hunt for C2 patterns you DIDN'T find: unusual DNS, long-session HTTPS, named pipe activity, or beacon-like periodicity in network flows.
+</div>
+
+<div class="section-head default">Actors who use beacons</div>
+
+<p class="prose">
+  Every actor from commodity criminals to top-tier nation-states uses C2 implants. The framework choice is the first attribution signal: <strong>Cobalt Strike</strong> is used by everyone (60%+ of IR engagements). <strong>Sliver</strong> and <strong>Brute Ratel</strong> are growing as CS detection improves. <strong><a href="/playbooks/actors/apt29.html">APT29</a></strong> uses custom implants (WellMess, EnvyScout) alongside commodity frameworks. <strong><a href="/playbooks/actors/apt41.html">APT41</a></strong> favors ShadowPad and PlugX. <strong><a href="/playbooks/actors/lazarus.html">Lazarus</a></strong> uses custom backdoors with distinctive C2 protocols.
+</p>
+
+</div>
+
+<footer>
+  <p>TONK &middot; Threat Observation &amp; Network Kill-chain</p>
+  <p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p>
+</footer>
+</body>
+</html>

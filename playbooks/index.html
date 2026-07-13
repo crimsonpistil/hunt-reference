@@ -133,12 +133,12 @@
 <span class="section-label">by environment</span>
 <div class="card-grid">
 
-  <div class="pb-card environ soon">
-    <span class="pb-pill planned">Planned</span>
+  <a href="environments/airgap-ot.html" class="pb-card environ">
+    <span class="pb-pill environ">Live</span>
     <div class="pb-name">Air-Gapped OT / ICS</div>
     <div class="pb-desc">Minimally connected or fully isolated industrial environments. What should never exist on the network becomes a tripwire. Host-side detection with no cloud EDR dependency.</div>
-    <div class="pb-meta">Purdue Level 2-3 &middot; no internet egress</div>
-  </div>
+    <div class="pb-meta">Purdue Level 2-3 &middot; no internet egress &middot; 10-step checklist &middot; 7 tripwires</div>
+  </a>
 
   <div class="pb-card environ soon">
     <span class="pb-pill planned">Planned</span>
@@ -157,31 +157,83 @@
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
-<!--  SCENARIO PLAYBOOKS                        -->
+<!--  INCIDENT TRIAGE PLAYBOOKS                 -->
 <!-- ═══════════════════════════════════════════ -->
 
-<span class="section-label">by scenario</span>
+<span class="section-label">incident triage: tier 1 - you will see these</span>
+<div class="card-grid">
+
+  <a href="triage/ransomware.html" class="pb-card scenario">
+    <span class="pb-pill scenario">Live</span>
+    <div class="pb-name">Ransomware Detected</div>
+    <div class="pb-desc">"Encryption started." Or increasingly, just the extortion note with no encryption at all. 70%+ now steal before encrypting. Blast radius, deployment mechanism, exfil timeline, and the question nobody wants to ask: did they already take everything?</div>
+    <div class="pb-meta">reactive &middot; time-critical &middot; 13-step checklist &middot; 3 phases</div>
+  </a>
+
+  <a href="triage/compromised-credentials.html" class="pb-card scenario">
+    <span class="pb-pill scenario">Live</span>
+    <div class="pb-name">Compromised Credentials</div>
+    <div class="pb-desc">Valid creds in use, no malware anywhere. 82% of CrowdStrike 2025 detections were malware-free. Infostealers, MFA bypass, help desk social engineering, or creds bought from an IAB. Which accounts, where did they go, what did they touch.</div>
+    <div class="pb-meta">reactive &middot; identity-based &middot; 13-step checklist &middot; 3 phases</div>
+  </a>
+
+  <a href="triage/c2-beacon.html" class="pb-card scenario">
+    <span class="pb-pill scenario">Live</span>
+    <div class="pb-name">C2 Beacon Found</div>
+    <div class="pb-desc">"We found C2 on one host. How far did they get?" Scope outward from the compromised host through credential access, lateral movement, and data staging. The host you found it on is never the only one.</div>
+    <div class="pb-meta">reactive &middot; single host confirmed &middot; 12-step checklist &middot; 3 phases</div>
+  </a>
+
+  <div class="pb-card scenario soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">Business Email Compromise</div>
+    <div class="pb-desc">Phishing is the #1 initial access vector again (35% per Talos Q1 2026). 76% of phishing cases become BEC. Mailbox rules forwarding to external, financial fraud in progress, lateral phishing from the compromised account, and OAuth app consent abuse.</div>
+    <div class="pb-meta">reactive &middot; identity + email &middot; #1 initial access vector</div>
+  </div>
+
+</div>
+
+<span class="section-label">incident triage: tier 2 - common and growing</span>
 <div class="card-grid">
 
   <div class="pb-card scenario soon">
     <span class="pb-pill planned">Planned</span>
-    <div class="pb-name">Intel Warning Received</div>
-    <div class="pb-desc">"Our sector is being targeted by X." The proactive hunt: what to look for before you have evidence, prioritized by what's most likely to already be in your environment undetected.</div>
-    <div class="pb-meta">proactive &middot; no indicators yet</div>
+    <div class="pb-name">Edge Device Compromised</div>
+    <div class="pb-desc">VPN, firewall, or web appliance exploited. 56% of tracked vulns exploitable without auth (IBM X-Force 2026). The appliance is the foothold, not the target. What did they pivot to? Check for credential harvest, config dump, and tunnel establishment.</div>
+    <div class="pb-meta">reactive &middot; perimeter breach &middot; pivot-focused</div>
   </div>
 
   <div class="pb-card scenario soon">
     <span class="pb-pill planned">Planned</span>
-    <div class="pb-name">Beacon Found</div>
-    <div class="pb-desc">"We found C2 on one host. How far did they get?" The scoping sequence: work outward from the compromised host through credential access, lateral movement, and data staging.</div>
-    <div class="pb-meta">reactive &middot; single host confirmed</div>
+    <div class="pb-name">Supply Chain Indicator</div>
+    <div class="pb-desc">Third-party compromise, SaaS OAuth abuse, vendor software backdoored. Quadrupled over 5 years. Assess exposure: shared credentials, OAuth tokens, API integrations, and how many of your environments the compromised vendor touches.</div>
+    <div class="pb-meta">reactive &middot; third-party &middot; scope shared trust</div>
   </div>
 
   <div class="pb-card scenario soon">
     <span class="pb-pill planned">Planned</span>
-    <div class="pb-name">Ransomware on One Host</div>
-    <div class="pb-desc">"Encryption started on a workstation." The triage sequence: determine blast radius, find the deployment mechanism, identify the initial access point, and check for data exfil before encryption.</div>
-    <div class="pb-meta">reactive &middot; time-critical &middot; scope the blast</div>
+    <div class="pb-name">Data Exfiltration Detected</div>
+    <div class="pb-desc">Outbound data movement found in proxy, DLP, or network telemetry. Reconstruct: what left, how (HTTPS, DNS, cloud storage, code repo), when it started, and whether the exfil channel is still active. Work backward to the staging host.</div>
+    <div class="pb-meta">reactive &middot; data loss &middot; reconstruct the timeline</div>
+  </div>
+
+</div>
+
+<span class="section-label">incident triage: tier 3 - specialized, high-impact</span>
+<div class="card-grid">
+
+  <div class="pb-card scenario soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">Living-off-the-Land Activity</div>
+    <div class="pb-desc">No malware. Just LOLBin sequences, RMM tool abuse, and legitimate admin commands in the wrong context. The Volt Typhoon pattern. The hardest triage because every artifact individually looks normal. Confirmation requires behavioral sequencing, not signatures.</div>
+    <div class="pb-meta">reactive &middot; no IOCs &middot; behavioral confirmation only</div>
+  </div>
+
+  <div class="pb-card scenario soon">
+    <span class="pb-pill planned">Planned</span>
+    <div class="pb-name">Infostealer Infection</div>
+    <div class="pb-desc">Credential harvester detected or your creds showed up on a dark web monitoring feed. 300K+ ChatGPT creds for sale in 2025 alone. Assess what was stolen: browser passwords, session cookies, SSH keys, cloud tokens. Then check where every one of those creds is valid.</div>
+    <div class="pb-meta">reactive &middot; credential exposure &middot; blast radius assessment</div>
   </div>
 
 </div>
