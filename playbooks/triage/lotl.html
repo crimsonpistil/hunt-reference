@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Living-off-the-Land Activity</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}
+  .logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}
+  .site-switcher{display:flex;gap:4px}
+  .switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}
+  .back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}
+  .pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--amber);border:1px solid rgba(210,153,34,.4);background:rgba(210,153,34,.08)}
+  .pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}
+  .pb-sub{font-size:13px;color:var(--text3);max-width:640px;margin:0 auto;line-height:1.6}
+  .pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}
+  .section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}
+  .section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}
+  .check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}
+  .check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}
+  .check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}
+  .check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}
+  .note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .note-box.blue{border-left-color:var(--accent)}.note-box.blue strong{color:var(--accent)}
+  .seq-block{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin:12px 0 20px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:2}
+  .seq-block .seq-arrow{color:var(--red);font-weight:700}
+  .seq-block .seq-cmd{color:var(--text);background:var(--bg3);padding:2px 6px;border-radius:3px}
+  .seq-block .seq-label{color:var(--text3);font-size:10px;display:block;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}
+  footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher">
+    <a class="switcher-side" href="/net/">NET</a>
+    <a class="switcher-side" href="/host/">HOST</a>
+    <a class="switcher-side" href="/attribution/">ATTRIB</a>
+    <span class="switcher-side active">PLAYBOOKS</span>
+  </div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">INCIDENT TRIAGE &middot; TIER 3</div>
+  <div class="pb-title">Living-off-the-Land Activity</div>
+  <div class="pb-sub">No malware. No C2 beacon. No IOCs. Just native tools and valid credentials in the wrong hands. Every command individually looks normal. Confirmation requires proving the SEQUENCE is wrong, not any single artifact.</div>
+  <div class="pb-meta-row">reactive &middot; behavioral confirmation only &middot; the hardest triage</div>
+</div>
+
+<div class="content">
+
+<div class="section-head red">Why this is the hardest playbook</div>
+
+<p class="prose">
+  Every other triage playbook starts with something concrete: an encrypted file, a beacon callback, a compromised credential alert. This one starts with a feeling. A SOC analyst noticed that someone ran <strong>nltest /dclist</strong> followed by <strong>net group "Domain Admins" /domain</strong> from a workstation that belongs to an HR employee. Nothing fired. Nothing is malware. The question is whether a human is doing something they shouldn't be, or an adversary is doing exactly what a human would.
+</p>
+<p class="prose">
+  LOTL operators like <strong>Volt Typhoon</strong> weaponize this ambiguity deliberately. They use <strong>no custom tools, no implants, no malware</strong>. They authenticate with stolen credentials, run built-in commands for discovery, use native file transfer (SMB, RDP clipboard, certutil) for staging, and maintain access through legitimate remote access methods (RDP, SSH, VPN). The only anomaly is behavioral: this account is doing things this account has never done before.
+</p>
+
+<div class="note-box red">
+  <strong>You cannot confirm LOTL from a single event.</strong> Every individual command in a LOTL intrusion has a legitimate explanation. The evidence is the pattern: timing, sequencing, source context, and access deviation. If you're looking for a smoking gun, you won't find one. You're building a circumstantial case.
+</div>
+
+<div class="section-head amber">Suspicious sequences to look for</div>
+
+<p class="prose">These are the command sequences that distinguish LOTL intrusions from legitimate administration. No single command is malicious. The sequence, timing, and source context make the case.</p>
+
+<div class="seq-block">
+  <span class="seq-label">Classic discovery burst (30-60 seconds, same session)</span>
+  <span class="seq-cmd">whoami /all</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">ipconfig /all</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">systeminfo</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">net user /domain</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">net group "Domain Admins" /domain</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">tasklist</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">netstat -ano</span>
+</div>
+
+<div class="seq-block">
+  <span class="seq-label">Credential recon into lateral movement</span>
+  <span class="seq-cmd">nltest /dclist:</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">net group "Domain Admins" /domain</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">net view \\DC01</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">dir \\DC01\SYSVOL</span> <span class="seq-arrow">&rarr;</span>
+  <em style="color:var(--text3)">then RDP or SMB to that DC</em>
+</div>
+
+<div class="seq-block">
+  <span class="seq-label">Linux LOTL (post-SSH foothold)</span>
+  <span class="seq-cmd">id</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">uname -a</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">cat /etc/passwd</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">ss -tunlp</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">find / -name authorized_keys</span> <span class="seq-arrow">&rarr;</span>
+  <span class="seq-cmd">cat /etc/shadow</span> <span class="seq-arrow">&rarr;</span>
+  <em style="color:var(--text3)">then SSH to other hosts using harvested keys</em>
+</div>
+
+<div class="section-head blue">Investigation checklist</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Establish the account baseline</strong>
+    What does this account NORMALLY do? Pull 30-60 days of authentication and process history. What hosts does it log into? What times? What commands does it typically run? The deviation from this baseline is the evidence. An HR user running nltest is the anomaly, not nltest itself.
+    <span class="ref"><a href="/host/discovery.html#T1033">HOST: T1033</a> User Discovery &middot; Security EID 4624 history by account</span>
+  </li>
+  <li>
+    <strong>2. Check the authentication source</strong>
+    Where did this session originate? VPN from a new IP, RDP from an internal host the user doesn't normally touch, SSH from a server that shouldn't initiate sessions. Credential theft via infostealer often manifests as valid creds from an unexpected geolocation or IP range.
+    <span class="ref"><a href="/host/lateral_movement.html#T1021.001">HOST: T1021.001</a> RDP &middot; Security EID 4624 source IP analysis</span>
+  </li>
+  <li>
+    <strong>3. Map the discovery command sequence</strong>
+    Isolate all commands run by this account/session in the suspicious window. Build the timeline. An admin troubleshooting runs targeted commands with gaps (check one thing, think, check another). An attacker runs a scripted enumeration burst: 6-10 discovery commands in 30-60 seconds, often in alphabetical or playbook order.
+    <span class="ref"><a href="/host/discovery.html">HOST: Discovery</a> (all techniques) &middot; Sysmon EID 1 timeline by session</span>
+  </li>
+  <li>
+    <strong>4. Check for RMM tool abuse</strong>
+    Legitimate Remote Monitoring and Management tools (AnyDesk, TeamViewer, ConnectWise ScreenConnect, Atera, Splashtop) are increasingly used as C2 alternatives. They're signed, trusted, and generate no malware alerts. Check for: RMM tools not in your approved software list, RMM tools installed after the suspicious session started, or RMM tools connecting to accounts not associated with your IT team.
+    <span class="ref">Sysmon EID 1: process creation for RMM binaries &middot; EID 3: connections to RMM cloud infra</span>
+  </li>
+  <li>
+    <strong>5. Look for "hands on keyboard" indicators</strong>
+    Automated scripts execute commands at machine speed with zero gaps. Interactive operators have human-speed typing with variable gaps. But sophisticated operators script their enumeration too. Better signals: command typos followed by corrections, use of cls/clear between commands (cleaning the screen for readability), and dir/ls browsing through directories exploratorily rather than targeting specific paths.
+    <span class="ref">Sysmon EID 1 timestamp analysis &middot; PowerShell ScriptBlock EID 4104</span>
+  </li>
+  <li>
+    <strong>6. Trace file access and data movement</strong>
+    LOTL operators use built-in tools for staging: <strong>xcopy</strong>, <strong>robocopy</strong>, <strong>tar</strong>, <strong>certutil -encode</strong>, PowerShell <strong>Compress-Archive</strong>, or just <strong>copy</strong> to a share. They don't need Rclone or MEGAcmd. Check for bulk file operations by the suspect account, especially targeting sensitive directories (finance, HR, executive, engineering).
+    <span class="ref"><a href="/host/lateral_movement.html#T1570">HOST: T1570</a> Lateral Tool Transfer &middot; Security EID 5145 share access</span>
+  </li>
+  <li>
+    <strong>7. Check for credential escalation without tools</strong>
+    LOTL operators escalate using built-in mechanisms: adding themselves to groups (<strong>net localgroup administrators</strong>), modifying ACLs, requesting Kerberos tickets for SPNs (Kerberoasting with native .NET, no Rubeus needed), or finding credentials in GPP/SYSVOL. No Mimikatz, no hash dump, just native Windows functionality.
+    <span class="ref"><a href="/host/credential_access.html#T1558.003">HOST: T1558.003</a> Kerberoasting &middot; <a href="/host/privilege_escalation.html">HOST: Privilege Escalation</a></span>
+  </li>
+  <li>
+    <strong>8. Check for persistence via legitimate mechanisms</strong>
+    No implant, no rootkit, no registry Run key. LOTL persistence is: a new VPN user, an added SSH authorized_key, a scheduled task that runs a legitimate binary with attacker-controlled arguments, or simply maintaining valid credentials that are never rotated. Check for new accounts, new group memberships, new scheduled tasks, and new SSH keys that appeared during the suspicious window.
+    <span class="ref"><a href="/host/persistence.html#T1098.004">HOST: T1098.004</a> SSH Keys &middot; <a href="/host/persistence.html#T1053.003">HOST: T1053.003</a> Cron &middot; Security EID 4720/4732</span>
+  </li>
+  <li>
+    <strong>9. Check for anti-forensic cleanup</strong>
+    LOTL operators who are aware of logging will clear their traces using built-in tools: <strong>wevtutil cl</strong> (Windows event logs), <strong>history -c</strong> or <strong>unset HISTFILE</strong> (bash history), <strong>del</strong> on staging directories. The cleanup itself is detectable if logging captures the cleanup commands before they take effect.
+    <span class="ref"><a href="/host/defense_evasion.html#T1070.001">HOST: T1070.001</a> Clear Event Logs &middot; <a href="/host/defense_evasion.html#T1070.003">HOST: T1070.003</a> Clear History</span>
+  </li>
+  <li>
+    <strong>10. Build the circumstantial case</strong>
+    You will not find a binary to submit to a sandbox. You will not find a C2 IP to block. What you have is: an account that deviated from its baseline, ran a structured enumeration sequence, accessed resources it doesn't normally touch, possibly escalated privileges through native mechanisms, and possibly staged or moved data using built-in tools. The totality of the deviation IS the evidence. Document the timeline, the baseline comparison, and each anomaly.
+  </li>
+</ol>
+
+<div class="section-head green">How to confirm (or rule out) LOTL</div>
+
+<p class="prose">
+  <strong>It's LOTL if:</strong> The commands are individually legitimate but the sequence matches a known enumeration or attack pattern, the account's behavior deviates from its 30-60 day baseline, the session originates from an unusual source, and there is no IT change ticket or administrative justification for the activity.
+</p>
+<p class="prose">
+  <strong>It's NOT LOTL if:</strong> The user can explain the activity (IT troubleshooting, new software setup), the commands match the user's normal work pattern, the session comes from the user's normal workstation at their normal working hours, or IT confirms the activity was authorized.
+</p>
+<p class="prose">
+  <strong>The gray zone:</strong> Sometimes you can't confirm or rule out. The activity is unusual but not impossible for a legitimate user. In this case, increase monitoring on the account (enable verbose logging, add to a watchlist), notify the user's manager to confirm the activity, and check whether the credentials are exposed in any breach databases or infostealer logs.
+</p>
+
+<div class="note-box blue">
+  <strong>The detection prerequisite.</strong> LOTL detection requires behavioral baselines: what accounts do what, from where, at what times. Without baselines, you cannot distinguish "unusual" from "normal." If your environment doesn't have user behavior analytics or at least historical authentication logs, your ability to confirm LOTL is severely limited. The investment in baselining pays for itself here.
+</div>
+
+<div class="section-head default">Actors who operate this way</div>
+
+<p class="prose">
+  <strong><a href="/playbooks/actors/volt-typhoon.html">Volt Typhoon</a></strong> is the defining LOTL actor. CISA's 2024 advisory documented their operations on US critical infrastructure using nothing but valid credentials and built-in tools, with multi-year dwell times. No malware was ever deployed. Detection came from behavioral anomalies in authentication logs and command patterns.
+</p>
+<p class="prose">
+  <strong><a href="/playbooks/actors/apt29.html">APT29</a></strong> increasingly operates in LOTL mode post-initial-access, particularly in cloud environments where they use native Azure/M365 admin tools rather than deploying implants. Their cloud operations are almost entirely credential-based.
+</p>
+<p class="prose">
+  <strong>Scattered Spider (UNC3944)</strong> combines social engineering (help desk calls for MFA resets) with pure credential abuse. Post-access, they use RMM tools and native admin utilities. No custom malware. They target identity providers specifically to maximize the value of stolen credentials.
+</p>
+<p class="prose">
+  <strong>Ransomware pre-staging</strong> increasingly uses LOTL techniques in the early reconnaissance phase before deploying tools. The discovery and credential access phases look like normal admin activity; the ransomware-specific tooling only appears in the final hours.
+</p>
+
+</div>
+
+<footer>
+  <p>TONK &middot; Threat Observation &amp; Network Kill-chain</p>
+  <p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p>
+</footer>
+</body>
+</html>
