@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Hybrid AD Enterprise</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--accent);border:1px solid rgba(88,166,255,.4);background:rgba(88,166,255,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:640px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .tripwire-list{list-style:none;margin:0 0 20px;padding:0}.tripwire-list li{position:relative;padding:10px 14px 10px 36px;margin-bottom:6px;background:rgba(248,81,73,.04);border:1px solid rgba(248,81,73,.15);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.6}.tripwire-list li::before{content:'!';position:absolute;left:12px;top:10px;width:16px;height:16px;background:rgba(248,81,73,.15);color:var(--red);font-family:var(--mono);font-size:10px;font-weight:700;text-align:center;line-height:16px;border-radius:3px}.tripwire-list li strong{color:var(--text)}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">ENVIRONMENT</div>
+  <div class="pb-title">Hybrid AD Enterprise</div>
+  <div class="pb-sub">On-prem Active Directory synced to Azure AD / Entra ID. The attack paths that span both environments: on-prem compromise to cloud escalation, cloud-to-on-prem reverse pivot, and the identity trust boundaries that attackers abuse to move between them.</div>
+  <div class="pb-meta-row">AD + Entra ID &middot; AD FS / AD Connect &middot; hybrid identity &middot; dual-surface detection</div>
+</div>
+
+<div class="content">
+
+<div class="section-head red">Why hybrid AD is the hardest environment to defend</div>
+
+<p class="prose">
+  A pure on-prem AD environment has one trust boundary. A pure cloud environment has one trust boundary. A hybrid environment has <strong>both, plus the sync mechanism connecting them</strong>, and attackers move across these boundaries in directions that monitoring often doesn't cover.
+</p>
+<p class="prose">
+  The core problem: <strong>on-prem AD compromise gives you cloud access</strong> (via AD Connect password hash sync, pass-through auth, or AD FS SAML forgery), and <strong>cloud compromise gives you on-prem access</strong> (via Azure AD Connect sync account, Intune device enrollment, or cloud-to-on-prem hybrid join). Most organizations monitor one environment well and the other poorly. Attackers exploit the transition.
+</p>
+
+<div class="note-box red">
+  <strong>The Golden SAML scenario.</strong> If an attacker compromises your AD FS server and steals the token-signing certificate, they can forge SAML tokens to authenticate as any user to any federated cloud service without knowing the user's password or triggering MFA. This is the APT29 SolarWinds post-compromise technique and it bypasses every cloud-side control. The on-prem AD FS server IS your cloud security boundary.
+</div>
+
+<div class="section-head amber">Critical trust boundaries to monitor</div>
+
+<ul class="tripwire-list">
+  <li><strong>AD Connect sync account.</strong> The account that syncs password hashes from on-prem AD to Entra ID. Compromise of this account = ability to read all on-prem password hashes. Monitor for: unusual access to this service account, sign-ins from unexpected hosts, and permission changes.</li>
+  <li><strong>AD FS signing certificate.</strong> The private key that signs SAML tokens for federated authentication. Access to this key = Golden SAML = unlimited cloud access. Monitor for: certificate exports, AD FS server access by non-admin accounts, and SAML tokens with unusual claims or lifetimes.</li>
+  <li><strong>Seamless SSO computer account (AZUREADSSOACC).</strong> The Kerberos decryption key for this account enables Silver Ticket attacks against Azure AD. Monitor for: password changes on the AZUREADSSOACC$ account that don't correspond to scheduled rotation.</li>
+  <li><strong>Entra ID Global Administrator accounts.</strong> Cloud-side equivalent of Domain Admin. Should use phishing-resistant MFA, PIM (Privileged Identity Management) for just-in-time activation, and should NEVER be synced from on-prem AD (cloud-only accounts for cloud admin).</li>
+  <li><strong>OAuth application permissions.</strong> Service principals and app registrations with high-privilege scopes (Directory.ReadWrite.All, Mail.ReadWrite, RoleManagement.ReadWrite.Directory). These survive password resets and MFA changes.</li>
+  <li><strong>Conditional Access policy gaps.</strong> Policies that apply to users but not service principals, that cover browser access but not mobile apps, or that exclude "break glass" accounts that attackers discover and abuse.</li>
+</ul>
+
+<div class="section-head blue">Hunt checklist: hybrid AD environment</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Audit AD Connect configuration and sync account</strong>
+    Verify AD Connect health: is it syncing normally, has the configuration been modified, is password hash sync enabled (and should it be)? Check the sync service account (MSOL_*) for: password changes, unusual sign-in activity, and permission modifications. This account has DCSync rights by default.
+    <span class="ref"><a href="/host/credential_access.html#T1003.006">HOST: T1003.006</a> DCSync &middot; Azure AD Connect Health</span>
+  </li>
+  <li>
+    <strong>2. Check for AD FS signing certificate access</strong>
+    If you use AD FS: who has accessed the AD FS server recently? Check for: remote logons to the AD FS server, certificate export events, and PowerShell commands targeting AD FS configuration (Get-AdfsProperties, Export-PfxCertificate). If the signing certificate was compromised, rotate it immediately and revoke all issued tokens.
+    <span class="ref"><a href="/host/credential_access.html">HOST: Credential Access</a> &middot; AD FS audit logs &middot; <a href="/playbooks/actors/apt29.html">APT29</a> Golden SAML</span>
+  </li>
+  <li>
+    <strong>3. Audit on-prem privileged accounts for cloud access</strong>
+    Domain Admins with synced Entra ID accounts have both on-prem and cloud admin rights. List all accounts with: on-prem DA/EA membership AND Entra ID Global Admin/Privileged Role assignments. These dual-privilege accounts are the highest-value targets because compromising one gives access to both environments.
+    <span class="ref"><a href="/host/discovery.html#T1087.002">HOST: T1087.002</a> Domain Enumeration &middot; Entra ID role assignments</span>
+  </li>
+  <li>
+    <strong>4. Search for cloud-to-on-prem lateral movement</strong>
+    Can cloud access reach on-prem? Check for: Intune device management pushing scripts or configurations to domain-joined devices, Azure Arc connected machines that bridge cloud management to on-prem servers, and Entra ID joined devices with VPN access to the corporate network. Each is a reverse-pivot path.
+    <span class="ref"><a href="/host/lateral_movement.html">HOST: Lateral Movement</a> &middot; Intune script execution audit</span>
+  </li>
+  <li>
+    <strong>5. Review OAuth application consent grants and service principals</strong>
+    The APT29 attack surface. Search for: recently created app registrations, apps with high-privilege API permissions (Directory.ReadWrite.All, Mail.ReadWrite), multi-tenant apps consented by non-admin users, and service principals with newly added credentials. One malicious OAuth app can provide persistent access that survives every credential reset.
+    <span class="ref"><a href="/playbooks/actors/apt29.html">APT29</a> playbook &middot; Entra ID: Enterprise Applications + App registrations</span>
+  </li>
+  <li>
+    <strong>6. Hunt for Kerberoasting and AS-REP roasting</strong>
+    On-prem credential attacks that yield domain credentials usable for cloud access (via password hash sync). Kerberoasting: EID 4769 with RC4 etype targeting service accounts with SPNs. AS-REP roasting: accounts with "Do not require pre-authentication" enabled. Cracked passwords grant cloud access if the account syncs to Entra ID.
+    <span class="ref"><a href="/host/credential_access.html#T1558.003">HOST: T1558.003</a> Kerberoasting &middot; <a href="/host/credential_access.html#T1003.006">T1003.006</a> DCSync</span>
+  </li>
+  <li>
+    <strong>7. Baseline authentication patterns across both surfaces</strong>
+    Build a map: which accounts authenticate where (on-prem DC, Entra ID, both), from which sources (workstation, VPN, cloud app), at what times. The anomaly in hybrid environments is an account that normally authenticates only on-prem suddenly appearing in Entra ID sign-in logs (or vice versa). This cross-surface deviation is the detection signal for hybrid lateral movement.
+    <span class="ref">Security EID 4624 (on-prem) &middot; Entra ID sign-in logs (cloud) &middot; Correlation</span>
+  </li>
+  <li>
+    <strong>8. Check for PTA (Pass-Through Authentication) agent compromise</strong>
+    If you use PTA instead of password hash sync: the PTA agent on your on-prem server validates cloud authentication requests in real-time. Compromise of the PTA agent host = ability to intercept and approve any cloud authentication. Verify PTA agent host integrity, check for unauthorized access, and ensure the host is hardened and monitored.
+    <span class="ref"><a href="/host/credential_access.html">HOST: Credential Access</a> &middot; PTA agent host Sysmon</span>
+  </li>
+  <li>
+    <strong>9. Verify Conditional Access coverage</strong>
+    Conditional Access policies are only effective if they cover all authentication paths. Audit for: policies that exclude emergency/break-glass accounts (attackers discover and use these), policies that don't apply to service principals, gaps in MFA enforcement for legacy protocols, and named location exemptions that an attacker on VPN could abuse.
+    <span class="ref">Entra ID: Conditional Access audit &middot; What-if analysis tool</span>
+  </li>
+  <li>
+    <strong>10. Test the on-prem-to-cloud escalation paths</strong>
+    Proactively validate: can a Domain Admin create a Global Admin in Entra ID? Can the AD Connect sync account be used to extract password hashes? Can the AZUREADSSOACC Kerberos key be used to forge cloud authentication? These are the paths attackers use. If you can do it in a red team exercise, they can do it in an intrusion.
+    <span class="ref">BloodHound / AzureHound (maps hybrid escalation paths)</span>
+  </li>
+</ol>
+
+<div class="section-head default">Actors who target hybrid AD</div>
+
+<p class="prose">
+  <strong><a href="/playbooks/actors/apt29.html">APT29</a></strong> is the primary hybrid AD threat. The SolarWinds post-compromise escalation was entirely about abusing AD FS trust to move from on-prem to cloud (Golden SAML). Their 2024 Microsoft breach exploited a legacy test tenant. APT29's entire modern tradecraft is built around cloud identity abuse in hybrid environments.
+</p>
+<p class="prose">
+  <strong><a href="/playbooks/actors/apt28.html">APT28</a></strong> targets Exchange and mailbox permissions in hybrid environments. Their campaigns modify mailbox folder permissions for persistent email access across both on-prem Exchange and Exchange Online.
+</p>
+<p class="prose">
+  <strong>Ransomware operators</strong> increasingly target hybrid AD for maximum impact: compromise on-prem DA, sync to cloud, disable cloud security controls, then deploy ransomware domain-wide with cloud-side backup destruction.
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>

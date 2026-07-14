@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Infostealer Infection</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--amber);border:1px solid rgba(210,153,34,.4);background:rgba(210,153,34,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:640px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">INCIDENT TRIAGE &middot; TIER 3</div>
+  <div class="pb-title">Infostealer Infection</div>
+  <div class="pb-sub">Credential harvester detected on a host, or your credentials showed up in a dark web monitoring feed. The malware already ran. The question isn't "remove it." The question is: what did it take, and where is every stolen credential valid?</div>
+  <div class="pb-meta-row">reactive &middot; credential exposure &middot; blast radius assessment &middot; the malware is the beginning, not the end</div>
+</div>
+
+<div class="content">
+
+<div class="section-head red">Why infostealers matter more than most malware</div>
+
+<p class="prose">
+  An infostealer runs for 30 seconds and exits. It's not persistent. It doesn't beacon. It doesn't spread. By every traditional metric, it's a low-severity incident: one host, one execution, no C2, no lateral movement. The AV quarantined it. Ticket closed.
+</p>
+<p class="prose">
+  Except the attacker now has <strong>every credential that was on that machine</strong>: browser-saved passwords (all of them), session cookies (active logins to every web service), SSH private keys, cloud tokens, VPN credentials, Wi-Fi passwords, cryptocurrency wallet seeds, and every autofill field the user has ever populated. Those credentials are sold on dark web markets within hours. Buyers use them for BEC, ransomware initial access, account takeover, and corporate network intrusion.
+</p>
+<p class="prose">
+  The infostealer itself is trivial. <strong>The credential blast radius is the actual incident.</strong>
+</p>
+
+<div class="note-box red">
+  <strong>Session cookies bypass MFA.</strong> Infostealers steal active browser session cookies. A valid session cookie authenticates to the service as the user without requiring a password or MFA challenge. Password reset alone does not invalidate stolen cookies. You must revoke all active sessions on every compromised service.
+</div>
+
+<div class="section-head amber">Common infostealer families</div>
+
+<p class="prose">
+  <strong>Raccoon Stealer:</strong> MaaS (Malware-as-a-Service). Steals browser credentials, cookies, crypto wallets, system info. Sold on Telegram. Active since 2019, v2 rebuilt in C/C++.<br>
+  <strong>RedLine Stealer:</strong> Most widely deployed infostealer 2021-2024. Browser creds, FTP clients, VPN configs, Discord tokens, Steam sessions. Disrupted by law enforcement in late 2024 but variants persist.<br>
+  <strong>Vidar:</strong> Forked from Arkei. Targets browser data, 2FA software databases (Authy, Google Authenticator exports), crypto wallets, and Telegram sessions.<br>
+  <strong>Lumma Stealer:</strong> Rising post-RedLine disruption. Active MaaS with frequent updates. Browser targeting, crypto wallet injection, and clipboard hijacking.<br>
+  <strong>META Stealer:</strong> Targets macOS specifically. Harvests Keychain credentials, browser data, and cryptocurrency wallets. Delivered via malicious DMG files.
+</p>
+
+<div class="section-head blue">Triage checklist: infostealer detected or credentials leaked</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Identify the scope of harvested data</strong>
+    Determine the infostealer family (AV detection name, hash, or behavioral analysis). Each family targets different data stores. At minimum assume: all browser-saved passwords, all active session cookies, all autofill data (addresses, credit cards, form fields), and system information (hostname, IP, installed software, screenshots). Higher-end stealers also grab: SSH keys, RDP credentials, VPN configs, cryptocurrency wallets, and messaging app sessions.
+    <span class="ref"><a href="/host/credential_access.html#T1555.003">HOST: T1555.003</a> Browser Creds &middot; <a href="/host/credential_access.html#T1552.001">T1552.001</a> Creds in Files</span>
+  </li>
+  <li>
+    <strong>2. Enumerate every service the user had saved credentials for</strong>
+    Export the browser's password manager (Chrome: chrome://settings/passwords, Firefox: about:logins) to identify every site/service with saved credentials. This is your blast radius map. Every entry is a compromised credential. Prioritize: corporate SSO/VPN, email, cloud services (AWS, Azure, GCP), financial accounts, code repositories (GitHub, GitLab), and anything with admin/privileged access.
+  </li>
+  <li>
+    <strong>3. Revoke all active sessions, not just passwords</strong>
+    For every service identified in step 2: reset the password AND revoke all active sessions/tokens. Stolen session cookies remain valid until the session is explicitly revoked, even after a password change. For cloud services: revoke OAuth tokens, API keys, and refresh tokens. For corporate services: force re-authentication on all sessions.
+    <span class="ref"><a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> playbook</span>
+  </li>
+  <li>
+    <strong>4. Check for SSH key compromise</strong>
+    If the infected host had SSH keys (check ~/.ssh/ and any SSH agent forwarding), every server those keys authenticate to is now accessible. Enumerate: which servers trust these keys (check authorized_keys on all accessible hosts), whether SSH agent forwarding was in use (extends exposure to every hop), and whether the private key was passphrase-protected (infostealers grab the file, not the passphrase, but weak passphrases are crackable).
+    <span class="ref"><a href="/host/credential_access.html#T1552.004">HOST: T1552.004</a> SSH Keys &middot; <a href="/playbooks/environments/linux-fleet.html">Linux Fleet</a> playbook</span>
+  </li>
+  <li>
+    <strong>5. Check for cloud token and API key exposure</strong>
+    Search the infected host for: AWS credentials (~/.aws/credentials, environment variables), Azure tokens (~/.azure/), GCP service account keys, and any .env files with API keys. Infostealers that grab files from common paths capture cloud credentials as a side effect. A stolen AWS access key is an open door to your cloud infrastructure.
+  </li>
+  <li>
+    <strong>6. Check for VPN credential compromise</strong>
+    If the user had VPN credentials saved (in a VPN client, browser, or credential manager), the attacker can authenticate to your corporate network from the outside. Check which VPN accounts are associated with the user, reset those credentials, and review VPN authentication logs for logins from unusual IPs after the infection timestamp.
+    <span class="ref">VPN authentication logs &middot; Conditional Access: geographic/device filters</span>
+  </li>
+  <li>
+    <strong>7. Check for cryptocurrency wallet exposure</strong>
+    Infostealers target wallet.dat files, browser extension wallets (MetaMask, Phantom), and seed phrase storage. If the user had cryptocurrency assets: check wallet balances immediately, transfer remaining funds to a new wallet with new keys, and assume any wallet the infected machine had access to is compromised.
+  </li>
+  <li>
+    <strong>8. Determine the delivery mechanism</strong>
+    How did the infostealer get on the host? Common vectors: cracked software downloads, fake game cheats/mods, phishing email with malicious attachment, SEO-poisoned download links, malicious ads (malvertising), and trojanized legitimate software. The delivery vector determines whether other users are at risk of the same infection.
+    <span class="ref"><a href="/host/execution.html">HOST: Execution</a> &middot; Sysmon EID 1 parent process chain</span>
+  </li>
+  <li>
+    <strong>9. Check dark web feeds for the stolen data</strong>
+    Infostealer logs are sold on dark web marketplaces and Telegram channels within hours to days. If your organization uses a dark web monitoring service (SpyCloud, Flare, Hudson Rock, Have I Been Pwned), check for the user's corporate email and personal email in recent credential dumps. The log may show exactly what was taken.
+  </li>
+  <li>
+    <strong>10. Assess whether the infected host was corporate or personal (BYOD)</strong>
+    If the infection was on a personal device that accessed corporate resources (BYOD, home computer with VPN access, personal phone with corporate email), the blast radius extends to every corporate service the user accessed from that device. Corporate credentials on an unmanaged personal device are exposed credentials. This is increasingly common as infostealers target home computers that have corporate VPN/SSO saved in the browser.
+  </li>
+  <li>
+    <strong>11. Check for follow-on access using stolen credentials</strong>
+    After addressing the infostealer itself, hunt for evidence that stolen credentials have already been used. Pull authentication logs for every compromised account and check for: logins from new IPs, logins from unusual geolocations, logins at unusual times, and access to resources the user doesn't normally touch. The stolen credentials may have been sold and used before you detected the infostealer.
+    <span class="ref"><a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> playbook &middot; <a href="/playbooks/triage/bec.html">BEC</a> playbook</span>
+  </li>
+</ol>
+
+<div class="section-head green">The BYOD problem</div>
+
+<p class="prose">
+  The fastest-growing infostealer vector is <strong>personal devices with corporate access</strong>. An employee's home computer has corporate VPN credentials saved in Chrome. Their kid downloads a cracked game. The game installs Raccoon Stealer. The infostealer grabs every browser password including the corporate VPN, SSO, and email credentials. The stolen log is sold on Telegram. A ransomware affiliate buys it and uses the VPN credentials to enter the corporate network.
+</p>
+<p class="prose">
+  This is not a theoretical scenario. It is documented in multiple IR engagements as a primary ransomware initial access vector. The corporate perimeter was not breached. The employee's home computer was, and it had the keys.
+</p>
+
+<div class="note-box">
+  <strong>The infostealer-to-ransomware pipeline.</strong> Infostealers are the #1 source of initial access credentials for ransomware affiliates. The pipeline: infostealer infects a home computer, harvests corporate VPN/SSO creds, logs are sold in bulk on dark web markets, ransomware affiliate buys logs filtered by industry/revenue, affiliate authenticates to VPN with valid creds, no exploitation needed. This makes the <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> and <a href="/playbooks/triage/ransomware.html">Ransomware</a> playbooks the natural follow-on from this one.
+</div>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (what to do once you know credentials are in attacker hands)<br>
+  <a href="/playbooks/triage/bec.html">Business Email Compromise</a> (stolen email credentials are immediately weaponized for BEC)<br>
+  <a href="/playbooks/triage/ransomware.html">Ransomware Detected</a> (infostealers are the upstream supplier for ransomware initial access)<br>
+  <a href="/playbooks/actors/lazarus.html">Lazarus</a> (AppleJeus and Operation DreamJob function as targeted infostealers against developers)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>

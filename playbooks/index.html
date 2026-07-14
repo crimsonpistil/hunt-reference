@@ -83,42 +83,36 @@
 <div class="card-grid">
 
   <a href="actors/apt41.html" class="pb-card actor">
-    <span class="pb-pill actor">Live</span>
     <div class="pb-name">APT41 / Winnti</div>
     <div class="pb-desc">China-nexus dual espionage and financial motivation. ShadowPad, PlugX side-loading, systemd persistence, Kerberoasting, SQL injection to shell. The actor most likely to show up in both IT and OT environments.</div>
     <div class="pb-meta">CN &middot; MSS / Chengdu 404 &middot; G0096 &middot; 10-step checklist &middot; dual-mandate &middot; 40+ countries</div>
   </a>
 
   <a href="actors/apt29.html" class="pb-card actor">
-    <span class="pb-pill actor">Live</span>
     <div class="pb-name">APT29 / Cozy Bear</div>
     <div class="pb-desc">Russia SVR. SolarWinds-class supply chain, WellMess, stealthy AD operations, cloud-focused post-compromise. The quietest long-dwell operator in the dataset.</div>
     <div class="pb-meta">RU &middot; SVR &middot; G0016 &middot; 10-step hunt checklist &middot; cloud identity focus</div>
   </a>
 
   <a href="actors/lazarus.html" class="pb-card actor">
-    <span class="pb-pill actor">Live</span>
     <div class="pb-name">Lazarus / HIDDEN COBRA</div>
     <div class="pb-desc">DPRK RGB. Financially motivated and destructive. Cryptocurrency targeting, SWIFT fraud, ransomware (Maui), wipers (Destover). Crosses the espionage-crime boundary.</div>
     <div class="pb-meta">KP &middot; RGB &middot; G0032 &middot; 10-step checklist &middot; $5B+ crypto stolen &middot; 3 subgroups</div>
   </a>
 
   <a href="actors/sandworm.html" class="pb-card actor">
-    <span class="pb-pill actor">Live</span>
     <div class="pb-name">Sandworm / APT44</div>
     <div class="pb-desc">Russia GRU Unit 74455. Destructive operations against critical infrastructure. NotPetya, Industroyer, WhisperGate, HermeticWiper. The actor most likely to cause physical-world impact.</div>
     <div class="pb-meta">RU &middot; GRU 74455 &middot; G0034 &middot; 10-step checklist &middot; 8 wiper families &middot; ICS protocol expertise</div>
   </a>
 
   <a href="actors/volt-typhoon.html" class="pb-card actor">
-    <span class="pb-pill actor">Live</span>
     <div class="pb-name">Volt Typhoon</div>
     <div class="pb-desc">China PLA. Pre-positioning on US critical infrastructure. Living-off-the-land, minimal tooling, long dwell. The hardest actor to detect because they use nothing an admin wouldn't.</div>
     <div class="pb-meta">CN &middot; PLA &middot; G1017 &middot; 12-step hunt checklist &middot; 6 CVEs &middot; documented LOTL commands</div>
   </a>
 
   <a href="actors/salt-typhoon.html" class="pb-card actor">
-    <span class="pb-pill actor">Live</span>
     <div class="pb-name">Salt Typhoon</div>
     <div class="pb-desc">PRC-affiliated. The worst telecom breach in US history. Nine carriers compromised, lawful intercept systems breached, presidential communications intercepted. Custom GhostSpider malware operating at the network infrastructure level.</div>
     <div class="pb-meta">CN &middot; PRC &middot; 10-step checklist &middot; 9 carriers &middot; 80+ countries &middot; CALEA exploitation</div>
@@ -127,7 +121,6 @@
 
 
   <a href="actors/apt28.html" class="pb-card actor">
-    <span class="pb-pill actor">Live</span>
     <div class="pb-name">APT28 / Fancy Bear</div>
     <div class="pb-desc">Russia GRU Unit 26165. Drovorub Linux rootkit, credential phishing, Exchange exploitation. Noisier and faster than APT29, favors speed over stealth.</div>
     <div class="pb-meta">RU &middot; GRU 26165 &middot; G0007 &middot; 10-step hunt checklist &middot; 7 CVEs &middot; 8 custom tools</div>
@@ -143,25 +136,22 @@
 <div class="card-grid">
 
   <a href="environments/airgap-ot.html" class="pb-card environ">
-    <span class="pb-pill environ">Live</span>
     <div class="pb-name">Air-Gapped OT / ICS</div>
     <div class="pb-desc">Minimally connected or fully isolated industrial environments. What should never exist on the network becomes a tripwire. Host-side detection with no cloud EDR dependency.</div>
     <div class="pb-meta">Purdue Level 2-3 &middot; no internet egress &middot; 10-step checklist &middot; 7 tripwires</div>
   </a>
 
-  <div class="pb-card environ soon">
-    <span class="pb-pill planned">Planned</span>
+  <a href="environments/hybrid-ad.html" class="pb-card environ">
     <div class="pb-name">Hybrid AD Enterprise</div>
     <div class="pb-desc">On-prem Active Directory synced to Azure AD / Entra ID. Hunt sequences for the attack paths that span both environments: on-prem compromise to cloud escalation and reverse.</div>
-    <div class="pb-meta">AD + Azure AD &middot; ADFS &middot; hybrid identity</div>
-  </div>
+    <div class="pb-meta">AD + Entra &middot; hybrid identity &middot; 10-step checklist &middot; 6 trust boundaries</div>
+  </a>
 
-  <div class="pb-card environ soon">
-    <span class="pb-pill planned">Planned</span>
-    <div class="pb-name">Linux Server Fleet</div>
+  <a href="environments/linux-fleet.html" class="pb-card environ">
+    <div class="pb-name">Linux Server Fleet</a>
     <div class="pb-desc">All-Linux infrastructure: web servers, databases, containers, CI/CD. No Windows telemetry. Auditd and Sysmon for Linux as primary sources. SSH lateral, cron/systemd persistence, /etc/shadow targeting.</div>
     <div class="pb-meta">auditd &middot; Sysmon for Linux &middot; osquery</div>
-  </div>
+  </a>
 
 </div>
 
@@ -173,28 +163,24 @@
 <div class="card-grid">
 
   <a href="triage/ransomware.html" class="pb-card scenario">
-    <span class="pb-pill scenario">Live</span>
     <div class="pb-name">Ransomware Detected</div>
     <div class="pb-desc">"Encryption started." Or increasingly, just the extortion note with no encryption at all. 70%+ now steal before encrypting. Blast radius, deployment mechanism, exfil timeline, and the question nobody wants to ask: did they already take everything?</div>
     <div class="pb-meta">reactive &middot; time-critical &middot; 13-step checklist &middot; 3 phases</div>
   </a>
 
   <a href="triage/compromised-credentials.html" class="pb-card scenario">
-    <span class="pb-pill scenario">Live</span>
     <div class="pb-name">Compromised Credentials</div>
     <div class="pb-desc">Valid creds in use, no malware anywhere. 82% of CrowdStrike 2025 detections were malware-free. Infostealers, MFA bypass, help desk social engineering, or creds bought from an IAB. Which accounts, where did they go, what did they touch.</div>
     <div class="pb-meta">reactive &middot; identity-based &middot; 13-step checklist &middot; 3 phases</div>
   </a>
 
   <a href="triage/c2-beacon.html" class="pb-card scenario">
-    <span class="pb-pill scenario">Live</span>
     <div class="pb-name">C2 Beacon Found</div>
     <div class="pb-desc">"We found C2 on one host. How far did they get?" Scope outward from the compromised host through credential access, lateral movement, and data staging. The host you found it on is never the only one.</div>
     <div class="pb-meta">reactive &middot; single host confirmed &middot; 12-step checklist &middot; 3 phases</div>
   </a>
 
   <a href="triage/bec.html" class="pb-card scenario">
-    <span class="pb-pill scenario">Live</span>
     <div class="pb-name">Business Email Compromise</div>
     <div class="pb-desc">Phishing is the #1 initial access vector again (35% per Talos Q1 2026). 76% of phishing cases become BEC. Mailbox rules forwarding to external, financial fraud in progress, lateral phishing from the compromised account, and OAuth app consent abuse.</div>
     <div class="pb-meta">reactive &middot; identity + email &middot; 13-step checklist &middot; 3 phases</div>
@@ -206,21 +192,18 @@
 <div class="card-grid">
 
   <div class="pb-card scenario soon">
-    <span class="pb-pill planned">Planned</span>
     <div class="pb-name">Edge Device Compromised</div>
     <div class="pb-desc">VPN, firewall, or web appliance exploited. 56% of tracked vulns exploitable without auth (IBM X-Force 2026). The appliance is the foothold, not the target. What did they pivot to? Check for credential harvest, config dump, and tunnel establishment.</div>
     <div class="pb-meta">reactive &middot; perimeter breach &middot; pivot-focused</div>
   </div>
 
   <div class="pb-card scenario soon">
-    <span class="pb-pill planned">Planned</span>
     <div class="pb-name">Supply Chain Indicator</div>
     <div class="pb-desc">Third-party compromise, SaaS OAuth abuse, vendor software backdoored. Quadrupled over 5 years. Assess exposure: shared credentials, OAuth tokens, API integrations, and how many of your environments the compromised vendor touches.</div>
     <div class="pb-meta">reactive &middot; third-party &middot; scope shared trust</div>
   </div>
 
   <div class="pb-card scenario soon">
-    <span class="pb-pill planned">Planned</span>
     <div class="pb-name">Data Exfiltration Detected</div>
     <div class="pb-desc">Outbound data movement found in proxy, DLP, or network telemetry. Reconstruct: what left, how (HTTPS, DNS, cloud storage, code repo), when it started, and whether the exfil channel is still active. Work backward to the staging host.</div>
     <div class="pb-meta">reactive &middot; data loss &middot; reconstruct the timeline</div>
@@ -232,32 +215,20 @@
 <div class="card-grid">
 
   <a href="triage/lotl.html" class="pb-card scenario">
-    <span class="pb-pill scenario">Live</span>
     <div class="pb-name">Living-off-the-Land Activity</div>
     <div class="pb-desc">No malware. Just LOLBin sequences, RMM tool abuse, and legitimate admin commands in the wrong context. The Volt Typhoon pattern. The hardest triage because every artifact individually looks normal. Confirmation requires behavioral sequencing, not signatures.</div>
     <div class="pb-meta">reactive &middot; no IOCs &middot; 10-step checklist &middot; behavioral confirmation</div>
   </a>
 
-  <div class="pb-card scenario soon">
-    <span class="pb-pill planned">Planned</span>
+  <a href="triage/infostealer.html" class="pb-card scenario">
     <div class="pb-name">Infostealer Infection</div>
     <div class="pb-desc">Credential harvester detected or your creds showed up on a dark web monitoring feed. 300K+ ChatGPT creds for sale in 2025 alone. Assess what was stolen: browser passwords, session cookies, SSH keys, cloud tokens. Then check where every one of those creds is valid.</div>
-    <div class="pb-meta">reactive &middot; credential exposure &middot; blast radius assessment</div>
-  </div>
+    <div class="pb-meta">reactive &middot; credential exposure &middot; 11-step checklist &middot; blast radius assessment</div>
+  </a>
 
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  ABOUT                                     -->
-<!-- ═══════════════════════════════════════════ -->
 
-<section class="info-section">
-  <div class="info-card">
-    <h3>What these playbooks will be</h3>
-    <p>Each playbook is a short, prioritized hunt sequence: what to check first, what distinguishes this actor or scenario from noise, and links into the <a href="/net/" style="color:var(--accent)">NET</a> and <a href="/host/" style="color:var(--accent)">HOST</a> references for the actual detection queries. Not a report. Not a technique list. A checklist you open when you need to know where to start.</p>
-    <p>Playbooks are hand-written from operational experience, not auto-generated from MITRE mappings. The value is in the prioritization and the distinctive tells, not the technique coverage.</p>
-  </div>
-</section>
 
 <footer>
   <p>TONK &middot; Threat Observation &amp; Network Kill-chain</p>
