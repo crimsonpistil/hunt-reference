@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Scattered Spider</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--amber);border:1px solid rgba(210,153,34,.4);background:rgba(210,153,34,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .alias-grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 20px}.alias-tag{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">THREAT ACTOR &middot; eCRIME</div>
+  <div class="pb-title">Scattered Spider</div>
+  <div class="pb-sub">Young, English-speaking, financially motivated, and terrifyingly effective. They don't exploit software. They call your help desk, impersonate an employee, reset the password, bypass MFA, and own your identity infrastructure before your SOC sees a single alert. The group that proved social engineering scales.</div>
+  <div class="pb-meta-row">MITRE G1015 &middot; US/UK-based &middot; active 2022-present &middot; $100M+ MGM &middot; $15M Caesars &middot; M&S/Co-op/Harrods 2025</div>
+</div>
+
+<div class="content">
+
+<div class="section-head default">Also known as</div>
+<div class="alias-grid">
+  <span class="alias-tag">UNC3944</span>
+  <span class="alias-tag">Octo Tempest</span>
+  <span class="alias-tag">Storm-0875</span>
+  <span class="alias-tag">Muddled Libra</span>
+  <span class="alias-tag">0ktapus</span>
+  <span class="alias-tag">Scatter Swine</span>
+  <span class="alias-tag">Star Blizzard</span>
+</div>
+
+<div class="section-head red">Why this group matters</div>
+
+<p class="prose">
+  Scattered Spider is not a single group. It's a <strong>collective of loosely affiliated subclusters</strong> that share TTPs, infrastructure patterns, and targeting philosophy. What connects them: native English speakers (mostly US and UK, many teenagers and young adults), identity-provider targeting as the primary attack vector, and the willingness to pick up the phone and lie convincingly to your help desk.
+</p>
+<p class="prose">
+  Their impact is disproportionate to their sophistication. They don't write zero-days. They don't deploy custom implants. They call the help desk, convince an IT staffer to reset a password, register a new MFA device, and then authenticate as a legitimate user. From there: Okta admin, Azure AD Global Admin, ESXi hypervisor, ransomware deployed, data exfiltrated. MGM lost $100M+ and 10 days of casino floor operations. Caesars paid $15M. M&S, Co-op, and Harrods were hit in a coordinated wave in May 2025.
+</p>
+<p class="prose">
+  <strong>"What started as a run-of-the-mill SIM-swapping crew has morphed into a global threat."</strong> They've progressed from SIM swaps (2022) to mass credential harvesting via Oktapus (9,931 credentials from 130+ companies) to ransomware deployment via BlackCat/ALPHV to the current DragonForce partnership. 70% of their targets are in technology, finance, and retail. They increasingly target MSPs and IT contractors for one-to-many access.
+</p>
+
+<div class="note-box red">
+  <strong>Your biggest vulnerability is your help desk.</strong> Every major Scattered Spider intrusion started with a phone call. Not an exploit. Not a phishing email. A call to an IT help desk from someone who sounds like an employee, knows the employee's name, team, and manager, and asks for a password reset. If your help desk can reset passwords and MFA without rigorous identity verification that cannot be socially engineered, Scattered Spider can get in.
+</div>
+
+<div class="section-head amber">Attack chain</div>
+
+<p class="prose">
+  <strong>1. Reconnaissance.</strong> LinkedIn, corporate directories, leaked databases. Build a profile of the target employee: name, title, team, manager, corporate email format. For MSP targeting, identify which IT contractor has admin access to the target organization.
+</p>
+<p class="prose">
+  <strong>2. Initial access (social engineering).</strong> Call the help desk impersonating the employee. Request a password reset and MFA re-enrollment. Alternative vectors: SMS phishing (smishing) targeting Okta/SSO login pages, MFA fatigue (push bombing until the user approves), SIM swap to intercept SMS-based MFA codes, AiTM phishing via Evilginx to capture session tokens, or vishing the employee directly.
+</p>
+<p class="prose">
+  <strong>3. Identity provider takeover.</strong> Once in, they target the identity provider (Okta, Azure AD/Entra ID). Create or modify admin accounts. Disable security controls. Add their own MFA devices. Modify conditional access policies. At this point, they control who can authenticate and how.
+</p>
+<p class="prose">
+  <strong>4. Persistence and lateral movement.</strong> Deploy RMM tools (AnyDesk, ScreenConnect, Splashtop) for persistent access. Move laterally via RDP, SSH, WMI. Target VMware ESXi hypervisors, domain controllers, and backup infrastructure. Use LOTL techniques to avoid endpoint detection.
+</p>
+<p class="prose">
+  <strong>5. Data theft and ransomware.</strong> Exfiltrate sensitive data for double extortion. Deploy ransomware (currently DragonForce, previously BlackCat/ALPHV, RansomHub). Target ESXi to encrypt all VMs simultaneously. The ransomware is the commodity tool. The social engineering is the craft.
+</p>
+
+<div class="section-head blue">Hunt checklist: if you suspect Scattered Spider</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Audit help desk interactions for the past 72 hours</strong>
+    Check for: password reset requests, MFA re-enrollment, account unlock requests, and new device registrations. Cross-reference with the user: did they actually make the request? Contact the user directly (not via email, which may be compromised). If the user didn't request the reset, the intrusion has already begun.
+    <span class="ref">Help desk ticketing system &middot; Okta/Entra ID: MFA registration events</span>
+  </li>
+  <li>
+    <strong>2. Check for new MFA device registrations</strong>
+    Search identity provider logs for new authenticator app registrations, new phone numbers, new FIDO keys. Scattered Spider registers their own MFA device immediately after the social-engineered password reset. A new MFA method registered within minutes of a help desk-initiated reset is the signature pattern.
+    <span class="ref">Entra ID: "User registered security info" &middot; Okta: system.mfa.factor.activate</span>
+  </li>
+  <li>
+    <strong>3. Check for identity provider admin modifications</strong>
+    Okta admin role assignments, Azure AD Global Admin grants, conditional access policy changes, new application consents. Scattered Spider escalates to identity provider admin as fast as possible because it gives them control over every downstream authentication decision.
+    <span class="ref">Okta: system.org.rate_limit.violation &middot; Entra ID: directory audit logs</span>
+  </li>
+  <li>
+    <strong>4. Hunt for unauthorized RMM tools</strong>
+    Search for: AnyDesk, ScreenConnect (ConnectWise), Splashtop, TeamViewer, Atera, Level.io. Scattered Spider deploys RMM tools for persistent access that bypasses VPN and corporate authentication. Any RMM tool not on your approved software list, especially one installed after a suspicious help desk interaction, is high-confidence Scattered Spider.
+    <span class="ref">Sysmon EID 1: RMM binary execution &middot; EID 3: connections to RMM cloud infra</span>
+  </li>
+  <li>
+    <strong>5. Check for ESXi hypervisor access</strong>
+    Scattered Spider targets ESXi directly (SSH to ESXi, vCenter access) to deploy ransomware on the hypervisor layer, encrypting all hosted VMs simultaneously. Check for: SSH connections to ESXi hosts, new ESXi local accounts, vCenter admin role assignments, and ransomware binaries (ELF format) in /vmfs/volumes/.
+    <span class="ref"><a href="/playbooks/triage/ransomware.html">Ransomware</a> playbook &middot; ESXi: /var/log/auth.log &middot; vCenter audit logs</span>
+  </li>
+  <li>
+    <strong>6. Check for MSP/contractor account abuse</strong>
+    The M&S breach reportedly started through compromised accounts from IT contractor Tata Consultancy Services. Check for: unusual activity from MSP/vendor admin accounts, MSP accounts authenticating from unexpected IPs, and MSP-deployed RMM tools being used outside normal maintenance windows.
+    <span class="ref"><a href="/playbooks/triage/supply-chain.html">Supply Chain</a> playbook &middot; MSP access audit logs</span>
+  </li>
+  <li>
+    <strong>7. Check for credential harvesting phishing infrastructure</strong>
+    Scattered Spider registers domains impersonating SSO, VPN, help desk, and Okta login pages. Domain patterns: keywords like "okta," "vpn," "helpdesk," "sso," "duo," "mfa," "servicenow" combined with the target company name. They've shifted from hyphenated domains (sso-company.com) to subdomain patterns (sso.company.com) to evade automated detection.
+    <span class="ref">Domain monitoring / DRP &middot; Email gateway: inbound URLs matching SSO patterns</span>
+  </li>
+  <li>
+    <strong>8. Look for data exfiltration before ransomware</strong>
+    Scattered Spider exfiltrates data for double extortion before deploying ransomware. Check for: large outbound transfers to cloud storage, archive creation (7z, zip) on file servers, and unusual SharePoint/OneDrive download volumes from admin accounts.
+    <span class="ref"><a href="/playbooks/triage/data-exfil.html">Data Exfiltration</a> playbook &middot; NET: <a href="/net/exfil.html">Exfiltration</a></span>
+  </li>
+</ol>
+
+<div class="section-head green">What distinguishes Scattered Spider</div>
+
+<p class="prose">
+  <strong>Social engineering first, always.</strong> Nation-state actors exploit software. Scattered Spider exploits people. Every major intrusion starts with a human interaction, not a technical vulnerability. This makes them uniquely hard to defend against with technical controls alone.
+</p>
+<p class="prose">
+  <strong>Native English speakers.</strong> Most APTs operate across language barriers (phishing in broken English, foreign accents on calls). Scattered Spider's members are native English speakers who sound exactly like the employees they're impersonating. This is why their help desk social engineering works where other groups' would fail.
+</p>
+<p class="prose">
+  <strong>RaaS affiliates, not operators.</strong> Scattered Spider doesn't write ransomware. They partner with RaaS platforms: BlackCat/ALPHV (2023), RansomHub (2024), DragonForce (2025). The ransomware is the commodity. The identity compromise chain is their value-add to the partnership.
+</p>
+<p class="prose">
+  <strong>Young, aggressive, and communicative.</strong> Members have been identified as teenagers and young adults. They communicate directly with victims (SMS, Telegram). Law enforcement has arrested several members, but operations continue uninterrupted. The collective structure means individual arrests don't stop the operation.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (every Scattered Spider intrusion is a credential compromise)<br>
+  <a href="/playbooks/triage/bec.html">Business Email Compromise</a> (identity provider takeover enables mailbox access)<br>
+  <a href="/playbooks/triage/ransomware.html">Ransomware Detected</a> (ESXi deployment via DragonForce/BlackCat)<br>
+  <a href="/playbooks/triage/insider-threat.html">Insider Threat</a> (help desk social engineering mimics insider access patterns)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>

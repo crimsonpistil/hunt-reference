@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Hacktivist Operations</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--text3);border:1px solid rgba(110,118,129,.4);background:rgba(110,118,129,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">THREAT ACTOR &middot; HACKTIVIST</div>
+  <div class="pb-title">Hacktivist Operations</div>
+  <div class="pb-sub">From script kiddies running Shodan queries to state-aligned pseudo-hacktivists deploying wipers. The spectrum is wider than it's ever been. The line between "ideological vandalism" and "state-directed destruction with a Telegram channel" barely exists anymore.</div>
+  <div class="pb-meta-row">opportunistic to state-aligned &middot; DDoS to ICS manipulation &middot; Telegram as C2 and amplification &middot; claims exceed capability, but capability is rising</div>
+</div>
+
+<div class="content">
+
+<div class="section-head red">The spectrum</div>
+
+<p class="prose">
+  "Hacktivist" used to mean Anonymous in Guy Fawkes masks defacing a website. In 2025, it means a range from genuine script kiddies running publicly available tools against exposed HMIs, to state-intelligence-aligned groups operating under hacktivist cover to provide deniability for destructive operations. You have to assess which one you're dealing with because the response is entirely different.
+</p>
+
+<p class="prose">
+  <strong>Tier 1: Script kiddies and opportunists.</strong> Run Shodan queries for exposed HMIs, VNC, and Modbus. Use default credentials. Screenshot the HMI and post to Telegram for clout. Real but limited impact: they can flip settings on exposed interfaces but lack the knowledge to cause sustained or targeted damage. The risk is accidental disruption, not intentional destruction. Respond by closing the exposure.
+</p>
+<p class="prose">
+  <strong>Tier 2: Organized hacktivists with growing capability.</strong> Z-Pentest, Dark Engine, CyberArmyofRussia_Reborn, and successors. They run coordinated campaigns, use Cobalt Strike or Sliver C2, employ LOTL techniques, and publish intrusion walkthroughs and ICS screenshots for psychological impact. Some campaigns have demonstrated basic lateral movement from compromised jump hosts to domain controllers to PLC management interfaces. In 2025, Dragos observed hacktivists exploiting OPC UA endpoints, BACnet devices, and MQTT brokers alongside the usual HMI and Modbus targets. This tier is closing the gap between "script kiddie" and "operator."
+</p>
+<p class="prose">
+  <strong>Tier 3: State-aligned pseudo-hacktivists.</strong> State intelligence operations wearing a hacktivist mask. Solntsepek (front for ELECTRUM/Sandworm), BAUXITE/CyberAv3ngers (IRGC-CEC), and KillNet successors. They deploy wipers, target critical infrastructure, and coordinate with geopolitical events. The "hacktivist" label provides deniability. The capability and targeting are state-grade. If your IR reveals wiper malware or ICS-protocol-level manipulation, you are not dealing with hacktivists. You are dealing with a state actor using a Telegram channel as cover.
+</p>
+
+<div class="note-box red">
+  <strong>Claims exceed capability, but capability is rising.</strong> Most hacktivist Telegram claims are exaggerated, recycled, or fabricated. Screenshots may be from unrelated systems. DDoS is temporary. Website defacement is cosmetic. But Dragos documented real hacktivist operations in 2025 that achieved unauthorized parameter changes at US water facilities and leveraged C2 frameworks previously associated with advanced adversaries. The mistake is dismissing all hacktivist claims as noise. Some of them are real, and the ones that are real are getting more capable.
+</div>
+
+<div class="section-head amber">Active hacktivist groups and clusters (2025-2026)</div>
+
+<p class="prose">
+  <strong>Pro-Russia aligned:</strong> CyberArmyofRussia_Reborn (proven ICS manipulation of US water HMIs), KillNet and successors (DDoS campaigns against NATO governments and infrastructure), Solntsepek (ELECTRUM/Sandworm front, deployed destructive malware against Ukrainian ISPs), NoName057(16) (DDoS-as-a-service via DDoSia tool, targets government websites in NATO countries). These groups coordinate via Telegram and time operations to geopolitical events.
+</p>
+<p class="prose">
+  <strong>Pro-Iran aligned:</strong> BAUXITE/CyberAv3ngers (IRGC-CEC, compromised Unitronics PLCs at US water facilities, deployed wipers against Israeli targets June 2025, IOControl malware campaign affecting 400+ OT devices globally). These are the most capable hacktivist-branded groups in the ICS space.
+</p>
+<p class="prose">
+  <strong>Other alignments:</strong> Anonymous Sudan (massive DDoS campaign against Microsoft, ChatGPT, and US government sites, members arrested late 2024), various pro-Palestinian and pro-Ukrainian groups of varying capability, and hacktivist-for-hire services that will DDoS or deface for anyone willing to pay.
+</p>
+
+<div class="section-head blue">Hunt checklist: hacktivist activity detected</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Determine whether the claim is real</strong>
+    Most hacktivist Telegram posts are false, exaggerated, or recycled screenshots from previous operations. Before responding: verify whether the claimed target is actually yours, check whether the screenshot matches your actual HMI/SCADA interface, and determine whether the claimed access is technically possible given your exposure. Do not mobilize a full IR based on a Telegram post alone.
+  </li>
+  <li>
+    <strong>2. Check for internet-exposed OT interfaces</strong>
+    The #1 hacktivist entry point. Search for: HMIs, VNC sessions, Modbus endpoints, DNP3 interfaces, MQTT brokers, OPC UA servers, and BACnet devices accessible from the internet. Use Shodan/Censys to see what they can see. If it's exposed, assume it's been found. Close it immediately.
+    <span class="ref"><a href="/playbooks/environments/airgap-ot.html">Air-Gapped OT</a> playbook &middot; Shodan/Censys self-audit</span>
+  </li>
+  <li>
+    <strong>3. Check for default or weak credentials on exposed devices</strong>
+    Unitronics PLCs hit by CyberAv3ngers were using default credentials. Exposed HMIs with no authentication are trivially accessible. Audit: every internet-facing device for default passwords, every VNC session for password protection, and every web-based management interface for authentication requirements.
+  </li>
+  <li>
+    <strong>4. Assess whether this is a hacktivist or a state actor in disguise</strong>
+    Key differentiators: hacktivists screenshot and leave. State actors persist and destroy. If you find: wiper malware, ICS-protocol-level commands from non-engineering sources, sustained persistence mechanisms, or evidence of long-term access preceding the public claim, escalate immediately. You are not dealing with opportunists. See <a href="/playbooks/actors/sandworm.html">Sandworm</a> (Solntsepek front) and BAUXITE in <a href="/playbooks/environments/airgap-ot.html">Air-Gapped OT</a>.
+  </li>
+  <li>
+    <strong>5. Check for DDoS impact on OT availability</strong>
+    DDoS against IT web properties is cosmetic. DDoS against internet-facing OT services (remote monitoring, cloud-connected SCADA, cellular gateways) can cause operational impact. If OT services depend on internet connectivity: verify they're still reachable, check whether DDoS traffic is reaching OT-adjacent infrastructure, and ensure failover to local control is functioning.
+    <span class="ref">NET: <a href="/net/c2.html">C2</a> &middot; Firewall/IDS DDoS counters</span>
+  </li>
+  <li>
+    <strong>6. Check for data leaks and credential exposure</strong>
+    Hacktivists increasingly publish stolen configuration files, network diagrams, employee lists, and credential databases. Check: have your configs or credentials appeared on Telegram channels or paste sites? Stolen network diagrams give any future attacker (hacktivist or nation-state) a roadmap to your environment.
+    <span class="ref">Dark web monitoring &middot; Telegram OSINT &middot; Paste site monitoring</span>
+  </li>
+  <li>
+    <strong>7. Verify OT device state and process integrity</strong>
+    If there's any evidence of actual OT access (not just claims): verify PLC logic state against known-good backelines, check HMI configurations for unauthorized parameter changes, review alarm configurations for suppression or modification, and verify that safety systems are functioning correctly. CyberArmyofRussia_Reborn achieved unauthorized parameter changes at US water facilities through exposed HMIs.
+    <span class="ref"><a href="/playbooks/environments/airgap-ot.html">Air-Gapped OT</a> checklist items 3, 8, 9</span>
+  </li>
+  <li>
+    <strong>8. Harden and close the exposure</strong>
+    The fix for most hacktivist operations is removing the exposure they exploited. Put it behind a VPN. Add authentication. Segment it from the internet. Patch the default credentials. The hacktivist will move on to the next exposed target. The state actor behind the hacktivist mask will not, but closing the trivial access forces them to use more detectable methods.
+  </li>
+</ol>
+
+<div class="note-box">
+  <strong>The convergence problem.</strong> In 2025, hacktivists adopted Cobalt Strike, Sliver C2, LOTL techniques, and open-source offensive tools previously associated with advanced adversaries. State actors adopted hacktivist personas for deniability. Ransomware affiliates adopted hacktivist messaging for pressure campaigns. The categories are blurring. The response should be driven by what you observe on your network (capability, persistence, intent), not by what the actor calls themselves on Telegram.
+</div>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/environments/airgap-ot.html">Air-Gapped OT / ICS</a> (the environment most frequently targeted by hacktivists)<br>
+  <a href="/playbooks/actors/sandworm.html">Sandworm</a> (operates through the Solntsepek hacktivist persona)<br>
+  <a href="/playbooks/triage/edge-device.html">Edge Device Compromised</a> (exposed OT interfaces are the hacktivist entry point)<br>
+  <a href="/playbooks/triage/lotl.html">Living-off-the-Land Activity</a> (Tier 2+ hacktivists now use LOTL techniques)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>
