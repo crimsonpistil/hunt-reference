@@ -150,6 +150,14 @@
   <strong>The exfil question matters most.</strong> If they only encrypted, you can rebuild from backups. If they stole data, you have a regulatory notification obligation and the extortion continues even if you restore from backup. Answering "did data leave the network" is more important than "can we decrypt."
 </div>
 
+<div class="note-box red">
+  <strong>ESXi/hypervisor targeting.</strong> Ransomware operators increasingly deploy directly on VMware ESXi hosts, encrypting all hosted VMs without triggering guest-level EDR agents. Most endpoint protection runs inside the guest OS, not on the hypervisor. A single ESXi host encrypted means every VM on it is down. Check for: SSH access to ESXi hosts from unexpected sources, new ESXi local accounts, and ransomware binaries compiled as ELF (Linux) targeting the /vmfs/volumes/ datastore paths. If your backup infrastructure also runs as VMs on the same hypervisor, the backups die with everything else.
+</div>
+
+<div class="note-box">
+  <strong>Breakout time: 29 minutes average, 27 seconds fastest.</strong> CrowdStrike's 2026 GTR measured the average eCrime breakout time (initial access to lateral movement) at 29 minutes, a 65% acceleration from 2024. The fastest recorded breakout was 27 seconds. In one intrusion, data exfiltration began within four minutes of initial access. The implication: if your detection and response cycle takes longer than 30 minutes, the attacker is already lateral before you see the first alert.
+</div>
+
 <div class="section-head default">Actors who run this playbook</div>
 
 <p class="prose">

@@ -136,6 +136,18 @@
   </li>
 </ol>
 
+<div class="section-head default">Delivery vectors evolving fast (2025-2026)</div>
+
+<p class="prose">
+  <strong>ClickFix / fake CAPTCHA (+563% in 2025).</strong> Victim visits a compromised or attacker-controlled site and sees a fake CAPTCHA or "verify you are human" prompt. Clicking it copies a malicious PowerShell command to the clipboard and instructs the user to paste it into a Run dialog. The command downloads credential stealers or establishes a session hijack. This bypasses email gateway filtering entirely because the delivery is a website, not an email attachment. CrowdStrike 2026 GTR flagged this as the fastest-growing social engineering technique.
+</p>
+<p class="prose">
+  <strong>Vishing (+442% between H1-H2 2024, now #2 initial access vector).</strong> Voice phishing calls impersonating IT help desks, vendors, or executives. Scattered Spider industrialized this: call the help desk, request a password reset, defeat MFA, pivot to identity infrastructure. AI-generated voice cloning makes impersonation of specific individuals trivial. Mandiant M-Trends 2026 ranked vishing as the #2 initial infection vector, present in 11% of investigations. CrowdStrike confirmed H1 2025 vishing volume already exceeded all of 2024.
+</p>
+<p class="prose">
+  <strong>Device code phishing.</strong> Attacker sends the victim a legitimate Microsoft device authorization code and instructions to enter it at microsoft.com/devicelogin. The victim authenticates at Microsoft's real login page, granting the attacker a valid OAuth token without ever seeing a fake login page. Phishing-resistant MFA (FIDO2, passkeys) does not block this because the victim authenticates at the real identity provider.
+</p>
+
 <div class="section-head default">BEC subtypes</div>
 
 <p class="prose">

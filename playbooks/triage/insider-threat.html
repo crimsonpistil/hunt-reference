@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Insider Threat</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--amber);border:1px solid rgba(210,153,34,.4);background:rgba(210,153,34,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:640px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}.note-box.blue{border-left-color:var(--accent)}.note-box.blue strong{color:var(--accent)}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">INCIDENT TRIAGE &middot; TIER 3</div>
+  <div class="pb-title">Insider Threat</div>
+  <div class="pb-sub">The threat actor has a badge, a laptop, and legitimate access to everything they're stealing. No exploitation, no malware, no C2. Every action is authorized at the technical level. Detection is entirely behavioral: the right person doing the wrong thing.</div>
+  <div class="pb-meta-row">reactive or proactive &middot; behavioral baseline required &middot; legal/HR coordination mandatory</div>
+</div>
+
+<div class="content">
+
+<div class="section-head red">The honest answer</div>
+
+<p class="prose">
+  There is no signature for insider threat. There is no IOC. There is no YARA rule. The insider uses their own credentials, their own workstation, their own authorized access, during business hours, to access data they are technically permitted to access. <strong>The only detection surface is deviation from what they normally do.</strong>
+</p>
+<p class="prose">
+  That means this playbook is useless without baselines. If you don't know what normal looks like for a given user (what they access, when, how much, from where), you cannot distinguish "working on a project" from "collecting everything before I leave." The investment in user behavior analytics, file access logging, and DLP pays for itself here and nowhere else.
+</p>
+
+<div class="note-box red">
+  <strong>Legal and HR must be involved before you investigate.</strong> Insider threat investigations involve monitoring an employee's activity. Depending on your jurisdiction, organization, and the employee's role, this may require legal authorization, HR coordination, union notification, or management approval. Do not begin covert monitoring without legal guidance. Getting this wrong creates liability that outlasts the incident.
+</div>
+
+<div class="section-head amber">Insider threat categories</div>
+
+<p class="prose">
+  <strong>Malicious insider.</strong> Deliberate theft or sabotage. Employee stealing IP before leaving for a competitor, admin planting a logic bomb before termination, or someone selling access to an external actor. The hardest to detect because they know the monitoring and deliberately avoid it.
+</p>
+<p class="prose">
+  <strong>Negligent insider.</strong> No malicious intent, but policy violations that create exposure. Emailing sensitive files to personal accounts for convenience, uploading to unauthorized cloud storage, disabling security controls to make something work, or leaving credentials in public repos. The most common category by volume.
+</p>
+<p class="prose">
+  <strong>Compromised insider.</strong> The employee's credentials are in attacker hands (infostealer, phishing, credential reuse). The "insider" is actually an external actor using a legitimate identity. This overlaps with the <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> and <a href="/playbooks/triage/infostealer.html">Infostealer</a> playbooks. The key differentiator: if the geographic source, timing, and device are consistent with the real user, it might be a true insider, not a compromised account.
+</p>
+
+<div class="section-head blue">Investigation checklist</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Establish the user's normal access baseline</strong>
+    Pull 60-90 days of the user's activity: file share access (EID 5140/5145), email volume and recipients, application logins, VPN connection patterns, print jobs, USB device connections. Build the profile: what do they normally access, when, how much, from where? Every subsequent step compares current activity against this baseline.
+    <span class="ref">Security EID 5140/5145 &middot; DLP logs &middot; Proxy logs &middot; Badge/physical access logs</span>
+  </li>
+  <li>
+    <strong>2. Look for access outside role or need-to-know</strong>
+    Is the user accessing file shares, databases, or applications they don't normally touch? A finance analyst browsing engineering source code repos. A departing sales rep downloading the entire customer database. An IT admin reading executive email. The access may be technically permitted (ACLs don't enforce need-to-know), but the pattern deviation is the indicator.
+    <span class="ref">Security EID 5145 &middot; Database access audit &middot; Application-level access logs</span>
+  </li>
+  <li>
+    <strong>3. Check for bulk data collection</strong>
+    Volume anomalies are the strongest signal. Compare the user's current file access volume against their 90-day average. A 10x spike in files accessed, downloaded, or copied is the clearest insider indicator, especially when the spike targets sensitive directories (IP, customer data, financial records, source code). Check for: mass file downloads, archive creation (zip, 7z, tar), and large copy operations.
+    <span class="ref">DLP alerts &middot; Security EID 5145 volume analysis &middot; Sysmon EID 11 archive creation</span>
+  </li>
+  <li>
+    <strong>4. Check for data movement to personal channels</strong>
+    Email to personal accounts (Gmail, Yahoo, ProtonMail). Uploads to personal cloud storage (personal OneDrive, Google Drive, Dropbox with a non-corporate login). USB file copies. Printing sensitive documents. AirDrop or Bluetooth transfers. Each of these moves data from corporate-controlled channels to channels the organization cannot monitor or recover from.
+    <span class="ref">Email gateway: outbound to freemail domains &middot; DLP: cloud storage uploads &middot; Sysmon EID 11 on removable media</span>
+  </li>
+  <li>
+    <strong>5. Correlate with HR signals</strong>
+    Technical indicators gain weight when combined with HR context. Is the employee on a Performance Improvement Plan? Have they submitted a resignation? Were they passed over for promotion? Is there an ongoing workplace dispute? Have they recently been contacted by a competitor (LinkedIn activity)? None of these alone is evidence. Combined with bulk data access, they build the case.
+  </li>
+  <li>
+    <strong>6. Check after-hours and off-pattern activity</strong>
+    Access during hours the user has never previously worked. VPN connections from locations the user doesn't normally work from. Weekend access when the user is a strict 9-to-5 employee. Badge access to the building at 2 AM. These time-based anomalies are weak signals individually but compound with volume and access pattern deviations.
+    <span class="ref">VPN logs &middot; Badge/physical access system &middot; Security EID 4624 timestamp analysis</span>
+  </li>
+  <li>
+    <strong>7. Check for circumvention of security controls</strong>
+    Is the user disabling DLP agents, using unauthorized VPN or proxy services to bypass web filtering, connecting personal devices to the corporate network, or using encrypted personal messaging (Signal, Telegram) for work communications? Circumvention of monitoring is both a policy violation and an indicator that the user knows they're being watched and is actively evading.
+    <span class="ref">EDR: agent health &middot; DLP: policy bypass events &middot; Proxy: tunnel/VPN detection</span>
+  </li>
+  <li>
+    <strong>8. Look for credential or access hoarding</strong>
+    Is the user requesting access to systems beyond their role? Creating service accounts or API keys? Saving credentials in personal password managers or plain text files? Copying SSH keys to personal devices? An insider preparing for post-departure access often stages credentials before they leave. Check access request logs and account creation/modification events.
+    <span class="ref"><a href="/host/credential_access.html#T1552.001">HOST: T1552.001</a> Creds in Files &middot; Security EID 4720 (account creation)</span>
+  </li>
+  <li>
+    <strong>9. Check for sabotage indicators (privileged users)</strong>
+    For IT admins and privileged users: unauthorized changes to backup configurations (disabling backups, modifying retention), creation of hidden admin accounts, deployment of logic bombs (scheduled tasks with future execution dates and destructive payloads), modification of access controls to lock others out, or deletion of audit logs. The admin who knows they're being terminated is the highest-risk insider.
+    <span class="ref"><a href="/host/impact.html#T1485">HOST: T1485</a> Data Destruction &middot; <a href="/host/persistence.html">HOST: Persistence</a> (scheduled tasks) &middot; <a href="/host/defense_evasion.html#T1070.001">T1070.001</a> Clear Logs</span>
+  </li>
+  <li>
+    <strong>10. Preserve evidence before any confrontation</strong>
+    Before HR takes action (termination meeting, confrontation, PIP conversation): preserve the forensic evidence. Image the user's workstation. Export their email. Snapshot their cloud storage. Pull their complete access logs. Disable their accounts simultaneously with the HR action, not after. An insider who learns they're being investigated will destroy evidence or accelerate exfiltration in the window between discovery and account disablement.
+  </li>
+</ol>
+
+<div class="section-head green">The baseline problem (and what to do about it)</div>
+
+<p class="prose">
+  Most organizations don't have user behavior analytics. File access logging is either not enabled or not centralized. DLP is deployed but nobody looks at the alerts. The first insider threat investigation reveals all of this at once and the answer is "we can't tell if this is unusual because we don't know what usual looks like."
+</p>
+<p class="prose">
+  <strong>Minimum viable baselining for insider threat:</strong> Enable and centralize Windows Security EID 5145 (file share access) and EID 4624 (logon events). Enable Exchange/M365 mailbox audit logging. Configure your proxy to log all outbound traffic by user. Enable USB device connection logging. These four sources, aggregated and retained for 90 days, give you enough to answer "is this user doing something they've never done before?" That's not a full UEBA program. It's the floor.
+</p>
+
+<div class="note-box blue">
+  <strong>Insider threat vs LOTL: the overlap.</strong> Both are "legitimate user, legitimate tools, no malware." The difference is authorization. In LOTL, the credentials belong to the real user but are being wielded by an external attacker. In insider threat, the real user is the actor. The detection signals are nearly identical (baseline deviation, unusual access patterns, data staging). The response differs: LOTL is a credential compromise response, insider threat is a legal/HR/security coordination. The <a href="/playbooks/triage/lotl.html">LOTL playbook</a> covers the external-actor scenario.
+</div>
+
+<div class="section-head default">Timing patterns that matter</div>
+
+<p class="prose">
+  <strong>Pre-resignation spike.</strong> The most common pattern: 2-4 weeks before submitting resignation, the user begins downloading files they've never accessed before. The spike often targets competitive intelligence, customer lists, and source code. By the time HR processes the resignation, the data is already on a personal drive.
+</p>
+<p class="prose">
+  <strong>Post-PIP escalation.</strong> An employee placed on a Performance Improvement Plan who believes termination is inevitable may begin exfiltrating data or preparing sabotage. The PIP notification is the trigger event, and monitoring should increase from that point.
+</p>
+<p class="prose">
+  <strong>The departing admin.</strong> Highest risk, shortest window. An IT admin who knows termination is coming can create backdoor accounts, plant logic bombs, modify backups, and destroy evidence in the time between receiving notice and account disablement. Simultaneous account disablement during the termination meeting is not optional for privileged users.
+</p>
+
+<div class="section-head red">Nation-state insider operations: FAMOUS CHOLLIMA</div>
+
+<p class="prose">
+  There is a fourth insider threat category that didn't exist five years ago: <strong>the planted operative</strong>. DPRK-linked FAMOUS CHOLLIMA doubled their activity in 2025 (CrowdStrike 2026 GTR), using AI-generated resumes, deepfake video interviews, and fabricated identity documents to place North Korean operatives inside Western companies through legitimate hiring processes. These are not compromised employees. They are intelligence operatives who got hired.
+</p>
+<p class="prose">
+  The operatives submit polished resumes generated by LLMs, coach themselves through interviews using hidden devices, and use deepfake or borrowed identities to pass video screening. Once inside, they have legitimate badge access, legitimate credentials, and legitimate need-to-know for their assigned role. Traditional insider threat detection (baseline deviation) doesn't work initially because they ARE establishing their baseline. Detection requires: verifying identity documents through third-party validation, requiring live unscripted video interactions during hiring, and cross-referencing application details against known DPRK front company patterns.
+</p>
+<p class="prose">
+  Post-hire containment: attribute-based access controls limiting data scope to defined job functions, audit logging of every data interaction from the first day, and monitoring for behaviors inconsistent with the stated role (accessing systems outside their function, working hours misaligned with their stated timezone, or shipping hardware to unexpected addresses).
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/triage/lotl.html">Living-off-the-Land Activity</a> (overlapping detection surface, different root cause)<br>
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (rule out compromised account before concluding insider threat)<br>
+  <a href="/playbooks/triage/infostealer.html">Infostealer Infection</a> (rule out credential theft as the explanation)<br>
+  <a href="/playbooks/triage/data-exfil.html">Data Exfiltration Detected</a> (the technical investigation of outbound data movement)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>
