@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Salt Typhoon</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--red);border:1px solid rgba(248,81,73,.4);background:rgba(248,81,73,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .alias-grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 20px}.alias-tag{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">THREAT ACTOR &middot; CHINA</div>
+  <div class="pb-title">Salt Typhoon</div>
+  <div class="pb-sub">The worst telecommunications breach in US history. Nine carriers compromised. Lawful intercept wiretap systems breached. Call metadata from over a million Americans collected. Presidential candidate communications intercepted. FBI wiretap target lists obtained. As of 2026, the FBI says the threat remains "very, very active."</div>
+  <div class="pb-meta-row">CISA AA25-239A &middot; PRC-affiliated &middot; active 2019-present &middot; targets: telecommunications, government, satellite</div>
+</div>
+
+<div class="content">
+
+<div class="section-head default">Also known as</div>
+<div class="alias-grid">
+  <span class="alias-tag">FamousSparrow</span>
+  <span class="alias-tag">GhostEmperor</span>
+  <span class="alias-tag">Earth Estries</span>
+  <span class="alias-tag">UNC2286</span>
+</div>
+
+<div class="section-head red">The scale of the compromise</div>
+
+<p class="prose">
+  In the fall of 2024, US investigators confirmed that Salt Typhoon had penetrated <strong>nine major US telecommunications carriers</strong>: AT&T, Verizon, T-Mobile, Charter/Spectrum, Lumen Technologies, Consolidated Communications, Windstream, and two others unnamed. Beyond the US, compromised organizations span <strong>80+ countries and 600+ organizations</strong> across six continents.
+</p>
+<p class="prose">
+  What Salt Typhoon accessed:
+</p>
+<p class="prose">
+  <strong>Call metadata from 1M+ users.</strong> Date/time stamps, source/destination IPs, phone numbers. Concentrated in the Washington DC area, targeting government officials, political figures, and intelligence community personnel.
+</p>
+<p class="prose">
+  <strong>Real-time call interception.</strong> Recorded calls and text messages from fewer than 100 high-profile individuals, including presidential candidates (Trump, Vance) and senior government officials.
+</p>
+<p class="prose">
+  <strong>FBI wiretap target lists.</strong> Nearly complete lists of phone numbers currently under court-authorized surveillance. This is the counterintelligence damage that experts call "catastrophic": a foreign intelligence service now knows exactly who US law enforcement is monitoring.
+</p>
+<p class="prose">
+  <strong>1,462 network configuration files</strong> from approximately 70 government agencies and critical infrastructure organizations across 12 sectors (disclosed June 2025 DHS memo).
+</p>
+<p class="prose">
+  <strong>National Guard networks</strong> compromised for nearly a year (disclosed July 2025).
+</p>
+
+<div class="note-box red">
+  <strong>The CALEA problem.</strong> Salt Typhoon exploited the very systems built for lawful surveillance. CALEA (Communications Assistance for Law Enforcement Act) mandates that telecom providers maintain intercept capabilities for court-authorized wiretaps. These systems are deeply embedded in carrier infrastructure, often managed separately from customer-facing platforms, and fell outside mature cybersecurity governance. The backdoor built for law enforcement became the front door for Chinese intelligence. The FBI, which spent 30 years fighting encryption, now recommends end-to-end encryption.
+</div>
+
+<div class="section-head amber">Known TTPs</div>
+
+<p class="prose">
+  <strong>Initial access:</strong> Exploitation of public-facing endpoints, particularly Cisco routers that form the backbone of carrier networks. Also VPN, firewall, and Exchange server vulnerabilities. Spearphishing with malware payloads. Supply chain compromise via firmware updates and telecom equipment. The exact initial entry vector for the major carrier breaches has not been fully disclosed.
+</p>
+<p class="prose">
+  <strong>Custom tooling:</strong> GhostSpider backdoor provides persistent access to compromised telecom infrastructure with modular capabilities for long-term espionage. Purpose-built for telecom network environments.
+</p>
+<p class="prose">
+  <strong>Network-level operations:</strong> Salt Typhoon operates inside core network infrastructure, targeting routers and switches that handle traffic routing, not endpoint servers. They reconfigure network protocols, intercept communications at the transport layer, and access network management systems. This is infrastructure-level compromise, not endpoint compromise.
+</p>
+<p class="prose">
+  <strong>Dwell time:</strong> At least 3 years confirmed in one carrier's network (Cisco report, 2025). The group was present in multiple carriers for well over a year before discovery. Operational since at least 2019 based on earliest known infrastructure.
+</p>
+
+<div class="section-head blue">Hunt checklist: if you suspect Salt Typhoon</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Audit core network device integrity</strong>
+    Salt Typhoon targets Cisco routers and core switching infrastructure. Check for: unauthorized configuration changes, unexpected ACLs or route policies, firmware integrity against vendor-published hashes, unauthorized management plane access, and new administrative accounts on network devices. If your core routers have been modified, the attacker controls your traffic.
+    <span class="ref">NET: <a href="/net/c2.html">C2</a> &middot; Cisco IOS integrity verification &middot; Network device configuration management</span>
+  </li>
+  <li>
+    <strong>2. Review lawful intercept and CALEA system access</strong>
+    If you operate telecom infrastructure with CALEA obligations: audit all access to lawful intercept systems, review who has queried wiretap provisioning interfaces, and check for unauthorized data exports from intercept databases. These systems are the primary intelligence target, not an incidental one.
+  </li>
+  <li>
+    <strong>3. Check for GhostSpider and related implants</strong>
+    Search for: unknown persistent processes on telecom infrastructure hosts, processes establishing long-lived outbound connections to unusual IPs, and binaries with no known provenance in system directories. GhostSpider is purpose-built for telecom environments and may not match generic endpoint malware signatures.
+    <span class="ref"><a href="/host/persistence.html">HOST: Persistence</a> &middot; <a href="/host/execution.html">HOST: Execution</a></span>
+  </li>
+  <li>
+    <strong>4. Baseline and monitor network management plane access</strong>
+    SSH, SNMP, NETCONF, and any proprietary management interfaces on routers and switches. Any management plane access from an unauthorized source IP, at an unexpected time, or using credentials that don't match your admin accounts should be investigated. Salt Typhoon operates at the network device level, not the server level.
+    <span class="ref">NET: SSH/SNMP connection logs &middot; AAA server (TACACS+/RADIUS) audit</span>
+  </li>
+  <li>
+    <strong>5. Audit network configuration export and backup activity</strong>
+    The June 2025 DHS disclosure revealed 1,462 stolen network configuration files. Check for: unauthorized TFTP/SCP/SFTP exports of running configs, unexpected access to configuration management databases, and network automation platforms (Ansible, Puppet, Chef) with unauthorized execution history.
+    <span class="ref">TFTP/SCP server access logs &middot; Configuration management audit trail</span>
+  </li>
+  <li>
+    <strong>6. Monitor for metadata collection indicators</strong>
+    CDR (Call Detail Record) databases, billing systems, and subscriber databases are intelligence targets. Check for: bulk queries against CDR systems, unauthorized access to subscriber lookup interfaces, and data exports from billing/provisioning platforms. Metadata collection is the primary intelligence objective.
+  </li>
+  <li>
+    <strong>7. Check for traffic interception and protocol manipulation</strong>
+    Salt Typhoon reconfigures routing to intercept communications. Check for: new or modified port mirror/SPAN configurations, unexpected GRE tunnels or MPLS LSPs, route policy changes that redirect specific traffic, and any encapsulation of traffic that shouldn't be encapsulated. Packet capture at core network boundaries for traffic that's being copied to unexpected destinations.
+    <span class="ref">NET: Arkime/Zeek on core network taps &middot; Router SPAN session audit</span>
+  </li>
+  <li>
+    <strong>8. Review VPN and remote access infrastructure</strong>
+    Salt Typhoon exploits VPN concentrators, firewalls, and edge devices. Same CVE-class exploitation as Volt Typhoon but targeting telecom-specific infrastructure. Audit patch status of all internet-facing network appliances, check for unauthorized VPN configurations, and verify that management interfaces are not exposed.
+    <span class="ref">NET: <a href="/net/initial_access.html">Initial Access</a> &middot; Edge device firmware validation</span>
+  </li>
+  <li>
+    <strong>9. Check for lateral movement between IT and telecom network segments</strong>
+    Telecom operators maintain separate IT (corporate) and telecom (carrier) network segments. Salt Typhoon bridges these. Check for: traffic between segments that bypasses normal demarcation points, credentials valid across both environments, and management system access patterns that cross segment boundaries.
+    <span class="ref"><a href="/host/lateral_movement.html">HOST: Lateral Movement</a> &middot; Network segmentation validation</span>
+  </li>
+  <li>
+    <strong>10. Coordinate with CISA and sector ISAC</strong>
+    Salt Typhoon is an active, ongoing national security investigation. If you identify indicators consistent with this campaign, coordinate with CISA (AA25-239A), the Communications ISAC, and the FBI Cyber Division. This is not an incident you handle alone: the scope is cross-carrier and cross-agency.
+  </li>
+</ol>
+
+<div class="section-head green">Salt Typhoon vs Volt Typhoon</div>
+
+<p class="prose">
+  Both are PRC-affiliated, both target US critical infrastructure, and both exploit the same detection blind spots (legitimate tools, long dwell times). But they serve different strategic objectives:
+</p>
+<p class="prose">
+  <strong>Volt Typhoon:</strong> Pre-positioning for disruption. Targets energy, water, transportation. Uses zero custom malware (pure LOTL). The objective is to have access ready for activation during a crisis. They want to be able to turn things off.
+</p>
+<p class="prose">
+  <strong>Salt Typhoon:</strong> Intelligence collection. Targets telecommunications. Uses custom malware (GhostSpider) and operates at the network infrastructure level. The objective is to know what the US government is saying, who they're monitoring, and how their communications infrastructure works. They want to listen.
+</p>
+<p class="prose">
+  <strong>For defenders:</strong> Volt Typhoon hunts focus on endpoint behavioral anomalies and authentication baselines. Salt Typhoon hunts focus on network device integrity, management plane access, and traffic routing anomalies. Different detection surfaces for different operational models.
+</p>
+
+<div class="note-box">
+  <strong>The dwell time problem.</strong> Salt Typhoon maintained access in at least one carrier network for three years before discovery. In that time, they had access to every communication that transited those networks. The intelligence value of three years of metadata from a major US carrier is incalculable. The lesson for defenders: if you discover Salt Typhoon today, assume they've had access since at least 2023 and scope your damage assessment accordingly.
+</div>
+
+<div class="section-head default">Key advisories and references</div>
+<p class="prose">
+  <strong>CISA AA25-239A</strong> (September 2025): Joint advisory on Salt Typhoon TTPs with MITRE ATT&CK mapping.<br>
+  <strong>FBI Director statement</strong> (February 2026): Threat remains "very, very active" in US networks.<br>
+  <strong>DHS memo</strong> (June 2025): 1,462 network config files stolen from 70 government agencies across 12 sectors.<br>
+  <strong>NBC News</strong> (July 2025): National Guard networks compromised for nearly a year.<br>
+  <strong>Recorded Future</strong> (December 2024-January 2025): University telecommunications research programs targeted.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/actors/volt-typhoon.html">Volt Typhoon</a> (PRC infrastructure targeting, different objective: disruption vs collection)<br>
+  <a href="/playbooks/environments/airgap-ot.html">Air-Gapped OT / ICS</a> (network segmentation principles applicable to telecom/IT separation)<br>
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (management plane credential compromise)<br>
+  <a href="/playbooks/actors/apt41.html">APT41</a> (Chinese state-sponsored with different targeting profile)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>
