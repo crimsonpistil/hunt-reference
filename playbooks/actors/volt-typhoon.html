@@ -233,7 +233,22 @@
   <strong>The hardest detection problem in cybersecurity.</strong> Volt Typhoon proved that a patient, well-resourced actor can maintain years-long access to critical infrastructure using nothing but legitimate tools and valid credentials. There is no signature to write, no hash to block, no C2 domain to sinkhole. Detection requires behavioral baselines, authentication analytics, and the willingness to investigate activity that "looks normal" but isn't.
 </div>
 
-<div class="section-head default">CISA advisories</div>
+<div class="section-head red">2025 evolution: VOLTZITE achieves Stage 2 (Dragos 2026)</div>
+
+<p class="prose">
+  Dragos elevated VOLTZITE (their tracking name for Volt Typhoon-linked activity) to ICS Kill Chain Stage 2 in 2025 after observing a critical capability shift: <strong>VOLTZITE moved beyond data exfiltration to directly manipulating engineering workstations</strong>. They compromised Sierra Wireless Airlink RV50/RV55 cellular gateways in electric and oil and gas organizations, pivoted to engineering workstations, and "manipulated the software to dump configuration files and alarm data to investigate what would trigger operational processes to stop."
+</p>
+<p class="prose">
+  This is the line between reconnaissance and pre-attack positioning. VOLTZITE is no longer just collecting data about OT environments. They are actively testing how to cause physical consequences.
+</p>
+<p class="prose">
+  <strong>SYLVANITE: the initial access team.</strong> Dragos identified SYLVANITE as a new threat group operating as Volt Typhoon's initial access provider. SYLVANITE rapidly weaponizes edge device vulnerabilities (Ivanti EPMM, F5 BIG-IP, SAP NetWeaver, ConnectWise ScreenConnect) and hands off compromised environments to VOLTZITE within days. This paired model (SYLVANITE for access, VOLTZITE for OT operations) mirrors the KAMACITE/ELECTRUM (Sandworm) division of labor and compresses the timeline from initial breach to operational readiness.
+</p>
+<p class="prose">
+  <strong>GIS data as a weapon.</strong> VOLTZITE exploited Trimble Cityworks GIS software (CVE-2025-0994) to steal geographic information system data about the layout and architecture of energy systems. GIS data maps physical assets and operational relationships. Stolen GIS data enables adversaries to plan precise, disruptive attacks on electric and water utilities.
+</p>
+
+<div class="section-head default">CISA advisories and references</div>
 <p class="prose">
   <strong>AA23-144A</strong> (May 2023): Initial disclosure. Microsoft and CISA detail Volt Typhoon's LOTL activity across US critical infrastructure.<br>
   <strong>AA24-038A</strong> (February 2024): Major update. Five-year dwell confirmed. Detailed TTPs, staging paths, and specific commands. Supplemental LOTL detection guidance published alongside.<br>

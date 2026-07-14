@@ -216,19 +216,63 @@
   <strong>Note on Purdue levels.</strong> This playbook targets Levels 2-3 (area supervisory and site operations), where Windows/Linux hosts exist and can run monitoring tools. Levels 0-1 (process and basic control: PLCs, RTUs, actuators) generally cannot run host-based agents. Detection at those levels is network-only: Zeek/Suricata on a span port monitoring the ICS protocol traffic. Level 4+ (IT/DMZ) has full enterprise tooling and is covered by the standard host and network playbooks.
 </div>
 
-<div class="section-head">Actors who target this environment</div>
+<div class="note-box red">
+  <strong>The visibility gap (Dragos 2026).</strong> Fewer than 10 percent of OT networks worldwide have network visibility and monitoring in place. 90 percent of Dragos customers cannot detect the style of attack that ELECTRUM used against Ukraine's power grid in 2015. 30 percent of Dragos IR cases in 2025 started not with a detection but with someone saying "something seems wrong," and in the majority of those cases, the data needed to determine whether cyber was involved had never been collected. OT network telemetry is transient. If you are not recording it when it happens, it is gone.
+</div>
+
+<div class="section-head red">ICS-specific attack tools in the wild (2025)</div>
 
 <p class="prose">
-  <strong><a href="/playbooks/actors/sandworm.html">Sandworm (APT44)</a></strong> is the primary threat to OT/ICS infrastructure. Industroyer (2016, 2022), BlackEnergy (2015), WhisperGate and HermeticWiper (2022) all targeted Ukrainian energy and critical infrastructure. Their playbook is IT compromise first, then pivot to OT through engineering workstations.
+  ICS protocols were designed for reliability in environments that were never expected to be connected to outside networks. They lack authentication, they are well documented, and their protocol libraries are publicly available. Building a tool that sends a command to a PLC does not require the resources of a state program. It requires documentation and a reason to try. More actors now have both.
 </p>
 <p class="prose">
-  <strong><a href="/playbooks/actors/volt-typhoon.html">Volt Typhoon</a></strong> pre-positions on US critical infrastructure using living-off-the-land techniques. No custom malware, no C2 beacons, just valid credentials and native tools. The hardest actor to detect in this environment because their activity looks identical to legitimate administration.
+  <strong>PLC_Controller.exe.</strong> Discovered July 2025 (Dragos). Compiled Python tool that issues S7comm and COTP requests to force older Siemens S7-300/S7-400 PLCs into STOP mode. 45 percent of S7 PLC devices in the Dragos Intelligence Fabric are vulnerable older models. Dragos assesses with moderate confidence the tool was used in a national red team exercise coordinated by China's Ministry of Public Security. The capability is fully functional and immediately operationalizable.
 </p>
 <p class="prose">
-  <strong><a href="/playbooks/actors/apt41.html">APT41</a></strong> has documented dual-purpose operations across IT and OT, with particular focus on manufacturing and technology sectors where OT networks hold intellectual property and process data.
+  <strong>Modbus PowerShell tool (exploit.ps1).</strong> Discovered November 2025 (Dragos). Scans for Modbus servers on a subnet, identifies holding registers with values greater than 400, and repeatedly writes 1,000 to the holding register. Found alongside a customized Slowloris DDoS tool with botnet functionality.
 </p>
 <p class="prose">
-  <strong>CyberAv3ngers (IRGC-CEC)</strong> targeted Unitronics PLCs at US water facilities in late 2023. Exploited default credentials on internet-exposed HMIs. Lower sophistication than Sandworm but demonstrated willingness to target Western critical infrastructure directly.
+  <strong>Hacktivist ICS targeting.</strong> In 2025, hacktivist groups moved beyond symbolic defacements into direct ICS interaction. Dragos observed exploitation of internet-facing HMIs, misconfigured engineering workstations, exposed Modbus/TCP, DNP3, MQTT, OPC UA endpoints, and BACnet devices. Groups like Z-Pentest and Dark Engine used open-source scanning tools to identify PLC gateways and historian servers. Some campaigns used Cobalt Strike, Sliver C2, and LOTL techniques, reflecting a maturation well beyond their traditional capability.
+</p>
+
+<div class="section-head red">Adversaries are mapping control loops (2025)</div>
+
+<p class="prose">
+  The most significant finding in the Dragos 2026 report: adversaries are no longer simply gaining access and waiting. Multiple threat groups, independently and across different geopolitical alignments, moved into <strong>actively mapping control loops</strong>: identifying engineering workstations, exfiltrating configuration files and alarm data, and learning how physical processes operate well enough to disrupt them. This is the removal of the last practical barrier between having access and being able to cause physical consequences.
+</p>
+<p class="prose">
+  <strong>KAMACITE (Sandworm access team)</strong> scanned US-exposed industrial devices from March through July 2025: Schneider Electric Altivar variable-frequency drives, Smart HMIs, Accuenergy AXM modules, and Sierra Wireless Airlink gateways. The scanning was not opportunistic. It targeted specific components in a sequence that suggests intent to understand entire control loops: operator interfaces (HMIs), actuators that influence physical processes (VFDs), metering and process-visibility points (AXM modules), and remote-access gateways that bridge ICS back to corporate networks (Airlink). "The pattern is consistent with what you would expect from a team being told to prepare for operations, not just collect."
+</p>
+<p class="prose">
+  <strong>VOLTZITE (overlaps Volt Typhoon)</strong> achieved Stage 2 capability in 2025 by moving beyond data exfiltration to direct manipulation of engineering workstations. They compromised Sierra Wireless Airlink RV50/RV55 cellular gateways in electric and oil and gas, pivoted to engineering workstations, and "manipulated the software to dump configuration files and alarm data to investigate what would trigger operational processes to stop." VOLTZITE also exploited Trimble Cityworks GIS software to steal data about the layout and architecture of energy systems.
+</p>
+<p class="prose">
+  <strong>AZURITE (new, overlaps Flax Typhoon)</strong> targets OT engineering workstations and exfiltrates operational data: alarm data, configuration files, process information, and employee operator information. They demonstrate knowledge of OT-centric software and conduct interactive operations to identify information of interest. Dragos assesses this activity supports capability development and target designation for offensive operations in case of geopolitical conflict. Targets manufacturing, automotive, electric, oil and gas, pharma, and defense across the US, Australia, Europe, Japan, South Korea, and Taiwan.
+</p>
+
+<div class="note-box">
+  <strong>Sierra Wireless Airlink: the OT edge device to watch.</strong> Both VOLTZITE and KAMACITE targeted Sierra Wireless Airlink cellular gateways in 2025. These devices connect field equipment to cellular networks for remote monitoring and management. The risks: they bypass network perimeter controls via cellular, IT security teams may not know they exist, they connect to legacy OT equipment without security features, and they're often in physically accessible remote locations. If you have Airlink devices in your environment, audit them now.
+</div>
+
+<div class="section-head default">Actors who target this environment</div>
+
+<p class="prose">
+  <strong><a href="/playbooks/actors/sandworm.html">Sandworm / ELECTRUM + KAMACITE</a></strong> remains the primary threat. ELECTRUM expanded beyond Ukraine into Poland in December 2025, targeting combined heat and power facilities and renewable energy management systems: the first major cyberattack against distributed energy resources anywhere in the world. KAMACITE expanded from Ukrainian targets into the European OT supply chain AND conducted sustained US ICS reconnaissance. New PathWiper malware identified June 2025 with another variant in December 2025. "The most operationally experienced infrastructure-attack group Dragos is aware of."
+</p>
+<p class="prose">
+  <strong><a href="/playbooks/actors/volt-typhoon.html">Volt Typhoon / VOLTZITE + SYLVANITE</a></strong> now operates in a paired model. SYLVANITE provides initial access by rapidly weaponizing edge device vulnerabilities (Ivanti, F5, SAP, ConnectWise) and hands off compromised environments to VOLTZITE within days. VOLTZITE achieved Stage 2 in 2025 through direct EWS manipulation and control-loop data theft. This division of labor compresses the timeline from breach to operational readiness from weeks to days.
+</p>
+<p class="prose">
+  <strong>AZURITE (new, Flax Typhoon overlap)</strong> targets engineering workstations to exfiltrate operational data for capability development. Uses compromised SOHO routers for C2, exploits the same edge device CVEs as SYLVANITE and VOLTZITE, and operates across manufacturing, defense, automotive, electric, oil and gas, and government sectors.
+</p>
+<p class="prose">
+  <strong>PYROXENE (new, IRGC-CEC/APT35 overlap)</strong> conducts supply chain compromises targeting defense, transportation, and critical infrastructure. Deployed wiper malware against Israeli targets in June 2025 during the Iran-Israel conflict. Conducted watering-hole attacks against a water utility serving Haifa Bay Port. Operates with initial access provided by PARISITE.
+</p>
+<p class="prose">
+  <strong>BAUXITE (CyberAv3ngers, IRGC-CEC)</strong> escalated from hacktivist-level operations to deploying custom wiper malware against Israeli targets in June 2025. Previously compromised Unitronics PLCs at US water facilities (2023) and over 400 global OT devices via IOControl malware. Sends threatening emails to ICS vendors, security researchers, and OT stakeholders.
+</p>
+<p class="prose">
+  <strong><a href="/playbooks/actors/apt41.html">APT41</a></strong> conducts dual-purpose operations across IT and OT, targeting manufacturing and technology sectors where OT networks hold intellectual property and process data.
 </p>
 
 </div>

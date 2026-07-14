@@ -101,7 +101,9 @@
   <strong>2018:</strong> Olympic Destroyer against PyeongChang Winter Olympics. Sophisticated false flag designed to implicate other APTs. Disrupted Wi-Fi, ticketing, and broadcasting.<br>
   <strong>2022:</strong> Wave of wipers at the start of the Ukraine invasion: WhisperGate (MBR corruptor + file wiper), HermeticWiper (EaseUS driver for disk-level destruction), CaddyWiper (file overwrite + partition table destruction), IsaacWiper, and Industroyer2 against electrical substations (thwarted by defenders).<br>
   <strong>2023:</strong> Infamous Chisel (Android malware targeting Ukrainian military devices). AcidPour (Linux wiper targeting embedded devices and routers).<br>
-  <strong>2024-2025:</strong> ZeroLot wiper against Ukrainian energy companies. CERT-UA confirmed Sandworm sub-cluster compromised ICS for water, heat, and energy supply facilities to amplify the effect of missile strikes.
+  <strong>2024-2025:</strong> ZeroLot wiper against Ukrainian energy companies. CERT-UA confirmed Sandworm sub-cluster compromised ICS for water, heat, and energy supply facilities to amplify the effect of missile strikes. KAMACITE expanded targeting into European OT supply chain (GIE conference targeting, 25+ Ukrainian industrial suppliers) and conducted sustained US ICS reconnaissance of Schneider Electric VFDs, HMIs, and Sierra Wireless Airlink gateways from March through July 2025.<br>
+  <strong>May 2025:</strong> ELECTRUM coordinated destructive attacks against eight Ukrainian ISPs (Interlink, ActiveNet, Corbina, and others) using the Solntsepek hacktivist persona as cover. PathWiper identified: overwrites MBR and NTFS metadata, enumerates mounted volumes, targets all accessible storage for irreversible data loss.<br>
+  <strong>December 2025:</strong> ELECTRUM expanded beyond Ukraine into Poland. First major cyberattack against distributed energy resources (DERs), targeting combined heat and power (CHP) facilities and renewable energy management systems. Polish authorities assessed the activity originated from actors linked to Russian state services. "The first major coordinated cyberattack against DERs anywhere in the world." Another new destructive wiper variant identified the same month.
 </p>
 
 <div class="section-head amber">Wiper arsenal</div>
@@ -129,7 +131,11 @@
   </div>
   <div class="tool-card">
     <div class="tc-name">ZeroLot</div>
-    <div class="tc-desc">Newest wiper (2024-2025). Deployed against Ukrainian energy companies. Purpose-built destructive tooling continuing the pattern of a new wiper for each campaign phase.</div>
+    <div class="tc-desc">2024-2025 wiper against Ukrainian energy companies. Purpose-built destructive tooling continuing the pattern of a new wiper for each campaign phase.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">PathWiper</div>
+    <div class="tc-desc">Identified June 2025 (Dragos/Cisco Talos). Overwrites MBR and NTFS filesystem metadata, enumerates mounted volumes, targets all accessible storage. "Reflects a more deliberate, volume-aware methodology than HermeticWiper." Another new variant discovered December 2025.</div>
   </div>
   <div class="tool-card">
     <div class="tc-name">Cyclops Blink</div>
@@ -204,10 +210,13 @@
   <strong>ICS protocol expertise.</strong> No other threat actor has demonstrated the ability to craft custom malware that communicates natively with industrial control systems using IEC 61850, IEC 104, OPC DA, and Modbus. Industroyer is not a modified IT tool: it is purpose-built ICS attack software.
 </p>
 <p class="prose">
-  <strong>A new wiper for every campaign.</strong> Most actors reuse tools. Sandworm develops new wiper families for each operational phase: CaddyWiper, HermeticWiper, WhisperGate, AcidPour, ZeroLot. This makes signature-based detection of "the next wiper" impossible. Detection must be behavioral: mass file overwrites, raw disk access, partition table manipulation, GPO-deployed scheduled tasks.
+  <strong>A new wiper for every campaign.</strong> Most actors reuse tools. Sandworm develops new wiper families for each operational phase: CaddyWiper, HermeticWiper, WhisperGate, AcidPour, ZeroLot, PathWiper, plus an unnamed December 2025 variant. This makes signature-based detection of "the next wiper" impossible. Detection must be behavioral: mass file overwrites, raw disk access, partition table manipulation, GPO-deployed scheduled tasks.
 </p>
 <p class="prose">
-  <strong>Coordination with kinetic operations.</strong> Since February 2022, Sandworm has timed wiper deployments to coincide with Russian missile strikes on Ukrainian infrastructure. This is not opportunistic cybercrime: it is integrated military operations where cyber effects are synchronized with physical attacks. CERT-UA confirmed that compromised ICS access to water and energy facilities was intended to amplify missile strike effects.
+  <strong>Paired operations model: KAMACITE builds access, ELECTRUM executes.</strong> Sandworm operates as two coordinated teams (Dragos designations). KAMACITE handles initial access, credential theft, supply chain compromise, and reconnaissance. ELECTRUM handles destructive payloads and ICS-specific operations. In 2025, KAMACITE expanded from Ukrainian targets into the European OT supply chain and then pivoted to sustained US ICS reconnaissance (March-July 2025), scanning Schneider Electric Altivar VFDs, Smart HMIs, Accuenergy AXM modules, and Sierra Wireless Airlink gateways in a sequence designed to map entire control loops: where commands originate, how they propagate, and where physical effects could be induced.
+</p>
+<p class="prose">
+  <strong>Coordination with kinetic operations.</strong> Since February 2022, Sandworm has timed wiper deployments to coincide with Russian missile strikes on Ukrainian infrastructure. CERT-UA confirmed that compromised ICS access to water, heat, and energy facilities was intended to amplify missile strike effects. This is integrated military operations where cyber effects are synchronized with physical attacks.
 </p>
 
 <div class="note-box">

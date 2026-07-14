@@ -158,6 +158,10 @@
   <strong>Breakout time: 29 minutes average, 27 seconds fastest.</strong> CrowdStrike's 2026 GTR measured the average eCrime breakout time (initial access to lateral movement) at 29 minutes, a 65% acceleration from 2024. The fastest recorded breakout was 27 seconds. In one intrusion, data exfiltration began within four minutes of initial access. The implication: if your detection and response cycle takes longer than 30 minutes, the attacker is already lateral before you see the first alert.
 </div>
 
+<div class="note-box red">
+  <strong>OT ransomware is being misclassified as IT-only (Dragos 2026).</strong> Dragos tracked 119 ransomware groups impacting 3,300+ industrial organizations in 2025 (up from 1,693 in 2024). But the numbers understate the problem. There is a persistent mischaracterization of ransomware incidents as IT-only, driven by responders who see a Windows operating system and classify the incident without recognizing that the system was hosting SCADA software or functioning as an engineering workstation. Manufacturing accounted for 67%+ of all ransomware victims. The operational impact is real even without ICS-specific malware: a Fog affiliate used compromised VPN access to reach an OT-adjacent ESXi hypervisor and encrypt SCADA-supporting virtual machines. No PLCs or field devices were touched, but the loss of the virtualization layer immediately removed operator visibility and control.
+</div>
+
 <div class="section-head default">Actors who run this playbook</div>
 
 <p class="prose">
