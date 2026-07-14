@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: APT29 / Cozy Bear</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}
+  .logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}
+  .site-switcher{display:flex;gap:4px}
+  .switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}
+  .back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}
+  .pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--red);border:1px solid rgba(248,81,73,.4);background:rgba(248,81,73,.08)}
+  .pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}
+  .pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}
+  .pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}
+  .section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}
+  .section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}
+  .check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}
+  .check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}
+  .check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}
+  .check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}
+  .note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .alias-grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 20px}
+  .alias-tag{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+  .cve-list{list-style:none;margin:0 0 16px;padding:0}
+  .cve-list li{padding:6px 10px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:4px;font-size:11px;color:var(--text2);line-height:1.5}
+  .cve-list li strong{color:var(--text)}
+  .tool-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+  @media(max-width:600px){.tool-grid{grid-template-columns:1fr}}
+  .tool-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px 14px}
+  .tool-card .tc-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--red);margin-bottom:4px}
+  .tool-card .tc-desc{font-size:11px;color:var(--text3);line-height:1.5}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}
+  footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher">
+    <a class="switcher-side" href="/net/">NET</a>
+    <a class="switcher-side" href="/host/">HOST</a>
+    <a class="switcher-side" href="/attribution/">ATTRIB</a>
+    <span class="switcher-side active">PLAYBOOKS</span>
+  </div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">THREAT ACTOR &middot; RUSSIA</div>
+  <div class="pb-title">APT29 / Cozy Bear</div>
+  <div class="pb-sub">Russia's SVR. The quietest long-dwell operator in the threat landscape. Supply chain mastery (SolarWinds), cloud-native identity abuse (Golden SAML, OAuth), and the 2024 Microsoft corporate breach. If APT28 is a sledgehammer, APT29 is a lockpick.</div>
+  <div class="pb-meta-row">MITRE G0016 &middot; SVR &middot; active 2008-present &middot; cloud-first tradecraft</div>
+</div>
+
+<div class="content">
+
+<div class="section-head default">Also known as</div>
+<div class="alias-grid">
+  <span class="alias-tag">Midnight Blizzard</span>
+  <span class="alias-tag">NOBELIUM</span>
+  <span class="alias-tag">The Dukes</span>
+  <span class="alias-tag">Dark Halo</span>
+  <span class="alias-tag">UNC2452</span>
+  <span class="alias-tag">CozyDuke</span>
+  <span class="alias-tag">SolarStorm</span>
+  <span class="alias-tag">Blue Kitsune</span>
+  <span class="alias-tag">UNC3524</span>
+  <span class="alias-tag">YTTRIUM</span>
+  <span class="alias-tag">NobleBaron</span>
+  <span class="alias-tag">IRON RITUAL</span>
+</div>
+
+<div class="section-head red">What makes APT29 dangerous</div>
+
+<p class="prose">
+  APT29 is the SVR's cyber arm, and they operate like an intelligence service: <strong>patient, methodical, and almost invisible</strong>. Where APT28 (GRU) moves fast and burns infrastructure for speed, APT29 measures dwell time in months and years. They pioneered the supply chain attack model that the entire industry now fears (SolarWinds, 2020: 18,000+ organizations compromised through a single build pipeline). In January 2024, they breached Microsoft's own corporate email systems and remained inside reading senior leadership mailboxes for weeks.
+</p>
+<p class="prose">
+  Their most significant evolution is the shift to <strong>cloud-native operations</strong>. CISA and NCSC advisories (2024) document APT29 abandoning traditional on-prem malware in favor of Azure AD/Entra ID abuse, OAuth token theft, SAML forgery, device enrollment manipulation, and residential proxy infrastructure. Post-SolarWinds APT29 looks almost nothing like pre-SolarWinds APT29: they operate in the identity layer, not the endpoint.
+</p>
+
+<div class="note-box">
+  <strong>The SolarWinds lesson.</strong> APT29 didn't hack 18,000 organizations. They hacked one build pipeline and let the software distribution do the rest. Only ~100 of those 18,000 received follow-on exploitation, selected by intelligence value. The supply chain was the access. The selectivity was the tradecraft. If you think you're too small to be a target, consider whether you're in someone else's supply chain.
+</div>
+
+<div class="section-head amber">Known initial access vectors</div>
+
+<ul class="cve-list">
+  <li><strong>Supply chain compromise.</strong> SolarWinds Orion (SUNBURST/SUNSPOT, 2020). Trojanized build pipeline injected a backdoor into signed software updates distributed to 18,000+ customers. The defining supply chain attack.</li>
+  <li><strong>CVE-2023-42793</strong> JetBrains TeamCity. Authentication bypass allowing arbitrary code execution on CI/CD servers. Mass exploitation confirmed in joint FBI/NSA/NCSC advisory (October 2024).</li>
+  <li><strong>CVE-2022-27924</strong> Zimbra command injection. Targeted hundreds of domains worldwide, injecting memcache commands to steal credentials and access mailboxes without user interaction.</li>
+  <li><strong>Password spraying</strong> against cloud identity providers (Azure AD, Okta, Google Workspace). Low-and-slow attempts through residential proxy infrastructure to avoid rate limiting and geofencing.</li>
+  <li><strong>OAuth consent phishing.</strong> Tricking users into granting permissions to malicious OAuth applications. Once consented, the app has persistent access to email, files, and calendar regardless of password changes.</li>
+  <li><strong>Device code phishing.</strong> Sending phishing emails with device authorization codes that victims enter at legitimate Microsoft login pages, granting the attacker a valid token without needing the password or MFA response.</li>
+  <li><strong>Spearphishing with HTML smuggling.</strong> EnvyScout HTML attachments that assemble the payload in the browser, bypassing email gateway inspection of attachments.</li>
+</ul>
+
+<div class="section-head amber">Signature tradecraft: cloud identity abuse</div>
+
+<p class="prose">This is what separates APT29 from every other actor. They don't just use the cloud, they <strong>operate natively inside the identity and trust layer</strong>.</p>
+
+<div class="tool-grid">
+  <div class="tool-card">
+    <div class="tc-name">Golden SAML</div>
+    <div class="tc-desc">Forging SAML authentication tokens using stolen AD FS signing certificates. Allows authentication as any user to any federated service without knowing their password or triggering MFA. The SolarWinds post-compromise escalation path.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">OAuth App Abuse</div>
+    <div class="tc-desc">Creating or hijacking OAuth applications with high-privilege scopes (full_access_as_app, Mail.ReadWrite). Provides persistent mailbox and file access that survives password resets, MFA changes, and session revocation.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Service Principal Credential Theft</div>
+    <div class="tc-desc">Stealing or creating credentials for Azure AD service principals. Service principals don't have MFA, don't trigger user sign-in alerts, and often have overly broad permissions. The invisible access path.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Residential Proxy C2</div>
+    <div class="tc-desc">Routing all authentication and C2 traffic through residential proxy services so connections appear to come from normal broadband ISPs. Defeats geofencing, IP reputation, and impossible travel detection.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Device Enrollment Manipulation</div>
+    <div class="tc-desc">Enrolling attacker-controlled devices into the victim's Azure AD/Intune. The enrolled device becomes a trusted endpoint, bypassing conditional access policies that require managed/compliant devices.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Mailbox Delegation Abuse</div>
+    <div class="tc-desc">Granting FullAccess or impersonation rights on target mailboxes. Allows reading email without logging in as the user. No authentication events are generated under the target's identity.</div>
+  </div>
+</div>
+
+<div class="section-head blue">Hunt checklist: if you suspect APT29</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Audit all OAuth application consent grants</strong>
+    Search Azure AD/Entra ID for application consent events, especially apps granted Mail.Read, Mail.ReadWrite, Mail.Send, or full_access_as_app. Check for multi-tenant apps created recently, apps with no organizational publisher, and apps consented by compromised accounts. One documented case involved 17,000 multitenant OAuth apps from a single campaign.
+    <span class="ref">Azure AD: Enterprise Applications &middot; Audit logs: "Consent to application" &middot; Graph API: oauth2PermissionGrants</span>
+  </li>
+  <li>
+    <strong>2. Check for AD FS signing certificate access</strong>
+    If you run AD FS, the signing certificate is the keys to the kingdom. Golden SAML requires the AD FS token-signing certificate's private key. Check for: unauthorized access to the AD FS server, exports of the signing certificate, and SAML tokens with unusual claims or lifetimes. If the certificate is compromised, rotate it immediately and revoke all issued tokens.
+    <span class="ref"><a href="/host/credential_access.html">HOST: Credential Access</a> &middot; AD FS audit logs &middot; Security EID 4662 on AD FS service account</span>
+  </li>
+  <li>
+    <strong>3. Audit service principal credentials</strong>
+    Service principals can have passwords or certificates added as credentials. Search for: newly created service principal credentials (Audit log: "Add service principal credentials"), service principals with multiple credentials, and service principals authenticating from unusual IPs. These are invisible access paths that bypass all user-level monitoring.
+    <span class="ref">Azure AD Audit: "Add service principal credentials" &middot; Sign-in logs (service principal tab)</span>
+  </li>
+  <li>
+    <strong>4. Check for device enrollment anomalies</strong>
+    Search Intune/Entra ID for devices enrolled during the compromise window, especially devices that don't match your hardware inventory. An attacker-enrolled device becomes a trusted endpoint that passes conditional access checks. Look for: device registrations from unusual IPs, devices with generic or out-of-pattern names, and devices that were enrolled and immediately used for authentication.
+    <span class="ref">Azure AD: Devices &middot; Intune: Device enrollment audit</span>
+  </li>
+  <li>
+    <strong>5. Hunt for password spraying through residential proxies</strong>
+    APT29 uses residential proxy services (not VPNs or VPS hosting) so their authentication attempts appear to come from normal broadband connections. Traditional "failed login from foreign IP" rules don't catch this. Look for: distributed low-volume failed authentications (1-2 per account per day) across many accounts from many different residential ISP IP ranges. The pattern is in the breadth and consistency, not the volume.
+    <span class="ref">Azure AD sign-in logs: filter by failure + ASN analysis &middot; <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> playbook</span>
+  </li>
+  <li>
+    <strong>6. Check for mailbox delegation and permission changes</strong>
+    APT29 adds FullAccess or impersonation rights to target mailboxes so they can read email without generating sign-in events under the target's identity. Search Exchange/M365 audit logs for: Add-MailboxPermission, Set-Mailbox -GrantSendOnBehalfTo, and application impersonation role assignments during the compromise window.
+    <span class="ref">Search-UnifiedAuditLog -Operations "Add-MailboxPermission" &middot; <a href="/playbooks/triage/bec.html">BEC</a> playbook</span>
+  </li>
+  <li>
+    <strong>7. Review software supply chain integrity</strong>
+    If your organization uses SolarWinds, JetBrains TeamCity, Zimbra, or managed service providers, verify build pipeline integrity. Check for: unauthorized changes to CI/CD configurations, unexpected build artifacts, software updates from untrusted sources, and MSP admin accounts with excessive permissions. APT29 targets the upstream provider to compromise the downstream customer.
+    <span class="ref">CI/CD pipeline audit logs &middot; Software signing verification</span>
+  </li>
+  <li>
+    <strong>8. Hunt for HTML smuggling delivery</strong>
+    APT29's EnvyScout delivers payloads via HTML email attachments that assemble the malware in the browser, bypassing email gateway file inspection. Search for: HTML attachments in email logs, Sysmon EID 11 for ISO/IMG/VHD files created from browser processes, and mounted disk image files that contain LNK or DLL payloads.
+    <span class="ref"><a href="/host/execution.html">HOST: Execution</a> &middot; <a href="/host/defense_evasion.html">HOST: Defense Evasion</a> &middot; Sysmon EID 11</span>
+  </li>
+  <li>
+    <strong>9. Check for SAML token anomalies</strong>
+    Golden SAML tokens forged by APT29 may have: unusually long lifetimes, claims that don't match the user's actual attributes, tokens issued from unexpected AD FS servers, or tokens used from IPs that don't match the issuing server's network. If you have AD FS claim logging enabled, audit for anomalies in token issuance patterns.
+    <span class="ref">AD FS audit logs &middot; Azure AD sign-in logs: "Token issuer" field</span>
+  </li>
+  <li>
+    <strong>10. Look for lateral movement via trusted applications</strong>
+    Post-compromise, APT29 moves laterally using legitimate cloud admin tools (Azure Portal, Graph API, Exchange PowerShell) rather than deploying implants. Their post-access activity looks like a cloud administrator doing their job. The anomaly is which account is doing it and from where, not what tool they're using.
+    <span class="ref">Azure Activity Log &middot; Graph API audit &middot; Exchange admin audit log</span>
+  </li>
+</ol>
+
+<div class="section-head green">What distinguishes APT29 from APT28</div>
+
+<p class="prose">
+  <strong>Speed vs patience.</strong> APT28 operates in days to weeks with aggressive credential harvesting and quick exploitation. APT29 operates in months to years with careful, selective targeting. If the intrusion feels rushed, it's more likely APT28.
+</p>
+<p class="prose">
+  <strong>Endpoints vs identity.</strong> APT28 deploys custom tools on endpoints (GooseEgg, X-Agent, Drovorub). APT29 increasingly avoids endpoint artifacts entirely, operating in the cloud identity layer (OAuth, SAML, service principals). If there's no malware on any host and the compromise is entirely cloud-based, it's more likely APT29.
+</p>
+<p class="prose">
+  <strong>Breadth vs selectivity.</strong> APT28 runs mass campaigns (password spraying thousands of accounts, phishing entire organizations). APT29 compromises one supply chain and then carefully selects which of the 18,000 affected organizations to pursue further. If the initial access was broad but the follow-on activity is highly selective, it's more likely APT29.
+</p>
+<p class="prose">
+  <strong>Different GRU vs SVR.</strong> APT28 is GRU (military intelligence, Unit 26165). APT29 is SVR (foreign intelligence service). They have different chains of command, different mission sets, and different operational philosophies. They occasionally target the same organizations independently (the DNC hack in 2016 involved both groups, apparently unaware of each other).
+</p>
+
+<div class="note-box">
+  <strong>APT29 in your cloud is the hardest detection problem after LOTL.</strong> They use legitimate tools, legitimate protocols, and legitimate authentication. They operate through identity trust boundaries that most monitoring doesn't cross. If your detection strategy is built around endpoint agents and network signatures, APT29 can operate underneath it indefinitely. Detection requires cloud-native monitoring: Azure AD sign-in analytics, OAuth consent auditing, service principal tracking, and SAML token verification.
+</div>
+
+<div class="section-head default">Key advisories and references</div>
+<p class="prose">
+  <strong>CISA AA24-057A</strong> (February 2024): SVR cyber actors adapt tactics for initial cloud access. Details residential proxy, service account, and OAuth abuse.<br>
+  <strong>FBI/NSA/NCSC Joint Advisory</strong> (October 2024): Mass exploitation of Zimbra and TeamCity by SVR actors.<br>
+  <strong>Microsoft Midnight Blizzard disclosure</strong> (January 2024): SVR actors breached Microsoft corporate email via password spray against a legacy test tenant.<br>
+  <strong>SolarWinds comprehensive timeline</strong> (2020-2021): SUNBURST backdoor, SUNSPOT build implant, TEARDROP/Raindrop second-stage loaders, Golden SAML post-compromise.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/actors/apt28.html">APT28 / Fancy Bear</a> (the noisier GRU counterpart for comparison)<br>
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (APT29's primary operational mode is credential and token abuse)<br>
+  <a href="/playbooks/triage/bec.html">Business Email Compromise</a> (OAuth app and mailbox delegation abuse overlap)<br>
+  <a href="/playbooks/triage/lotl.html">Living-off-the-Land Activity</a> (APT29's cloud operations are the identity-layer equivalent of LOTL)
+</p>
+
+</div>
+
+<footer>
+  <p>TONK &middot; Threat Observation &amp; Network Kill-chain</p>
+  <p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p>
+</footer>
+</body>
+</html>
