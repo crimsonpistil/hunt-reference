@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: APT41 / Winnti</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--red);border:1px solid rgba(248,81,73,.4);background:rgba(248,81,73,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .alias-grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 20px}.alias-tag{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+  .cve-list{list-style:none;margin:0 0 16px;padding:0}.cve-list li{padding:6px 10px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:4px;font-size:11px;color:var(--text2);line-height:1.5}.cve-list li strong{color:var(--text)}
+  .tool-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}@media(max-width:600px){.tool-grid{grid-template-columns:1fr}}.tool-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px 14px}.tool-card .tc-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--red);margin-bottom:4px}.tool-card .tc-desc{font-size:11px;color:var(--text3);line-height:1.5}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">THREAT ACTOR &middot; CHINA</div>
+  <div class="pb-title">APT41 / Winnti</div>
+  <div class="pb-sub">China's dual-mandate operator: state espionage by day, financially motivated cybercrime by night. Supply chain mastery (CCleaner, ShadowPad), the deepest malware arsenal of any Chinese APT, and the only named group with DOJ-indicted members who kept operating. Targets 40+ countries across 15+ industries.</div>
+  <div class="pb-meta-row">MITRE G0096 &middot; MSS / Chengdu 404 &middot; active 2012-present &middot; dual-mandate: espionage + financial crime</div>
+</div>
+
+<div class="content">
+
+<div class="section-head default">Also known as</div>
+<div class="alias-grid">
+  <span class="alias-tag">Brass Typhoon</span>
+  <span class="alias-tag">Wicked Panda</span>
+  <span class="alias-tag">BARIUM</span>
+  <span class="alias-tag">Double Dragon</span>
+  <span class="alias-tag">RedGolf</span>
+  <span class="alias-tag">Earth Baku</span>
+  <span class="alias-tag">Blackfly</span>
+  <span class="alias-tag">Grayfly</span>
+  <span class="alias-tag">TAG-22</span>
+  <span class="alias-tag">Winnti Group</span>
+</div>
+
+<div class="section-head red">The dual-mandate problem</div>
+
+<p class="prose">
+  APT41 is the only major APT that simultaneously conducts <strong>state-directed espionage and personally motivated financial crime</strong>. The 2020 DOJ indictment named five members of Chengdu 404 Network Technology Company, revealing that state espionage operations ran during business hours while financially motivated attacks (ransomware, cryptojacking, gaming virtual currency theft) ran after hours and on weekends. The indicted operators remain in China and APT41 continued operating without interruption through 2025.
+</p>
+<p class="prose">
+  This dual mandate makes APT41 the most versatile threat actor in the dataset. They've compromised software supply chains (CCleaner, 2.27 million users), deployed ShadowPad and PlugX across dozens of government targets, run ransomware against hospitals, cryptojacked cloud environments, and stolen virtual currencies from gaming companies. If you're in tech, telecom, healthcare, gaming, government, defense, pharma, education, or manufacturing, you're in APT41's target set.
+</p>
+
+<div class="note-box">
+  <strong>ShadowPad proliferation.</strong> ShadowPad was originally APT41's exclusive flagship implant. It has since been shared with or sold to at least 10 other Chinese APT groups (APT10, APT27, APT40, and others). Finding ShadowPad on a host no longer uniquely attributes to APT41: it narrows to "Chinese state-sponsored" but requires additional indicators (specific loader variant, infrastructure, or co-deployed tooling) to attribute to APT41 specifically.
+</div>
+
+<div class="section-head amber">Known initial access vectors</div>
+
+<ul class="cve-list">
+  <li><strong>Supply chain compromise.</strong> CCleaner (2017, 2.27M users). ShadowPad in NetSarang Xmanager (2017). Compromised software build pipelines to distribute backdoors through legitimate update channels.</li>
+  <li><strong>CVE-2021-44228</strong> Log4Shell. APT41 began exploitation the same day as disclosure (December 10, 2021). Targeted Citrix, Cisco, and other Java-based enterprise platforms at scale.</li>
+  <li><strong>CVE-2019-19781</strong> Citrix ADC / Gateway. Mass exploitation of pre-auth RCE for initial foothold into enterprise networks.</li>
+  <li><strong>CVE-2020-5902</strong> F5 BIG-IP. Critical TMUI RCE exploited in campaigns targeting technology and government sectors.</li>
+  <li><strong>CVE-2022-26134</strong> Atlassian Confluence. OGNL injection for RCE against collaboration infrastructure.</li>
+  <li><strong>CVE-2021-40539</strong> Zoho ManageEngine ADSelfService Plus. Auth bypass and RCE against identity management platforms. Shared exploitation with Volt Typhoon.</li>
+  <li><strong>SQL injection</strong> against web applications. APT41 maintains capability for manual SQL injection to shell on custom web applications, a technique less common among other nation-state actors.</li>
+  <li><strong>Spearphishing</strong> with maldocs and malicious archives. Often themed around industry-specific topics relevant to the target's sector.</li>
+</ul>
+
+<div class="section-head amber">Signature tooling</div>
+
+<div class="tool-grid">
+  <div class="tool-card">
+    <div class="tc-name">ShadowPad</div>
+    <div class="tc-desc">Modular backdoor platform. Plugin architecture supporting keylogging, screenshots, file management, and dozens of other modules. Originally APT41-exclusive, now shared across Chinese APT ecosystem. Deployed via DLL side-loading.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">PlugX</div>
+    <div class="tc-desc">Long-running modular RAT shared across Chinese APTs. DLL side-loading delivery using legitimate signed binaries (11-year-old Bitdefender, VMware executables). Multiple variants with evolving C2 protocols.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">KEYPLUG</div>
+    <div class="tc-desc">Cross-platform (Windows + Linux) backdoor with custom TLS C2. Active since at least 2021. Notable for Linux variant targeting, unusual for Chinese APTs. C2 using Cloudflare Workers and Google services.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">DodgeBox</div>
+    <div class="tc-desc">Memory-only loader active since 2025. PE32 x86 DLL with signature evasion. Targeting EU energy sector. Represents APT41's continued investment in detection evasion.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">DUSTTRAP / TOUGHPROGRESS</div>
+    <div class="tc-desc">DUSTTRAP: multi-stage encrypted payload. TOUGHPROGRESS: abuses Google Calendar for C2 (2024). Both delivered via free web hosting platforms to evade domain reputation systems.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Winnti Rootkit</div>
+    <div class="tc-desc">Kernel-level rootkit providing process, file, and registry hiding. Used for long-term persistence on high-value targets. The original namesake tool of the broader Winnti ecosystem.</div>
+  </div>
+</div>
+
+<div class="section-head blue">Hunt checklist: if you suspect APT41</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Hunt for DLL side-loading from legitimate signed binaries</strong>
+    APT41's signature delivery mechanism. Search for: signed executables from Bitdefender, VMware, or other vendors running from non-standard paths (C:\ProgramData, C:\Users\Public, temp directories), loading DLLs from the same directory. Sysmon EID 7 (ImageLoad) cross-referenced with EID 1 (ProcessCreate) for path anomalies. The legitimate binary is the loader; the side-loaded DLL is the payload.
+    <span class="ref"><a href="/host/defense_evasion.html">HOST: Defense Evasion</a> &middot; Sysmon EID 7 + EID 1</span>
+  </li>
+  <li>
+    <strong>2. Search for ShadowPad and PlugX indicators</strong>
+    ShadowPad: look for encrypted configuration blocks in registry or files, modular plugin loading patterns, and C2 callbacks using custom TLS. PlugX: classic indicators include DLL side-loading triads (legitimate exe + malicious DLL + encrypted payload), and C2 using HTTP with encoded headers. YARA rules for both are well-established.
+    <span class="ref"><a href="/host/persistence.html">HOST: Persistence</a> &middot; YARA: ShadowPad and PlugX signatures</span>
+  </li>
+  <li>
+    <strong>3. Check for C2 using legitimate cloud services</strong>
+    APT41 abuses Cloudflare Workers, Google Calendar, Google Drive, Google Sheets, and OneDrive for C2 and exfiltration. TOUGHPROGRESS uses Google Calendar events as command channels. DUSTTRAP and VOLDEMORT use free web hosting. Search for: unusual API calls to Google/Microsoft services from processes that shouldn't be making them.
+    <span class="ref">NET: <a href="/net/c2.html">C2</a> &middot; Sysmon EID 3 to Google/Microsoft API endpoints from non-browser processes</span>
+  </li>
+  <li>
+    <strong>4. Audit software supply chain integrity</strong>
+    APT41 is one of the most prolific supply chain attackers. Check: integrity of installed software against vendor hashes, CI/CD pipeline configurations for unauthorized changes, third-party library dependencies for known-compromised packages, and software update channels for unexpected activity.
+  </li>
+  <li>
+    <strong>5. Hunt for rapid vulnerability exploitation</strong>
+    APT41 exploits critical CVEs within hours of disclosure (Log4Shell same-day). After any major CVE announcement affecting your stack, assume APT41 (among others) is already scanning. Check for exploitation indicators on: Citrix, F5, Confluence, Exchange, ManageEngine, and any Java-based web application in your environment.
+    <span class="ref">NET: <a href="/net/initial_access.html">Initial Access</a> &middot; Vendor patch validation</span>
+  </li>
+  <li>
+    <strong>6. Check for systemd and cron persistence on Linux</strong>
+    APT41 uses systemd service creation with spoofed daemon names and cron.d injection for Linux persistence. Search for: unpackaged systemd units (not from dpkg/rpm), cron.d entries not owned by any package, and services with ExecStart pointing to writable paths.
+    <span class="ref"><a href="/host/persistence.html#T1543.002">HOST: T1543.002</a> Systemd &middot; <a href="/host/persistence.html#T1053.003">T1053.003</a> Cron</span>
+  </li>
+  <li>
+    <strong>7. Check for SQL injection and web shell artifacts</strong>
+    APT41 maintains manual SQL injection capability against custom web applications and deploys China Chopper and other web shells for initial persistence. Search web server directories for: new .aspx/.jsp/.php files, files with eval/execute patterns, and recently modified files in web roots.
+    <span class="ref"><a href="/host/execution.html">HOST: Execution</a> &middot; FIM on web server directories</span>
+  </li>
+  <li>
+    <strong>8. Map credential access and lateral movement</strong>
+    Standard APT41 post-compromise: LSASS dumping, Kerberoasting, DCSync, then lateral movement via Cobalt Strike, WMI, and PsExec. The credential chain reveals which accounts are compromised and which systems the attacker has accessed. Build the timeline from credential theft through lateral movement to data access.
+    <span class="ref"><a href="/host/credential_access.html">HOST: Credential Access</a> &middot; <a href="/host/lateral_movement.html">HOST: Lateral Movement</a></span>
+  </li>
+  <li>
+    <strong>9. Check for data exfiltration via SQLULDR2 and PineGrove</strong>
+    APT41 uses SQLULDR2 (Oracle database exfiltration utility) to bulk-export database contents and PineGrove to upload stolen data to OneDrive. Search for: SQLULDR2 execution, large data exports from database servers, and unusual OneDrive/cloud storage uploads from server infrastructure.
+    <span class="ref">NET: <a href="/net/exfil.html">Exfiltration</a> &middot; <a href="/net/collection.html">Collection</a></span>
+  </li>
+  <li>
+    <strong>10. Determine whether the operation is espionage or financial</strong>
+    APT41's dual mandate means the same intrusion might pursue both objectives simultaneously. Indicators of espionage: targeting government/defense/tech, data exfiltration of IP/secrets, long-dwell persistence. Indicators of financial crime: ransomware deployment, cryptojacking, virtual currency theft, targeting gaming platforms. The response priorities differ.
+    <span class="ref"><a href="/attribution/">ATTRIB</a> engine</span>
+  </li>
+</ol>
+
+<div class="section-head green">What distinguishes APT41 from other Chinese actors</div>
+
+<p class="prose">
+  <strong>The financial side.</strong> APT10, APT27, APT40, and Volt Typhoon conduct espionage only. APT41 runs ransomware, cryptojacking, and gaming currency theft alongside state espionage. If the intrusion involves both data theft AND financial crime indicators, it's likely APT41.
+</p>
+<p class="prose">
+  <strong>Exploitation speed.</strong> APT41 exploits critical vulnerabilities faster than almost any other actor. Log4Shell exploitation began same-day. This "first to exploit" pattern is a distinguishing characteristic: if you were compromised within 24-48 hours of a critical CVE disclosure, APT41 is high on the suspect list.
+</p>
+<p class="prose">
+  <strong>The ShadowPad question.</strong> ShadowPad used to be APT41-exclusive. It's now shared with 10+ Chinese groups. Finding ShadowPad alone attributes to "Chinese state-sponsored" but not APT41 specifically. APT41 attribution requires: ShadowPad + specific loader variant (Bitdefender side-load) + co-deployed tooling (KEYPLUG, DUSTTRAP) + targeting pattern (dual espionage/financial).
+</p>
+
+<div class="section-head default">Key references</div>
+<p class="prose">
+  <strong>DOJ indictment</strong> (September 2020): Five Chengdu 404 members indicted. Front company identified. Operations continued uninterrupted.<br>
+  <strong>Mandiant "Double Dragon" report</strong> (2019): Comprehensive APT41 profile establishing the dual-mandate operating model.<br>
+  <strong>Cisco Talos ShadowPad campaigns</strong> (2024): Ongoing targeting of Taiwanese government with ShadowPad + Cobalt Strike via Bitdefender DLL side-loading.<br>
+  <strong>Google TAG DodgeBox report</strong> (2025): New memory-only loader targeting EU energy sector.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/actors/volt-typhoon.html">Volt Typhoon</a> (Chinese infrastructure targeting, opposite operational style: zero tools vs deep arsenal)<br>
+  <a href="/playbooks/triage/ransomware.html">Ransomware Detected</a> (APT41 deploys ransomware during off-hours operations)<br>
+  <a href="/playbooks/triage/c2-beacon.html">C2 Beacon Found</a> (ShadowPad, PlugX, KEYPLUG C2 detection)<br>
+  <a href="/playbooks/environments/airgap-ot.html">Air-Gapped OT / ICS</a> (APT41 targets manufacturing and technology OT environments)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>

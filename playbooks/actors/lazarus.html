@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Lazarus / HIDDEN COBRA</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--red);border:1px solid rgba(248,81,73,.4);background:rgba(248,81,73,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .alias-grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 20px}.alias-tag{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+  .tool-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}@media(max-width:600px){.tool-grid{grid-template-columns:1fr}}.tool-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px 14px}.tool-card .tc-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--red);margin-bottom:4px}.tool-card .tc-desc{font-size:11px;color:var(--text3);line-height:1.5}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">THREAT ACTOR &middot; DPRK</div>
+  <div class="pb-title">Lazarus / HIDDEN COBRA</div>
+  <div class="pb-sub">DPRK Reconnaissance General Bureau. The only nation-state actor that robs banks for a living. $5B+ in cryptocurrency stolen since 2021. Simultaneously runs espionage, destructive wipers, ransomware against healthcare, and supply chain attacks against developers. Crosses every boundary other actors respect.</div>
+  <div class="pb-meta-row">MITRE G0032 &middot; RGB &middot; active 2009-present &middot; subgroups: Bluenoroff (finance) &middot; Andariel (espionage)</div>
+</div>
+
+<div class="content">
+
+<div class="section-head default">Also known as</div>
+<div class="alias-grid">
+  <span class="alias-tag">HIDDEN COBRA</span>
+  <span class="alias-tag">Diamond Sleet</span>
+  <span class="alias-tag">ZINC</span>
+  <span class="alias-tag">Labyrinth Chollima</span>
+  <span class="alias-tag">Guardians of Peace</span>
+  <span class="alias-tag">NICKEL ACADEMY</span>
+  <span class="alias-tag">Bluenoroff (APT38)</span>
+  <span class="alias-tag">Andariel</span>
+  <span class="alias-tag">Stardust Chollima</span>
+  <span class="alias-tag">Sapphire Sleet</span>
+</div>
+
+<div class="section-head red">Why Lazarus is unlike any other actor</div>
+
+<p class="prose">
+  Every other nation-state APT has a primary mission: espionage (APT29), destruction (Sandworm), or pre-positioning (Volt Typhoon). Lazarus does <strong>all of the above, plus financial crime at industrial scale</strong>. Their cryptocurrency operations directly fund North Korea's nuclear weapons program. The $1.5 billion Bybit heist (February 2025) was the largest cryptocurrency theft in history. The Bangladesh Bank SWIFT attack (2016) attempted to steal $951 million. They deployed WannaCry ransomware globally (2017). They run Maui ransomware against US healthcare (2022).
+</p>
+<p class="prose">
+  Lazarus operates through <strong>specialized subgroups</strong>. Bluenoroff (APT38) handles financial operations: SWIFT fraud, cryptocurrency exchange heists, DeFi exploits. Andariel handles espionage and ransomware, primarily targeting South Korean defense and critical infrastructure. The parent Lazarus umbrella conducts destructive operations and high-profile attacks (Sony Pictures 2014, WannaCry 2017). These subgroups share tooling and infrastructure but have distinct targeting and mission sets.
+</p>
+
+<div class="note-box red">
+  <strong>Lazarus targets developers.</strong> Operation DreamJob and Operation 99 (2024-2025) send fake job offers to software developers, particularly in cryptocurrency and Web3. The "recruiter" sends a coding assessment containing trojanized npm/PyPI packages. If you work in cryptocurrency, blockchain, or Web3 development and receive an unsolicited job offer with a coding test, assume it's Lazarus until proven otherwise.
+</div>
+
+<div class="section-head amber">Signature operations</div>
+
+<p class="prose">
+  <strong>Bybit ($1.5B, February 2025):</strong> Compromised Safe{Wallet} multi-signature platform to manipulate transaction approvals. Laundered through THORChain within hours. FBI attribution within five days. The single largest crypto theft in history.<br>
+  <strong>Ronin Bridge ($620M, March 2022):</strong> Compromised validator keys for the Axie Infinity Ronin Bridge via social engineering of Sky Mavis employees through fake LinkedIn job offers.<br>
+  <strong>Bangladesh Bank ($81M stolen of $951M attempted, 2016):</strong> Infiltrated Bangladesh Central Bank's SWIFT terminal, submitted 35 fraudulent transfer requests. A typo in one request triggered scrutiny that stopped most transfers.<br>
+  <strong>Sony Pictures (2014):</strong> Destructive wiper attack in retaliation for "The Interview" film. Exfiltrated and leaked unreleased films, emails, and employee data.<br>
+  <strong>WannaCry (2017):</strong> Global ransomware leveraging EternalBlue. 200,000+ systems across 150 countries. Linked to Lazarus via code similarities with earlier DPRK tooling.<br>
+  <strong>Maui ransomware (2022):</strong> Targeting US healthcare organizations. FBI/CISA joint advisory. Manual deployment (not spray-and-pray), with specific targeting of healthcare for maximum payment pressure.
+</p>
+
+<div class="section-head amber">Custom tooling</div>
+
+<div class="tool-grid">
+  <div class="tool-card">
+    <div class="tc-name">CookiePlus</div>
+    <div class="tc-desc">Modular backdoor disguised as open-source plugins. Deployed via Operation DreamJob (2024) targeting nuclear sector employees through fake skill assessments.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Destover</div>
+    <div class="tc-desc">Destructive wiper used in the Sony Pictures attack. MBR overwrite + file deletion. The template for subsequent DPRK destructive operations.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Maui Ransomware</div>
+    <div class="tc-desc">Manually deployed ransomware targeting healthcare. AES-128, RSA, XOR encryption chain. No automated propagation: each deployment is hand-operated.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">TAINTEDSCRIBE / FALLCHILL</div>
+    <div class="tc-desc">Full-featured RATs with keylogging, screenshot, file exfil. FALLCHILL uses dual-proxy C2 through compromised web servers. Long-running DPRK implant families.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Trojanized npm/PyPI packages</div>
+    <div class="tc-desc">Supply chain attacks through open-source package registries (2025). Malicious packages impersonate legitimate libraries, targeting developer machines in cryptocurrency projects.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">AppleJeus</div>
+    <div class="tc-desc">Trojanized cryptocurrency trading applications. Fake exchanges and trading platforms used to deliver backdoors to cryptocurrency traders and developers. Cross-platform: Windows, macOS, Linux.</div>
+  </div>
+</div>
+
+<div class="section-head blue">Hunt checklist: if you suspect Lazarus</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Check for trojanized developer tools and packages</strong>
+    Search developer workstations for: recently installed npm/PyPI packages from unknown publishers, Node.js or Python processes making outbound connections to unusual IPs, and coding assessment files received via LinkedIn/Telegram from "recruiters." Operation DreamJob specifically targets developers with fake job offers containing malicious code samples.
+    <span class="ref"><a href="/host/execution.html">HOST: Execution</a> &middot; npm audit &middot; pip audit</span>
+  </li>
+  <li>
+    <strong>2. Audit cryptocurrency wallet infrastructure</strong>
+    If you operate cryptocurrency infrastructure: review multi-sig approval workflows, audit smart contract permissions, check for unauthorized API key creation, and verify that hardware wallet firmware is genuine. Lazarus targets the transaction signing process, not the blockchain itself.
+    <span class="ref">Application-specific audit logs &middot; Smart contract event monitoring</span>
+  </li>
+  <li>
+    <strong>3. Hunt for DLL side-loading</strong>
+    Lazarus heavily uses DLL side-loading via legitimate signed executables (documented: Bitdefender, VMware, and other vendor binaries loading malicious DLLs). Search for: signed executables in non-standard paths loading DLLs from the same directory, and known side-loading pairs in Sysmon EID 7 (ImageLoad).
+    <span class="ref"><a href="/host/defense_evasion.html">HOST: Defense Evasion</a> &middot; Sysmon EID 7 &middot; <a href="/host/persistence.html">HOST: Persistence</a></span>
+  </li>
+  <li>
+    <strong>4. Check for social engineering via LinkedIn and Telegram</strong>
+    Lazarus runs persistent social engineering campaigns posing as recruiters from major tech companies. Review: unsolicited job offers received by developers, especially those including coding tests, archive files, or links to private GitHub repos. The "recruiter" profiles are well-crafted with stolen photos and fabricated work histories.
+  </li>
+  <li>
+    <strong>5. Search for SWIFT terminal access anomalies</strong>
+    If you operate banking/financial infrastructure: audit SWIFT Alliance Lite2 terminal access logs, check for unauthorized message submissions, and verify that SWIFT operator credentials haven't been compromised. Lazarus specifically targets the SWIFT messaging interface for fraudulent transfer requests.
+  </li>
+  <li>
+    <strong>6. Check for credential harvesting and lateral movement</strong>
+    Standard post-compromise: LSASS dumping, SAM extraction, Kerberoasting. Lazarus performs aggressive credential harvesting early in the intrusion to move toward high-value financial systems. The credential chain leads to their actual target (SWIFT terminals, wallet infrastructure, financial databases).
+    <span class="ref"><a href="/host/credential_access.html#T1003.001">HOST: T1003.001</a> LSASS &middot; <a href="/host/lateral_movement.html">HOST: Lateral Movement</a></span>
+  </li>
+  <li>
+    <strong>7. Look for cross-platform implants</strong>
+    Lazarus operates across Windows, macOS, Linux, and mobile (Android). AppleJeus targets macOS alongside Windows. Check non-Windows endpoints that are often overlooked in hunts: developer MacBooks, Linux build servers, and mobile devices with access to cryptocurrency wallets.
+    <span class="ref"><a href="/host/persistence.html">HOST: Persistence</a> (Linux techniques) &middot; macOS: launchd persistence</span>
+  </li>
+  <li>
+    <strong>8. Monitor for data exfiltration and financial staging</strong>
+    Lazarus exfiltrates both data (for espionage) and money (for revenue). Financial staging indicators: unusual cryptocurrency transactions, unauthorized API calls to exchange platforms, and large transfers to new wallet addresses. Data exfiltration: archive creation, cloud storage uploads, and C2-based file transfer.
+    <span class="ref">NET: <a href="/net/exfil.html">Exfiltration</a> &middot; <a href="/net/c2.html">C2</a></span>
+  </li>
+  <li>
+    <strong>9. Check for Maui ransomware indicators (healthcare sector)</strong>
+    If you're in healthcare: Maui is manually deployed (not spray-and-pray). Look for: new executables in admin-accessible paths, AES-encrypted files with .maui extension, ransom notes referencing "Maui," and the manual nature of the deployment (single hosts encrypted in sequence, not domain-wide GPO push).
+    <span class="ref"><a href="/playbooks/triage/ransomware.html">Ransomware</a> playbook &middot; <a href="/host/impact.html#T1486">HOST: T1486</a></span>
+  </li>
+  <li>
+    <strong>10. Assess whether the compromise is espionage or financial</strong>
+    The response differs. Espionage (Andariel): focus on what data was accessed, how long they had access, and what persistence they left. Financial (Bluenoroff): focus on stopping the money, recalling transfers, and freezing wallets. Time is money, literally: Lazarus launders cryptocurrency within hours of theft.
+    <span class="ref"><a href="/attribution/">ATTRIB</a> engine &middot; FBI IC3 for financial reporting</span>
+  </li>
+</ol>
+
+<div class="section-head green">What distinguishes Lazarus</div>
+
+<p class="prose">
+  <strong>Financial motivation at nation-state scale.</strong> No other APT steals money. Lazarus funds a nuclear weapons program through cryptocurrency theft. This creates urgency: every dollar stolen is a dollar that funds weapons proliferation. Financial institutions and cryptocurrency platforms are legitimate national security targets for DPRK.
+</p>
+<p class="prose">
+  <strong>Developer targeting.</strong> Operation DreamJob and Operation 99 specifically target individual developers through social engineering. The attack surface isn't a server or a network: it's a person's LinkedIn inbox. This is fundamentally different from the infrastructure-targeting approach of every other actor in this playbook collection.
+</p>
+<p class="prose">
+  <strong>Cross-platform parity.</strong> Most APTs are Windows-primary with limited Linux capability. Lazarus operates with equal fluency across Windows, macOS, Linux, and mobile. Their AppleJeus trojanized trading apps target macOS specifically because cryptocurrency developers disproportionately use Macs.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/triage/ransomware.html">Ransomware Detected</a> (Maui ransomware against healthcare)<br>
+  <a href="/playbooks/triage/c2-beacon.html">C2 Beacon Found</a> (FALLCHILL, CookiePlus, and custom implant detection)<br>
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (credential theft chain toward financial systems)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>
