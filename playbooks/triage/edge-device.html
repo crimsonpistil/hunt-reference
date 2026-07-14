@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Edge Device Compromised</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--amber);border:1px solid rgba(210,153,34,.4);background:rgba(210,153,34,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:640px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .cve-list{list-style:none;margin:0 0 16px;padding:0}.cve-list li{padding:6px 10px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:4px;font-size:11px;color:var(--text2);line-height:1.5}.cve-list li strong{color:var(--text)}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">INCIDENT TRIAGE &middot; TIER 2</div>
+  <div class="pb-title">Edge Device Compromised</div>
+  <div class="pb-sub">VPN concentrator, firewall, or web appliance exploited. 56% of tracked vulnerabilities exploitable without authentication (IBM X-Force 2026). The appliance is the foothold, not the target. The question is: what did they pivot to from the perimeter?</div>
+  <div class="pb-meta-row">reactive &middot; perimeter breach &middot; pivot-focused &middot; the appliance is already gone</div>
+</div>
+
+<div class="content">
+
+<div class="note-box red">
+  <strong>Do not assume patching fixes a compromise.</strong> Patching closes the vulnerability. It does not remove web shells, backdoor accounts, modified configs, or stolen credentials that were harvested before the patch. If the device was vulnerable during the exploitation window, treat it as compromised even if it's now patched. Verify integrity independently.
+</div>
+
+<div class="section-head red">The perimeter device problem</div>
+
+<p class="prose">
+  Edge devices (VPN, firewall, load balancer, mail gateway, web application firewall) sit at the network boundary, are internet-facing by design, and run proprietary firmware that most EDR agents cannot cover. They authenticate users, terminate VPN tunnels, and often have implicit trust to the internal network. A compromised edge device gives an attacker <strong>authenticated access to the internal network through the front door</strong>, often with visibility into every user's credentials as they transit the device.
+</p>
+
+<div class="section-head amber">Frequently targeted platforms (2023-2026)</div>
+
+<ul class="cve-list">
+  <li><strong>Fortinet FortiGate</strong> CVE-2022-42475, CVE-2023-27997 (XORtigate). Pre-auth RCE on SSL-VPN. Volt Typhoon's documented entry point. FortiOS remains the single most exploited edge platform by nation-state actors.</li>
+  <li><strong>Ivanti Connect Secure / Pulse Secure</strong> CVE-2023-46805, CVE-2024-21887 (auth bypass + command injection chain). Mass exploitation in January 2024. CISA ordered federal agencies to disconnect Ivanti devices.</li>
+  <li><strong>Palo Alto PAN-OS</strong> CVE-2024-3400 (GlobalProtect command injection). Zero-day exploited in the wild before patch. Pre-auth RCE on the firewall management interface.</li>
+  <li><strong>Cisco IOS XE</strong> CVE-2023-20198 + CVE-2023-20273 (web UI privilege escalation chain). Tens of thousands of devices compromised. Attacker creates local admin accounts on the router.</li>
+  <li><strong>Citrix NetScaler / ADC</strong> CVE-2023-4966 (Citrix Bleed). Session token leakage allowing session hijack without credentials. Exploited by ransomware affiliates for initial access.</li>
+  <li><strong>F5 BIG-IP</strong> CVE-2020-5902, CVE-2023-46747. RCE on the traffic management interface. Targeted by APT41 and multiple ransomware groups.</li>
+  <li><strong>Barracuda ESG</strong> CVE-2023-2868 (command injection via email attachment processing). Exploited by Chinese APT UNC4841. Barracuda's remediation: replace the physical device entirely.</li>
+</ul>
+
+<div class="section-head blue">Hunt checklist: edge device compromised</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Verify device firmware and configuration integrity</strong>
+    Compare running firmware hash against vendor-published known-good. Export the running configuration and diff against the last known-good backup. Check for: new admin accounts, modified ACLs, new VPN tunnel definitions, altered logging configurations (attackers disable logging first), and unauthorized SSL certificates.
+    <span class="ref">Vendor integrity verification tools &middot; Configuration management diff</span>
+  </li>
+  <li>
+    <strong>2. Check for web shells on the appliance</strong>
+    Many edge device exploits (FortiGate, Ivanti, Citrix) result in web shell deployment on the appliance itself. Check web server directories on the device for: files not present in the vendor firmware image, recently modified files, and files with eval/exec/system patterns. Some appliances require vendor support or forensic firmware extraction to inspect.
+    <span class="ref"><a href="/host/persistence.html">HOST: Persistence</a> &middot; Vendor forensic tools</span>
+  </li>
+  <li>
+    <strong>3. Extract and analyze all credentials the device handled</strong>
+    The compromised device saw every credential that transited it: VPN authentication (usernames + passwords if not using certificate auth), LDAP bind credentials (often the device binds to AD for authentication), RADIUS/TACACS+ shared secrets, and SSL/TLS private keys. Assume all of these are compromised. Reset LDAP bind accounts, rotate RADIUS secrets, and reissue certificates.
+    <span class="ref"><a href="/host/credential_access.html">HOST: Credential Access</a> &middot; <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> playbook</span>
+  </li>
+  <li>
+    <strong>4. Check for credential harvesting during the exploitation window</strong>
+    Attackers on a VPN concentrator can capture every user's credentials as they authenticate. Pull authentication logs from the period the device was compromised and treat every account that authenticated during that window as potentially compromised. For high-value accounts (admins, executives), force password resets and session revocations.
+  </li>
+  <li>
+    <strong>5. Hunt for pivot from the appliance into the internal network</strong>
+    The edge device is the foothold. Where did they go? Check internal network logs for: connections originating from the appliance's internal IP to hosts it doesn't normally talk to, new VPN sessions or tunnels established from the device, and lateral movement artifacts (SMB, RDP, SSH) sourced from the appliance's management interface or internal IP.
+    <span class="ref">NET: <a href="/net/lateral.html">Lateral Movement</a> &middot; Zeek conn.log &middot; Firewall internal interface logs</span>
+  </li>
+  <li>
+    <strong>6. Check for persistent backdoor access</strong>
+    Beyond web shells: check for new local accounts on the device, SSH keys added to the device, modified startup scripts, scheduled tasks or cron jobs on the appliance OS, and reverse tunnels or port forwarding rules (netsh portproxy on Windows-based appliances, iptables rules on Linux-based ones). Volt Typhoon uses netsh portproxy specifically for this.
+    <span class="ref"><a href="/playbooks/actors/volt-typhoon.html">Volt Typhoon</a> playbook &middot; <a href="/host/persistence.html">HOST: Persistence</a></span>
+  </li>
+  <li>
+    <strong>7. Review all VPN user sessions during the compromise window</strong>
+    If the attacker had access to the VPN concentrator, they may have created VPN sessions for their own access that blend with legitimate traffic. Check for: VPN sessions from unusual source IPs (residential, VPS, foreign), sessions outside normal hours, sessions with unusual duration or data volume, and sessions from user accounts that were also used legitimately (attacker piggybacks on a real account).
+    <span class="ref">VPN session logs &middot; NET: <a href="/net/c2.html">C2</a></span>
+  </li>
+  <li>
+    <strong>8. Check whether logging was disabled or tampered with</strong>
+    Attackers who compromise edge devices frequently disable or redirect logging as a first action. Check: are logs being forwarded to your SIEM, is the logging configuration unchanged from baseline, are there gaps in the log timeline (missing hours or days), and has the syslog destination been modified? A gap in logs from a device that normally logs continuously is an indicator.
+    <span class="ref"><a href="/host/defense_evasion.html#T1070.001">HOST: T1070.001</a> Clear Logs &middot; Syslog server receipt validation</span>
+  </li>
+  <li>
+    <strong>9. Determine whether to patch, reimage, or replace</strong>
+    Patching alone is insufficient if the device is already compromised. For most compromised appliances: factory reset and rebuild from known-good config is the minimum. For Barracuda ESG (CVE-2023-2868), the vendor recommended full device replacement because persistence survived factory reset. Check vendor advisories for remediation guidance specific to the CVE.
+  </li>
+  <li>
+    <strong>10. Assess exposure window and notify downstream</strong>
+    How long was the device vulnerable? Cross-reference the CVE disclosure date, when your device was patched, and when exploitation began (check vendor threat intelligence for exploitation timelines). Every user who authenticated through the device during the exposure window needs credential resets. If the device handled partner/vendor VPN connections, notify those parties.
+  </li>
+</ol>
+
+<div class="note-box">
+  <strong>Edge devices are the new initial access vector.</strong> Phishing used to be #1. Edge device exploitation is now competitive and in some reports dominant for nation-state initial access. Volt Typhoon, APT28, APT41, and ransomware affiliates all exploit edge devices because they provide authenticated internal access, often with admin-level trust, and run on platforms that most detection stacks can't monitor. If your security strategy starts at the endpoint, you've already lost the perimeter.
+</div>
+
+<div class="section-head default">Actors who exploit edge devices</div>
+<p class="prose">
+  <strong><a href="/playbooks/actors/volt-typhoon.html">Volt Typhoon</a></strong> (FortiGate, Ivanti, Zoho), <strong><a href="/playbooks/actors/apt28.html">APT28</a></strong> (Ubiquiti edge routers for botnet relay), <strong><a href="/playbooks/actors/apt41.html">APT41</a></strong> (Citrix, F5, Confluence), <strong><a href="/playbooks/actors/sandworm.html">Sandworm</a></strong> (WatchGuard, ASUS via Cyclops Blink), <strong><a href="/playbooks/actors/salt-typhoon.html">Salt Typhoon</a></strong> (Cisco IOS routers in carrier infrastructure). Every major nation-state actor has edge device exploitation in their toolkit.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (every credential that transited the device is potentially stolen)<br>
+  <a href="/playbooks/triage/c2-beacon.html">C2 Beacon Found</a> (the pivot from edge device to internal implant)<br>
+  <a href="/playbooks/actors/volt-typhoon.html">Volt Typhoon</a> (edge device exploitation is their primary initial access)<br>
+  <a href="/playbooks/environments/airgap-ot.html">Air-Gapped OT</a> (edge devices bridging IT/OT are a critical exposure point)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>

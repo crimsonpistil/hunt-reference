@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Data Exfiltration Detected</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--amber);border:1px solid rgba(210,153,34,.4);background:rgba(210,153,34,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:640px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">INCIDENT TRIAGE &middot; TIER 2</div>
+  <div class="pb-title">Data Exfiltration Detected</div>
+  <div class="pb-sub">Outbound data movement found in proxy, DLP, network telemetry, or cloud access logs. Something left your network that shouldn't have. Reconstruct: what left, how, when it started, whether the channel is still active, and where the data was staged before it moved.</div>
+  <div class="pb-meta-row">reactive &middot; data loss &middot; reconstruct the timeline &middot; regulatory notification trigger</div>
+</div>
+
+<div class="content">
+
+<div class="note-box red">
+  <strong>Is the exfiltration channel still active?</strong> Before deep investigation, determine if data is still leaving. If the channel is live (ongoing large outbound transfer, active C2 session with file upload, continuous DNS tunneling), block it now. Preserve the evidence in your network capture, then cut the connection. The investigation can use the captured traffic.
+</div>
+
+<div class="section-head red">Common exfiltration channels</div>
+
+<p class="prose">
+  <strong>HTTPS to cloud storage.</strong> Rclone to Mega, OneDrive, Google Drive, Dropbox, S3. The most common exfil method because it blends with legitimate cloud traffic. Look for: Rclone process execution (Sysmon EID 1), large sustained HTTPS uploads to cloud storage domains, and cloud storage API calls from server infrastructure that doesn't normally use cloud storage.
+</p>
+<p class="prose">
+  <strong>DNS tunneling.</strong> Data encoded in DNS queries to attacker-controlled domains. Low bandwidth but hard to detect without DNS inspection. Indicators: extremely long DNS query names, high query volume to a single domain, query names with encoded or hex data patterns, and TXT record responses with encoded payloads.
+</p>
+<p class="prose">
+  <strong>C2 channel exfil.</strong> Data uploaded through an existing C2 implant (Cobalt Strike download command, custom backdoor file upload). Blends with C2 callback traffic. Identified by: unusually large C2 sessions, C2 session duration spikes, and beacon traffic volume anomalies.
+</p>
+<p class="prose">
+  <strong>Email-based.</strong> Forwarding rules sending copies of email to external addresses, or bulk email with attachments to attacker-controlled mailboxes. Low and slow. Identified by: mailbox rule auditing (see <a href="/playbooks/triage/bec.html">BEC playbook</a>).
+</p>
+<p class="prose">
+  <strong>Code repository push.</strong> Cloning internal repos and pushing to external Git hosting, or uploading source code archives. Developer-focused exfil. Identified by: git push to external remotes, large archive uploads from development infrastructure.
+</p>
+<p class="prose">
+  <strong>Physical/removable media.</strong> USB drives, external hard drives. Air-gapped environments are limited to this channel (see <a href="/playbooks/environments/airgap-ot.html">Air-Gapped OT playbook</a>). Identified by: Sysmon EID 11 file creation on removable media, USB mount events.
+</p>
+
+<div class="section-head blue">Triage checklist: exfiltration detected</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Characterize the exfiltration channel</strong>
+    What protocol, what destination, what volume? Pull the network evidence: proxy logs, firewall logs, DNS logs, Zeek conn.log, Arkime sessions. Identify the destination IP/domain, the protocol (HTTPS, DNS, SSH, SMTP), the total volume transferred, the session duration, and whether it's a single burst or sustained slow exfil.
+    <span class="ref">NET: <a href="/net/exfil.html">Exfiltration</a> &middot; <a href="/net/c2.html">C2</a> &middot; Zeek conn.log &middot; Arkime sessions</span>
+  </li>
+  <li>
+    <strong>2. Identify the source host</strong>
+    Which internal host initiated the outbound transfer? The source host is the staging point and likely the last host the attacker had hands-on access to. All subsequent investigation (credential access, lateral movement, data collection) traces backward from this host.
+    <span class="ref">NET: source IP from proxy/firewall logs &middot; Zeek conn.log orig_h</span>
+  </li>
+  <li>
+    <strong>3. Determine when exfiltration started</strong>
+    Search historical logs for the first connection to the exfil destination. The first transfer timestamp anchors the timeline: everything before it is staging, everything during is active exfil. Check for earlier smaller test transfers (attackers often test the channel with small files before bulk exfil).
+    <span class="ref">Zeek conn.log historical search &middot; DNS logs for first resolution of exfil domain</span>
+  </li>
+  <li>
+    <strong>4. Identify what data was staged</strong>
+    On the source host: check for archive creation (7z, zip, rar, tar) in recent file history (Sysmon EID 11). Check for staging directories (C:\Users\Public, C:\Windows\Temp, /tmp, /dev/shm) containing archives or data dumps. Check for database export tools (SQLULDR2, mysqldump, pg_dump) in process history. The staging artifacts tell you what was collected.
+    <span class="ref"><a href="/host/credential_access.html#T1003.003">HOST: T1003.003</a> NTDS (if credential dumps were staged) &middot; Sysmon EID 11</span>
+  </li>
+  <li>
+    <strong>5. Determine what data was accessed before staging</strong>
+    The attacker collected data before staging it. Check: file share access logs (EID 5145) for bulk reads from sensitive shares, database query logs for large exports, email access logs (MailItemsAccessed) for bulk mailbox access, and source control logs for repo cloning. Map which data stores were accessed and what was read.
+    <span class="ref">Security EID 5145 &middot; <a href="/net/collection.html">NET: Collection</a></span>
+  </li>
+  <li>
+    <strong>6. Reconstruct the exfiltration tool</strong>
+    What tool was used? Rclone (process name, command line with remote config), MEGAcmd, curl/wget with POST data, PowerShell Invoke-WebRequest, Python scripts, certutil -encode for file encoding, or the C2 framework's built-in upload. The tool choice can help with attribution and reveals whether the attacker used custom tooling or commodity tools.
+    <span class="ref"><a href="/host/execution.html">HOST: Execution</a> &middot; Sysmon EID 1 command line</span>
+  </li>
+  <li>
+    <strong>7. Check for encrypted or encoded data</strong>
+    Attackers often encrypt or encode staged data before exfiltration: password-protected archives (7z -p, zip -e), base64 encoding (certutil -encode), or custom encryption. If the staged archives are password-protected, you may be able to determine the contents from the collection phase logs (what files were read) even if you can't decrypt the archive.
+    <span class="ref"><a href="/host/defense_evasion.html">HOST: Defense Evasion</a></span>
+  </li>
+  <li>
+    <strong>8. Check for additional exfiltration channels</strong>
+    The channel you detected may not be the only one. Search for other anomalous outbound patterns from the same source host and from other compromised hosts: unusual DNS query volumes, sustained HTTPS to cloud storage, SSH/SCP to external IPs, SMTP with large attachments, and any outbound connection to IPs/domains associated with the attacker's C2 infrastructure.
+    <span class="ref">NET: <a href="/net/exfil.html">Exfiltration</a> &middot; Zeek dns.log + conn.log correlation</span>
+  </li>
+  <li>
+    <strong>9. Determine the total volume of data lost</strong>
+    Sum all outbound transfer volumes to the exfiltration destination across all sessions. Check for: multiple sessions to the same destination over time (slow exfil), transfers from multiple source hosts to the same destination (parallel exfil), and transfers to multiple destinations (redundant exfil). The total volume informs the regulatory notification and damage assessment.
+    <span class="ref">Zeek conn.log: sum(orig_bytes) grouped by dest &middot; Proxy logs: total upload volume</span>
+  </li>
+  <li>
+    <strong>10. Assess regulatory notification obligations</strong>
+    If PII, PHI, financial data, or classified information was exfiltrated, regulatory notification timelines apply: GDPR (72 hours), HIPAA (60 days), state breach notification laws (varies, 30-90 days), and sector-specific requirements (CMMC, PCI-DSS, NERC CIP). The data classification from steps 4-5 determines which regulations apply. Legal counsel should be involved before notification decisions.
+  </li>
+</ol>
+
+<div class="note-box">
+  <strong>Exfiltration is usually the last step before impact.</strong> In espionage operations (APT29, APT41), exfil is the objective: once the data is out, the mission is complete. In ransomware operations, exfil happens days before encryption. If you detect exfiltration, check whether ransomware deployment is imminent: <a href="/playbooks/triage/ransomware.html">Ransomware playbook</a>.
+</div>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/triage/ransomware.html">Ransomware Detected</a> (exfiltration precedes encryption in 70%+ of modern ransomware)<br>
+  <a href="/playbooks/triage/c2-beacon.html">C2 Beacon Found</a> (the C2 channel is often the exfil channel)<br>
+  <a href="/playbooks/triage/bec.html">Business Email Compromise</a> (email forwarding rules as exfil)<br>
+  <a href="/playbooks/environments/airgap-ot.html">Air-Gapped OT</a> (USB/removable media as the only exfil path)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Supply Chain Indicator</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--amber);border:1px solid rgba(210,153,34,.4);background:rgba(210,153,34,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:640px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">INCIDENT TRIAGE &middot; TIER 2</div>
+  <div class="pb-title">Supply Chain Indicator</div>
+  <div class="pb-sub">A vendor was compromised, a SaaS tool you use was backdoored, or a software update you deployed carried a payload. The attack happened upstream. Your job is to assess whether and how far the compromise reached your environment through the trust you gave someone else.</div>
+  <div class="pb-meta-row">reactive &middot; third-party &middot; scope shared trust &middot; quadrupled over 5 years</div>
+</div>
+
+<div class="content">
+
+<div class="section-head red">Supply chain compromise subtypes</div>
+
+<p class="prose">
+  <strong>Software supply chain.</strong> Trojanized software update (SolarWinds/SUNBURST, CCleaner, M.E.Doc/NotPetya, 3CX). The vendor's build pipeline was compromised and a backdoor was injected into a signed, legitimate update distributed to all customers. The attacker inherits the vendor's trust.
+</p>
+<p class="prose">
+  <strong>SaaS/OAuth supply chain.</strong> A SaaS vendor you've integrated via OAuth is compromised, or a malicious OAuth app was consented by a user and now has persistent API access to your data. The attacker doesn't need your credentials: they have an authorized API token.
+</p>
+<p class="prose">
+  <strong>MSP/IT service provider.</strong> Your managed service provider is compromised. They have admin credentials to your environment, VPN access, RMM agent deployment rights, and often domain admin equivalent access. One compromised MSP can cascade to hundreds of downstream clients simultaneously.
+</p>
+<p class="prose">
+  <strong>Open-source dependency.</strong> A malicious package injected into npm, PyPI, or another registry, or a legitimate package maintainer's account was hijacked. The malicious code runs in your CI/CD pipeline or developer workstation when the dependency is installed or updated.
+</p>
+
+<div class="note-box">
+  <strong>The attacker chose you through your vendor.</strong> Supply chain compromises are not about exploiting your defenses. Your firewall, EDR, and SOC are irrelevant when the attack comes through a signed software update from a trusted vendor, an authenticated API call from an authorized SaaS app, or an RMM push from your managed service provider. The trust boundary was upstream.
+</div>
+
+<div class="section-head blue">Triage checklist: supply chain indicator received</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Determine the scope of the compromised product/vendor in your environment</strong>
+    How many hosts run the affected software? Which version? Is auto-update enabled? For SaaS: which users have accounts, what permissions does the integration have, what data does it access? For MSPs: what credentials and access do they hold? Build the complete map of your exposure to the compromised vendor before investigating individual hosts.
+  </li>
+  <li>
+    <strong>2. Check whether the compromised version was deployed</strong>
+    Cross-reference the compromised version (hash, version number, build date) against your software inventory. SolarWinds affected a specific Orion build range. CCleaner affected specific versions. If you have a version outside the affected range, you may not be compromised, but verify: check software update logs for any temporary installation of the affected version, even if it was later updated past the affected range.
+    <span class="ref">Software inventory / CMDB &middot; Patch management logs</span>
+  </li>
+  <li>
+    <strong>3. Check for indicators of second-stage activation</strong>
+    Most supply chain compromises are selective. SolarWinds SUNBURST backdoored 18,000 organizations but only ~100 received second-stage payloads (TEARDROP, Raindrop). The backdoor phones home with system info, and the attacker decides whether to escalate. Check for: C2 callbacks from the compromised software, second-stage payload delivery, and behavioral anomalies from the software process.
+    <span class="ref">NET: <a href="/net/c2.html">C2</a> &middot; DNS logs for C2 domain lookups &middot; Proxy logs for callbacks</span>
+  </li>
+  <li>
+    <strong>4. Review OAuth and API integrations with the compromised vendor</strong>
+    For SaaS compromises: what API permissions does the vendor's integration have in your environment? Check for: OAuth tokens with Mail.Read, Files.ReadWrite, or directory scopes granted to the vendor's app. A compromised vendor with API access to your M365 tenant can read your email without touching your network. Revoke the tokens and review access logs.
+    <span class="ref"><a href="/playbooks/triage/bec.html">BEC</a> playbook &middot; <a href="/playbooks/actors/apt29.html">APT29</a> OAuth abuse</span>
+  </li>
+  <li>
+    <strong>5. Audit MSP/vendor admin credentials and access logs</strong>
+    For MSP compromise: immediately reset all credentials the MSP holds. Review their access logs: when did they log in, from where, what did they do? Check for: MSP admin accounts used at unusual times, RMM tools pushing unexpected scripts or payloads, and MSP VPN connections from unusual source IPs. The MSP's compromised credentials are your compromised credentials.
+    <span class="ref"><a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> playbook</span>
+  </li>
+  <li>
+    <strong>6. Check for lateral movement from the compromised software's host</strong>
+    If the compromised software ran with elevated privileges (as most enterprise management tools do), check for: credential access from that host (LSASS dumps, SAM extraction), lateral movement originating from that host (SMB, RDP, WMI to other hosts), and discovery commands run by the software's process or its child processes.
+    <span class="ref"><a href="/host/lateral_movement.html">HOST: Lateral Movement</a> &middot; <a href="/host/credential_access.html">HOST: Credential Access</a></span>
+  </li>
+  <li>
+    <strong>7. Inspect open-source dependencies in CI/CD</strong>
+    For package registry compromises: audit your lock files (package-lock.json, Pipfile.lock, Gemfile.lock) for the compromised package version. Check CI/CD build logs for: unexpected post-install scripts, network connections during build, and new files created outside the expected build output. Run <code>npm audit</code>, <code>pip audit</code>, or equivalent.
+    <span class="ref"><a href="/playbooks/actors/lazarus.html">Lazarus</a> npm/PyPI supply chain &middot; CI/CD audit logs</span>
+  </li>
+  <li>
+    <strong>8. Assess data exposure</strong>
+    What data did the compromised vendor/software have access to? The SolarWinds Orion agent had network monitoring access to every device it managed. An MSP's RMM agent has SYSTEM-level access on every managed endpoint. A SaaS integration with Mail.Read has every email in the connected mailboxes. Scope the data exposure based on the permissions the compromised component held.
+  </li>
+  <li>
+    <strong>9. Determine whether your environment was selected for follow-on</strong>
+    Supply chain attacks are often broad access with selective exploitation. Indicators that you WERE selected: second-stage payloads deployed, C2 callbacks from the compromised software, credential access or lateral movement from the software's host, or data exfiltration. Indicators you were NOT selected: compromised version was installed but only made baseline telemetry callbacks (standard software behavior), no second-stage, no unusual activity.
+  </li>
+  <li>
+    <strong>10. Coordinate with the vendor, peers, and sector ISAC</strong>
+    The vendor may have IOCs, affected version details, and remediation guidance. Your sector ISAC may have reports from peer organizations. CISA may have a dedicated advisory. Supply chain incidents are inherently multi-organization events. Information sharing is not optional: your peer's findings inform your investigation and vice versa.
+  </li>
+</ol>
+
+<div class="section-head default">Actors who specialize in supply chain</div>
+<p class="prose">
+  <strong><a href="/playbooks/actors/apt29.html">APT29</a></strong> (SolarWinds SUNBURST, the defining supply chain attack), <strong><a href="/playbooks/actors/apt41.html">APT41</a></strong> (CCleaner, ShadowPad in NetSarang, same-day Log4Shell), <strong><a href="/playbooks/actors/sandworm.html">Sandworm</a></strong> (M.E.Doc/NotPetya, destructive supply chain), <strong><a href="/playbooks/actors/lazarus.html">Lazarus</a></strong> (npm/PyPI package poisoning, trojanized cryptocurrency apps).
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/triage/c2-beacon.html">C2 Beacon Found</a> (supply chain backdoors establish C2 as their first action)<br>
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (MSP credentials are your credentials)<br>
+  <a href="/playbooks/triage/edge-device.html">Edge Device Compromised</a> (firmware supply chain and vendor update integrity)<br>
+  <a href="/playbooks/actors/apt29.html">APT29</a> (SolarWinds methodology and selective second-stage activation)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>
