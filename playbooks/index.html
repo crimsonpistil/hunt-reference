@@ -45,6 +45,11 @@
   .pb-pill.environ{color:var(--accent);border-color:rgba(88,166,255,.4);background:rgba(88,166,255,.08)}
 
   .pb-name{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px}
+  .country-pill{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;margin-right:6px;letter-spacing:.04em;vertical-align:middle}
+  .country-pill.cn{color:#f85149;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3)}
+  .country-pill.ru{color:#bc8cff;background:rgba(188,140,255,.12);border:1px solid rgba(188,140,255,.3)}
+  .country-pill.ir{color:#3fb950;background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3)}
+  .country-pill.kp{color:#d29922;background:rgba(210,153,34,.12);border:1px solid rgba(210,153,34,.3)}
   .pb-desc{font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:10px}
   .pb-meta{font-family:var(--mono);font-size:10px;color:var(--text3)}
 
@@ -95,80 +100,65 @@
 <!--  THREAT ACTOR PLAYBOOKS                    -->
 <!-- ═══════════════════════════════════════════ -->
 
-<span class="section-label">CN</span>
+<span class="section-label">by threat actor</span>
 <div class="card-grid">
 
   <a href="actors/volt-typhoon.html" class="pb-card actor">
-    <div class="pb-name">Volt Typhoon</div>
+    <div class="pb-name"><span class="country-pill cn">CN</span> Volt Typhoon</div>
     <div class="pb-desc">VOLT TYPHOON<br><strong>Operational Profile:</strong> China-nexus pre-positioning on US critical infrastructure. VOLTZITE (Dragos) achieved Stage 2 ICS capability in 2025 through direct engineering workstation manipulation.<br><strong>Key TTPs:</strong> Pure LOTL: valid credentials, native OS tools, no custom malware. SYLVANITE initial access team rapidly weaponizes edge CVEs. SOHO router botnets (KV Botnet). Control-loop mapping via Sierra Wireless Airlink compromise.</div>
     <div class="pb-meta">CN &middot; PLA &middot; G1017 &middot; 12-step hunt checklist &middot; 6 CVEs &middot; documented LOTL commands</div>
   </a>
 
   <a href="actors/salt-typhoon.html" class="pb-card actor">
-    <div class="pb-name">Salt Typhoon</div>
+    <div class="pb-name"><span class="country-pill cn">CN</span> Salt Typhoon</div>
     <div class="pb-desc">SALT TYPHOON<br><strong>Operational Profile:</strong> PRC-affiliated. Executed the worst telecom breach in US history. Compromised lawful intercept (CALEA) systems across nine carriers, intercepting presidential communications.<br><strong>Key TTPs:</strong> Custom GhostSpider malware operating at network infrastructure level. Exploitation of carrier-grade routing and switching infrastructure. Persistent access across 80+ countries. Intelligence collection at the backbone, not the endpoint.</div>
     <div class="pb-meta">CN &middot; PRC &middot; 10-step checklist &middot; 9 carriers &middot; 80+ countries &middot; CALEA exploitation</div>
   </a>
 
   <a href="actors/apt41.html" class="pb-card actor">
-    <div class="pb-name">APT41 / Winnti</div>
+    <div class="pb-name"><span class="country-pill cn">CN</span> APT41 / Winnti</div>
     <div class="pb-desc">APT41 / WINNTI<br><strong>Operational Profile:</strong> High-capability China-nexus group executing parallel state-sponsored espionage and financially motivated operations. Highly adept at pivoting across enterprise IT into OT control paths.<br><strong>Key TTPs:</strong> SQL injection to shell for initial access. PlugX/ShadowPad side-loading via legitimate binaries. Kerberoasting for privilege escalation. systemd (Linux) and service manipulation (Windows) for persistence.</div>
     <div class="pb-meta">CN &middot; MSS / Chengdu 404 &middot; G0096 &middot; 10-step checklist &middot; dual-mandate &middot; 40+ countries</div>
   </a>
 
-</div>
-
-<span class="section-label">RU</span>
-<div class="card-grid">
-
   <a href="actors/sandworm.html" class="pb-card actor">
-    <div class="pb-name">Sandworm / APT44</div>
+    <div class="pb-name"><span class="country-pill ru">RU</span> Sandworm / APT44</div>
     <div class="pb-desc">SANDWORM / APT44<br><strong>Operational Profile:</strong> Russia GRU Unit 74455. The most operationally experienced infrastructure-disrupting adversary in the world. Paired model: KAMACITE builds access, ELECTRUM executes destruction.<br><strong>Key TTPs:</strong> Nine wiper families (CaddyWiper through PathWiper). ICS protocol exploitation (Industroyer). Coordination of cyber effects with kinetic military strikes. Expanded into Poland DER targeting (Dec 2025).</div>
     <div class="pb-meta">RU &middot; GRU 74455 &middot; G0034 &middot; 10-step checklist &middot; 8 wiper families &middot; ICS protocol expertise</div>
   </a>
 
   <a href="actors/apt29.html" class="pb-card actor">
-    <div class="pb-name">APT29 / Cozy Bear</div>
+    <div class="pb-name"><span class="country-pill ru">RU</span> APT29 / Cozy Bear</div>
     <div class="pb-desc">APT29 / COZY BEAR<br><strong>Operational Profile:</strong> Russia SVR. The quietest long-dwell operator in the dataset, specializing in supply chain compromise and cloud identity exploitation for intelligence collection.<br><strong>Key TTPs:</strong> Supply chain compromise (SolarWinds-class). Golden SAML and OAuth abuse for cloud persistence. Residential proxy networks to blend with legitimate traffic. Minimal tooling footprint during lateral movement.</div>
     <div class="pb-meta">RU &middot; SVR &middot; G0016 &middot; 10-step hunt checklist &middot; cloud identity focus</div>
   </a>
 
   <a href="actors/apt28.html" class="pb-card actor">
-    <div class="pb-name">APT28 / Fancy Bear</div>
+    <div class="pb-name"><span class="country-pill ru">RU</span> APT28 / Fancy Bear</div>
     <div class="pb-desc">APT28 / FANCY BEAR<br><strong>Operational Profile:</strong> Russia GRU Unit 26165. Fast, noisy, and aggressive compared to APT29. Favors speed over stealth with rapid exploitation and credential phishing at scale.<br><strong>Key TTPs:</strong> Drovorub Linux rootkit. GooseEgg Windows privilege escalation. LAMEHUG LLM-enabled malware for automated recon. Exchange and Outlook exploitation (CVE-2023-23397). OCEANMAP C2 backdoor.</div>
     <div class="pb-meta">RU &middot; GRU 26165 &middot; G0007 &middot; 10-step hunt checklist &middot; 7 CVEs &middot; 8 custom tools</div>
   </a>
 
-</div>
-
-<span class="section-label">IR</span>
-<div class="card-grid">
-
   <a href="actors/apt35.html" class="pb-card actor">
-    <div class="pb-name">APT35 / Charming Kitten</div>
+    <div class="pb-name"><span class="country-pill ir">IR</span> APT35 / Charming Kitten</div>
     <div class="pb-desc">APT35 / CHARMING KITTEN<br><strong>Operational Profile:</strong> IRGC-affiliated political espionage targeting government, defense, media, and NGOs. Pioneered multi-week relationship-based social engineering ("catfishing") for credential theft.<br><strong>Key TTPs:</strong> Weeks-long fake persona correspondence before delivering credential harvesting links. 2024 US election interference (both campaigns). Fox Kitten crossover: state actor moonlighting as ransomware IAB selling VPN access.</div>
     <div class="pb-meta">IR &middot; IRGC &middot; Mint Sandstorm &middot; 6-step checklist &middot; catfishing tradecraft &middot; Fox Kitten IAB crossover</div>
   </a>
 
   <a href="actors/apt42.html" class="pb-card actor">
-    <div class="pb-name">APT42</div>
+    <div class="pb-name"><span class="country-pill ir">IR</span> APT42</div>
     <div class="pb-desc">APT42<br><strong>Operational Profile:</strong> IRGC Intelligence Organization. Specialized surveillance unit targeting individual human beings: dissidents, activists, journalists, and academics. The target is a person, not a network.<br><strong>Key TTPs:</strong> Custom Android spyware (PINEFLOWER, VINETHORN) for call recording, GPS tracking, and microphone activation. Cloud-native C2 via Cloudflare Workers and Firebase. NICECURL/TAMECAT desktop backdoors.</div>
     <div class="pb-meta">IR &middot; IRGC-IO &middot; 6-step checklist &middot; mobile spyware &middot; individual surveillance &middot; cloud-native C2</div>
   </a>
 
   <a href="actors/muddywater.html" class="pb-card actor">
-    <div class="pb-name">MuddyWater</div>
+    <div class="pb-name"><span class="country-pill ir">IR</span> MuddyWater</div>
     <div class="pb-desc">MUDDYWATER<br><strong>Operational Profile:</strong> Iran MOIS. High-volume, persistent operations targeting government, telecom, and energy sectors across the Middle East and Europe. Trades sophistication for scale.<br><strong>Key TTPs:</strong> Spearphishing with maldoc lures (OneNote, PDF, archive). PowerShell-native at every stage (MuddyC2Go framework). Legitimate RMM tool abuse (Atera, SimpleHelp, ScreenConnect) for persistence.</div>
     <div class="pb-meta">IR &middot; MOIS &middot; Mango Sandstorm &middot; 6-step checklist &middot; MuddyC2Go &middot; PowerShell-native</div>
   </a>
 
-</div>
-
-<span class="section-label">KP</span>
-<div class="card-grid">
-
   <a href="actors/lazarus.html" class="pb-card actor">
-    <div class="pb-name">Lazarus / HIDDEN COBRA</div>
+    <div class="pb-name"><span class="country-pill kp">KP</span> Lazarus / HIDDEN COBRA</div>
     <div class="pb-desc">LAZARUS / HIDDEN COBRA<br><strong>Operational Profile:</strong> DPRK RGB. The only nation-state APT that funds weapons programs through cybercrime. Cryptocurrency theft ($5B+), SWIFT fraud, ransomware, and destructive wipers, all under one umbrella.<br><strong>Key TTPs:</strong> Developer-targeted social engineering (Operation DreamJob). Trojanized trading apps (AppleJeus). FAMOUS CHOLLIMA planted insiders via AI-generated resumes. PRESSURE CHOLLIMA supply chain attacks ($1.46B Bybit).</div>
     <div class="pb-meta">KP &middot; RGB &middot; G0032 &middot; 10-step checklist &middot; $5B+ crypto stolen &middot; 3 subgroups</div>
   </a>
