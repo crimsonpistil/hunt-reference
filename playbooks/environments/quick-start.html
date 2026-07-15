@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Quick Start - Where to Begin</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--accent);border:1px solid rgba(88,166,255,.4);background:rgba(88,166,255,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .seq-block{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin:12px 0 20px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:2}.seq-block .seq-label{color:var(--text3);font-size:10px;display:block;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}.seq-block .seq-cmd{color:var(--text);background:var(--bg3);padding:2px 6px;border-radius:3px}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg" style="color:var(--green);border-color:rgba(63,185,80,.4);background:rgba(63,185,80,.08)">START HERE</div>
+  <div class="pb-title">Quick Start: Where to Begin</div>
+  <div class="pb-sub">Not sure which playbook applies? Don't know what you're looking for yet? These ten checks work in every environment. They require no prior intel, no actor hypothesis, and no specialized tools. If something is wrong on your network, at least one of these will show it.</div>
+  <div class="pb-meta-row">environment-agnostic &middot; no prior intel required &middot; 10 universal checks &middot; start here, specialize later</div>
+</div>
+
+<div class="content">
+
+<div class="section-head green">The philosophy</div>
+
+<p class="prose">
+  Most playbooks in this collection assume you already know something: an actor name, a detection that fired, an environment to scope. This one doesn't. It's for the moment when you sit down at the console and need to start looking without a specific lead. These checks are universal because they target the behaviors that every attacker, from a script kiddie to a nation-state, must perform to operate: authenticate, move, persist, collect, and exfiltrate.
+</p>
+
+<div class="note-box">
+  <strong>How to use this.</strong> Work through these ten checks in order. They're sequenced from quickest to most involved. Each one either clears a concern or surfaces something that points you to a specialized playbook. The goal is not to be comprehensive. It's to find the thread to pull.
+</div>
+
+<div class="section-head blue">10 universal hunt checks</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Check for failed and anomalous authentication</strong>
+    Every attacker authenticates. Start here. Search for: high volumes of failed logons from a single source (brute force), successful logons from unexpected IPs or geolocations (credential compromise), logons outside normal business hours for accounts that are strictly 9-to-5, and service account logons from workstations (service accounts should only authenticate from servers). This one check catches credential stuffing, compromised accounts, and lateral movement.
+    <span class="ref">Windows: Security EID 4624/4625 &middot; Linux: /var/log/auth.log &middot; Cloud: sign-in logs &middot; <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a></span>
+  </li>
+  <li>
+    <strong>2. Look for new or unexpected admin accounts</strong>
+    Attackers create accounts for persistence. Search for: new local admin accounts created recently, new domain admin group memberships, new cloud admin role assignments, and accounts that exist but nobody recognizes. This takes five minutes and catches persistence that's been sitting there for weeks.
+    <span class="ref">Windows: Security EID 4720 (account created) / EID 4732 (added to group) &middot; Cloud: IAM audit logs</span>
+  </li>
+  <li>
+    <strong>3. Check DNS for anomalies</strong>
+    DNS is the universal protocol. Every environment has it. Search for: queries to newly registered domains (less than 30 days old), high-entropy domain names (DGA indicators), unusually long DNS queries (DNS tunneling), and queries to known-bad resolvers. DNS anomalies surface C2, data exfiltration, and phishing infrastructure.
+    <span class="ref">Zeek dns.log &middot; Passive DNS &middot; NET: <a href="/net/c2.html">C2</a> &middot; <a href="/net/exfil.html">Exfiltration</a></span>
+  </li>
+  <li>
+    <strong>4. Look for unexpected outbound connections</strong>
+    Servers should talk to known destinations. Workstations should not maintain persistent connections to random external IPs. Search for: long-duration outbound connections (beaconing), connections to IPs in unexpected countries, connections on non-standard ports (especially from servers), and any outbound traffic from systems that should have no internet access (DMZ hosts, OT systems, backup servers).
+    <span class="ref">Zeek conn.log: long duration + low bytes &middot; Firewall logs &middot; <a href="/playbooks/triage/c2-beacon.html">C2 Beacon</a></span>
+  </li>
+  <li>
+    <strong>5. Check for unauthorized remote access tools</strong>
+    RMM tools (AnyDesk, TeamViewer, ScreenConnect, Splashtop, Atera) provide persistent remote access that bypasses VPN and looks like legitimate IT management. Search for: RMM binaries running on systems your IT team doesn't manage with that tool, RMM installations that appeared recently, and RMM cloud connections from unexpected hosts. Every major eCrime and nation-state actor uses legitimate RMM tools for persistence.
+    <span class="ref">Sysmon EID 1: RMM process names &middot; EID 3: connections to RMM cloud infra &middot; <a href="/playbooks/actors/scattered-spider.html">Scattered Spider</a></span>
+  </li>
+  <li>
+    <strong>6. Hunt for LOLBin abuse</strong>
+    Legitimate OS tools used in the wrong context. Search for: PowerShell with encoded commands (-e, -enc), certutil downloading files, bitsadmin transferring from external URLs, mshta executing remote content, rundll32 loading DLLs from temp or user directories, and wmic creating remote processes. Each individually might be normal. Two or more in sequence on the same host is a behavioral chain.
+    <span class="ref"><a href="/host/execution.html">HOST: Execution</a> &middot; <a href="/host/defense_evasion.html">HOST: Defense Evasion</a> &middot; <a href="/playbooks/triage/lotl.html">LOTL</a></span>
+  </li>
+  <li>
+    <strong>7. Check for scheduled tasks and persistence mechanisms</strong>
+    Attackers persist. Search for: newly created scheduled tasks (Sysmon EID 1 for schtasks.exe), new services installed (Security EID 7045), new registry Run key entries (Sysmon EID 13), new cron jobs (Linux), new LaunchAgents (macOS), and new startup scripts. Anything created recently that nobody recognizes is worth investigating.
+    <span class="ref"><a href="/host/persistence.html">HOST: Persistence</a> &middot; Sysmon EID 1/13 &middot; Security EID 7045</span>
+  </li>
+  <li>
+    <strong>8. Look for large or unusual data movement</strong>
+    Data exfiltration leaves a volume signature. Search for: large outbound transfers (especially to cloud storage, code repos, or file sharing services), archive creation (zip, 7z, rar) on file servers or workstations, USB device connections followed by large file copies, and email with large attachments to external freemail addresses. Volume anomalies are the strongest exfiltration indicator.
+    <span class="ref">NET: <a href="/net/exfil.html">Exfiltration</a> &middot; DLP alerts &middot; Proxy logs &middot; <a href="/playbooks/triage/data-exfil.html">Data Exfil</a></span>
+  </li>
+  <li>
+    <strong>9. Verify your security tools are running</strong>
+    Before you hunt further: are your tools actually working? Check for: EDR agents that have stopped reporting, hosts that aren't sending logs to your SIEM, antivirus with definitions older than a week, and network sensors with gaps in coverage. An attacker's first move after gaining access is often to disable or blind the security tools. A gap in telemetry is itself an indicator.
+    <span class="ref">EDR console: agent health &middot; SIEM: host reporting gaps &middot; <a href="/host/defense_evasion.html">HOST: Defense Evasion</a></span>
+  </li>
+  <li>
+    <strong>10. Check the edge: what's exposed to the internet?</strong>
+    Run an external scan of your perimeter. Search Shodan/Censys for your IP ranges. Check for: exposed management interfaces (RDP, SSH, admin panels), services you didn't know were internet-facing, TLS certificates that reveal internal hostnames, and devices that respond to probes on unexpected ports. If you find something exposed that shouldn't be, assume it has already been found by someone else.
+    <span class="ref"><a href="/playbooks/triage/edge-device.html">Edge Device</a> &middot; <a href="/playbooks/environments/soho-router.html">SOHO Router</a> &middot; Shodan/Censys self-audit</span>
+  </li>
+</ol>
+
+<div class="section-head green">Where to go from here</div>
+
+<p class="prose">
+  Each check above either comes back clean or surfaces something. When something surfaces, follow the cross-link to the specialized playbook. The path from this page to the rest of the collection:
+</p>
+<p class="prose">
+  <strong>Found suspicious authentication?</strong> Go to <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a>.<br>
+  <strong>Found a C2 beacon?</strong> Go to <a href="/playbooks/triage/c2-beacon.html">C2 Beacon Found</a>.<br>
+  <strong>Found RMM tools or LOLBin chains?</strong> Go to <a href="/playbooks/triage/lotl.html">Living-off-the-Land Activity</a>.<br>
+  <strong>Found data movement?</strong> Go to <a href="/playbooks/triage/data-exfil.html">Data Exfiltration Detected</a>.<br>
+  <strong>Found exposed services?</strong> Go to <a href="/playbooks/triage/edge-device.html">Edge Device Compromised</a>.<br>
+  <strong>Found ransomware artifacts?</strong> Go to <a href="/playbooks/triage/ransomware.html">Ransomware Detected</a>.<br>
+  <strong>Need to scope a specific environment?</strong> Go to the <a href="/playbooks/">environment playbooks</a>.<br>
+  <strong>Intel dropped an actor name?</strong> Go to the <a href="/playbooks/">actor playbooks</a>.
+</p>
+
+</div>
+
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>

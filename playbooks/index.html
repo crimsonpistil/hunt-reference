@@ -77,6 +77,21 @@
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
+<!--  QUICK START                                -->
+<!-- ═══════════════════════════════════════════ -->
+
+<span class="section-label">start here</span>
+<div class="card-grid" style="grid-template-columns:1fr">
+
+  <a href="environments/quick-start.html" class="pb-card environ" style="border-left-color:var(--green)">
+    <div class="pb-name">Quick Start: Where to Begin</div>
+    <div class="pb-desc">NOT SURE WHERE TO START?<br><strong>10 universal hunt checks</strong> that work in every environment. No prior intel required, no actor hypothesis, no specialized tools. Authentication anomalies, DNS, outbound connections, LOLBin abuse, persistence mechanisms, data movement, and exposed services. If something is wrong on your network, at least one of these will show it. Start here, specialize later.</div>
+    <div class="pb-meta">environment-agnostic &middot; 10 checks &middot; cross-links to every specialized playbook</div>
+  </a>
+
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
 <!--  THREAT ACTOR PLAYBOOKS                    -->
 <!-- ═══════════════════════════════════════════ -->
 
@@ -254,6 +269,12 @@
     <div class="pb-name">macOS Developer Fleet</div>
     <div class="pb-desc">MACOS DEVELOPER FLEET<br><strong>Environment:</strong> macOS-heavy engineering organizations where developers hold SSH keys, AWS credentials, Git tokens, and Docker configs on machines with minimal endpoint telemetry. The gap between assumed security and actual exposure is enormous.<br><strong>Key Attack Paths:</strong> Keychain dumping. Credential file harvesting (~/.ssh, ~/.aws). TCC bypass via dylib injection. Trojanized developer tools (Lazarus AppleJeus). LaunchAgent persistence.</div>
     <div class="pb-meta">Endpoint Security API &middot; Unified Log &middot; osquery &middot; 7-step checklist</div>
+  </a>
+
+  <a href="environments/soho-router.html" class="pb-card environ">
+    <div class="pb-name">SOHO Router and Home Edge</div>
+    <div class="pb-desc">SOHO ROUTER AND HOME EDGE<br><strong>Environment:</strong> Consumer routers with no endpoint telemetry. Nation-state actors (Volt Typhoon KV Botnet, APT28 EdgeRouter campaigns, Sandworm Cyclops Blink) compromise SOHO devices to build proxy networks blending with residential ISP traffic.<br><strong>Key Attack Paths:</strong> Web management command injection. Firmware modification with static SSH keys. DNS hijacking. UPnP abuse. Reverse proxy installation (FRP). Hunting is network-artifact-only.</div>
+    <div class="pb-meta">NetFlow / IPFIX &middot; DNS monitoring &middot; no EDR &middot; 8-step checklist &middot; firmware integrity</div>
   </a>
 
 </div>

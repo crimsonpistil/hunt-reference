@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: SOHO Router and Edge</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--accent);border:1px solid rgba(88,166,255,.4);background:rgba(88,166,255,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .seq-block{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin:12px 0 20px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:2}.seq-block .seq-label{color:var(--text3);font-size:10px;display:block;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}.seq-block .seq-cmd{color:var(--text);background:var(--bg3);padding:2px 6px;border-radius:3px}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">ENVIRONMENT</div>
+  <div class="pb-title">SOHO Router and Home Edge</div>
+  <div class="pb-sub">No EDR. No Sysmon. No agent of any kind running on the firmware. Nation-state actors systematically compromise SOHO routers to build proxy networks that blend with residential ISP traffic, bypassing geo-fencing and corporate edge alerts. You are hunting blind, using only network artifacts and configuration discrepancies.</div>
+  <div class="pb-meta-row">NetFlow / IPFIX &middot; DNS monitoring &middot; no endpoint telemetry &middot; Volt Typhoon KV Botnet &middot; APT28 FrostArmada &middot; firmware integrity</div>
+</div>
+
+<div class="content">
+
+<div class="section-head red">The nation-state proxy network</div>
+
+<p class="prose">
+  SOHO routers (ASUS, TP-Link, Netgear, Cisco RV, MikroTik) are among the most heavily targeted devices in the world. Not for the data behind them, but for what they are: <strong>residential IP addresses that blend with legitimate traffic</strong>. China's Volt Typhoon built the KV Botnet from compromised SOHO routers to proxy their operations through US residential IPs, making their traffic indistinguishable from a home user browsing the web. Russia's APT28 used compromised Ubiquiti EdgeRouters for credential relay and botnet C2. The FBI disrupted the KV Botnet in January 2024. Volt Typhoon rebuilt it within 37 days.
+</p>
+<p class="prose">
+  <strong>The hunting challenge:</strong> you cannot install an agent on consumer router firmware. There is no Sysmon, no EDR, no process telemetry. The device runs a stripped-down Linux kernel that the vendor rarely updates and the owner never patches. Your entire detection surface is network flow data, DNS monitoring, and behavioral anomalies from the devices sitting behind the router.
+</p>
+
+<div class="note-box red">
+  <strong>Your home network is not "off limits" to nation-state actors.</strong> If you work in defense, intelligence, critical infrastructure, or government, your home router is a target. Not to steal your data (though they might). To use your residential IP as a proxy node in operations against your employer's network. The traffic arrives at the corporate perimeter from a legitimate US residential ISP address. Every geo-fence and reputation list misses it.
+</div>
+
+<div class="section-head amber">How they get in</div>
+
+<p class="prose">
+  <strong>Web management interface command injection.</strong> The router's admin web panel passes unsanitized input directly to the underlying Linux shell. CVE-2025-6542 and CVE-2026-0630 (TP-Link), CVE-2023-20073 (Cisco RV), and dozens of similar vulns in every consumer router vendor. The admin panel is often exposed on the WAN by default or reachable via CSRF from a compromised LAN device.
+</p>
+<p class="prose">
+  <strong>UPnP exploitation.</strong> Universal Plug and Play runs on most consumer routers by default, allowing any LAN device to open external-facing ports without authentication. Attackers abuse UPnP to expose internal services, redirect traffic, or force the router to proxy connections.
+</p>
+<p class="prose">
+  <strong>Firmware modification.</strong> Replacing the legitimate firmware image with a trojanized version containing static SSH keys, listening beacons, or embedded proxy tools. Survives reboots. The only remediation is reflashing from known-good media. Some firmware implants persist even through factory reset if they modify the bootloader.
+</p>
+<p class="prose">
+  <strong>Default and weak credentials.</strong> Many SOHO routers ship with default admin passwords that owners never change, or with known recovery credentials. Botnet operators scan entire ISP ranges for routers with default credentials on management ports.
+</p>
+
+<div class="section-head blue">Network hunt: what to look for in traffic logs</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Hunt for the proxy loop (long-lived, low-bandwidth connections)</strong>
+    Threat actors install reverse proxy tools (commonly FRP, Fast Reverse Proxy) on compromised routers. The tell: a home IP maintaining a permanent, long-lived, low-bandwidth TCP connection to an external server over an unusual port (random high ports, or port 443/80 traffic that doesn't match normal web browsing handshake sizes and patterns). These connections persist for days or weeks with minimal data transfer, punctuated by bursts when the proxy is actively relaying.
+    <span class="ref">NetFlow/IPFIX: long-duration sessions (>24h) to external IPs on non-standard ports &middot; Zeek conn.log duration analysis</span>
+  </li>
+  <li>
+    <strong>2. Hunt for DNS hijacking</strong>
+    Attackers swap the router's WAN DNS settings to an attacker-controlled upstream resolver. All DNS queries from every device behind the router now flow through the attacker's server, enabling phishing, credential interception, and traffic manipulation. The tell: outbound DNS queries from the router to non-standard public IP addresses rather than ISP defaults or hardened resolvers (1.1.1.1, 8.8.8.8, 9.9.9.9).
+    <span class="ref">Zeek dns.log: queries to unexpected upstream resolvers &middot; Router config audit: DNS server settings</span>
+  </li>
+  <li>
+    <strong>3. Check for inbound management scans</strong>
+    Spikes in external traffic hitting ports 80, 443, 8080, 8443, or 22 directly on the WAN IP interface. Botnet operators and nation-state scanners continuously probe residential IP ranges for exposed management interfaces. If your router's admin panel is reachable from the internet, it will be found.
+    <span class="ref">Firewall logs: inbound connections to management ports on WAN interface</span>
+  </li>
+  <li>
+    <strong>4. Hunt for CSRF/command injection from LAN devices</strong>
+    A compromised device behind the router (IoT camera, phished laptop) attacks the router itself via the LAN. The tell: an internal host making rapid automated HTTP POST requests to the local gateway IP (192.168.1.1/cgi-bin/, /boafrm/, or vendor-specific admin endpoints). This indicates a local device attempting CSRF or command injection to compromise the router from inside.
+    <span class="ref">Zeek http.log: POST requests to gateway IP from non-browser user agents &middot; IDS: internal-to-gateway exploit signatures</span>
+  </li>
+  <li>
+    <strong>5. Check for unexpected UPnP port mappings</strong>
+    Audit active UPnP port mappings on the router. Legitimate UPnP use: gaming, media streaming on known ports. Suspicious: mappings for SSH (22), RDP (3389), SMB (445), or random high ports that no resident application would request. Disable UPnP if not needed. If needed, audit the active mappings regularly.
+    <span class="ref">Router admin: UPnP port mapping table &middot; upnpc -l from LAN host</span>
+  </li>
+  <li>
+    <strong>6. Verify firmware integrity</strong>
+    Compare the running firmware hash against the vendor's published hash for that version. If they don't match, the firmware has been modified. Check: router admin panel for firmware version, compare against vendor download page, and if possible, dump the firmware and hash it. Trojanized firmware survives reboots and may survive factory reset.
+    <span class="ref">Router admin: firmware version &middot; Vendor website: published firmware hash &middot; JTAG/serial dump if available</span>
+  </li>
+  <li>
+    <strong>7. Monitor for asymmetric internal traffic routing</strong>
+    A compromised router may route traffic between internal devices unexpectedly. The tell: a LAN device broadcasting traffic to the gateway, but the gateway forwarding it to internal neighbors via attacker-configured UPnP rules or static routes. Internal-to-internal traffic routing through the gateway that doesn't match normal LAN behavior indicates router-level manipulation.
+    <span class="ref">NetFlow: internal-to-internal flows via gateway &middot; ARP table audit</span>
+  </li>
+  <li>
+    <strong>8. Audit the router configuration directly</strong>
+    If you can access the router admin panel: check DNS settings (should be ISP default or known resolver), check for unknown admin accounts, check for static routes that shouldn't exist, check for SSH keys you didn't add, check the list of connected devices against known devices, and verify that remote management (WAN-side admin access) is disabled.
+    <span class="ref">Router admin panel: every settings page &middot; Config backup and diff against known-good</span>
+  </li>
+</ol>
+
+<div class="note-box">
+  <strong>The remediation reality.</strong> If a SOHO router is compromised with firmware-level persistence, the only reliable remediation is: power off, reflash firmware from known-good media downloaded directly from the vendor on a clean device, factory reset, change all credentials, and disable WAN-side management and UPnP. Rebooting alone does not clear firmware implants. Factory reset alone may not clear bootloader-level persistence. Replace the device if firmware integrity cannot be verified.
+</div>
+
+<div class="section-head default">Actors who target SOHO infrastructure</div>
+<p class="prose">
+  <strong><a href="/playbooks/actors/volt-typhoon.html">Volt Typhoon</a></strong> built the KV Botnet from compromised SOHO routers (Cisco RV, Netgear, ASUS, DrayTek) to proxy operations through US residential IPs. FBI disrupted it January 2024. Rebuilt within 37 days.<br>
+  <strong><a href="/playbooks/actors/apt28.html">APT28 / Fancy Bear</a></strong> compromised Ubiquiti EdgeRouters for credential relay, botnet C2, and network reconnaissance infrastructure.<br>
+  <strong><a href="/playbooks/actors/sandworm.html">Sandworm</a></strong> used Cyclops Blink malware to build a botnet from WatchGuard and ASUS routers for C2 infrastructure and operational relay.<br>
+  <strong>Commodity botnets</strong> (Mirai variants, Moobot) continuously scan for default credentials and known CVEs on consumer routers at massive scale.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/actors/volt-typhoon.html">Volt Typhoon</a> (KV Botnet, SOHO router proxy infrastructure)<br>
+  <a href="/playbooks/triage/edge-device.html">Edge Device Compromised</a> (enterprise edge devices share the same exploitation patterns)<br>
+  <a href="/playbooks/triage/lotl.html">Living-off-the-Land Activity</a> (the proxy traffic blends with legitimate residential browsing)<br>
+  <a href="/playbooks/actors/apt28.html">APT28</a> (Ubiquiti EdgeRouter compromise)
+</p>
+
+</div>
+
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>
