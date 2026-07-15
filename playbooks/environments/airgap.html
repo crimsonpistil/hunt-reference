@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Air-Gapped Networks</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--accent);border:1px solid rgba(88,166,255,.4);background:rgba(88,166,255,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .tripwire-list{list-style:none;margin:0 0 20px;padding:0}.tripwire-list li{position:relative;padding:10px 14px 10px 36px;margin-bottom:6px;background:rgba(248,81,73,.04);border:1px solid rgba(248,81,73,.15);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.6}.tripwire-list li::before{content:'!';position:absolute;left:12px;top:10px;width:16px;height:16px;background:rgba(248,81,73,.15);color:var(--red);font-family:var(--mono);font-size:10px;font-weight:700;text-align:center;line-height:16px;border-radius:3px}.tripwire-list li strong{color:var(--text)}
+  .tool-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}@media(max-width:600px){.tool-grid{grid-template-columns:1fr}}.tool-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px 14px}.tool-card .tc-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px}.tool-card .tc-desc{font-size:11px;color:var(--text3);line-height:1.5}.tool-card.unavailable{opacity:.5}.tool-card.unavailable .tc-name{color:var(--red)}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">ENVIRONMENT</div>
+  <div class="pb-title">Air-Gapped Networks</div>
+  <div class="pb-sub">Classified enclaves, secure government networks, disconnected lab environments, and any infrastructure intentionally isolated from the internet. The air gap solves one problem (no external access) and creates another: every defensive tool that phones home, updates from the cloud, or streams telemetry to a SaaS backend stops working. You hunt with what you brought.</div>
+  <div class="pb-meta-row">no internet egress &middot; sneakernet vectors &middot; cross-domain transfer &middot; offline tools only &middot; patch integrity</div>
+</div>
+
+<div class="content">
+
+<div class="section-head red">What makes air-gapped hunting different</div>
+
+<p class="prose">
+  On a connected network, you assume your tools work: EDR agents call home for behavioral analysis, SIEM streams to a cloud backend, vulnerability scanners pull definitions, and threat intel feeds update automatically. On an air-gapped network, <strong>none of that happens</strong>. Every tool must run locally. Every signature and definition must be brought in manually. Every log must be stored, searched, and correlated on local infrastructure. The gap is not just a network architecture decision. It is a fundamental constraint on your detection capability.
+</p>
+<p class="prose">
+  <strong>The paradox:</strong> air-gapped networks contain the most sensitive data (classified intelligence, weapons systems, critical infrastructure controls, research IP) but have the weakest detection posture because the tools that modern security depends on require the connectivity that the air gap removes.
+</p>
+
+<div class="section-head red">Tripwires: should never exist on this network</div>
+
+<p class="prose">On an air-gapped network, certain artifacts should never appear. Their presence is not just suspicious, it is a confirmed anomaly that demands investigation.</p>
+
+<ul class="tripwire-list">
+  <li><strong>Any internet-bound connection attempt.</strong> DNS queries to external resolvers, HTTP/HTTPS to public IPs, NTP to internet time servers. If the network is truly air-gapped, these should be impossible. Their presence indicates a misconfiguration, an unauthorized bridge, or an attacker attempting to establish connectivity.</li>
+  <li><strong>Unauthorized removable media.</strong> USB devices not in your approved device inventory. Personal phones connected via USB. External drives brought in without following the media sanitization process. Removable media is the #1 air-gap crossing vector (Stuxnet, Agent.BTZ).</li>
+  <li><strong>Software not on the approved baseline.</strong> Any executable, script, or tool not present in the system baseline image. On a controlled enclave, software installation is managed. Anything outside that process is either a policy violation or an indicator of compromise.</li>
+  <li><strong>Wireless signals.</strong> WiFi access points, Bluetooth devices, or any RF emission from a system that should have no wireless capability. Some air-gap bypass techniques use covert wireless channels.</li>
+  <li><strong>Accounts that don't belong.</strong> Local admin accounts not in the baseline, service accounts with interactive logon capability, or domain accounts that don't map to authorized personnel.</li>
+</ul>
+
+<div class="section-head blue">Hunt checklist</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Audit every cross-domain transfer</strong>
+    If files move from a lower-classification network to the air-gapped environment via sneakernet, data diode, or manual process, every transfer is an attack surface. Check: what content types are allowed, is active content stripped, are files scanned with current YARA rules before introduction, and is there an integrity chain from origin to destination? The <a href="/playbooks/exploits/sharepoint-chain.html">SharePoint CVE Chain</a> demonstrated that vulnerabilities can be triggered when applications process transferred files.
+    <span class="ref">Transfer logs &middot; Content inspection records &middot; YARA scan results</span>
+  </li>
+  <li>
+    <strong>2. Monitor USB and removable media activity</strong>
+    Every USB insertion should be logged and auditable. Search Sysmon EID 11 for file creation events on removable media paths. Search Security EID 6416 for new USB device connections. Cross-reference against your approved device inventory. Any unrecognized device is an immediate investigation.
+    <span class="ref">Sysmon EID 11 on removable paths &middot; Security EID 6416 &middot; USB device inventory</span>
+  </li>
+  <li>
+    <strong>3. Verify patch and definition integrity</strong>
+    Patches, AV definitions, and tool updates must be delivered via secure media. Verify: are patches integrity-checked (hash verified against a trusted source) before application? Could a compromised patch delivery mechanism introduce malicious code? Is the update media itself clean? Supply chain compromise of the patch delivery process is an air-gap crossing vector.
+    <span class="ref"><a href="/playbooks/triage/supply-chain.html">Supply Chain</a> playbook &middot; Hash verification &middot; Patch source audit</span>
+  </li>
+  <li>
+    <strong>4. Hunt for unauthorized network bridges</strong>
+    Scan for: hosts with multiple network interfaces (one on the air-gapped segment, one connected elsewhere), unauthorized WiFi adapters, cellular modems, or any device that bridges the air gap. Check ARP tables for unexpected MAC addresses. Run wireless scans for rogue access points. A single bridge defeats the entire air gap.
+    <span class="ref">Network scan: multi-homed hosts &middot; Wireless survey &middot; ARP table audit</span>
+  </li>
+  <li>
+    <strong>5. Baseline and monitor all running processes</strong>
+    On a controlled enclave, the process inventory should be stable. Create a known-good process baseline and alert on any deviation. New processes, processes running from non-standard paths, and processes with unexpected parent-child relationships are all indicators. osquery's scheduled queries run locally and can report process inventory drift.
+    <span class="ref"><a href="/host/execution.html">HOST: Execution</a> &middot; osquery: processes table &middot; Sysmon EID 1 baseline</span>
+  </li>
+  <li>
+    <strong>6. Check for data staging and exfiltration preparation</strong>
+    On an air-gapped network, exfiltration requires physical media. Hunt for: archive creation (zip, 7z, rar, tar) on workstations or servers, large file copies to directories that align with removable media mount points, encryption of staged files (the attacker encrypts collected data before exfiltrating via USB), and files placed in locations accessible to transient devices.
+    <span class="ref"><a href="/host/impact.html">HOST: Impact</a> &middot; Sysmon EID 11 on staging paths &middot; <a href="/playbooks/triage/data-exfil.html">Data Exfil</a></span>
+  </li>
+  <li>
+    <strong>7. Audit privileged account usage</strong>
+    On an air-gapped network with limited monitoring, insider threat and credential abuse are elevated risks. Audit: admin account logons against expected schedules, service account interactive sessions (should never happen), accounts accessing resources outside their role, and any account activity during non-operational hours.
+    <span class="ref"><a href="/playbooks/triage/insider-threat.html">Insider Threat</a> playbook &middot; Security EID 4624 &middot; Privileged account audit</span>
+  </li>
+  <li>
+    <strong>8. Verify security tool health</strong>
+    On a connected network, tool health is monitored centrally. On an air-gapped network, you must check manually: are AV definitions current (within your update cycle), are Sysmon/auditd agents running on every host, is log collection functioning (check for gaps), are YARA rules current, and is the local SIEM ingesting from all sources? A tool that silently stopped running could go unnoticed for weeks.
+    <span class="ref">EDR/AV agent health check &middot; SIEM ingestion audit &middot; Log gap analysis</span>
+  </li>
+</ol>
+
+<div class="section-head green">Available tools (no internet required)</div>
+
+<div class="tool-grid">
+  <div class="tool-card">
+    <div class="tc-name">Zeek + Suricata</div>
+    <div class="tc-desc">Network monitoring on a span port. Zeek logs conn, dns, http, smb, and protocol metadata. Suricata runs local rule sets. Both run fully offline once deployed.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Arkime</div>
+    <div class="tc-desc">Full packet capture and indexed search. The forensic record when you need to reconstruct what happened on the wire. Runs locally.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Sysmon (Windows) / auditd (Linux)</div>
+    <div class="tc-desc">Host-level process, file, network, and registry telemetry. No cloud dependency. The primary endpoint visibility on air-gapped hosts.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">osquery</div>
+    <div class="tc-desc">Scheduled SQL queries against the host: processes, files, users, network state. Ships results to a local collector. Excellent for baseline drift detection.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">YARA</div>
+    <div class="tc-desc">Signature scanning of files and processes. Rules updated via sneakernet. Catches known malware on disk and in memory without a cloud AV backend.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Local Elastic/Kibana or Security Onion</div>
+    <div class="tc-desc">Log aggregation and search. Replaces cloud SIEM. Ingest Sysmon, auditd, Zeek, and Suricata logs locally. The SIEM runs on the enclave.</div>
+  </div>
+  <div class="tool-card unavailable">
+    <div class="tc-name">Cloud EDR (unavailable)</div>
+    <div class="tc-desc">CrowdStrike, Defender for Endpoint, SentinelOne all require cloud connectivity for behavioral detection. They will not function on an air-gapped network.</div>
+  </div>
+  <div class="tool-card unavailable">
+    <div class="tc-name">Cloud SIEM (unavailable)</div>
+    <div class="tc-desc">Splunk Cloud, Elastic Cloud, Microsoft Sentinel cannot receive logs from an air-gapped network. Use local alternatives.</div>
+  </div>
+</div>
+
+<div class="section-head default">Air-gapped environment types</div>
+<p class="prose">
+  <strong>Classified government networks</strong> (SIPR, JWICS, allied equivalents): Windows/Linux endpoints, Active Directory, SharePoint, email, file shares. Full enterprise IT stack without internet. The <a href="/playbooks/exploits/sharepoint-chain.html">SharePoint CVE Chain</a> is particularly relevant here: SharePoint is deployed on-prem, processes uploaded files, and the exploit chain works entirely without internet connectivity.
+</p>
+<p class="prose">
+  <strong>Secure research and development:</strong> labs handling sensitive IP, pharmaceutical research, defense contractor enclaves. Often have controlled data diode transfers from external networks. The cross-domain transfer process is the primary attack surface.
+</p>
+<p class="prose">
+  <strong>OT/ICS networks:</strong> Industrial environments that are air-gapped (or should be). These have the additional complexity of ICS protocols, PLCs, and physical process integrity. See the dedicated <a href="/playbooks/environments/airgap-ot.html">ICS / SCADA / OT</a> playbook for OT-specific hunting.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/environments/airgap-ot.html">ICS / SCADA / OT</a> (OT-specific detection in industrial environments)<br>
+  <a href="/playbooks/exploits/sharepoint-chain.html">SharePoint CVE Chain</a> (fully functional inside air-gapped SharePoint farms)<br>
+  <a href="/playbooks/triage/insider-threat.html">Insider Threat</a> (elevated risk in environments with limited monitoring)<br>
+  <a href="/playbooks/triage/supply-chain.html">Supply Chain Indicator</a> (patch delivery and media transfers as attack vectors)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>

@@ -226,6 +226,24 @@
     <div class="pb-meta">CVE-2021-26855 + 26857 + 26858 + 27065 &middot; 6-step checklist &middot; w3wp.exe web shells &middot; Exchange proxy architecture</div>
   </a>
 
+  <a href="exploits/citrix-bleed.html" class="pb-card t3">
+    <div class="pb-name">Citrix Bleed (CVE-2023-4966)</div>
+    <div class="pb-desc">CITRIX BLEED (CVE-2023-4966)<br><strong>Vulnerability:</strong> Unauthenticated buffer over-read in Citrix NetScaler ADC/Gateway. Crafted HTTP GET leaks system memory including active session cookies. Complete MFA bypass via session replay.<br><strong>Impact:</strong> Stolen session cookies bypass MFA entirely. No credentials needed. LockBit industrialized this for critical infrastructure campaigns. The attacker and the legitimate user operate simultaneously.</div>
+    <div class="pb-meta">CVE-2023-4966 &middot; 4-step checklist &middot; session hijack &middot; MFA bypass &middot; impossible travel detection</div>
+  </a>
+
+  <a href="exploits/petitpotam-adcs.html" class="pb-card t3">
+    <div class="pb-name">PetitPotam to AD CS (ESC1)</div>
+    <div class="pb-desc">PETITPOTAM TO AD CS (ESC1)<br><strong>Vulnerability:</strong> NTLM coercion via MS-EFSR relayed to misconfigured AD CS enrollment endpoint. Unauthenticated attacker requests a certificate as the Domain Controller's machine account.<br><strong>Impact:</strong> Unauthenticated to Domain Admin in seconds. Certificate-based TGT minting enables full domain compromise. ESC1 is a misconfiguration, not a bug, so patching alone doesn't fix it.</div>
+    <div class="pb-meta">CVE-2021-36942 + AD CS ESC1 &middot; 4-step checklist &middot; NTLM relay &middot; certificate abuse &middot; DC impersonation</div>
+  </a>
+
+  <a href="exploits/ivanti-chain.html" class="pb-card t3">
+    <div class="pb-name">Ivanti Connect Secure Chain</div>
+    <div class="pb-desc">IVANTI CONNECT SECURE CHAIN<br><strong>Vulnerability:</strong> Authentication bypass via path traversal (CVE-2023-46805) chained with command injection (CVE-2024-21887). Unauthenticated SYSTEM-level RCE on the VPN perimeter.<br><strong>Impact:</strong> Persistent web shells, session cookie theft (MFA bypass), and internal network sweep from the VPN gateway. CISA ordered emergency disconnection. Ivanti's own integrity checker failed to detect compromises.</div>
+    <div class="pb-meta">CVE-2023-46805 + CVE-2024-21887 &middot; 5-step checklist &middot; VPN perimeter RCE &middot; CISA Emergency Directive</div>
+  </a>
+
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
@@ -235,10 +253,16 @@
 <span class="section-label">by environment</span>
 <div class="card-grid">
 
+  <a href="environments/airgap.html" class="pb-card environ">
+    <div class="pb-name">Air-Gapped Networks</div>
+    <div class="pb-desc">AIR-GAPPED NETWORKS<br><strong>Environment:</strong> Classified enclaves, secure government networks, disconnected labs, and any infrastructure intentionally isolated from the internet. Every tool that phones home stops working. You hunt with what you brought.<br><strong>Key Attack Paths:</strong> Cross-domain transfer exploitation. Contaminated removable media (Stuxnet/Agent.BTZ pattern). Patch delivery supply chain. Data staging to USB. Unauthorized network bridges. SharePoint CVE chain is fully functional here.</div>
+    <div class="pb-meta">no internet &middot; sneakernet &middot; offline tools only &middot; 8-step checklist &middot; 5 tripwires</div>
+  </a>
+
   <a href="environments/airgap-ot.html" class="pb-card environ">
-    <div class="pb-name">Air-Gapped OT / ICS</div>
-    <div class="pb-desc">AIR-GAPPED OT / ICS<br><strong>Environment:</strong> Minimally connected or fully isolated Purdue Level 2-3 industrial networks. No cloud EDR, no internet egress. Detection relies on Zeek, Suricata, Sysmon, and auditd running locally.<br><strong>Key Threats (2025-2026):</strong> VOLTZITE Stage 2 EWS manipulation. KAMACITE control-loop mapping of US ICS. PLC_Controller.exe and Modbus PowerShell tools. &lt;10% of OT networks have monitoring.</div>
-    <div class="pb-meta">Purdue Level 2-3 &middot; no internet egress &middot; 10-step checklist &middot; 7 tripwires</div>
+    <div class="pb-name">ICS / SCADA / OT</div>
+    <div class="pb-desc">ICS / SCADA / OT<br><strong>Environment:</strong> Industrial control systems at Purdue Level 0-3. PLCs, HMIs, engineering workstations, and ICS protocols (Modbus, DNP3, S7comm, OPC UA) that were designed for reliability, not security. May be air-gapped, minimally connected, or exposed.<br><strong>Key Threats (2025-2026):</strong> VOLTZITE Stage 2 EWS manipulation. KAMACITE control-loop mapping. PLC_Controller.exe S7comm STOP commands. Modbus PowerShell tools. &lt;10% of OT networks have monitoring.</div>
+    <div class="pb-meta">Purdue model &middot; ICS protocols &middot; Zeek/Suricata &middot; physical process integrity &middot; 10-step checklist</div>
   </a>
 
   <a href="environments/hybrid-ad.html" class="pb-card environ">
