@@ -95,32 +95,8 @@
 <!--  THREAT ACTOR PLAYBOOKS                    -->
 <!-- ═══════════════════════════════════════════ -->
 
-<span class="section-label">by threat actor</span>
+<span class="section-label">CN</span>
 <div class="card-grid">
-
-  <a href="actors/apt41.html" class="pb-card actor">
-    <div class="pb-name">APT41 / Winnti</div>
-    <div class="pb-desc">APT41 / WINNTI<br><strong>Operational Profile:</strong> High-capability China-nexus group executing parallel state-sponsored espionage and financially motivated operations. Highly adept at pivoting across enterprise IT into OT control paths.<br><strong>Key TTPs:</strong> SQL injection to shell for initial access. PlugX/ShadowPad side-loading via legitimate binaries. Kerberoasting for privilege escalation. systemd (Linux) and service manipulation (Windows) for persistence.</div>
-    <div class="pb-meta">CN &middot; MSS / Chengdu 404 &middot; G0096 &middot; 10-step checklist &middot; dual-mandate &middot; 40+ countries</div>
-  </a>
-
-  <a href="actors/apt29.html" class="pb-card actor">
-    <div class="pb-name">APT29 / Cozy Bear</div>
-    <div class="pb-desc">APT29 / COZY BEAR<br><strong>Operational Profile:</strong> Russia SVR. The quietest long-dwell operator in the dataset, specializing in supply chain compromise and cloud identity exploitation for intelligence collection.<br><strong>Key TTPs:</strong> Supply chain compromise (SolarWinds-class). Golden SAML and OAuth abuse for cloud persistence. Residential proxy networks to blend with legitimate traffic. Minimal tooling footprint during lateral movement.</div>
-    <div class="pb-meta">RU &middot; SVR &middot; G0016 &middot; 10-step hunt checklist &middot; cloud identity focus</div>
-  </a>
-
-  <a href="actors/lazarus.html" class="pb-card actor">
-    <div class="pb-name">Lazarus / HIDDEN COBRA</div>
-    <div class="pb-desc">LAZARUS / HIDDEN COBRA<br><strong>Operational Profile:</strong> DPRK RGB. The only nation-state APT that funds weapons programs through cybercrime. Cryptocurrency theft ($5B+), SWIFT fraud, ransomware, and destructive wipers, all under one umbrella.<br><strong>Key TTPs:</strong> Developer-targeted social engineering (Operation DreamJob). Trojanized trading apps (AppleJeus). FAMOUS CHOLLIMA planted insiders via AI-generated resumes. PRESSURE CHOLLIMA supply chain attacks ($1.46B Bybit).</div>
-    <div class="pb-meta">KP &middot; RGB &middot; G0032 &middot; 10-step checklist &middot; $5B+ crypto stolen &middot; 3 subgroups</div>
-  </a>
-
-  <a href="actors/sandworm.html" class="pb-card actor">
-    <div class="pb-name">Sandworm / APT44</div>
-    <div class="pb-desc">SANDWORM / APT44<br><strong>Operational Profile:</strong> Russia GRU Unit 74455. The most operationally experienced infrastructure-disrupting adversary in the world. Paired model: KAMACITE builds access, ELECTRUM executes destruction.<br><strong>Key TTPs:</strong> Nine wiper families (CaddyWiper through PathWiper). ICS protocol exploitation (Industroyer). Coordination of cyber effects with kinetic military strikes. Expanded into Poland DER targeting (Dec 2025).</div>
-    <div class="pb-meta">RU &middot; GRU 74455 &middot; G0034 &middot; 10-step checklist &middot; 8 wiper families &middot; ICS protocol expertise</div>
-  </a>
 
   <a href="actors/volt-typhoon.html" class="pb-card actor">
     <div class="pb-name">Volt Typhoon</div>
@@ -134,16 +110,44 @@
     <div class="pb-meta">CN &middot; PRC &middot; 10-step checklist &middot; 9 carriers &middot; 80+ countries &middot; CALEA exploitation</div>
   </a>
 
+  <a href="actors/apt41.html" class="pb-card actor">
+    <div class="pb-name">APT41 / Winnti</div>
+    <div class="pb-desc">APT41 / WINNTI<br><strong>Operational Profile:</strong> High-capability China-nexus group executing parallel state-sponsored espionage and financially motivated operations. Highly adept at pivoting across enterprise IT into OT control paths.<br><strong>Key TTPs:</strong> SQL injection to shell for initial access. PlugX/ShadowPad side-loading via legitimate binaries. Kerberoasting for privilege escalation. systemd (Linux) and service manipulation (Windows) for persistence.</div>
+    <div class="pb-meta">CN &middot; MSS / Chengdu 404 &middot; G0096 &middot; 10-step checklist &middot; dual-mandate &middot; 40+ countries</div>
+  </a>
+
+</div>
+
+<span class="section-label">RU</span>
+<div class="card-grid">
+
+  <a href="actors/sandworm.html" class="pb-card actor">
+    <div class="pb-name">Sandworm / APT44</div>
+    <div class="pb-desc">SANDWORM / APT44<br><strong>Operational Profile:</strong> Russia GRU Unit 74455. The most operationally experienced infrastructure-disrupting adversary in the world. Paired model: KAMACITE builds access, ELECTRUM executes destruction.<br><strong>Key TTPs:</strong> Nine wiper families (CaddyWiper through PathWiper). ICS protocol exploitation (Industroyer). Coordination of cyber effects with kinetic military strikes. Expanded into Poland DER targeting (Dec 2025).</div>
+    <div class="pb-meta">RU &middot; GRU 74455 &middot; G0034 &middot; 10-step checklist &middot; 8 wiper families &middot; ICS protocol expertise</div>
+  </a>
+
+  <a href="actors/apt29.html" class="pb-card actor">
+    <div class="pb-name">APT29 / Cozy Bear</div>
+    <div class="pb-desc">APT29 / COZY BEAR<br><strong>Operational Profile:</strong> Russia SVR. The quietest long-dwell operator in the dataset, specializing in supply chain compromise and cloud identity exploitation for intelligence collection.<br><strong>Key TTPs:</strong> Supply chain compromise (SolarWinds-class). Golden SAML and OAuth abuse for cloud persistence. Residential proxy networks to blend with legitimate traffic. Minimal tooling footprint during lateral movement.</div>
+    <div class="pb-meta">RU &middot; SVR &middot; G0016 &middot; 10-step hunt checklist &middot; cloud identity focus</div>
+  </a>
+
+  <a href="actors/apt28.html" class="pb-card actor">
+    <div class="pb-name">APT28 / Fancy Bear</div>
+    <div class="pb-desc">APT28 / FANCY BEAR<br><strong>Operational Profile:</strong> Russia GRU Unit 26165. Fast, noisy, and aggressive compared to APT29. Favors speed over stealth with rapid exploitation and credential phishing at scale.<br><strong>Key TTPs:</strong> Drovorub Linux rootkit. GooseEgg Windows privilege escalation. LAMEHUG LLM-enabled malware for automated recon. Exchange and Outlook exploitation (CVE-2023-23397). OCEANMAP C2 backdoor.</div>
+    <div class="pb-meta">RU &middot; GRU 26165 &middot; G0007 &middot; 10-step hunt checklist &middot; 7 CVEs &middot; 8 custom tools</div>
+  </a>
+
+</div>
+
+<span class="section-label">IR</span>
+<div class="card-grid">
+
   <a href="actors/apt35.html" class="pb-card actor">
     <div class="pb-name">APT35 / Charming Kitten</div>
     <div class="pb-desc">APT35 / CHARMING KITTEN<br><strong>Operational Profile:</strong> IRGC-affiliated political espionage targeting government, defense, media, and NGOs. Pioneered multi-week relationship-based social engineering ("catfishing") for credential theft.<br><strong>Key TTPs:</strong> Weeks-long fake persona correspondence before delivering credential harvesting links. 2024 US election interference (both campaigns). Fox Kitten crossover: state actor moonlighting as ransomware IAB selling VPN access.</div>
     <div class="pb-meta">IR &middot; IRGC &middot; Mint Sandstorm &middot; 6-step checklist &middot; catfishing tradecraft &middot; Fox Kitten IAB crossover</div>
-  </a>
-
-  <a href="actors/muddywater.html" class="pb-card actor">
-    <div class="pb-name">MuddyWater</div>
-    <div class="pb-desc">MUDDYWATER<br><strong>Operational Profile:</strong> Iran MOIS. High-volume, persistent operations targeting government, telecom, and energy sectors across the Middle East and Europe. Trades sophistication for scale.<br><strong>Key TTPs:</strong> Spearphishing with maldoc lures (OneNote, PDF, archive). PowerShell-native at every stage (MuddyC2Go framework). Legitimate RMM tool abuse (Atera, SimpleHelp, ScreenConnect) for persistence.</div>
-    <div class="pb-meta">IR &middot; MOIS &middot; Mango Sandstorm &middot; 6-step checklist &middot; MuddyC2Go &middot; PowerShell-native</div>
   </a>
 
   <a href="actors/apt42.html" class="pb-card actor">
@@ -152,12 +156,21 @@
     <div class="pb-meta">IR &middot; IRGC-IO &middot; 6-step checklist &middot; mobile spyware &middot; individual surveillance &middot; cloud-native C2</div>
   </a>
 
+  <a href="actors/muddywater.html" class="pb-card actor">
+    <div class="pb-name">MuddyWater</div>
+    <div class="pb-desc">MUDDYWATER<br><strong>Operational Profile:</strong> Iran MOIS. High-volume, persistent operations targeting government, telecom, and energy sectors across the Middle East and Europe. Trades sophistication for scale.<br><strong>Key TTPs:</strong> Spearphishing with maldoc lures (OneNote, PDF, archive). PowerShell-native at every stage (MuddyC2Go framework). Legitimate RMM tool abuse (Atera, SimpleHelp, ScreenConnect) for persistence.</div>
+    <div class="pb-meta">IR &middot; MOIS &middot; Mango Sandstorm &middot; 6-step checklist &middot; MuddyC2Go &middot; PowerShell-native</div>
+  </a>
 
+</div>
 
-  <a href="actors/apt28.html" class="pb-card actor">
-    <div class="pb-name">APT28 / Fancy Bear</div>
-    <div class="pb-desc">APT28 / FANCY BEAR<br><strong>Operational Profile:</strong> Russia GRU Unit 26165. Fast, noisy, and aggressive compared to APT29. Favors speed over stealth with rapid exploitation and credential phishing at scale.<br><strong>Key TTPs:</strong> Drovorub Linux rootkit. GooseEgg Windows privilege escalation. LAMEHUG LLM-enabled malware for automated recon. Exchange and Outlook exploitation (CVE-2023-23397). OCEANMAP C2 backdoor.</div>
-    <div class="pb-meta">RU &middot; GRU 26165 &middot; G0007 &middot; 10-step hunt checklist &middot; 7 CVEs &middot; 8 custom tools</div>
+<span class="section-label">KP</span>
+<div class="card-grid">
+
+  <a href="actors/lazarus.html" class="pb-card actor">
+    <div class="pb-name">Lazarus / HIDDEN COBRA</div>
+    <div class="pb-desc">LAZARUS / HIDDEN COBRA<br><strong>Operational Profile:</strong> DPRK RGB. The only nation-state APT that funds weapons programs through cybercrime. Cryptocurrency theft ($5B+), SWIFT fraud, ransomware, and destructive wipers, all under one umbrella.<br><strong>Key TTPs:</strong> Developer-targeted social engineering (Operation DreamJob). Trojanized trading apps (AppleJeus). FAMOUS CHOLLIMA planted insiders via AI-generated resumes. PRESSURE CHOLLIMA supply chain attacks ($1.46B Bybit).</div>
+    <div class="pb-meta">KP &middot; RGB &middot; G0032 &middot; 10-step checklist &middot; $5B+ crypto stolen &middot; 3 subgroups</div>
   </a>
 
 </div>
