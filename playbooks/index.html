@@ -193,6 +193,24 @@
     <div class="pb-meta">CVE-2026-32201 + 45659 + 56164 &middot; 10-step checklist &middot; air-gap implications &middot; actively exploited</div>
   </a>
 
+  <a href="exploits/printnightmare.html" class="pb-card t3">
+    <div class="pb-name">PrintNightmare (CVE-2021-34527)</div>
+    <div class="pb-desc">PRINTNIGHTMARE (CVE-2021-34527)<br><strong>Vulnerability:</strong> Windows Print Spooler RpcAddPrinterDriverEx() allows any authenticated domain user to load a malicious DLL as SYSTEM. Local privilege escalation and remote RCE. Enabled by default on every Windows system, including DCs.<br><strong>Impact:</strong> Domain user to SYSTEM in one step. On a DC: domain user to domain compromise. Integrated into Mimikatz and Metasploit. Patch alone was insufficient without disabling Point and Print.</div>
+    <div class="pb-meta">CVE-2021-34527 + CVE-2021-1675 &middot; 6-step checklist &middot; spoolsv.exe child processes &middot; DC compromise path</div>
+  </a>
+
+  <a href="exploits/log4shell.html" class="pb-card t3">
+    <div class="pb-name">Log4Shell (CVE-2021-44228)</div>
+    <div class="pb-desc">LOG4SHELL (CVE-2021-44228)<br><strong>Vulnerability:</strong> JNDI injection via log message in Apache Log4j 2.x. A single string (<code>${jndi:ldap://...}</code>) in any logged field achieves unauthenticated RCE. CVSS 10.0. Embedded in hundreds of thousands of Java applications as a transitive dependency.<br><strong>Impact:</strong> Mass exploitation within hours of disclosure. Nation-state (APT35, APT41, Lazarus) and commodity actors simultaneously. The dependency-of-a-dependency problem.</div>
+    <div class="pb-meta">CVE-2021-44228 &middot; 6-step checklist &middot; JNDI/LDAP/RMI callbacks &middot; java.exe child processes</div>
+  </a>
+
+  <a href="exploits/proxylogon.html" class="pb-card t3">
+    <div class="pb-name">ProxyLogon (CVE-2021-26855)</div>
+    <div class="pb-desc">PROXYLOGON (CVE-2021-26855)<br><strong>Vulnerability:</strong> Unauthenticated SSRF in Exchange Server chained with arbitrary file write for web shell deployment. Exploited as a zero-day by Hafnium (China) two months before disclosure.<br><strong>Impact:</strong> 30,000+ Exchange servers compromised within a week. Full mailbox access plus domain credential exposure. Followed by ProxyShell, ProxyOracle, ProxyNotShell, all exploiting the same architectural flaw.</div>
+    <div class="pb-meta">CVE-2021-26855 + 26857 + 26858 + 27065 &middot; 6-step checklist &middot; w3wp.exe web shells &middot; Exchange proxy architecture</div>
+  </a>
+
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
