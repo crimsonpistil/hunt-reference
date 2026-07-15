@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: APT35 / Charming Kitten</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--red);border:1px solid rgba(248,81,73,.4);background:rgba(248,81,73,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .alias-grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 20px}.alias-tag{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+  .seq-block{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin:12px 0 20px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:2}.seq-block .seq-arrow{color:var(--red);font-weight:700}.seq-block .seq-label{color:var(--text3);font-size:10px;display:block;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">THREAT ACTOR &middot; IRAN</div>
+  <div class="pb-title">APT35 / Charming Kitten</div>
+  <div class="pb-sub">Iran's most prolific credential thief. They don't send phishing blasts. They build fake relationships over weeks, impersonating journalists, researchers, and conference organizers, then steal your password when you trust them. Political espionage targeting government, defense, media, NGOs, and the Iranian diaspora.</div>
+  <div class="pb-meta-row">MITRE G0059 &middot; IRGC-affiliated &middot; active 2014-present &middot; overlaps with Mint Sandstorm (Microsoft) &middot; political espionage + credential theft</div>
+</div>
+
+<div class="content">
+
+<div class="section-head default">Also known as</div>
+<div class="alias-grid">
+  <span class="alias-tag">Mint Sandstorm</span>
+  <span class="alias-tag">Phosphorus</span>
+  <span class="alias-tag">Magic Hound</span>
+  <span class="alias-tag">NewsBeef</span>
+  <span class="alias-tag">Newscaster</span>
+  <span class="alias-tag">Ajax Security Team</span>
+  <span class="alias-tag">COBALT ILLUSION</span>
+</div>
+
+<div class="section-head red">The catfishing playbook</div>
+
+<p class="prose">
+  APT35 pioneered the long-con credential theft model that <a href="/playbooks/actors/apt42.html">APT42</a> later refined. The attack starts not with a link or an attachment, but with a <strong>relationship</strong>. An operator creates a convincing persona: a journalist from a Western outlet, a researcher at a think tank, an organizer for an academic conference. They reach out to the target via email, LinkedIn, or Twitter with a legitimate-seeming request: an interview, a speaking invitation, a collaboration proposal.
+</p>
+<p class="prose">
+  The correspondence continues for days or weeks. The persona builds credibility by sharing genuine articles, referencing real events, and demonstrating knowledge of the target's work. Only after trust is established does the attack materialize: a shared Google Doc that requires login (credential harvesting page), a conference registration form (fake portal), or a document that requires downloading from a cloud link (malware delivery).
+</p>
+<p class="prose">
+  This patient social engineering is why APT35 is effective against high-value individuals who are trained to spot phishing. The lure doesn't look like phishing. It looks like a professional opportunity from someone you've been corresponding with for two weeks.
+</p>
+
+<div class="seq-block">
+  <span class="seq-label">The APT35 social engineering lifecycle</span>
+  <strong style="color:var(--text)">Create persona</strong> (journalist, researcher, organizer with LinkedIn profile, publication history, headshot)
+  <span class="seq-arrow">&rarr;</span> <strong style="color:var(--text)">Initial contact</strong> (benign introduction email referencing target's published work)
+  <span class="seq-arrow">&rarr;</span> <strong style="color:var(--text)">Build rapport</strong> (1-3 weeks of genuine-seeming correspondence)
+  <span class="seq-arrow">&rarr;</span> <strong style="color:var(--text)">Deliver lure</strong> (shared document, conference registration, interview scheduling link)
+  <span class="seq-arrow">&rarr;</span> <strong style="color:var(--text)">Credential harvest</strong> (fake Google/Microsoft/Yahoo login page, AiTM session capture)
+  <span class="seq-arrow">&rarr;</span> <strong style="color:var(--text)">Account takeover</strong> (access email, harvest contacts, pivot to additional targets)
+</div>
+
+<div class="note-box red">
+  <strong>2024 US election interference.</strong> APT35/Charming Kitten targeted individuals associated with both US presidential campaigns, attempting to compromise personal email accounts. Google TAG confirmed targeted operations against both the Biden/Harris and Trump campaigns. Successfully compromised and leaked materials from the Trump campaign via a hack-and-leak operation.
+</div>
+
+<div class="section-head amber">Known TTPs</div>
+
+<p class="prose">
+  <strong>Credential harvesting infrastructure.</strong> APT35 builds convincing login pages mimicking Google, Microsoft, Yahoo, university SSO, and webmail providers. Domains use SSO-related keywords combined with target-organization names. Infrastructure rotates every 1-2 months. Recent shift from hyphenated domains (sso-target.com) to subdomain patterns (sso.target.com).
+</p>
+<p class="prose">
+  <strong>Exploitation.</strong> CVE-2023-38831 (WinRAR) used in credential harvesting campaigns. CVE-2022-47966 (Zoho ManageEngine) for initial access. Log4Shell (CVE-2021-44228) exploited for enterprise network intrusion. ProxyShell/ProxyLogon (Exchange) for email access. When social engineering doesn't work, they exploit.
+</p>
+<p class="prose">
+  <strong>Post-compromise.</strong> Once inside an email account: harvest the contact list for additional targeting, search for sensitive communications, set up forwarding rules to maintain access, and pivot to cloud storage (OneDrive, Google Drive) linked to the account. The compromised email is both an intelligence source and a launch platform for targeting the victim's contacts.
+</p>
+<p class="prose">
+  <strong>Fox Kitten / Lemon Sandstorm crossover.</strong> APT35 overlaps with Fox Kitten (PARISITE) operations that exploit VPN and edge devices (Citrix, F5, Pulse Secure, Fortinet) for initial access. FBI/CISA confirmed Fox Kitten selling network access to ransomware affiliates (NoEscape, RansomHouse, ALPHV). The line between APT35 espionage and Fox Kitten access brokering is blurred, with shared infrastructure and tooling.
+</p>
+
+<div class="section-head blue">Hunt checklist: if you suspect APT35</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Search for relationship-based phishing correspondence</strong>
+    Check email logs for multi-message threads with unknown external contacts that preceded a link click or document download. The pattern: 3+ messages exchanged before any link or attachment appears. The sender claims to be a journalist, researcher, think tank analyst, or conference organizer. Contact information doesn't verify against the claimed organization's real staff directory.
+    <span class="ref">Email gateway: multi-message thread analysis &middot; Sender domain WHOIS/age check</span>
+  </li>
+  <li>
+    <strong>2. Check for credential harvesting page visits</strong>
+    Search proxy logs for visits to recently registered domains containing keywords: "login," "signin," "auth," "verify," "account," "security," "webmail," combined with the target's organization name or a mimicked cloud provider. Also check for AiTM proxy indicators (Evilginx-style) where the URL structure proxies a legitimate login page.
+    <span class="ref"><a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> playbook &middot; Proxy logs &middot; Domain age analysis</span>
+  </li>
+  <li>
+    <strong>3. Audit email forwarding rules on high-value accounts</strong>
+    APT35 sets up forwarding rules to maintain persistent access to compromised mailboxes. Check for: rules forwarding to external freemail addresses, rules that delete or move specific messages, and rules created during or shortly after credential compromise. Use <code>Get-InboxRule</code> across all executive, policy, and communications staff mailboxes.
+    <span class="ref"><a href="/playbooks/triage/bec.html">BEC</a> playbook &middot; Exchange: Get-InboxRule &middot; M365 UAL: New-InboxRule</span>
+  </li>
+  <li>
+    <strong>4. Check for VPN/edge device exploitation (Fox Kitten crossover)</strong>
+    If you run Citrix NetScaler, F5 BIG-IP, Pulse Secure/Ivanti, PanOS, or Fortinet: check for exploitation indicators during vulnerability windows. Fox Kitten/PARISITE rapidly exploits these devices and either conducts espionage or sells the access to ransomware groups. The same infrastructure that serves APT35 espionage serves Fox Kitten access brokering.
+    <span class="ref"><a href="/playbooks/triage/edge-device.html">Edge Device</a> playbook &middot; FBI/CISA AA24-241A</span>
+  </li>
+  <li>
+    <strong>5. Check for cloud account compromise indicators</strong>
+    After credential theft, APT35 accesses cloud services linked to the compromised account. Check for: unusual sign-ins to Google Workspace, M365, or OneDrive from new IPs, bulk file downloads from cloud storage, OAuth app consent grants from compromised accounts, and new device enrollments.
+    <span class="ref"><a href="/playbooks/environments/hybrid-ad.html">Hybrid AD</a> playbook &middot; Cloud sign-in logs &middot; OAuth consent audit</span>
+  </li>
+  <li>
+    <strong>6. Verify whether compromised accounts were used to target contacts</strong>
+    A compromised APT35 account becomes a trusted launchpad. Check sent items for: outbound messages to the victim's contact list containing links or documents, messages impersonating the victim to their professional network, and correspondence that continues the catfishing pattern (building relationships with the victim's contacts before delivering lures).
+    <span class="ref">Email gateway: outbound analysis from compromised account &middot; Message trace</span>
+  </li>
+</ol>
+
+<div class="section-head green">APT35 vs APT42: the split</div>
+
+<p class="prose">
+  APT35 and <a href="/playbooks/actors/apt42.html">APT42</a> were originally tracked as one group. Mandiant split APT42 out in 2022, identifying distinct operational mandates. The distinction matters for defenders:
+</p>
+<p class="prose">
+  <strong>APT35</strong> focuses on <strong>political espionage at organizational scale</strong>. They target government agencies, defense contractors, media organizations, and NGOs. Their credential theft feeds intelligence collection against institutions. They also cross over into exploitation (VPN/edge devices, Exchange) and have a documented connection to the Fox Kitten ransomware IAB operation.
+</p>
+<p class="prose">
+  <strong><a href="/playbooks/actors/apt42.html">APT42</a></strong> focuses on <strong>surveillance of specific individuals</strong>. They target dissidents, activists, journalists, and academics as people, not as employees of organizations. Their operations include mobile spyware and cloud-based tracking. The intelligence objective is monitoring what an individual says and does, not what their organization knows.
+</p>
+<p class="prose">
+  In practice, the groups share infrastructure, tooling, and social engineering methodology. Microsoft tracks both under the composite name "Mint Sandstorm." If you're investigating Iranian credential theft, both playbooks apply.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/actors/apt42.html">APT42</a> (individual surveillance, split from APT35)<br>
+  <a href="/playbooks/actors/muddywater.html">MuddyWater</a> (MOIS, different agency, PowerShell-focused)<br>
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (APT35's entire model)<br>
+  <a href="/playbooks/triage/edge-device.html">Edge Device Compromised</a> (Fox Kitten crossover)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>

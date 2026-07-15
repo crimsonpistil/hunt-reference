@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: MuddyWater</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--red);border:1px solid rgba(248,81,73,.4);background:rgba(248,81,73,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .alias-grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 20px}.alias-tag{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+  .seq-block{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin:12px 0 20px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:2}.seq-block .seq-cmd{color:var(--text);background:var(--bg3);padding:2px 6px;border-radius:3px}.seq-block .seq-label{color:var(--text3);font-size:10px;display:block;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">THREAT ACTOR &middot; IRAN</div>
+  <div class="pb-title">MuddyWater</div>
+  <div class="pb-sub">Iran's Ministry of Intelligence workhorse. Less sophisticated than APT35 or APT42, but persistent and high-volume. Spearphishing with maldocs, PowerShell-everything tradecraft, and a focus on government, telecom, and energy targets across the Middle East, Europe, and the US. What they lack in elegance they make up for in persistence.</div>
+  <div class="pb-meta-row">MITRE G0069 &middot; MOIS &middot; active 2017-present &middot; government + telecom + energy &middot; PowerShell-native</div>
+</div>
+
+<div class="content">
+
+<div class="section-head default">Also known as</div>
+<div class="alias-grid">
+  <span class="alias-tag">Mango Sandstorm</span>
+  <span class="alias-tag">MERCURY</span>
+  <span class="alias-tag">Static Kitten</span>
+  <span class="alias-tag">Seedworm</span>
+  <span class="alias-tag">TEMP.Zagros</span>
+  <span class="alias-tag">COBALT ULSTER</span>
+  <span class="alias-tag">Earth Vetala</span>
+</div>
+
+<div class="section-head red">Different agency, different mandate</div>
+
+<p class="prose">
+  MuddyWater operates under Iran's <strong>Ministry of Intelligence and Security (MOIS)</strong>, not the IRGC. This is a different chain of command from <a href="/playbooks/actors/apt35.html">APT35</a> and <a href="/playbooks/actors/apt42.html">APT42</a> (both IRGC). MOIS handles domestic security and foreign intelligence collection. MuddyWater's targeting reflects this: government agencies, telecom providers, energy companies, and defense organizations, primarily in the Middle East but extending into Europe, North America, and South Asia.
+</p>
+<p class="prose">
+  MuddyWater is not sophisticated. They don't build elaborate social engineering campaigns like APT35 or deploy mobile spyware like APT42. They send spearphishing emails with malicious attachments (OneNote, PDF, archive lures), compromise the endpoint, and establish PowerShell-based C2 for data collection. Their value to MOIS is volume and persistence, not stealth. They cast a wider net and accept a higher detection rate.
+</p>
+
+<div class="note-box">
+  <strong>MOIS vs IRGC: why it matters for attribution.</strong> If you're investigating Iranian activity and trying to determine which group you're dealing with: MuddyWater (MOIS) targets government/telecom/energy infrastructure using PowerShell frameworks and maldoc delivery. APT35/APT42 (IRGC) targets individuals and political organizations using social engineering and credential theft. The tooling, targeting, and tradecraft are different enough that the distinction is usually clear. Finding PowerShell C2 with maldoc delivery against a government network points to MuddyWater. Finding credential harvesting pages targeting a journalist's personal Gmail points to APT35/42.
+</div>
+
+<div class="section-head amber">Tradecraft: PowerShell everything</div>
+
+<p class="prose">
+  MuddyWater's signature is their heavy reliance on PowerShell at every stage of the intrusion. Their custom C2 framework (MuddyC2Go, successor to MuddyC3 and PhonyC2) is PowerShell-based. Their reverse shells are PowerShell. Their data collection scripts are PowerShell. Their persistence mechanisms use PowerShell. If you have PowerShell ScriptBlock logging (EID 4104) enabled, MuddyWater's entire operation is visible in your logs.
+</p>
+
+<div class="seq-block">
+  <span class="seq-label">Typical MuddyWater attack chain</span>
+  <strong style="color:var(--text)">Spearphishing email</strong> (OneNote, PDF, RAR attachment with embedded macro/LNK)
+  <br>&darr;<br>
+  <strong style="color:var(--text)">User opens attachment</strong> (macro/LNK executes PowerShell downloader)
+  <br>&darr;<br>
+  <span class="seq-cmd">powershell -ep bypass -e [base64 encoded command]</span>
+  <br>&darr;<br>
+  <strong style="color:var(--text)">MuddyC2Go beacon</strong> (HTTP POST with encoded system info to cloud-hosted C2)
+  <br>&darr;<br>
+  <strong style="color:var(--text)">Reconnaissance</strong> (systeminfo, ipconfig, net user, tasklist via PowerShell)
+  <br>&darr;<br>
+  <strong style="color:var(--text)">Lateral movement</strong> (WMI, RDP, or SSH with harvested credentials)
+  <br>&darr;<br>
+  <strong style="color:var(--text)">Data collection</strong> (PowerShell scripts targeting documents, email archives, credentials)
+</div>
+
+<p class="prose">
+  <strong>Legitimate tool abuse.</strong> MuddyWater increasingly deploys legitimate RMM tools (Atera, SimpleHelp, ScreenConnect) alongside or instead of custom C2. This mirrors the <a href="/playbooks/actors/scattered-spider.html">Scattered Spider</a> RMM abuse pattern. The RMM tool provides persistent remote access that blends with IT management traffic and doesn't trigger malware detections.
+</p>
+
+<div class="section-head blue">Hunt checklist: if you suspect MuddyWater</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Search for encoded PowerShell execution</strong>
+    MuddyWater's signature: PowerShell with <code>-EncodedCommand</code> or <code>-e</code> flag executing base64 payloads. Search Sysmon EID 1 for powershell.exe with -e or -enc in the command line. ScriptBlock logging (EID 4104) captures the decoded content. If you have 4104 enabled, search for: Invoke-WebRequest, Invoke-Expression, Net.WebClient, DownloadString, and encoded reverse shell patterns.
+    <span class="ref"><a href="/host/execution.html">HOST: Execution</a> &middot; Sysmon EID 1 &middot; PowerShell EID 4104</span>
+  </li>
+  <li>
+    <strong>2. Check for maldoc delivery via email</strong>
+    Search email gateway logs for: OneNote attachments (.one) with embedded scripts, PDF attachments with links to external download sites, RAR/ZIP archives containing LNK files, and macro-enabled Office documents. MuddyWater's lures are themed around government communications, official documents, HR notices, and telecom industry topics.
+    <span class="ref">Email gateway: attachment type analysis &middot; Sandbox detonation results</span>
+  </li>
+  <li>
+    <strong>3. Hunt for MuddyC2Go beacon traffic</strong>
+    MuddyC2Go communicates via HTTP POST requests to cloud-hosted infrastructure. The beacon sends encoded system information (hostname, IP, OS version, username) on first callback and polls for commands. Search proxy logs for: regular-interval HTTP POST requests to cloud hosting providers (AWS, Azure, DigitalOcean, free hosting platforms) from non-browser processes.
+    <span class="ref">NET: <a href="/net/c2.html">C2</a> &middot; Proxy logs: POST requests from PowerShell processes</span>
+  </li>
+  <li>
+    <strong>4. Check for unauthorized RMM tools</strong>
+    MuddyWater deploys Atera, SimpleHelp, and ScreenConnect for persistence. Search for: RMM agent installation events, RMM binary execution from non-standard paths, and RMM cloud service connections from hosts that aren't managed by your IT team's approved RMM platform.
+    <span class="ref">Sysmon EID 1: RMM binary names &middot; EID 3: connections to RMM cloud infrastructure</span>
+  </li>
+  <li>
+    <strong>5. Check for lateral movement via WMI and RDP</strong>
+    Post-compromise, MuddyWater uses WMI for remote command execution and RDP for interactive access. Search for: WmiPrvSE.exe spawning cmd.exe or PowerShell (remote WMI execution), type 10 logons (RDP) from internal hosts that don't normally initiate RDP, and credential use from accounts that don't normally access the target systems.
+    <span class="ref"><a href="/host/lateral_movement.html#T1047">HOST: T1047</a> WMI &middot; <a href="/host/lateral_movement.html#T1021.001">T1021.001</a> RDP &middot; EID 4624 type 10</span>
+  </li>
+  <li>
+    <strong>6. Search for data staging and exfiltration</strong>
+    MuddyWater uses PowerShell scripts to collect documents and stage them for exfiltration. Search for: PowerShell Compress-Archive commands creating ZIP files, large file copies to staging directories, and outbound uploads to cloud storage or C2 infrastructure. The exfiltration often uses the same C2 channel as the beacon traffic.
+    <span class="ref">NET: <a href="/net/exfil.html">Exfiltration</a> &middot; <a href="/playbooks/triage/data-exfil.html">Data Exfil</a> playbook</span>
+  </li>
+</ol>
+
+<div class="section-head green">What distinguishes MuddyWater</div>
+
+<p class="prose">
+  <strong>MOIS, not IRGC.</strong> Different chain of command, different intelligence priorities, different targeting. MuddyWater targets government and infrastructure. APT35/42 targets individuals and political organizations. Both are Iranian state-sponsored, but they report to different agencies.
+</p>
+<p class="prose">
+  <strong>Volume over stealth.</strong> MuddyWater runs broad phishing campaigns against many organizations simultaneously. They accept that some will be detected. Their model is: send enough lures to enough targets that some percentage will succeed. This is the opposite of APT42's one-target-at-a-time patience.
+</p>
+<p class="prose">
+  <strong>PowerShell-native.</strong> If the entire intrusion is PowerShell from initial execution through C2 through data collection, and the targeting is government/telecom/energy in the Middle East or Europe, it's probably MuddyWater. No other Iranian group is this committed to PowerShell as a platform.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/actors/apt35.html">APT35 / Charming Kitten</a> (IRGC, credential-focused, different agency)<br>
+  <a href="/playbooks/actors/apt42.html">APT42</a> (IRGC-IO, individual surveillance, different mandate)<br>
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (MuddyWater harvests creds post-compromise)<br>
+  <a href="/playbooks/triage/c2-beacon.html">C2 Beacon Found</a> (MuddyC2Go detection)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>

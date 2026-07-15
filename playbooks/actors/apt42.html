@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: APT42</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--red);border:1px solid rgba(248,81,73,.4);background:rgba(248,81,73,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .alias-grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 20px}.alias-tag{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+  .tool-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}@media(max-width:600px){.tool-grid{grid-template-columns:1fr}}.tool-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px 14px}.tool-card .tc-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--red);margin-bottom:4px}.tool-card .tc-desc{font-size:11px;color:var(--text3);line-height:1.5}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">THREAT ACTOR &middot; IRAN</div>
+  <div class="pb-title">APT42</div>
+  <div class="pb-sub">IRGC Intelligence Organization's surveillance team. They don't target networks. They target people. Dissidents, activists, journalists, human rights lawyers, and academics who study Iran. Custom mobile spyware, cloud-based tracking, and credential theft operations designed to monitor individuals, not organizations.</div>
+  <div class="pb-meta-row">MITRE G1044 &middot; IRGC-IO &middot; active 2015-present &middot; 30+ countries &middot; surveillance of individuals</div>
+</div>
+
+<div class="content">
+
+<div class="section-head default">Also known as</div>
+<div class="alias-grid">
+  <span class="alias-tag">Mint Sandstorm (partial)</span>
+  <span class="alias-tag">TA453</span>
+  <span class="alias-tag">Yellow Garuda</span>
+  <span class="alias-tag">ITG18</span>
+  <span class="alias-tag">CALANQUE</span>
+  <span class="alias-tag">CharmingCypress</span>
+  <span class="alias-tag">Educated Manticore</span>
+  <span class="alias-tag">UNK_SmudgedSerpent</span>
+</div>
+
+<div class="section-head red">The surveillance mission</div>
+
+<p class="prose">
+  APT42 was split from the broader <a href="/playbooks/actors/apt35.html">APT35/Charming Kitten</a> cluster by Mandiant in 2022 because their operational mandate is fundamentally different. APT35 conducts political espionage against organizations. APT42 conducts <strong>surveillance of specific human beings</strong>. The IRGC-IO's mission includes monitoring and preventing threats to the Islamic Republic from dissidents, opposition groups, and foreign influence. APT42 is the cyber arm of that surveillance apparatus.
+</p>
+<p class="prose">
+  <strong>Targeting is personal.</strong> APT42 targets individuals by name: Iranian diaspora members, dual-national citizens, human rights activists, journalists covering Iranian affairs, former government officials who left the regime, and academics researching Iranian policy. The intelligence objective is not "what does this organization know" but "what is this person saying, who are they talking to, and where are they."
+</p>
+<p class="prose">
+  <strong>Surveillance tools, not espionage tools.</strong> APT42's custom malware includes Android spyware (PINEFLOWER, VINETHORN) that records calls, captures SMS, tracks GPS location, activates the microphone, and exfiltrates photos and contacts. Their desktop tools (NICECURL, TAMECAT, CHAIRSMACK) focus on keylogging, screen capture, email harvesting, and browser credential theft. These are surveillance capabilities designed to build a comprehensive picture of a target's life, not to pivot through a corporate network.
+</p>
+
+<div class="section-head amber">Custom tooling</div>
+
+<div class="tool-grid">
+  <div class="tool-card">
+    <div class="tc-name">NICECURL</div>
+    <div class="tc-desc">VBScript backdoor. C2 via Cloudflare Workers, Firebase, OneDrive. Downloads and executes additional modules. Designed for initial access and reconnaissance on desktop targets.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">TAMECAT</div>
+    <div class="tc-desc">PowerShell backdoor deployed alongside NICECURL. Executes arbitrary commands and scripts. Persistence via registry Run keys. Used for sustained desktop surveillance.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">PINEFLOWER</div>
+    <div class="tc-desc">Android spyware. Records calls, captures SMS, tracks GPS, activates microphone, exfiltrates photos and contacts. Delivered via trojanized Android apps or sideloaded APKs.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">VINETHORN</div>
+    <div class="tc-desc">Android surveillance implant with VPN tunneling capability. Monitors communications across messaging apps (WhatsApp, Telegram, Signal) by capturing screen content and notifications.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">CHAIRSMACK / POWERPOST</div>
+    <div class="tc-desc">Desktop post-exploitation. CHAIRSMACK provides deep system recon. POWERPOST stages and exfiltrates data over cloud services. Together they enable comprehensive desktop monitoring.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">DOSTEALER</div>
+    <div class="tc-desc">Credential and data stealer. Harvests browser passwords, session cookies, email tokens, and stored credentials. Feeds the credential access pipeline that enables email monitoring.</div>
+  </div>
+</div>
+
+<div class="note-box red">
+  <strong>Cloud-native C2.</strong> APT42 malware uses Cloudflare Workers, Firebase, OneDrive, Google services, and legitimate hosting platforms for command and control. The traffic blends with normal cloud API calls, making network-level detection extremely difficult. You're looking for PowerShell or VBScript processes maintaining long-lived connections to cloud service APIs, not connections to suspicious IPs.
+</div>
+
+<div class="section-head blue">Hunt checklist: if you suspect APT42 surveillance</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Identify whether individuals in your organization are APT42 target profiles</strong>
+    APT42 targets specific categories of people. If your organization employs or protects: Iranian-born or dual-national individuals, journalists covering Middle Eastern affairs, academics researching Iranian policy, human rights workers, or former government officials with Iran expertise, they may be individually targeted regardless of your organization's sector.
+  </li>
+  <li>
+    <strong>2. Check for sustained social engineering correspondence</strong>
+    APT42 operators impersonate journalists, think tank researchers, and conference organizers. Check for multi-message email threads from external freemail addresses (Gmail, ProtonMail, Outlook) claiming media or academic affiliations. Verify the sender's identity against the claimed organization's real staff. APT42 personas have fake LinkedIn profiles, fabricated publication histories, and stolen headshots.
+    <span class="ref">Email gateway: multi-message thread analysis from freemail to target individuals</span>
+  </li>
+  <li>
+    <strong>3. Hunt for mobile spyware indicators</strong>
+    If APT42 is targeting individuals in your organization, check their mobile devices for: sideloaded Android APKs from non-Play Store sources, apps requesting excessive permissions (microphone, camera, SMS, location, contacts simultaneously), persistent VPN connections to unknown endpoints, and unusual battery drain or data usage patterns consistent with continuous background monitoring.
+    <span class="ref">MDM: app inventory audit &middot; Android: adb shell pm list packages for unknown packages</span>
+  </li>
+  <li>
+    <strong>4. Check for cloud-abusing C2 from desktop endpoints</strong>
+    Search for: PowerShell, VBScript (wscript.exe, cscript.exe), or rundll32 processes making sustained HTTPS connections to Cloudflare Workers subdomains, Firebase APIs, or OneDrive/Google Drive APIs. Legitimate cloud usage comes from browsers and official apps, not from script interpreters. Cross-reference Sysmon EID 1 (process) with EID 3 (network) for script-to-cloud connections.
+    <span class="ref">Sysmon EID 1 + EID 3 &middot; Proxy logs: script interpreter user-agents to cloud APIs</span>
+  </li>
+  <li>
+    <strong>5. Check for credential harvesting page visits</strong>
+    APT42 builds fake login pages mimicking Google, Microsoft, Yahoo, and academic SSO portals. Search proxy logs for visits to recently registered domains with login-related keywords. The credential harvesting page captures both the password and the session token (AiTM), defeating MFA.
+    <span class="ref"><a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> playbook &middot; Proxy logs &middot; Domain registration monitoring</span>
+  </li>
+  <li>
+    <strong>6. Audit personal cloud accounts of targeted individuals</strong>
+    With consent: check the individual's personal Gmail, Outlook, or Yahoo account for unauthorized access (login history from unknown IPs), forwarding rules to unknown addresses, OAuth app consents they didn't authorize, and recently accessed documents. APT42's primary intelligence product is the target's personal communications, not corporate data.
+  </li>
+</ol>
+
+<div class="section-head green">Why APT42 is different from every other APT</div>
+
+<p class="prose">
+  <strong>The target is a person, not a network.</strong> Every other playbook in this collection treats the organization as the target. APT42 targets the individual. The organization is incidental: they'll compromise a university's network to reach a professor, or an NGO's email to monitor an activist. The network compromise is a means, not an end.
+</p>
+<p class="prose">
+  <strong>Mobile surveillance at scale.</strong> APT42 is one of the few APTs with documented custom Android spyware deployed against named individuals. PINEFLOWER and VINETHORN turn a target's phone into a real-time surveillance device. This capability exists on the same spectrum as NSO Group's Pegasus, but operated by a state intelligence service directly.
+</p>
+<p class="prose">
+  <strong>The human cost.</strong> APT42's targets are not corporations or governments. They are individuals who are often already at personal risk from the Iranian regime. Successful surveillance can lead to arrest of family members still in Iran, intimidation campaigns, and physical harm. The stakes of detecting APT42 are not financial. They are about human safety.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/actors/apt35.html">APT35 / Charming Kitten</a> (organizational espionage counterpart, shared infrastructure)<br>
+  <a href="/playbooks/actors/muddywater.html">MuddyWater</a> (MOIS, different agency and mandate)<br>
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (credential theft is APT42's primary access method)<br>
+  <a href="/playbooks/triage/insider-threat.html">Insider Threat</a> (APT42 surveillance mimics insider monitoring patterns)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>
