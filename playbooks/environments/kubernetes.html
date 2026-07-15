@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Kubernetes and Container</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--accent);border:1px solid rgba(88,166,255,.4);background:rgba(88,166,255,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .seq-block{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin:12px 0 20px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:2}.seq-block .seq-label{color:var(--text3);font-size:10px;display:block;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}.seq-block .seq-cmd{color:var(--text);background:var(--bg3);padding:2px 6px;border-radius:3px}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">ENVIRONMENT</div>
+  <div class="pb-title">Kubernetes and Container</div>
+  <div class="pb-sub">Containers are ephemeral. If an attacker compromises a pod, pulls a tool, runs an exploit, and the pod terminates ten minutes later, the telemetry is gone forever unless you are capturing runtime behavior at the kernel level. The blind spot infrastructure.</div>
+  <div class="pb-meta-row">K8s audit logs &middot; eBPF / Falco / Tetragon &middot; container escape &middot; API server abuse &middot; service account token theft</div>
+</div>
+
+<div class="content">
+
+<div class="section-head red">Why Kubernetes is a hunting nightmare</div>
+
+<p class="prose">
+  Traditional endpoint telemetry assumes the host persists. Containers don't. A pod can spin up, execute a workload, and terminate before a scheduled scan runs. If an attacker compromises a container, the evidence dies with the container unless you have runtime monitoring hooked at the kernel level (eBPF) or API-level audit logging capturing every request.
+</p>
+<p class="prose">
+  <strong>The default posture is weak.</strong> Developers routinely run containers as root (privileged), mount the host filesystem for convenience, leave the internal Kubernetes API service account tokens accessible inside every pod at <code>/var/run/secrets/kubernetes.io/serviceaccount/token</code>, and deploy with overly permissive RBAC roles. Every one of these defaults is an attack surface.
+</p>
+
+<div class="note-box red">
+  <strong>Cryptomining is the canary.</strong> If you find unauthorized cryptominers running in your cluster, you have a much bigger problem than wasted compute. The miner proves someone can deploy arbitrary workloads. The same access that deploys a miner deploys a reverse shell, a data exfiltration tool, or a lateral movement pivot. Treat every cryptominer as evidence of a compromised cluster, not just a nuisance.
+</div>
+
+<div class="section-head blue">Hunt checklist</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Hunt for container escapes</strong>
+    Attackers break out of container namespaces to control the underlying node. Search eBPF/Falco telemetry for: processes inside containers accessing host PID namespace, mount namespace escapes via <code>/proc/1/root</code>, writes to host filesystem paths from container contexts, and nsenter or chroot execution inside containers.
+    <span class="ref">Falco: container.id != host AND (proc.name in (nsenter, chroot) OR fd.name startswith /proc/1/root)</span>
+  </li>
+  <li>
+    <strong>2. Detect shells spawning inside production containers</strong>
+    Production containers should not have interactive shells. Any bash, sh, or interactive process inside a running production pod is suspicious. Configure Falco or Tetragon to alert on shell spawning inside containers.
+    <span class="ref">Falco: container.id != host AND proc.name in (bash, sh, dash) AND not user.login</span>
+  </li>
+  <li>
+    <strong>3. Audit Kubernetes API server requests</strong>
+    Enable K8s audit logging and search for: anomalous User-Agent strings querying the API, rapid <code>impersonate</code> verb requests, unauthorized <code>create</code> or <code>exec</code> requests for pods, and requests from service accounts that don't normally interact with the API. API server abuse is how attackers spin up rogue pods.
+    <span class="ref">K8s audit log: verb=create resource=pods from unexpected service accounts</span>
+  </li>
+  <li>
+    <strong>4. Hunt for service account token theft</strong>
+    Every pod gets a service account token mounted at <code>/var/run/secrets/kubernetes.io/serviceaccount/token</code> by default. Attackers read this token to authenticate to the K8s API from inside the pod. Search for: processes reading the token file, outbound connections to the K8s API endpoint (typically 443 on the cluster IP), and token use from unexpected source pods.
+    <span class="ref">Falco: open read /var/run/secrets/kubernetes.io/ &middot; K8s audit: bearer token from unexpected source</span>
+  </li>
+  <li>
+    <strong>5. Check for privileged containers and host mounts</strong>
+    Audit running pods for: <code>privileged: true</code> in the security context, host PID/network/IPC namespace sharing, host filesystem mounts (especially /, /etc, /var/run/docker.sock), and containers running as UID 0 (root). Each is an escape vector.
+    <span class="ref">kubectl get pods -o json | jq for securityContext.privileged</span>
+  </li>
+  <li>
+    <strong>6. Monitor for rogue pod deployment</strong>
+    Search K8s audit logs for pod creation events that don't match your CI/CD pipeline: pods created by service accounts other than your deployment pipeline, pods with images from unexpected registries, pods with hostNetwork or hostPID enabled, and DaemonSets or CronJobs created outside change management.
+    <span class="ref">K8s audit: verb=create resource=pods NOT from CI/CD service account</span>
+  </li>
+  <li>
+    <strong>7. Hunt for lateral movement between namespaces</strong>
+    Kubernetes namespaces provide logical isolation, not network isolation (by default). Search for: network connections between pods in different namespaces that don't have a defined communication path, DNS lookups for services in other namespaces, and RBAC bindings that grant cross-namespace access.
+    <span class="ref">Network policy audit &middot; Cilium/Calico flow logs &middot; K8s RBAC review</span>
+  </li>
+  <li>
+    <strong>8. Verify image integrity and supply chain</strong>
+    Compromised container images are a supply chain attack vector. Check for: images pulled from public registries without signature verification, images with known vulnerabilities (Trivy, Grype scans), base images that have been modified since initial deployment, and images with embedded cryptominers or backdoors.
+    <span class="ref"><a href="/playbooks/triage/supply-chain.html">Supply Chain</a> playbook &middot; Cosign signature verification &middot; Trivy/Grype scanning</span>
+  </li>
+</ol>
+
+<div class="section-head green">Required telemetry</div>
+
+<p class="prose">
+  <strong>eBPF-based runtime monitoring (Falco, Tetragon, Tracee).</strong> Hooks directly into the Linux kernel of the host nodes. Captures process execution, file access, network connections, and syscalls from inside containers in real time, regardless of container lifecycle. This is the primary detection source. Without it, you are blind to in-container activity.
+</p>
+<p class="prose">
+  <strong>Kubernetes audit logs.</strong> API server request logging. Captures every kubectl command, every API call, every pod creation/deletion. Must be configured explicitly (not enabled by default on most distributions). Store externally so they survive cluster compromise.
+</p>
+<p class="prose">
+  <strong>Network flow logs (Cilium, Calico).</strong> Pod-to-pod and pod-to-external network flows. Required for detecting lateral movement between namespaces and unexpected egress to C2 or mining pools.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/environments/linux-fleet.html">Linux Server Fleet</a> (the underlying nodes are Linux hosts)<br>
+  <a href="/playbooks/triage/supply-chain.html">Supply Chain Indicator</a> (container image compromise)<br>
+  <a href="/playbooks/environments/cloud-control.html">Cloud Control Plane</a> (K8s often runs on cloud infrastructure with shared IAM)<br>
+  <a href="/playbooks/triage/c2-beacon.html">C2 Beacon Found</a> (post-compromise C2 from inside containers)
+</p>
+
+</div>
+
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>

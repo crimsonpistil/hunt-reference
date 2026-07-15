@@ -238,6 +238,24 @@
     <div class="pb-meta">auditd &middot; Sysmon for Linux &middot; osquery</div>
   </a>
 
+  <a href="environments/kubernetes.html" class="pb-card environ">
+    <div class="pb-name">Kubernetes and Container</div>
+    <div class="pb-desc">KUBERNETES AND CONTAINER<br><strong>Environment:</strong> Ephemeral container workloads on K8s. Telemetry dies with the container unless captured at the kernel level via eBPF. Developers run privileged by default, mount host filesystems, and leave API tokens accessible.<br><strong>Key Attack Paths:</strong> Container escape to node. K8s API abuse for rogue pod deployment. Service account token theft. Namespace lateral movement. Image supply chain compromise.</div>
+    <div class="pb-meta">eBPF / Falco / Tetragon &middot; K8s audit logs &middot; 8-step checklist</div>
+  </a>
+
+  <a href="environments/cloud-control.html" class="pb-card environ">
+    <div class="pb-name">Cloud Control Plane</div>
+    <div class="pb-desc">CLOUD CONTROL PLANE (AWS / AZURE / GCP)<br><strong>Environment:</strong> Identity is the perimeter. Every action is an API call authenticated by an identity. No firewalls blocking internal movement if IAM is misconfigured. 37% increase in cloud-conscious intrusions (CrowdStrike 2026).<br><strong>Key Attack Paths:</strong> Credential theft and session hijacking. Shadow admin IAM escalation. Snapshot exfil to external accounts. OAuth consent abuse. Logging pipeline disruption.</div>
+    <div class="pb-meta">CloudTrail / Activity Logs &middot; IAM audit &middot; 8-step checklist</div>
+  </a>
+
+  <a href="environments/macos-fleet.html" class="pb-card environ">
+    <div class="pb-name">macOS Developer Fleet</div>
+    <div class="pb-desc">MACOS DEVELOPER FLEET<br><strong>Environment:</strong> macOS-heavy engineering organizations where developers hold SSH keys, AWS credentials, Git tokens, and Docker configs on machines with minimal endpoint telemetry. The gap between assumed security and actual exposure is enormous.<br><strong>Key Attack Paths:</strong> Keychain dumping. Credential file harvesting (~/.ssh, ~/.aws). TCC bypass via dylib injection. Trojanized developer tools (Lazarus AppleJeus). LaunchAgent persistence.</div>
+    <div class="pb-meta">Endpoint Security API &middot; Unified Log &middot; osquery &middot; 7-step checklist</div>
+  </a>
+
 </div>
 
 <!-- ═══════════════════════════════════════════ -->

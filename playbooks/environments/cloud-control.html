@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Cloud Control Plane</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--accent);border:1px solid rgba(88,166,255,.4);background:rgba(88,166,255,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .seq-block{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin:12px 0 20px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:2}.seq-block .seq-label{color:var(--text3);font-size:10px;display:block;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}.seq-block .seq-cmd{color:var(--text);background:var(--bg3);padding:2px 6px;border-radius:3px}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">ENVIRONMENT</div>
+  <div class="pb-title">Cloud Control Plane (AWS / Azure / GCP)</div>
+  <div class="pb-sub">In the cloud, identity is the perimeter. There are no firewalls blocking internal movement if IAM is misconfigured. An attacker doesn't need a kernel exploit. They need one compromised API key or one hijacked session, and the entire control plane is accessible.</div>
+  <div class="pb-meta-row">CloudTrail / Activity Logs &middot; IAM abuse &middot; credential theft &middot; snapshot exfil &middot; impossible travel &middot; shadow admin escalation</div>
+</div>
+
+<div class="content">
+
+<div class="section-head red">Why cloud is different from everything else in this collection</div>
+
+<p class="prose">
+  On-prem hunting is about network traffic and process execution. Cloud hunting is about <strong>API calls and identity</strong>. Every action in AWS, Azure, or GCP is an API call authenticated by an identity. The attacker's footprint is not a binary on disk or a packet on the wire. It is a sequence of API calls made by a compromised identity. If you are not ingesting and analyzing cloud audit logs (CloudTrail, Azure Activity Logs, GCP Cloud Audit Logs), you have no visibility at all.
+</p>
+<p class="prose">
+  <strong>The IAM complexity problem.</strong> Cloud IAM policies are nested, inherited, and frequently over-permissioned. Third-party SaaS integrations get admin-level access for convenience. Service accounts accumulate permissions over years. A single overprivileged identity is the equivalent of leaving a domain admin password on a sticky note.
+</p>
+
+<div class="note-box red">
+  <strong>37% increase in cloud-conscious intrusions (CrowdStrike 2026 GTR).</strong> 266% increase among state-nexus actors. 35% of cloud incidents involved valid account abuse. APT29 specifically targets cloud identity infrastructure (OAuth abuse, tenant hijacking). The cloud is not a secondary target anymore. It is where the data lives and where the attackers are going.
+</div>
+
+<div class="section-head blue">Hunt checklist</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Hunt for credential theft and session hijacking</strong>
+    Search for: logins from new or unusual IP ranges, logins without MFA where MFA should be enforced, console logins from API-only service accounts, and session token reuse from different source IPs. Impossible travel detection: a user authenticating from one geography and then from a cloud provider IP in a different region within minutes.
+    <span class="ref">CloudTrail: ConsoleLogin &middot; Azure: Sign-in logs &middot; Impossible travel logic on IP geolocation</span>
+  </li>
+  <li>
+    <strong>2. Hunt for shadow admin and privilege escalation</strong>
+    An identity with limited permissions using IAM API calls to grant itself elevated access. Search for: <code>iam:CreatePolicyVersion</code>, <code>iam:AttachUserPolicy</code>, <code>iam:PutRolePolicy</code> (AWS), or equivalent Azure/GCP role assignment calls made by non-admin identities. Also check for <code>sts:AssumeRole</code> to roles the identity doesn't normally assume.
+    <span class="ref">CloudTrail: eventName=CreatePolicyVersion/AttachUserPolicy by non-admin &middot; Azure: roleAssignments/write</span>
+  </li>
+  <li>
+    <strong>3. Check for data exfiltration via snapshot sharing</strong>
+    Attackers copy EBS volume snapshots or RDS database snapshots and share them with an external AWS account under their control. Search for: <code>ModifySnapshotAttribute</code> or <code>ModifyDBSnapshotAttribute</code> calls that add an external account ID, <code>CopySnapshot</code> to a different region, and <code>CreateDBSnapshot</code> followed by sharing.
+    <span class="ref">CloudTrail: ModifySnapshotAttribute with add + external accountId &middot; <a href="/playbooks/triage/data-exfil.html">Data Exfil</a> playbook</span>
+  </li>
+  <li>
+    <strong>4. Audit S3/Blob/GCS public exposure and bulk access</strong>
+    Search for: bucket policy changes that add public access, <code>PutBucketPolicy</code> or <code>PutBucketAcl</code> with public grants, bulk <code>GetObject</code> calls from a single identity (data harvesting), and <code>ListBuckets</code> from identities that don't normally enumerate storage. Object-level logging (S3 data events) is required to see individual file access.
+    <span class="ref">CloudTrail: S3 data events &middot; Azure: Blob diagnostic logs &middot; GCP: Data Access audit logs</span>
+  </li>
+  <li>
+    <strong>5. Hunt for OAuth app consent abuse</strong>
+    Attackers register or consent to malicious OAuth apps that inherit user permissions. Search for: new OAuth app registrations, consent grants from compromised accounts (especially "admin consent" that applies org-wide), and OAuth apps with mail.read, files.readwrite, or directory.readwrite permissions.
+    <span class="ref"><a href="/playbooks/environments/hybrid-ad.html">Hybrid AD</a> playbook &middot; Azure AD: App consent audit log &middot; Google Workspace: OAuth token audit</span>
+  </li>
+  <li>
+    <strong>6. Check for resource creation in unexpected regions</strong>
+    Attackers create compute instances in regions your organization doesn't use (to avoid monitoring and for cryptomining). Search for: EC2 RunInstances, Azure VM creation, or GCP Compute instance creation in regions outside your approved list. Any resource creation in a non-standard region is suspicious.
+    <span class="ref">CloudTrail: RunInstances where awsRegion NOT IN [approved list]</span>
+  </li>
+  <li>
+    <strong>7. Audit cross-account and federation trust</strong>
+    Search for: new cross-account IAM roles, SAML/OIDC provider creation or modification, and federation trust changes. Attackers establish persistent cross-account access or modify federation to mint tokens. APT29 specifically targets identity federation (Golden SAML, OAuth abuse).
+    <span class="ref"><a href="/playbooks/actors/apt29.html">APT29</a> playbook &middot; CloudTrail: CreateSAMLProvider, UpdateSAMLProvider</span>
+  </li>
+  <li>
+    <strong>8. Monitor for logging and monitoring disruption</strong>
+    The first thing a sophisticated cloud attacker does: disable logging. Search for: <code>StopLogging</code> (CloudTrail), <code>DeleteTrail</code>, <code>PutEventSelectors</code> that reduce coverage, GuardDuty detector deletion, and Security Hub disablement. Any modification to the logging pipeline is a critical alert.
+    <span class="ref">CloudTrail: StopLogging / DeleteTrail / UpdateTrail &middot; GuardDuty: DeleteDetector</span>
+  </li>
+</ol>
+
+<div class="section-head green">Required telemetry</div>
+
+<p class="prose">
+  <strong>CloudTrail / Azure Activity Logs / GCP Cloud Audit Logs.</strong> Management events (API calls that modify resources) are the minimum. Data events (S3 object access, Lambda invocations) are required for data exfiltration detection. Store logs externally in a locked-down account that the primary account can't modify.
+</p>
+<p class="prose">
+  <strong>Identity logs.</strong> Azure AD/Entra ID sign-in logs, AWS IAM Access Analyzer, GCP IAM audit logs. Correlate identity activity across cloud providers if you are multi-cloud.
+</p>
+<p class="prose">
+  <strong>Network flow logs.</strong> VPC Flow Logs (AWS), NSG Flow Logs (Azure), VPC Flow Logs (GCP). Required for detecting lateral movement between cloud resources and unexpected egress.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/environments/hybrid-ad.html">Hybrid AD Enterprise</a> (cloud identity is the bridge between on-prem and cloud)<br>
+  <a href="/playbooks/actors/apt29.html">APT29 / Cozy Bear</a> (cloud-focused post-compromise and OAuth abuse)<br>
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (cloud credential theft is the #1 cloud attack vector)<br>
+  <a href="/playbooks/environments/kubernetes.html">Kubernetes and Container</a> (K8s runs on cloud infrastructure with shared IAM)
+</p>
+
+</div>
+
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>

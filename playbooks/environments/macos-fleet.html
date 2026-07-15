@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: macOS Developer Fleet</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--accent);border:1px solid rgba(88,166,255,.4);background:rgba(88,166,255,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .seq-block{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin:12px 0 20px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:2}.seq-block .seq-label{color:var(--text3);font-size:10px;display:block;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}.seq-block .seq-cmd{color:var(--text);background:var(--bg3);padding:2px 6px;border-radius:3px}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">ENVIRONMENT</div>
+  <div class="pb-title">macOS Developer Fleet</div>
+  <div class="pb-sub">In tech, finance, and engineering, the endpoint fleet is macOS, not Windows. Developers run SSH keys, AWS credentials in cleartext, Git configs, and Docker containers on machines that security teams historically treated as "inherently secure." The gap between assumed security and actual exposure is enormous.</div>
+  <div class="pb-meta-row">Unified Log &middot; Endpoint Security API &middot; Keychain &middot; TCC bypass &middot; credential harvesting &middot; SSH/AWS/Git config theft</div>
+</div>
+
+<div class="content">
+
+<div class="section-head red">The macOS security illusion</div>
+
+<p class="prose">
+  macOS is not inherently secure. It is inherently less targeted, which is not the same thing. As organizations shift to macOS-heavy fleets (especially in engineering and development), the attack surface follows. A compromised developer MacBook often has more sensitive access than a compromised corporate Windows endpoint: SSH keys to production servers, AWS credentials in <code>~/.aws/credentials</code>, GitHub tokens in <code>~/.gitconfig</code>, Docker contexts pointing to production clusters, and Keychain entries for every internal service.
+</p>
+<p class="prose">
+  <strong>The detection gap is real.</strong> Most SOCs have deep Windows telemetry (Sysmon, Event Logs, EDR) and minimal macOS visibility. The macOS Unified Log is verbose but poorly understood. Apple's Endpoint Security API provides process execution, file access, and network events, but many EDR vendors still have weaker macOS coverage than Windows. Hunting on macOS requires different tools, different queries, and different instincts.
+</p>
+
+<div class="note-box">
+  <strong>Lazarus targets macOS developers specifically.</strong> Operation DreamJob and AppleJeus campaigns deliver trojanized applications targeting macOS because cryptocurrency developers disproportionately use Macs. The <a href="/playbooks/actors/lazarus.html">Lazarus</a> playbook covers this in detail. macOS targeting is not hypothetical. It is documented and ongoing.
+</div>
+
+<div class="section-head blue">Hunt checklist</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Hunt for Keychain credential dumping</strong>
+    The macOS Keychain stores passwords, API keys, certificates, and SSH passphrases. Attackers use tools like Chainbreaker or the built-in <code>security find-generic-password</code> command to dump stored credentials. Search for: non-system binaries executing <code>security find-generic-password</code> or <code>security dump-keychain</code>, and any process accessing Keychain database files directly.
+    <span class="ref">ES API: process exec of "security" with args containing find-generic-password &middot; Unified Log</span>
+  </li>
+  <li>
+    <strong>2. Hunt for local credential file access</strong>
+    Developers store sensitive credentials in predictable locations. Monitor for unauthorized reads of: <code>~/.ssh/</code> (SSH keys and config), <code>~/.aws/credentials</code> and <code>~/.aws/config</code> (AWS access keys), <code>~/.gitconfig</code> and <code>~/.git-credentials</code> (GitHub/GitLab tokens), <code>~/.docker/config.json</code> (container registry creds), and <code>~/.kube/config</code> (Kubernetes cluster access). Any process reading these files that isn't the expected application is suspicious.
+    <span class="ref">ES API: file open events on credential paths &middot; Falco for macOS &middot; osquery FIM</span>
+  </li>
+  <li>
+    <strong>3. Hunt for TCC bypasses</strong>
+    Transparency, Consent, and Control (TCC) governs which apps can access camera, microphone, full disk, and other protected resources. Attackers bypass TCC by injecting code into apps that already have TCC permissions (Terminal, VS Code, Slack) to inherit their grants. Search for: dylib injection into TCC-trusted apps, unexpected code signing changes, and processes accessing TCC-protected resources without a corresponding user prompt.
+    <span class="ref">ES API: process exec with TCC-protected resource access &middot; tccutil audit &middot; TCC.db query</span>
+  </li>
+  <li>
+    <strong>4. Hunt for persistence mechanisms</strong>
+    macOS persistence is different from Windows. Search for: LaunchAgents and LaunchDaemons in ~/Library/LaunchAgents/, /Library/LaunchAgents/, /Library/LaunchDaemons/ (new plists), Login Items modifications, cron jobs (crontab -l), at jobs, and Finder Sync extensions. Any new LaunchAgent or LaunchDaemon plist created outside managed software deployment is suspicious.
+    <span class="ref">osquery: SELECT * FROM launchd WHERE path NOT IN [approved list] &middot; FIM on LaunchAgents/</span>
+  </li>
+  <li>
+    <strong>5. Check for trojanized developer tools</strong>
+    Lazarus specifically targets developers with trojanized applications: fake trading platforms (AppleJeus), malicious npm/pip packages, and backdoored developer utilities. Search for: recently installed applications not from the App Store or your MDM, applications with invalid or ad-hoc code signatures, and npm/pip packages that execute post-install scripts with network activity.
+    <span class="ref"><a href="/playbooks/actors/lazarus.html">Lazarus</a> playbook &middot; MDM app inventory &middot; codesign -v verification</span>
+  </li>
+  <li>
+    <strong>6. Monitor for process injection and dylib hijacking</strong>
+    Attackers inject malicious dynamic libraries (dylibs) into running processes or exploit dylib search order to load malicious code. Search for: DYLD_INSERT_LIBRARIES environment variable set on process launch, dylibs loaded from non-standard paths, and processes loading unsigned dylibs.
+    <span class="ref">ES API: dylib load events &middot; Unified Log: dyld entries &middot; DYLD_INSERT_LIBRARIES in env</span>
+  </li>
+  <li>
+    <strong>7. Audit outbound connections from developer tools</strong>
+    Developer tools (IDE extensions, npm/pip, Docker, git) make legitimate outbound connections. The hunt: connections from these tools to destinations outside their expected set. A VS Code extension connecting to an unknown C2 server. An npm install triggering a reverse shell. Git cloning from an attacker-controlled repo that executes a post-checkout hook.
+    <span class="ref">Network monitoring: outbound from developer tool processes &middot; Little Snitch / LuLu alerts</span>
+  </li>
+</ol>
+
+<div class="section-head green">Required telemetry</div>
+
+<p class="prose">
+  <strong>Apple Endpoint Security API.</strong> The macOS equivalent of ETW/Sysmon. Provides process execution, file access, network connections, and authorization events. Your EDR vendor's macOS agent should be consuming these events. If it isn't, you have no endpoint visibility on macOS.
+</p>
+<p class="prose">
+  <strong>Unified Log.</strong> Apple's centralized logging system. Verbose but powerful. Use <code>log stream</code> or <code>log show</code> for real-time and historical queries. Filter by subsystem (com.apple.securityd for Keychain, com.apple.TCC for TCC decisions).
+</p>
+<p class="prose">
+  <strong>osquery.</strong> Cross-platform host interrogation. Runs on macOS and provides SQL-queryable views of processes, LaunchAgents, Keychain entries, browser extensions, and file integrity. The most practical tool for fleet-wide macOS hunting.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/actors/lazarus.html">Lazarus / HIDDEN COBRA</a> (macOS developer targeting via AppleJeus and Operation DreamJob)<br>
+  <a href="/playbooks/triage/infostealer.html">Infostealer Infection</a> (credential harvesting from developer machines)<br>
+  <a href="/playbooks/triage/supply-chain.html">Supply Chain Indicator</a> (trojanized developer tools and packages)<br>
+  <a href="/playbooks/environments/cloud-control.html">Cloud Control Plane</a> (stolen AWS/GCP credentials from developer machines enable cloud compromise)
+</p>
+
+</div>
+
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>
