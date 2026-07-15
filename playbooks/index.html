@@ -247,6 +247,18 @@
     <div class="pb-meta">CVE-2023-46805 + CVE-2024-21887 &middot; 5-step checklist &middot; VPN perimeter RCE &middot; CISA Emergency Directive</div>
   </a>
 
+  <a href="exploits/esxi-chain.html" class="pb-card t3">
+    <div class="pb-name">VMware ESXi Exploitation Chain</div>
+    <div class="pb-desc">VMWARE ESXI EXPLOITATION CHAIN<br><strong>Vulnerability:</strong> Multiple attack paths to hypervisor admin: NTLM relay to ESXi management, AD "ESX Admins" group abuse, and direct SSH access. Guest-level EDR is completely bypassed.<br><strong>Impact:</strong> esxcli mass VM kill followed by direct .vmdk encryption from the hypervisor shell. One compromised ESXi host takes down every VM it hosts. Scattered Spider, LockBit, Akira, BlackCat, and Fog all target this.</div>
+    <div class="pb-meta">ESXi / vCenter &middot; 6-step checklist &middot; ESX Admins group &middot; .vmdk encryption &middot; guest EDR bypass</div>
+  </a>
+
+  <a href="exploits/panos-fortigate.html" class="pb-card t3">
+    <div class="pb-name">PanOS and FortiGate VPN Bypasses</div>
+    <div class="pb-desc">PANOS AND FORTIGATE VPN BYPASSES<br><strong>Vulnerability:</strong> Palo Alto GlobalProtect command injection (CVE-2024-3400, CVSS 10.0) and FortiGate SSL-VPN RCE (CVE-2024-21762) plus FortiManager "FortiJump" (CVE-2024-47575). The other two pillars of enterprise edge perimeters.<br><strong>Impact:</strong> Unauthenticated RCE on the firewall/VPN. Reverse shell from a device with visibility into every network segment. FortiBleed exposed 73,000+ admin credentials (June 2026).</div>
+    <div class="pb-meta">CVE-2024-3400 + CVE-2024-21762 + CVE-2024-47575 &middot; 5-step checklist &middot; config extraction &middot; firmware persistence</div>
+  </a>
+
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
@@ -304,6 +316,12 @@
     <div class="pb-meta">NetFlow / IPFIX &middot; DNS monitoring &middot; no EDR &middot; 8-step checklist &middot; firmware integrity</div>
   </a>
 
+  <a href="environments/ai-llm.html" class="pb-card environ">
+    <div class="pb-name">AI Engineering and LLM Orchestration</div>
+    <div class="pb-desc">AI ENGINEERING AND LLM ORCHESTRATION<br><strong>Environment:</strong> Internal LLM pipelines, vector databases, model staging nodes, and AI orchestration frameworks deployed without standard telemetry. APT28 already uses LLM-enabled malware (LAMEHUG).<br><strong>Key Attack Paths:</strong> Prompt injection against public-facing LLM endpoints. API token theft from .env files. Bulk vector database scraping for proprietary training data exfiltration. Model supply chain (backdoored weights, malicious pickle files).</div>
+    <div class="pb-meta">LangChain &middot; vector DBs &middot; prompt injection &middot; model supply chain &middot; 6-step checklist</div>
+  </a>
+
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
@@ -358,6 +376,12 @@
     <div class="pb-name">Data Exfiltration Detected</div>
     <div class="pb-desc">DATA EXFILTRATION DETECTED<br><strong>Trigger:</strong> Outbound data movement found in proxy, DLP, or network telemetry.<br><strong>Priority Actions:</strong> Reconstruct what left, how (HTTPS, DNS, cloud storage, code repo, USB), when it started, and whether the channel is still active. Work backward from the exfil point to the staging host to the initial compromise. Six exfil channel types covered.</div>
     <div class="pb-meta">reactive &middot; data loss &middot; 10-step checklist &middot; 6 exfil channel types</div>
+  </a>
+
+  <a href="triage/saas-hijack.html" class="pb-card t2">
+    <div class="pb-name">SaaS Tenant Hijack</div>
+    <div class="pb-desc">SAAS TENANT HIJACK / OAUTH PERSISTENCE<br><strong>Trigger:</strong> The identity provider itself is compromised. Not a mailbox, not a user: the Okta tenant, the Entra ID directory, the entire identity plane.<br><strong>Priority Actions:</strong> Terminate unauthorized admin sessions via token revocation. Enumerate rogue Enterprise Applications. Check for shadow federation trusts (backdoor IdPs). Audit Global Admin roles and cross-tenant sync. Rotate all signing certificates.</div>
+    <div class="pb-meta">reactive &middot; clock-stopping &middot; 7-step checklist &middot; IdP takeover &middot; OAuth persistence &middot; shadow federation</div>
   </a>
 
 </div>

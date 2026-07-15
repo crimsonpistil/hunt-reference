@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: SaaS Tenant Hijack and OAuth Persistence</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--amber);border:1px solid rgba(210,153,34,.4);background:rgba(210,153,34,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .seq-block{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin:12px 0 20px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:2}.seq-block .seq-label{color:var(--text3);font-size:10px;display:block;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}.seq-block .seq-cmd{color:var(--text);background:var(--bg3);padding:2px 6px;border-radius:3px}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+<div class="pb-hero">
+  <div class="pb-pill-lg">INCIDENT TRIAGE &middot; TIER 2</div>
+  <div class="pb-title">SaaS Tenant Hijack and OAuth Persistence</div>
+  <div class="pb-sub">The identity provider itself is compromised. Not a single mailbox, not one user account: the Okta tenant, the Entra ID directory, the entire identity plane. The attacker controls who can authenticate, what permissions they have, and can create backdoor federation trusts that survive password resets and MFA changes.</div>
+  <div class="pb-meta-row">IdP takeover &middot; OAuth app persistence &middot; shadow federation &middot; cross-tenant sync &middot; Global Admin audit &middot; token revocation</div>
+</div>
+<div class="content">
+
+<div class="section-head red">This is not BEC. This is identity infrastructure compromise.</div>
+
+<p class="prose">
+  The <a href="/playbooks/triage/bec.html">BEC playbook</a> covers a compromised mailbox. The <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> playbook covers a stolen password. This playbook covers a fundamentally different scenario: <strong>the identity provider itself is the target</strong>. Scattered Spider's MGM attack compromised Okta. APT29 targets Entra ID tenants for OAuth persistence. When the IdP is compromised, every downstream application that trusts it is compromised too.
+</p>
+
+<div class="note-box red">
+  <strong>Clock-stopping priority.</strong> IdP compromise is the fastest path to total organizational compromise. Every minute the attacker has admin access to your identity provider, they can create new admin accounts, register persistent OAuth apps, modify federation trusts, and disable security controls. This is a "stop everything and contain" scenario.
+</div>
+
+<div class="section-head blue">Triage checklist</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Terminate unauthorized admin sessions immediately</strong>
+    Revoke all active sessions for compromised admin accounts via the IdP's token revocation API. In Entra ID: Revoke-AzureADUserAllRefreshToken. In Okta: clear all sessions via Admin API. Force re-authentication for all Global/Super Admin accounts. Do not wait for session expiry.
+    <span class="ref">Entra ID: Revoke-AzureADUserAllRefreshToken &middot; Okta: /api/v1/users/[id]/sessions DELETE</span>
+  </li>
+  <li>
+    <strong>2. Audit Global Administrator and privileged role assignments</strong>
+    Enumerate every account with admin roles. Check for: recently added Global Admins, Privileged Role Admins, or Application Admins. Check for role assignments that bypassed PIM (Privileged Identity Management) activation. Any admin role granted during the compromise window is suspect until verified.
+    <span class="ref">Entra ID: directory audit logs for roleAssignments &middot; Okta: System Log for privilege grants</span>
+  </li>
+  <li>
+    <strong>3. Enumerate all Enterprise Applications added in the blast-radius window</strong>
+    Attackers register malicious OAuth apps or consent to rogue third-party apps to maintain persistent access. Search for: new Enterprise Application registrations, OAuth consent grants (especially "admin consent" that applies org-wide), and apps with high-privilege permissions (Mail.ReadWrite, Directory.ReadWrite.All, Files.ReadWrite.All). Revoke consent for any unauthorized app.
+    <span class="ref">Entra ID: Enterprise Applications audit &middot; <a href="/playbooks/triage/bec.html">BEC</a> playbook (OAuth section)</span>
+  </li>
+  <li>
+    <strong>4. Check for shadow federation and backdoor IdPs</strong>
+    APT29 and Scattered Spider both create backdoor federation trusts. Search for: new SAML/OIDC/WS-Federation identity provider configurations, modified federation domain settings, and new trusted certificate configurations. A shadow federation trust allows the attacker to mint valid tokens from their own infrastructure indefinitely, surviving password resets, MFA changes, and account disablement.
+    <span class="ref">Entra ID: Get-MgDomainFederationConfiguration &middot; <a href="/playbooks/actors/apt29.html">APT29</a> (Golden SAML)</span>
+  </li>
+  <li>
+    <strong>5. Review cross-tenant synchronization rules</strong>
+    In multi-tenant environments, attackers modify cross-tenant sync to propagate their access from one tenant to others. Check for: new cross-tenant access policies, modified inbound/outbound trust settings, and B2B collaboration configurations that grant external tenants admin-level access.
+    <span class="ref">Entra ID: cross-tenant access settings &middot; B2B collaboration audit</span>
+  </li>
+  <li>
+    <strong>6. Audit conditional access policy modifications</strong>
+    Attackers weaken or disable conditional access to maintain their access. Check for: policies modified to exclude admin accounts from MFA requirements, new "break glass" exclusions added during the compromise window, and policies disabled entirely. Restore all conditional access policies to pre-compromise state.
+    <span class="ref">Entra ID: Conditional Access audit log &middot; Policy backup comparison</span>
+  </li>
+  <li>
+    <strong>7. Rotate all IdP signing certificates and keys</strong>
+    If the attacker accessed SAML signing certificates or token signing keys, they can forge tokens indefinitely. After containing the compromise: rotate all SAML/token signing certificates, rotate all application secrets and certificates, and invalidate all existing tokens org-wide. This is disruptive. It is also necessary.
+    <span class="ref">Entra ID: token signing certificate rotation &middot; Okta: key rotation</span>
+  </li>
+</ol>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (single account compromise, not IdP takeover)<br>
+  <a href="/playbooks/triage/bec.html">Business Email Compromise</a> (mailbox-level compromise with OAuth overlap)<br>
+  <a href="/playbooks/actors/scattered-spider.html">Scattered Spider</a> (Okta admin takeover is their signature)<br>
+  <a href="/playbooks/actors/apt29.html">APT29</a> (Golden SAML, OAuth app abuse, tenant hijacking)<br>
+  <a href="/playbooks/environments/cloud-control.html">Cloud Control Plane</a> (IdP is the cloud control plane)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>

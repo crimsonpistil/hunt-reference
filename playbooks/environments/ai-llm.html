@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: AI Engineering and LLM Orchestration</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--accent);border:1px solid rgba(88,166,255,.4);background:rgba(88,166,255,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .seq-block{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin:12px 0 20px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:2}.seq-block .seq-label{color:var(--text3);font-size:10px;display:block;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}.seq-block .seq-cmd{color:var(--text);background:var(--bg3);padding:2px 6px;border-radius:3px}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+<div class="pb-hero">
+  <div class="pb-pill-lg">ENVIRONMENT</div>
+  <div class="pb-title">AI Engineering and LLM Orchestration</div>
+  <div class="pb-sub">Internal LLM pipelines, vector databases, model staging nodes, and AI orchestration frameworks deployed without standard telemetry. APT28 already uses LLM-enabled malware (LAMEHUG). The infrastructure that runs your AI is an attack surface that most security teams have never inventoried.</div>
+  <div class="pb-meta-row">LangChain / LlamaIndex &middot; vector databases (Pinecone, Milvus, ChromaDB) &middot; prompt injection &middot; .env token theft &middot; model poisoning</div>
+</div>
+<div class="content">
+
+<div class="section-head red">The unmonitored infrastructure</div>
+
+<p class="prose">
+  Security teams are deploying LLM pipelines, retrieval-augmented generation (RAG) stacks, and AI orchestration frameworks at a pace that outstrips their ability to secure and monitor them. LangChain applications with API keys in .env files. Vector databases (Pinecone, Milvus, ChromaDB, Weaviate) holding embeddings of proprietary documents. Model staging servers with GPU access pulling weights from Hugging Face. None of this has the telemetry architecture that a standard web application would.
+</p>
+<p class="prose">
+  <strong>The threat is not hypothetical.</strong> APT28's LAMEHUG malware integrates LLM capabilities for automated reconnaissance. Prompt injection attacks against public-facing LLM endpoints can extract system prompts, API keys, and internal data. Adversaries targeting vector databases can exfiltrate the proprietary training data that represents an organization's competitive advantage.
+</p>
+
+<div class="section-head blue">Hunt checklist</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Inventory all AI/LLM infrastructure</strong>
+    Most security teams don't know what AI infrastructure exists. Audit for: LangChain/LlamaIndex/AutoGen deployments, vector database instances, GPU compute nodes running model inference, API endpoints serving LLM completions, and developer notebooks (Jupyter) with model access. You can't secure what you haven't inventoried.
+    <span class="ref">Asset inventory &middot; Container registry audit &middot; Cloud resource tags for ML/AI workloads</span>
+  </li>
+  <li>
+    <strong>2. Hunt for API token and credential exposure</strong>
+    LLM applications store API keys (OpenAI, Anthropic, cloud provider credentials, database connection strings) in .env files, environment variables, and application configs. Search for: .env files in production containers and repos, hardcoded API keys in application code, and secrets committed to version control. A single exposed API key can cost thousands in compute or grant access to internal systems.
+    <span class="ref"><a href="/playbooks/environments/kubernetes.html">Kubernetes</a> (container secrets) &middot; <a href="/playbooks/environments/macos-fleet.html">macOS Fleet</a> (developer credential files)</span>
+  </li>
+  <li>
+    <strong>3. Monitor for prompt injection against public-facing LLM endpoints</strong>
+    If your organization exposes an LLM-powered chatbot, search tool, or API, it is a prompt injection target. Search application logs for: inputs containing "ignore previous instructions," system prompt extraction attempts, requests attempting to make the LLM call external URLs or APIs, and inputs designed to extract training data or RAG context. Prompt injection is the SQL injection of AI applications.
+    <span class="ref">Application logs: input/output logging on LLM endpoints &middot; WAF rules for injection patterns</span>
+  </li>
+  <li>
+    <strong>4. Check for anomalous bulk queries to vector databases</strong>
+    Vector databases hold embeddings of proprietary documents, customer data, and internal knowledge. Bulk similarity searches or direct API access patterns that don't match normal application usage may indicate data scraping for exfiltration. Search for: query volume spikes, queries from unexpected source IPs, and API access from non-application service accounts.
+    <span class="ref">Vector DB access logs &middot; API gateway: query volume analysis &middot; <a href="/playbooks/triage/data-exfil.html">Data Exfil</a></span>
+  </li>
+  <li>
+    <strong>5. Verify model integrity and supply chain</strong>
+    Models pulled from public repositories (Hugging Face, GitHub) can contain backdoors, trojans, or malicious code in custom layers. Search for: models loaded from unverified sources, pickle files (Python serialization, arbitrary code execution risk), and model files that have been modified since initial deployment. Treat model files like executable code.
+    <span class="ref"><a href="/playbooks/triage/supply-chain.html">Supply Chain</a> playbook &middot; Model hash verification &middot; Pickle scanning</span>
+  </li>
+  <li>
+    <strong>6. Audit MCP server and tool-use configurations</strong>
+    AI orchestration frameworks (LangChain, AutoGen, MCP servers) grant LLMs the ability to call external tools, execute code, query databases, and access APIs. Audit for: over-privileged tool configurations, MCP servers with unrestricted network access, agents with write access to production systems, and tool-use logs showing unexpected external calls.
+    <span class="ref">MCP server configs &middot; Tool-use audit logs &middot; Agent permission review</span>
+  </li>
+</ol>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/environments/kubernetes.html">Kubernetes and Container</a> (LLM infra often runs on K8s)<br>
+  <a href="/playbooks/environments/cloud-control.html">Cloud Control Plane</a> (AI services run on cloud with shared IAM)<br>
+  <a href="/playbooks/triage/supply-chain.html">Supply Chain Indicator</a> (model and package supply chain)<br>
+  <a href="/playbooks/actors/apt28.html">APT28</a> (LAMEHUG LLM-enabled malware)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>
