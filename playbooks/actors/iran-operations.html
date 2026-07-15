@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[TONK] Playbook: Iranian Cyber Operations</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--border:#30363d;--border2:#444c56;--accent:#58a6ff;--accent2:#1f6feb;--red:#f85149;--green:#3fb950;--amber:#d29922;--purple:#bc8cff;--mono:'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace;--sans:-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}.logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text2);white-space:nowrap}.logo span{font-weight:400;color:var(--text3)}.site-switcher{display:flex;gap:4px}.switcher-side{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;color:var(--text3);text-decoration:none;letter-spacing:.03em;transition:background .15s}.switcher-side:hover{background:var(--bg3);text-decoration:none}.switcher-side.active{background:var(--red);color:#fff}.back-link{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;text-decoration:none}.back-link:hover{color:var(--text2);text-decoration:none}
+  .pb-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:36px 20px;text-align:center}.pb-pill-lg{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:14px;color:var(--red);border:1px solid rgba(248,81,73,.4);background:rgba(248,81,73,.08)}.pb-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px}.pb-sub{font-size:13px;color:var(--text3);max-width:680px;margin:0 auto;line-height:1.6}.pb-meta-row{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:12px;letter-spacing:.04em}
+  .content{max-width:820px;margin:0 auto;padding:28px 20px 40px}.section-head{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}.section-head:first-child{margin-top:0}.section-head.red{color:var(--red)}.section-head.amber{color:var(--amber)}.section-head.blue{color:var(--accent)}.section-head.green{color:var(--green)}.section-head.default{color:var(--text3)}
+  .prose{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px}.prose strong{color:var(--text);font-weight:600}
+  .check-list{list-style:none;margin:0 0 20px;padding:0}.check-list li{position:relative;padding:12px 14px 12px 36px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.65}.check-list li::before{content:'';position:absolute;left:12px;top:15px;width:14px;height:14px;border:2px solid var(--border2);border-radius:3px}.check-list li strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}.check-list li .ref{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:6px;display:block}
+  .note-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:6px;padding:14px 16px;margin:20px 0;font-size:12px;color:var(--text2);line-height:1.65}.note-box strong{color:var(--amber)}.note-box.red{border-left-color:var(--red)}.note-box.red strong{color:var(--red)}
+  .alias-grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 20px}.alias-tag{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+  .tool-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}@media(max-width:600px){.tool-grid{grid-template-columns:1fr}}.tool-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px 14px}.tool-card .tc-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--red);margin-bottom:4px}.tool-card .tc-desc{font-size:11px;color:var(--text3);line-height:1.5}
+  footer{margin-top:auto;padding:22px 20px;border-top:1px solid var(--border);background:var(--bg2);text-align:center}footer p{font-family:var(--mono);font-size:10px;color:var(--text3);margin:0;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<header>
+  <a href="/playbooks/" class="logo" style="text-decoration:none">TONK<span> &bull; playbooks</span></a>
+  <div class="site-switcher"><a class="switcher-side" href="/net/">NET</a><a class="switcher-side" href="/host/">HOST</a><a class="switcher-side" href="/attribution/">ATTRIB</a><span class="switcher-side active">PLAYBOOKS</span></div>
+  <a href="/playbooks/" class="back-link">&larr; all playbooks</a>
+</header>
+
+<div class="pb-hero">
+  <div class="pb-pill-lg">THREAT ACTOR &middot; IRAN</div>
+  <div class="pb-title">Iranian Cyber Operations</div>
+  <div class="pb-sub">Three intelligence agencies, overlapping mandates, and a willingness to cross lines other nation-states won't. Surveillance of dissidents and journalists (APT42), ICS attacks on water systems (CyberAv3ngers), ransomware moonlighting (Fox Kitten), election interference (2024), and destructive wipers against Israel. Iran punches above its weight because it doesn't respect the boundaries.</div>
+  <div class="pb-meta-row">IRGC-IO &middot; IRGC-CEC &middot; MOIS &middot; active 2014-present &middot; espionage + ICS + ransomware + surveillance + election interference</div>
+</div>
+
+<div class="content">
+
+<div class="section-head red">The Iranian cyber ecosystem</div>
+
+<p class="prose">
+  Iran operates cyber capabilities through three separate intelligence agencies with overlapping mandates, creating a threat landscape that is less coordinated than China or Russia but more unpredictable. The groups occasionally collaborate, share tooling, and hand off access to each other, but they also operate independently and sometimes at cross-purposes.
+</p>
+
+<div class="tool-grid">
+  <div class="tool-card">
+    <div class="tc-name">APT42 / Charming Kitten</div>
+    <div class="tc-desc">IRGC Intelligence Organization (IRGC-IO). Social engineering and credential harvesting against dissidents, journalists, academics, and policy experts. Surveillance of individuals. 2024 US election interference (targeted both campaigns). The most prolific Iranian APT by operation count.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Fox Kitten / Lemon Sandstorm</div>
+    <div class="tc-desc">IRGC-affiliated (PARISITE per Dragos). Exploits VPN and edge devices for initial access, then moonlights as an initial access broker selling footholds to ransomware affiliates. The FBI confirmed Iranian actors providing access to networks that were subsequently encrypted by ransomware groups.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">CyberAv3ngers / BAUXITE</div>
+    <div class="tc-desc">IRGC Cyber-Electronic Command (IRGC-CEC). The ICS threat. Compromised Unitronics PLCs at US water facilities (2023). IOControl malware affecting 400+ OT devices globally. Deployed custom wipers against Israeli targets (June 2025). Sends threatening emails to ICS vendors and researchers.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">MuddyWater / Mango Sandstorm</div>
+    <div class="tc-desc">Ministry of Intelligence and Security (MOIS). Targets government and telecom in Middle East, Europe, and US. PowerShell-heavy tooling. MuddyC2Go framework. Phishing with OneNote, PDF, and archive lures. Less sophisticated but persistent and high-volume.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">PYROXENE</div>
+    <div class="tc-desc">IRGC-CEC/APT35 overlap (Dragos designation). Supply chain compromises targeting defense, transportation, and critical infrastructure. Deployed wiper malware against Israeli targets (June 2025). Watering-hole attacks against Haifa Bay Port water utility.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">Cotton Sandstorm / Emennet Pasargad</div>
+    <div class="tc-desc">IRGC-affiliated. Influence operations and hack-and-leak. Targeted 2020 US election with voter intimidation emails. Compromised and defaced streaming services. Increasingly merging cyber capabilities with information operations.</div>
+  </div>
+</div>
+
+<div class="section-head amber">APT42: the social engineering machine</div>
+
+<p class="prose">
+  APT42 is Iran's most active cyber espionage group and operates differently from every other APT in this playbook collection. Where Russian and Chinese actors exploit software, APT42 <strong>builds relationships</strong>. They impersonate journalists, think tank researchers, conference organizers, and academics. They maintain weeks-long email conversations to build trust before sending a credential harvesting link or malicious document. The target doesn't get phished by a stranger. They get phished by someone they've been corresponding with for a month.
+</p>
+<p class="prose">
+  <strong>Targeting is personal, not organizational.</strong> APT42 targets specific individuals: Iranian diaspora members, human rights activists, policy researchers, journalists covering Iran, former government officials, and academics specializing in Iranian affairs. The intelligence objective is often surveillance of individuals rather than organizational espionage. Compromised email accounts are monitored for content, not used as pivot points into corporate networks.
+</p>
+<p class="prose">
+  <strong>2024 US election interference.</strong> APT42 targeted individuals associated with both US presidential campaigns, attempting to compromise personal email accounts of campaign staff and advisors. Google TAG confirmed targeted credential harvesting operations against both the Biden/Harris and Trump campaigns. Successfully compromised and leaked materials from the Trump campaign.
+</p>
+
+<div class="section-head amber">APT42 aliases</div>
+<div class="alias-grid">
+  <span class="alias-tag">Charming Kitten</span>
+  <span class="alias-tag">Mint Sandstorm</span>
+  <span class="alias-tag">Phosphorus</span>
+  <span class="alias-tag">TA453</span>
+  <span class="alias-tag">Yellow Garuda</span>
+  <span class="alias-tag">ITG18</span>
+  <span class="alias-tag">CALANQUE</span>
+  <span class="alias-tag">CharmingCypress</span>
+  <span class="alias-tag">Educated Manticore</span>
+</div>
+
+<div class="section-head amber">Custom tooling</div>
+
+<div class="tool-grid">
+  <div class="tool-card">
+    <div class="tc-name">NICECURL</div>
+    <div class="tc-desc">VBScript-based backdoor delivered via spearphishing. Downloads and executes additional modules. Uses cloud services (Cloudflare Workers, Firebase) for C2 to blend with legitimate traffic.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">TAMECAT</div>
+    <div class="tc-desc">PowerShell backdoor deployed alongside NICECURL. Executes arbitrary commands and PowerShell scripts. Persistence via registry Run keys. Designed for initial access and reconnaissance.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">CHAIRSMACK / POWERPOST</div>
+    <div class="tc-desc">APT42 post-exploitation tools for data collection and exfiltration. CHAIRSMACK provides deep system reconnaissance. POWERPOST stages and exfiltrates data over cloud services.</div>
+  </div>
+  <div class="tool-card">
+    <div class="tc-name">IOControl</div>
+    <div class="tc-desc">CyberAv3ngers malware for OT device exploitation. Affected 400+ devices globally including fuel management systems, water treatment controllers, and telecom infrastructure. Custom-built for ICS environments.</div>
+  </div>
+</div>
+
+<div class="note-box red">
+  <strong>Fox Kitten sells access to ransomware gangs.</strong> In August 2024, the FBI, CISA, and DC3 jointly confirmed that Fox Kitten (also tracked as Pioneer Kitten, Lemon Sandstorm, PARISITE) is an Iranian state-sponsored group that exploits VPN and edge device vulnerabilities for initial access, then sells that access to ransomware affiliates including NoEscape, RansomHouse, and ALPHV/BlackCat. This is the first confirmed case of a nation-state actor operating as a ransomware initial access broker. The groups using the access don't necessarily know their IAB is the Iranian government.
+</div>
+
+<div class="section-head blue">Hunt checklist: if you suspect Iranian operations</div>
+
+<ol class="check-list">
+  <li>
+    <strong>1. Check for relationship-based phishing (APT42 pattern)</strong>
+    Unlike mass phishing campaigns, APT42 sends personalized emails from personas that match the target's professional network. Search for: correspondence with supposed journalists, think tank researchers, or conference organizers that preceded a credential harvesting link or document. The lure isn't an urgent invoice. It's a genuine-sounding interview request or conference invitation from someone who spent weeks building rapport.
+    <span class="ref">Email gateway: inbound from freemail (Gmail, Outlook, ProtonMail) impersonating journalists/academics</span>
+  </li>
+  <li>
+    <strong>2. Check for credential harvesting pages spoofing cloud services</strong>
+    APT42 builds convincing login pages mimicking Google, Microsoft, Yahoo, and academic single-sign-on portals. Check email logs for links to: domains with SSO-related keywords, recently registered domains mimicking legitimate cloud providers, and shortened URLs redirecting to credential harvesting infrastructure. Google TAG tracks APT42's infrastructure rotation closely.
+    <span class="ref"><a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> playbook &middot; Domain monitoring for SSO spoofing</span>
+  </li>
+  <li>
+    <strong>3. Check for cloud-abusing C2 traffic</strong>
+    APT42 malware (NICECURL, TAMECAT) uses Cloudflare Workers, Firebase, OneDrive, and legitimate hosting services for C2. The traffic blends with normal cloud API calls. Search for: PowerShell or VBScript processes making sustained connections to cloud APIs, rundll32 executing unusual DLLs with cloud service callbacks, and processes maintaining connections to Cloudflare Worker subdomains.
+    <span class="ref">NET: <a href="/net/c2.html">C2</a> &middot; Sysmon EID 1 + EID 3 cross-correlation</span>
+  </li>
+  <li>
+    <strong>4. Audit VPN and edge device exploitation (Fox Kitten pattern)</strong>
+    Fox Kitten exploits Citrix NetScaler (CVE-2019-19781, CVE-2023-3519), F5 BIG-IP, Pulse Secure/Ivanti, PanOS, and Fortinet for initial access. If any of these devices were vulnerable during the exploitation window, check for: web shells in device file systems, new local accounts, SSH keys added, and reverse tunnels or netsh portproxy rules.
+    <span class="ref"><a href="/playbooks/triage/edge-device.html">Edge Device</a> playbook &middot; <a href="/playbooks/actors/volt-typhoon.html">Volt Typhoon</a> (similar VPN exploitation pattern)</span>
+  </li>
+  <li>
+    <strong>5. Check for ICS/OT device targeting (CyberAv3ngers pattern)</strong>
+    If you operate water, energy, or industrial infrastructure: check for unauthorized access to Unitronics PLCs (default credentials on web HMI), unauthorized Modbus commands, IOControl malware indicators, and connections to ICS devices from unexpected source IPs. CyberAv3ngers specifically targets internet-exposed OT devices with default credentials.
+    <span class="ref"><a href="/playbooks/environments/airgap-ot.html">Air-Gapped OT</a> playbook &middot; Unitronics HMI access logs</span>
+  </li>
+  <li>
+    <strong>6. Check for ransomware access broker indicators</strong>
+    Fox Kitten sells access, not ransomware. If you experienced a ransomware incident where initial access was through a VPN vulnerability (not phishing, not credentials): consider whether the VPN exploitation was conducted by a different actor than the ransomware deployment. The access provider may be Iranian state-sponsored even if the ransomware is NoEscape or BlackCat.
+    <span class="ref"><a href="/playbooks/actors/raas-ecosystem.html">RaaS Ecosystem</a> playbook &middot; FBI/CISA AA24-241A (Fox Kitten advisory)</span>
+  </li>
+  <li>
+    <strong>7. Look for PowerShell-heavy post-exploitation (MuddyWater pattern)</strong>
+    MuddyWater uses PowerShell extensively: MuddyC2Go framework, PowerShell reverse shells, encoded commands, and cloud-based C2. Search for: encoded PowerShell execution (EID 4104 ScriptBlock), PowerShell downloading and executing remote scripts, and MuddyC2Go beacon patterns (HTTP POST with encoded system info).
+    <span class="ref"><a href="/host/execution.html">HOST: Execution</a> &middot; PowerShell ScriptBlock EID 4104</span>
+  </li>
+  <li>
+    <strong>8. Assess whether you're a surveillance target (APT42) or an infrastructure target (CyberAv3ngers)</strong>
+    The response differs. APT42 surveillance: they want to read your email, monitor your communications, and track your activities. The compromise is silent and persistent. CyberAv3ngers ICS targeting: they want to manipulate physical processes or deploy wipers. The compromise leads to operational impact. Fox Kitten access brokering: they want to sell your network to someone else. The compromise leads to ransomware you didn't expect from Iran.
+  </li>
+</ol>
+
+<div class="section-head green">What distinguishes Iranian operations</div>
+
+<p class="prose">
+  <strong>The boundary problem.</strong> Most nation-state actors stay in their lane: Russia does espionage and destruction, China does espionage and pre-positioning, DPRK does financial theft. Iran does all of it simultaneously. Espionage against dissidents, ICS attacks on water infrastructure, ransomware access brokering for financial gain, election interference, destructive wipers against Israel, and surveillance of journalists. There are no conceptual boundaries that Iranian operators won't cross, which makes threat modeling harder.
+</p>
+<p class="prose">
+  <strong>Social engineering depth.</strong> APT42's relationship-building campaigns are the most patient social engineering operations documented outside of HUMINT. Weeks of legitimate-seeming correspondence before any malicious action. This level of investment per target means APT42 operations are low-volume but extremely high-confidence. If they're targeting you, the lure will be convincing.
+</p>
+<p class="prose">
+  <strong>State-actor-as-IAB.</strong> Fox Kitten selling VPN access to ransomware affiliates is a model no other nation-state has openly adopted. It blurs the line between state espionage and criminal ransomware in a way that complicates attribution, response, and diplomatic consequences. The ransomware affiliate who bought the access may not know they're working with an Iranian state actor.
+</p>
+<p class="prose">
+  <strong>ICS willingness.</strong> CyberAv3ngers compromised US water facility PLCs using default credentials. This was not a sophisticated attack. It was a willingness to target critical infrastructure that other actors (with the exception of Sandworm) have historically avoided. Iran's willingness to target Western critical infrastructure directly, even at low sophistication levels, changes the risk calculus for water, energy, and transportation operators.
+</p>
+
+<div class="note-box">
+  <strong>The 2025-2026 escalation.</strong> Following the Iran-Israel conflict, Iranian cyber operations escalated significantly. BAUXITE/CyberAv3ngers deployed custom wiper malware against Israeli targets in June 2025. PYROXENE conducted supply chain attacks and watering-hole operations against Israeli critical infrastructure. Iran's proxy architecture (Houthis, Hezbollah) extends into cyber, where pseudo-hacktivist groups provide deniability for state-directed operations. The geopolitical situation makes Iranian cyber operations more likely against Western and Israeli targets, particularly in energy, water, defense, and government sectors.
+</div>
+
+<div class="section-head default">Key advisories and references</div>
+<p class="prose">
+  <strong>Google TAG / Mandiant APT42 report</strong> (May 2024): Comprehensive profile, three credential harvesting clusters, NICECURL/TAMECAT malware.<br>
+  <strong>FBI/CISA/DC3 AA24-241A</strong> (August 2024): Fox Kitten confirmed as ransomware IAB, exploiting Citrix/BIG-IP/Pulse/PanOS.<br>
+  <strong>CISA AA23-335A</strong> (December 2023): CyberAv3ngers targeting Unitronics PLCs at US water facilities.<br>
+  <strong>Trellix "The Iranian Cyber Capability 2026"</strong> (2026): Comprehensive ecosystem assessment including PARISITE, APT42, and emerging groups.<br>
+  <strong>Israel National Digital Agency SpearSpecter</strong> (2025): APT42 targeting senior Israeli defense and government officials.
+</p>
+
+<div class="section-head default">Related playbooks</div>
+<p class="prose">
+  <a href="/playbooks/environments/airgap-ot.html">Air-Gapped OT / ICS</a> (CyberAv3ngers/BAUXITE ICS targeting)<br>
+  <a href="/playbooks/triage/edge-device.html">Edge Device Compromised</a> (Fox Kitten VPN exploitation and access brokering)<br>
+  <a href="/playbooks/triage/compromised-credentials.html">Compromised Credentials</a> (APT42's entire model is credential theft)<br>
+  <a href="/playbooks/actors/hacktivist-ops.html">Hacktivist Operations</a> (CyberAv3ngers operates under hacktivist cover)<br>
+  <a href="/playbooks/actors/raas-ecosystem.html">RaaS Ecosystem</a> (Fox Kitten feeds the ransomware pipeline)
+</p>
+
+</div>
+<footer><p>TONK &middot; Threat Observation &amp; Network Kill-chain</p><p style="margin-top:8px">built by <a href="https://6b74.dev" style="color:var(--accent)">KT</a></p></footer>
+</body>
+</html>
