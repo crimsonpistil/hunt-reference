@@ -86,12 +86,18 @@
 <!-- ═══════════════════════════════════════════ -->
 
 <span class="section-label">start here</span>
-<div class="card-grid" style="grid-template-columns:1fr">
+<div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
 
   <a href="environments/quick-start.html" class="pb-card environ" style="border-left-color:var(--green)">
     <div class="pb-name">Quick Start: Where to Begin</div>
     <div class="pb-desc">NOT SURE WHERE TO START?<br><strong>10 universal hunt checks</strong> that work in every environment. No prior intel required, no actor hypothesis, no specialized tools. Authentication anomalies, DNS, outbound connections, LOLBin abuse, persistence mechanisms, data movement, and exposed services. If something is wrong on your network, at least one of these will show it. Start here, specialize later.</div>
     <div class="pb-meta">environment-agnostic &middot; 10 checks &middot; cross-links to every specialized playbook</div>
+  </a>
+
+  <a href="generate.html" class="pb-card environ" style="border-left-color:var(--green)">
+    <div class="pb-name">Import Scan: Generate Hunt Playbook</div>
+    <div class="pb-desc">GOT A SCAN?<br>Drop in an <strong>nmap XML</strong> or host-port CSV. This compiles a right-now hunt plan from what the scan actually exposed, routed into NET techniques and PLAYBOOKS exploits. Ranked by signal, with ICS/OT protocol exposure surfaced first. It generates hypotheses to chase, not findings.</div>
+    <div class="pb-meta">nmap XML or CSV &middot; correlated to ATT&amp;CK &middot; cross-links to every specialized playbook</div>
   </a>
 
 </div>
