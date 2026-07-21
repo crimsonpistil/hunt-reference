@@ -3,7 +3,7 @@
 title: T1490 - Shadow Copy Deletion and Recovery Disabling (vssadmin, bcdedit, wbadmin, wmic) (Shadow copy deletion (any method
 id: aaa4552d-1403-5c82-8ea6-4584dc1f58cb
 status: experimental
-description: 'Execution of vssadmin delete shadows, bcdedit /set recoveryenabled no, wbadmin delete catalog, or wmic shadowcopy delete, the pre-encryption commands that eliminate the primary recovery path for ransomware victims Query block: Shadow copy deletion (any method). NOTE: no machine-translatable query logic (relies on aggregation, statistical baselining, or an external analytics layer). This rule is a documentation stub - see the tonk section for the original hunt logic.'
+description: 'Execution of vssadmin delete shadows, bcdedit /set recoveryenabled no, wbadmin delete catalog, or wmic shadowcopy delete, the pre-encryption commands that eliminate the primary recovery path for ransomware victims Query block: Shadow copy deletion (any method).'
 references:
     - MITRE ATT&CK T1490
 author: TONK Hunt Reference (6b74.dev)
@@ -17,14 +17,26 @@ logsource:
     category: process_creation
     product: windows
 detection:
-    selection:
-        EventID|exists: true
-    condition: selection and not selection
+    selection_0:
+        process.name: vssadmin.exe
+        process.command_line: '*delete*shadow*'
+    selection_1:
+        process.name: bcdedit.exe
+        process.command_line:
+            - '*recoveryenabled*'
+            - '*safeboot*'
+    selection_2:
+        process.name: wbadmin.exe
+        process.command_line: '*delete*catalog*'
+    selection_3:
+        process.name: wmic.exe
+        process.command_line: '*shadowcopy*delete*'
+    condition: selection_0 or selection_1 or selection_2 or selection_3
 falsepositives:
     - Unknown - baseline before enabling
 level: medium
 tonk:
-    fidelity: metadata
+    fidelity: full
     source_file: host/js/data/impact.js
     domain: host
     technique: T1490
@@ -96,8 +108,6 @@ tonk:
         System event log (EID 7036 service state changes)
         Canary files / tripwire directories
         Pre-staged offline backups (the actual recovery path)
-    dropped_clauses:
-        - 'unparsed: (process.name: "vssadmin.exe" AND process.command_line: *delete*shadow*) OR (process.name: "bcdedit.exe" AND process.com'
     actors:
         - Lazarus
         - Sandworm

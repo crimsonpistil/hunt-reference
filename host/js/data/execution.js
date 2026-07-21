@@ -596,7 +596,7 @@ CommandLine matches (any of):
 // detection below for runtime alerting.`,
         kibana: `winlog.event_id: 1
 AND process.name: "cmd.exe"
-AND process.command_line: /(\^{3,}|\"\"[a-z]\"\"|\,[\/\\\\]|;[a-z];|%[A-Za-z]+:~[0-9]+,[0-9]+%)/
+AND process.command_line: /(\\^{3,}|\"\"[a-z]\"\"|\,[\/\\\\]|;[a-z];|%[A-Za-z]+:~[0-9]+,[0-9]+%)/
 
 // Alternative plaintext-match approach (lower fidelity):
 AND process.command_line: (*^^^* OR *""c""* OR *,/c* OR *;m;d;*)`,
@@ -607,7 +607,7 @@ Get-WinEvent -FilterHashtable @{
 } | Where-Object {
   $_.Properties[4].Value -like '*\\cmd.exe' -and (
     # 3+ consecutive carets
-    $_.Properties[10].Value -match '\^{3,}' -or
+    $_.Properties[10].Value -match '\\^{3,}' -or
     # Quoted null-string insertion (s""et, c""md, etc.)
     $_.Properties[10].Value -match '""\w""' -or
     # Comma or semicolon as command token separator

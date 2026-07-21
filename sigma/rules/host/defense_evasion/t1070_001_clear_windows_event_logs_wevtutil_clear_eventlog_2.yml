@@ -3,7 +3,7 @@
 title: 'T1070.001 - Clear Windows Event Logs (wevtutil, Clear-EventLog, Phant0m) (EventLog service stop/suspend (Phant0m has NO '
 id: d4e4c4a9-f6e3-58cb-8b14-10e9893aaa63
 status: experimental
-description: 'Clearing or suppressing Windows event logs via wevtutil cl, PowerShell Clear-EventLog / Remove-EventLog / Limit-EventLog, [System.Diagnostics.EventLog]::Clear(), or by stopping and suspending the Windows Event Log service threads (Phant0m) so logging halts without writing the tell-tale 1102 clear record Query block: EventLog service stop/suspend (Phant0m has NO 1102 - hunt the silence). NOTE: no machine-translatable query logic (relies on aggregation, statistical baselining, or an external analytics layer). This rule is a documentation stub - see the tonk section for the original hunt logic.'
+description: 'Clearing or suppressing Windows event logs via wevtutil cl, PowerShell Clear-EventLog / Remove-EventLog / Limit-EventLog, [System.Diagnostics.EventLog]::Clear(), or by stopping and suspending the Windows Event Log service threads (Phant0m) so logging halts without writing the tell-tale 1102 clear record Query block: EventLog service stop/suspend (Phant0m has NO 1102 - hunt the silence).'
 author: TONK Hunt Reference (6b74.dev)
 date: 2026/07/21
 tags:
@@ -17,14 +17,20 @@ logsource:
     category: process_creation
     product: windows
 detection:
-    selection:
-        EventID|exists: true
-    condition: selection and not selection
+    selection_0:
+        winlog.event_id:
+            - 7035
+            - 7036
+            - 7040
+        message: '*"Event Log"*'
+    selection_1:
+        winlog.event_id: 4719
+    condition: selection_0 or selection_1
 falsepositives:
     - Unknown - baseline before enabling
 level: high
 tonk:
-    fidelity: metadata
+    fidelity: full
     source_file: host/js/data/defense_evasion.js
     domain: host
     technique: T1070.001
@@ -207,8 +213,6 @@ tonk:
           (Ryuk, Conti and successors) routinely wevtutil cl during
           pre-encryption staging; and Russian and Chinese intrusion sets
           clear logs as part of anti-forensic hygiene.
-    dropped_clauses:
-        - 'unparsed: (winlog.event_id: (7035 OR 7036 OR 7040) AND message: *"Event Log"*) OR winlog.event_id: 4719'
     actors:
         - Lazarus
         - APT28

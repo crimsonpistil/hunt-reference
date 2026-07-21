@@ -15,16 +15,19 @@ logsource:
     category: process_creation
     product: windows
 detection:
-    selection:
-        process.name|all:
+    selection_0:
+        process.name:
             - aa-teardown
             - aa-disable
-            - '"aa-complain")'
-            - '(process.command_line: (*"stop apparmor"*'
-            - '*"disable apparmor"*))'
-            - '(process.name: "apparmor_parser"'
-            - 'process.command_line: *-R*'
-    condition: selection
+            - aa-complain
+    selection_1:
+        process.command_line:
+            - '*"stop apparmor"*'
+            - '*"disable apparmor"*'
+    selection_2:
+        process.name: apparmor_parser
+        process.command_line: '*-R*'
+    condition: selection_0 or selection_1 or selection_2
 falsepositives:
     - Unknown - baseline before enabling
 level: medium

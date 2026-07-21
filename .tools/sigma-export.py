@@ -368,19 +368,25 @@ def tokenize_clauses(block):
 
 
 def split_top_level(text, keyword):
-    """Split on a keyword that appears outside any parentheses."""
+    """
+    Split on a keyword appearing outside any parentheses. Whitespace-tolerant,
+    so both " OR " and a line-leading "OR " are recognised.
+    """
     parts, depth, cur, i = [], 0, "", 0
-    kw = " %s " % keyword
+    kw = keyword.upper()
+    n = len(kw)
     while i < len(text):
         c = text[i]
         if c == "(":
             depth += 1
         elif c == ")":
             depth -= 1
-        if depth == 0 and text[i:i + len(kw)].upper() == kw:
+        if (depth == 0 and c in " \t\n"
+                and text[i + 1:i + 1 + n].upper() == kw
+                and (i + 1 + n >= len(text) or text[i + 1 + n] in " \t\n")):
             parts.append(cur)
             cur = ""
-            i += len(kw)
+            i += 1 + n
             continue
         cur += c
         i += 1
@@ -429,7 +435,61 @@ def translate_block(block):
         dropped.append("prose: " + re.sub(r"\s+", " ", p)[:120])
     block = PROSE_RE.sub(" ", block)
     block = INLINE_COMMENT_RE.sub("", block)
+    # Splitting a field into blocks can leave a dangling leading conjunction,
+    # e.g. an "alternative query" block authored to slot into the one above it.
+    block = re.sub(r"^\s*(AND|OR)\s+", "", block, flags=re.I)
 
+    # A block may be a top-level OR of groups, e.g.
+    #   (a: 1 AND b: 2)
+    #   OR c: 3
+    # In Sigma each side becomes its own selection, OR-ed in the condition.
+    or_parts = split_top_level(block, "OR")
+    if len(or_parts) > 1:
+        detection, conds, dropped_all = OrderedDict(), [], list(dropped)
+        for i, part in enumerate(or_parts):
+            part = part.strip()
+            if part.startswith("(") and part.endswith(")"):
+                part = part[1:-1].strip()
+            sel, filt, drp = translate_and_group(part)
+            dropped_all.extend(drp)
+            if not sel and not filt:
+                continue
+            expr = []
+            if sel:
+                name = "selection_%d" % i
+                detection[name] = sel
+                expr.append(name)
+            for j, f in enumerate(filt):
+                fname = "filter_%d_%d" % (i, j)
+                detection[fname] = f
+                expr.append("not " + fname)
+            if not expr:
+                continue
+            joined = " and ".join(expr)
+            conds.append("(%s)" % joined if len(expr) > 1 else joined)
+        if not conds:
+            return None, None, dropped_all
+        return detection, " or ".join(conds), dropped_all
+
+    selection, filters, drp = translate_and_group(block)
+    dropped.extend(drp)
+
+    detection, parts = OrderedDict(), []
+    if selection:
+        detection["selection"] = selection
+        parts.append("selection")
+    for idx, f in enumerate(filters):
+        detection["filter_%d" % idx] = f
+        parts.append("not filter_%d" % idx)
+
+    if not parts:
+        return None, None, dropped
+    return detection, " and ".join(parts), dropped
+
+
+def translate_and_group(block):
+    """Translate one AND-joined group into (selection, filters, dropped)."""
+    dropped = []
     selection, filters = OrderedDict(), []
 
     for negated, clause in tokenize_clauses(block):
@@ -558,17 +618,7 @@ def translate_block(block):
         else:
             selection[key] = payload
 
-    detection, parts = OrderedDict(), []
-    if selection:
-        detection["selection"] = selection
-        parts.append("selection")
-    for idx, f in enumerate(filters):
-        detection["filter_%d" % idx] = f
-        parts.append("not filter_%d" % idx)
-
-    if not parts:
-        return None, None, dropped
-    return detection, " and ".join(parts), dropped
+    return selection, filters, dropped
 
 
 TRIPWIRE_RE = re.compile(r"^\[OFF-NET TRIPWIRE\]\s*")

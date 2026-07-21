@@ -35,7 +35,7 @@ tonk:
     technique: T1033
     technique_name: System Owner/User Discovery
     os: win
-    query_block: 2 of 2
+    query_block: 2 of 3
     original_query: |-
         process.name: "whoami.exe"
         AND process.parent.name: ("w3wp.exe" OR "httpd.exe" OR "rundll32.exe")

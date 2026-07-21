@@ -7,24 +7,24 @@ grade, so nothing is lost silently in translation.
 
 | Fidelity | Rules | Share |
 | --- | ---: | ---: |
-| full | 831 | 89.4% |
-| partial | 89 | 9.6% |
-| metadata | 10 | 1.1% |
-| **total** | **930** | |
+| full | 849 | 90.3% |
+| partial | 89 | 9.5% |
+| metadata | 2 | 0.2% |
+| **total** | **940** | |
 
 ## By domain
 
 | Domain | full | partial | metadata |
 | --- | ---: | ---: | ---: |
 | net | 278 | 78 | 2 |
-| host | 553 | 11 | 8 |
+| host | 571 | 11 | 0 |
 
 ## By severity
 
 | Level | Rules |
 | --- | ---: |
 | high | 216 |
-| medium | 683 |
+| medium | 693 |
 | low | 31 |
 
 ## By source file
@@ -38,7 +38,7 @@ grade, so nothing is lost silently in translation.
 | recon | 80 |
 | c2 | 76 |
 | initial_access | 66 |
-| discovery | 53 |
+| discovery | 63 |
 | credential_access | 37 |
 | lateral | 32 |
 | lateral_movement | 24 |
@@ -107,11 +107,3 @@ grade, so nothing is lost silently in translation.
 
 - `T1556.006` - T1556.006 - Push Bombing
 - `T1563` - T1563 - RDP Session Takeover
-- `T1070.001` - T1070.001 - Clear Windows Event Logs (wevtutil, Clear-EventLog, Phant0m) (EventLog service stop/suspend (Phant0m has NO 
-- `T1218.004` - T1218.004 - InstallUtil: .NET Uninstall-Method Proxy Execution (InstallUtil spawning a shell or making network connectio
-- `T1127.001` - T1127.001 - MSBuild: Inline Task Source Execution (MSBuild spawning a shell or making network connections)
-- `T1218.007` - T1218.007 - Msiexec: Remote and Malicious MSI Proxy Execution (msiexec with Office/script parent (delivery chain) or spa
-- `T1016` - T1016 - Network Config Enumeration (ipconfig, ifconfig, route, arp, ip addr)
-- `T1049` - T1049 - Active Connection Enumeration (netstat, ss, Get-NetTCPConnection, lsof)
-- `T1059.003` - T1059.003 - DOSfuscation / Command Obfuscation (Alternative plaintext-match approach (lower fidelity):)
-- `T1490` - T1490 - Shadow Copy Deletion and Recovery Disabling (vssadmin, bcdedit, wbadmin, wmic) (Shadow copy deletion (any method

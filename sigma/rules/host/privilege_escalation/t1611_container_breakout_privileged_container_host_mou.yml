@@ -16,14 +16,16 @@ logsource:
     category: process_creation
     product: windows
 detection:
-    selection:
+    selection_0:
         process.command_line:
             - '*docker.sock*'
             - '*containerd.sock*'
-            - '*docker_engine*)'
-            - 'file.path: ("/var/run/docker.sock"'
+            - '*docker_engine*'
+    selection_1:
+        file.path:
+            - /var/run/docker.sock
             - /run/containerd/containerd.sock
-    condition: selection
+    condition: selection_0 or selection_1
 falsepositives:
     - Unknown - baseline before enabling
 level: medium

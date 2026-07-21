@@ -18,17 +18,19 @@ logsource:
     category: process_creation
     product: windows
 detection:
-    selection:
+    selection_0:
         winlog.event_id: 7045
-        winlog.event_data.ServiceName|all:
+        winlog.event_data.ServiceName:
             - PSEXESVC*
             - '*RemCom*'
-            - '*BTOBTO*)'
-            - '(winlog.event_id: 7045'
-            - 'winlog.event_data.ImagePath: (*ADMIN$*'
+            - '*BTOBTO*'
+    selection_1:
+        winlog.event_id: 7045
+        winlog.event_data.ImagePath:
+            - '*ADMIN$*'
             - '*cmd*'
-            - '*powershell*)'
-    condition: selection
+            - '*powershell*'
+    condition: selection_0 or selection_1
 falsepositives:
     - Unknown - baseline before enabling
 level: medium

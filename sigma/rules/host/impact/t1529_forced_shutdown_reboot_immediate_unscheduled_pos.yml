@@ -3,7 +3,7 @@
 title: T1529 - Forced Shutdown/Reboot (immediate, unscheduled, post-attack trigger) (Windows forced shutdown)
 id: aaa75b59-da7d-5193-9b6a-f8db9c355b11
 status: experimental
-description: 'Execution of shutdown.exe or init with immediate/force flags (/s /f /t 0, shutdown -h now) outside of scheduled maintenance windows, particularly when preceded by shadow copy deletion, service stopping, or encryption activity, indicating the final step of a destructive or ransomware operation Query block: Windows forced shutdown.'
+description: 'Execution of shutdown.exe or init with immediate/force flags (/s /f /t 0, shutdown -h now) outside of scheduled maintenance windows, particularly when preceded by shadow copy deletion, service stopping, or encryption activity, indicating the final step of a destructive or ransomware operation Query block: Windows forced shutdown. NOTE: partial conversion - one or more source clauses could not be expressed in stock Sigma. See tonk.dropped_clauses.'
 references:
     - MITRE ATT&CK T1529
 author: TONK Hunt Reference (6b74.dev)
@@ -17,19 +17,17 @@ logsource:
     category: process_creation
     product: windows
 detection:
-    selection:
+    selection_0:
         process.name: shutdown.exe
         process.command_line|all:
             - '*"/s"*'
-            - '*"/f"*)'
-            - (*"/r"*
             - '*"/f"*'
-    condition: selection
+    condition: selection_0
 falsepositives:
     - Unknown - baseline before enabling
 level: medium
 tonk:
-    fidelity: full
+    fidelity: partial
     source_file: host/js/data/impact.js
     domain: host
     technique: T1529
@@ -105,6 +103,9 @@ tonk:
         System event log (EID 6006/6008 shutdown type)
         Sysmon (EID 1 shutdown command)
         UPS/PDU logs (correlate power events with host events)
+    dropped_clauses:
+        - 'unparsed: *"/r"*'
+        - 'unparsed: *"/f"*'
     actors:
         - Sandworm
         - Lazarus

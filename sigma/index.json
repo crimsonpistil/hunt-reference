@@ -3976,7 +3976,7 @@
     "technique": "T1070.001",
     "domain": "host",
     "tactic": "defense_evasion",
-    "fidelity": "metadata",
+    "fidelity": "full",
     "level": "high"
   },
   {
@@ -4976,7 +4976,7 @@
     "technique": "T1218.004",
     "domain": "host",
     "tactic": "defense_evasion",
-    "fidelity": "metadata",
+    "fidelity": "full",
     "level": "medium"
   },
   {
@@ -5026,7 +5026,7 @@
     "technique": "T1127.001",
     "domain": "host",
     "tactic": "defense_evasion",
-    "fidelity": "metadata",
+    "fidelity": "full",
     "level": "medium"
   },
   {
@@ -5086,7 +5086,7 @@
     "technique": "T1218.007",
     "domain": "host",
     "tactic": "defense_evasion",
-    "fidelity": "metadata",
+    "fidelity": "full",
     "level": "medium"
   },
   {
@@ -5320,9 +5320,29 @@
     "level": "medium"
   },
   {
+    "file": "rules/host/discovery/t1033_user_context_enumeration_whoami_query_user_id_li.yml",
+    "id": "fa010a71-c950-5689-950b-ca6341d6995e",
+    "title": "T1033 - User Context Enumeration (whoami, query user, id) (Linux)",
+    "technique": "T1033",
+    "domain": "host",
+    "tactic": "discovery",
+    "fidelity": "full",
+    "level": "medium"
+  },
+  {
     "file": "rules/host/discovery/t1082_system_profiling_systeminfo_hostname_uname_wmic.yml",
     "id": "eed134a6-25dc-5a90-bb31-fd2045bedde2",
-    "title": "T1082 - System Profiling (systeminfo, hostname, uname, wmic os)",
+    "title": "T1082 - System Profiling (systeminfo, hostname, uname, wmic os) (Windows system profiling)",
+    "technique": "T1082",
+    "domain": "host",
+    "tactic": "discovery",
+    "fidelity": "full",
+    "level": "medium"
+  },
+  {
+    "file": "rules/host/discovery/t1082_system_profiling_systeminfo_hostname_uname_wmic_1.yml",
+    "id": "7091f645-b587-56d8-a019-1a8ab0efd8c3",
+    "title": "T1082 - System Profiling (systeminfo, hostname, uname, wmic os) (Linux)",
     "technique": "T1082",
     "domain": "host",
     "tactic": "discovery",
@@ -5332,11 +5352,21 @@
   {
     "file": "rules/host/discovery/t1016_network_config_enumeration_ipconfig_ifconfig_rou.yml",
     "id": "27bd86c2-09b2-59f5-9b9b-0ac6c35a8941",
-    "title": "T1016 - Network Config Enumeration (ipconfig, ifconfig, route, arp, ip addr)",
+    "title": "T1016 - Network Config Enumeration (ipconfig, ifconfig, route, arp, ip addr) (Windows)",
     "technique": "T1016",
     "domain": "host",
     "tactic": "discovery",
-    "fidelity": "metadata",
+    "fidelity": "full",
+    "level": "medium"
+  },
+  {
+    "file": "rules/host/discovery/t1016_network_config_enumeration_ipconfig_ifconfig_rou_1.yml",
+    "id": "acea7a13-09c3-59c4-ba51-5e7154efc6f2",
+    "title": "T1016 - Network Config Enumeration (ipconfig, ifconfig, route, arp, ip addr) (Linux)",
+    "technique": "T1016",
+    "domain": "host",
+    "tactic": "discovery",
+    "fidelity": "full",
     "level": "medium"
   },
   {
@@ -5353,6 +5383,36 @@
     "file": "rules/host/discovery/t1087_002_domain_account_and_group_enumeration_net_user_gr_1.yml",
     "id": "8b55487d-5778-51c7-b610-95e8cb862b61",
     "title": "T1087.002 - Domain Account and Group Enumeration (net user/group /domain, nltest, ADFind) (Privileged group enumeration)",
+    "technique": "T1087.002",
+    "domain": "host",
+    "tactic": "discovery",
+    "fidelity": "full",
+    "level": "medium"
+  },
+  {
+    "file": "rules/host/discovery/t1087_002_domain_account_and_group_enumeration_net_user_gr_2.yml",
+    "id": "d67b9671-8060-5ace-9c2b-8969d172f812",
+    "title": "T1087.002 - Domain Account and Group Enumeration (net user/group /domain, nltest, ADFind) (nltest)",
+    "technique": "T1087.002",
+    "domain": "host",
+    "tactic": "discovery",
+    "fidelity": "full",
+    "level": "medium"
+  },
+  {
+    "file": "rules/host/discovery/t1087_002_domain_account_and_group_enumeration_net_user_gr_3.yml",
+    "id": "698a667d-7630-5eed-9ec2-58abcc5e453c",
+    "title": "T1087.002 - Domain Account and Group Enumeration (net user/group /domain, nltest, ADFind) (ADFind)",
+    "technique": "T1087.002",
+    "domain": "host",
+    "tactic": "discovery",
+    "fidelity": "full",
+    "level": "medium"
+  },
+  {
+    "file": "rules/host/discovery/t1087_002_domain_account_and_group_enumeration_net_user_gr_4.yml",
+    "id": "52d12aa5-d2a1-5943-9181-300d799e22fe",
+    "title": "T1087.002 - Domain Account and Group Enumeration (net user/group /domain, nltest, ADFind) (PowerShell AD)",
     "technique": "T1087.002",
     "domain": "host",
     "tactic": "discovery",
@@ -5382,7 +5442,17 @@
   {
     "file": "rules/host/discovery/t1057_process_listing_tasklist_get_process_ps_aux_wmic.yml",
     "id": "206f40ac-26af-517c-971a-d31381cd4971",
-    "title": "T1057 - Process Listing (tasklist, Get-Process, ps aux, wmic process)",
+    "title": "T1057 - Process Listing (tasklist, Get-Process, ps aux, wmic process) (Process listing)",
+    "technique": "T1057",
+    "domain": "host",
+    "tactic": "discovery",
+    "fidelity": "full",
+    "level": "medium"
+  },
+  {
+    "file": "rules/host/discovery/t1057_process_listing_tasklist_get_process_ps_aux_wmic_1.yml",
+    "id": "50a56a22-af06-5761-9fcd-dbe0f8811f9b",
+    "title": "T1057 - Process Listing (tasklist, Get-Process, ps aux, wmic process) (Linux)",
     "technique": "T1057",
     "domain": "host",
     "tactic": "discovery",
@@ -5392,7 +5462,17 @@
   {
     "file": "rules/host/discovery/t1135_network_share_enumeration_net_share_net_view_smb.yml",
     "id": "de3b5910-1ee1-5bf9-bea1-7c745b8c8daa",
-    "title": "T1135 - Network Share Enumeration (net share, net view, smbclient, Get-SmbShare)",
+    "title": "T1135 - Network Share Enumeration (net share, net view, smbclient, Get-SmbShare) (Share enumeration)",
+    "technique": "T1135",
+    "domain": "host",
+    "tactic": "discovery",
+    "fidelity": "full",
+    "level": "medium"
+  },
+  {
+    "file": "rules/host/discovery/t1135_network_share_enumeration_net_share_net_view_smb_1.yml",
+    "id": "70251838-8eba-5783-b077-931f38b65cfe",
+    "title": "T1135 - Network Share Enumeration (net share, net view, smbclient, Get-SmbShare) (PowerShell)",
     "technique": "T1135",
     "domain": "host",
     "tactic": "discovery",
@@ -5402,11 +5482,31 @@
   {
     "file": "rules/host/discovery/t1049_active_connection_enumeration_netstat_ss_get_net.yml",
     "id": "5f14546d-e6a8-5afb-b37b-54febf738f3d",
-    "title": "T1049 - Active Connection Enumeration (netstat, ss, Get-NetTCPConnection, lsof)",
+    "title": "T1049 - Active Connection Enumeration (netstat, ss, Get-NetTCPConnection, lsof) (Windows)",
     "technique": "T1049",
     "domain": "host",
     "tactic": "discovery",
-    "fidelity": "metadata",
+    "fidelity": "full",
+    "level": "medium"
+  },
+  {
+    "file": "rules/host/discovery/t1049_active_connection_enumeration_netstat_ss_get_net_1.yml",
+    "id": "f1a828e9-0db7-5180-8af1-eb4651b832ff",
+    "title": "T1049 - Active Connection Enumeration (netstat, ss, Get-NetTCPConnection, lsof) (PowerShell)",
+    "technique": "T1049",
+    "domain": "host",
+    "tactic": "discovery",
+    "fidelity": "full",
+    "level": "medium"
+  },
+  {
+    "file": "rules/host/discovery/t1049_active_connection_enumeration_netstat_ss_get_net_2.yml",
+    "id": "c248e4c1-9f53-576d-875d-938a7d3b8572",
+    "title": "T1049 - Active Connection Enumeration (netstat, ss, Get-NetTCPConnection, lsof) (Linux)",
+    "technique": "T1049",
+    "domain": "host",
+    "tactic": "discovery",
+    "fidelity": "full",
     "level": "medium"
   },
   {
@@ -5476,7 +5576,7 @@
     "technique": "T1059.003",
     "domain": "host",
     "tactic": "execution",
-    "fidelity": "partial",
+    "fidelity": "full",
     "level": "medium"
   },
   {
@@ -5486,7 +5586,7 @@
     "technique": "T1059.003",
     "domain": "host",
     "tactic": "execution",
-    "fidelity": "metadata",
+    "fidelity": "full",
     "level": "medium"
   },
   {
@@ -6586,7 +6686,7 @@
     "technique": "T1490",
     "domain": "host",
     "tactic": "impact",
-    "fidelity": "metadata",
+    "fidelity": "full",
     "level": "medium"
   },
   {
@@ -6756,7 +6856,7 @@
     "technique": "T1529",
     "domain": "host",
     "tactic": "impact",
-    "fidelity": "full",
+    "fidelity": "partial",
     "level": "medium"
   },
   {

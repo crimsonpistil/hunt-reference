@@ -16,12 +16,11 @@ logsource:
     product: windows
 detection:
     selection:
-        process.command_line:
-            - (*stop*
+        process.command_line|all:
+            - '*stop*'
             - '*disable*'
-            - |-
-                *mask*) AND
-                  (*falco*
+            - '*mask*'
+            - '*falco*'
             - '*wazuh*'
             - '*osquery*'
             - '*clamav*'
@@ -32,7 +31,7 @@ detection:
             - '*carbonblack*'
             - '*sentinelone*'
             - '*filebeat*'
-            - '*auditbeat*)'
+            - '*auditbeat*'
     condition: selection
 falsepositives:
     - Unknown - baseline before enabling

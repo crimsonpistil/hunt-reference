@@ -3,7 +3,7 @@
 title: T1059.003 - DOSfuscation / Command Obfuscation (Alternative plaintext-match approach (lower fidelity):)
 id: 27d51c64-4bb1-5da8-bac4-086e83c6d025
 status: experimental
-description: 'cmd.exe command string with excessive carets, quoted null insertions, or comma/semicolon delimiters - obfuscated shell syntax Query block: Alternative plaintext-match approach (lower fidelity):. NOTE: no machine-translatable query logic (relies on aggregation, statistical baselining, or an external analytics layer). This rule is a documentation stub - see the tonk section for the original hunt logic.'
+description: 'cmd.exe command string with excessive carets, quoted null insertions, or comma/semicolon delimiters - obfuscated shell syntax Query block: Alternative plaintext-match approach (lower fidelity):.'
 references:
     - MITRE ATT&CK T1059.003
     - T1027
@@ -18,13 +18,17 @@ logsource:
     product: windows
 detection:
     selection:
-        EventID|exists: true
-    condition: selection and not selection
+        process.command_line:
+            - '*^^^*'
+            - '*""c""*'
+            - '*,/c*'
+            - '*;m;d;*'
+    condition: selection
 falsepositives:
     - Unknown - baseline before enabling
 level: medium
 tonk:
-    fidelity: metadata
+    fidelity: full
     source_file: host/js/data/execution.js
     domain: host
     technique: T1059.003
@@ -54,7 +58,7 @@ tonk:
         } | Where-Object {
           $_.Properties[4].Value -like '*\cmd.exe' -and (
             # 3+ consecutive carets
-            $_.Properties[10].Value -match '^{3,}' -or
+            $_.Properties[10].Value -match '\^{3,}' -or
             # Quoted null-string insertion (s""et, c""md, etc.)
             $_.Properties[10].Value -match '""w""' -or
             # Comma or semicolon as command token separator
@@ -123,8 +127,6 @@ tonk:
         - Older malware lineages
         - Environments where PS execution is blocked or monitored
         - Manual operators who default to cmd.exe tradecraft
-    dropped_clauses:
-        - 'unparsed: AND process.command_line: (*^^^* OR *""c""* OR *,/c* OR *;m;d;*)'
     actors:
         - APT41
     analyst_notes: 'DOSfuscation exploits cmd.exe''s quirky parsing rules - carets are escape characters, quoted empty strings are silently removed, commas and semicolons can substitute for spaces in certain positions. The result is command strings that look like noise but execute normally. The core reference is Daniel Bohannon''s 2018 DEF CON talk and the Invoke-DOSfuscation tool. Detection angle: legitimate cmd.exe usage almost never contains 3+ consecutive carets or quoted null strings mid-token. These patterns have near-zero false-positive rate in normal enterprise telemetry - they''re detectable because the obfuscation itself is anomalous. The deeper hunt is what the obfuscated command actually does: decode the outer shell (drop carets, remove quoted nulls, resolve env var substrings) and analyze the revealed payload. Kibana regex on CommandLine is more reliable than Sysmon config-level filtering here because Sysmon''s XML match syntax doesn''t support regex in CommandLine fields - this is one of the genuine cases where the Kibana column catches things the Sysmon column misses at config time.'

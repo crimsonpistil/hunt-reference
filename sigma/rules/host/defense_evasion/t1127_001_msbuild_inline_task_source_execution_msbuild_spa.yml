@@ -3,7 +3,7 @@
 title: 'T1127.001 - MSBuild: Inline Task Source Execution (MSBuild spawning a shell or making network connections)'
 id: 083d07de-2c80-5dd6-98e2-9cce2586d745
 status: experimental
-description: 'Abusing MSBuild.exe, a trusted developer build tool, to compile and execute inline C# embedded in a crafted .csproj or .xml project file via an inline UsingTask/Code block, running arbitrary code under a signed Microsoft binary and performing on-host compilation without a separate compiler, which both bypasses application control and evades static detection of the payload Query block: MSBuild spawning a shell or making network connections. NOTE: no machine-translatable query logic (relies on aggregation, statistical baselining, or an external analytics layer). This rule is a documentation stub - see the tonk section for the original hunt logic.'
+description: 'Abusing MSBuild.exe, a trusted developer build tool, to compile and execute inline C# embedded in a crafted .csproj or .xml project file via an inline UsingTask/Code block, running arbitrary code under a signed Microsoft binary and performing on-host compilation without a separate compiler, which both bypasses application control and evades static detection of the payload Query block: MSBuild spawning a shell or making network connections.'
 author: TONK Hunt Reference (6b74.dev)
 date: 2026/07/21
 tags:
@@ -16,14 +16,26 @@ logsource:
     category: process_creation
     product: windows
 detection:
-    selection:
-        EventID|exists: true
-    condition: selection and not selection
+    selection_0:
+        process.parent.name: MSBuild.exe
+        process.name:
+            - cmd.exe
+            - powershell.exe
+            - rundll32.exe
+    selection_1:
+        winlog.event_id: 3
+        process.name: MSBuild.exe
+    filter_1_0:
+        destination.ip:
+            - 10.0.0.0/8
+            - 172.16.0.0/12
+            - 192.168.0.0/16
+    condition: selection_0 or (selection_1 and not filter_1_0)
 falsepositives:
     - Unknown - baseline before enabling
 level: medium
 tonk:
-    fidelity: metadata
+    fidelity: full
     source_file: host/js/data/defense_evasion.js
     domain: host
     technique: T1127.001
@@ -214,8 +226,6 @@ tonk:
           a well-known red-team and APT bypass; used by espionage operators
           (including Russian sets) and criminal crews to run .NET tradecraft
           and Cobalt Strike stagers through a signed build tool.
-    dropped_clauses:
-        - 'unparsed: (process.parent.name: "MSBuild.exe" AND process.name: ("cmd.exe" OR "powershell.exe" OR "rundll32.exe")) OR (winlog.even'
     actors:
         - APT29
         - APT41

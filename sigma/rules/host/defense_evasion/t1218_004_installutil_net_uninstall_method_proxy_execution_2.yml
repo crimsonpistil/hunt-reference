@@ -3,7 +3,7 @@
 title: 'T1218.004 - InstallUtil: .NET Uninstall-Method Proxy Execution (InstallUtil spawning a shell or making network connectio'
 id: c5d1c26e-3dcb-5a66-a8a8-b17752f9edab
 status: experimental
-description: 'Abusing the .NET Framework InstallUtil.exe to run code through the [System.ComponentModel.RunInstaller] Uninstall method of a crafted assembly (InstallUtil /logfile= /LogToConsole=false /U evil.exe), executing attacker code under a signed Microsoft utility and bypassing application control that trusts the .NET tooling path Query block: InstallUtil spawning a shell or making network connections. NOTE: no machine-translatable query logic (relies on aggregation, statistical baselining, or an external analytics layer). This rule is a documentation stub - see the tonk section for the original hunt logic.'
+description: 'Abusing the .NET Framework InstallUtil.exe to run code through the [System.ComponentModel.RunInstaller] Uninstall method of a crafted assembly (InstallUtil /logfile= /LogToConsole=false /U evil.exe), executing attacker code under a signed Microsoft utility and bypassing application control that trusts the .NET tooling path Query block: InstallUtil spawning a shell or making network connections.'
 author: TONK Hunt Reference (6b74.dev)
 date: 2026/07/21
 tags:
@@ -15,14 +15,25 @@ logsource:
     category: process_creation
     product: windows
 detection:
-    selection:
-        EventID|exists: true
-    condition: selection and not selection
+    selection_0:
+        process.parent.name: InstallUtil.exe
+        process.name:
+            - cmd.exe
+            - powershell.exe
+    selection_1:
+        winlog.event_id: 3
+        process.name: InstallUtil.exe
+    filter_1_0:
+        destination.ip:
+            - 10.0.0.0/8
+            - 172.16.0.0/12
+            - 192.168.0.0/16
+    condition: selection_0 or (selection_1 and not filter_1_0)
 falsepositives:
     - Unknown - baseline before enabling
 level: medium
 tonk:
-    fidelity: metadata
+    fidelity: full
     source_file: host/js/data/defense_evasion.js
     domain: host
     technique: T1218.004
@@ -193,8 +204,6 @@ tonk:
           espionage sets and criminal operators to launch managed payloads
           (including .NET implants and Cobalt Strike loaders) under a signed
           framework binary.
-    dropped_clauses:
-        - 'unparsed: (process.parent.name: "InstallUtil.exe" AND process.name: ("cmd.exe" OR "powershell.exe")) OR (winlog.event_id: 3 AND pr'
     actors:
         - APT41
         - Lazarus

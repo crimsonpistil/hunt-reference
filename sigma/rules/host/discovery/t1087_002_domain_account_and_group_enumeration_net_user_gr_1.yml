@@ -34,7 +34,7 @@ tonk:
     technique: T1087.002
     technique_name: 'Account Discovery: Domain Account'
     os: win
-    query_block: 2 of 2
+    query_block: 2 of 5
     original_query: 'process.command_line: (*"Domain Admins"* OR *"Enterprise Admins"*)'
     sysmon: |-
         // Sysmon EID 1 - net.exe domain enumeration

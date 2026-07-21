@@ -25,7 +25,8 @@ AND process.args: ("/priv" OR "/groups" OR "/all")
 process.name: "whoami.exe"
 AND process.parent.name: ("w3wp.exe" OR "httpd.exe" OR "rundll32.exe")
 
-// Linux: process.name: ("id" OR "whoami" OR "w" OR "who")`,
+// Linux
+process.name: ("id" OR "whoami" OR "w" OR "who")`,
         powershell: `# User discovery detection
 Write-Host "[*] === whoami executions ==="
 Get-WinEvent -FilterHashtable @{
@@ -75,7 +76,8 @@ CommandLine=(*Get-ComputerInfo* OR *Win32_OperatingSystem*)
 process.name: ("systeminfo.exe" OR "hostname.exe")
 OR (process.name: "wmic.exe" AND process.command_line: (*os* OR *computersystem*))
 
-// Linux: process.name: ("uname" OR "hostnamectl" OR "lsb_release")`,
+// Linux
+process.name: ("uname" OR "hostnamectl" OR "lsb_release")`,
         powershell: `# System profiling detection
 Write-Host "[*] === systeminfo/hostname executions ==="
 Get-WinEvent -FilterHashtable @{
@@ -112,8 +114,11 @@ Get-WinEvent -FilterHashtable @{
 Image=(*\\\\ipconfig.exe OR *\\\\route.exe OR *\\\\arp.exe OR *\\\\netsh.exe)
 
 // Linux: Image=(*/ip OR */ifconfig OR */route OR */arp OR */ss)`,
-        kibana: `// Windows: process.name: ("ipconfig.exe" OR "route.exe" OR "arp.exe" OR "netsh.exe")
-// Linux: process.name: ("ip" OR "ifconfig" OR "route" OR "ss" OR "netstat")`,
+        kibana: `// Windows
+process.name: ("ipconfig.exe" OR "route.exe" OR "arp.exe" OR "netsh.exe")
+
+// Linux
+process.name: ("ip" OR "ifconfig" OR "route" OR "ss" OR "netstat")`,
         powershell: `# Network config discovery detection
 Write-Host "[*] === Network discovery commands ==="
 Get-WinEvent -FilterHashtable @{
@@ -169,11 +174,15 @@ AND process.command_line: (*"/domain"*)
 // Privileged group enumeration
 process.command_line: (*"Domain Admins"* OR *"Enterprise Admins"*)
 
-// nltest: process.name: "nltest.exe" AND process.command_line: (*dclist* OR *domain_trusts*)
+// nltest
+process.name: "nltest.exe"
+AND process.command_line: (*dclist* OR *domain_trusts*)
 
-// ADFind: process.name: "adfind.exe"
+// ADFind
+process.name: "adfind.exe"
 
-// PowerShell AD: script_block_text: (*Get-ADUser* OR *Get-ADGroup* OR *adsisearcher*)`,
+// PowerShell AD
+script_block_text: (*Get-ADUser* OR *Get-ADGroup* OR *adsisearcher*)`,
         powershell: `# Domain enumeration detection
 Write-Host "[*] === Domain enumeration commands ==="
 Get-WinEvent -FilterHashtable @{
@@ -273,7 +282,9 @@ process.name: "tasklist.exe"
 OR (process.name: "wmic.exe" AND process.command_line: *process*)
 OR process.command_line: *Get-Process*
 
-// Linux: process.name: "ps" AND process.args: ("aux" OR "-ef")`,
+// Linux
+process.name: "ps"
+AND process.args: ("aux" OR "-ef")`,
         powershell: `# Process discovery detection
 Get-WinEvent -FilterHashtable @{
   LogName='Microsoft-Windows-Sysmon/Operational'; Id=1
@@ -317,7 +328,8 @@ CommandLine=(*share* OR *view*)
 process.name: ("net.exe" OR "net1.exe")
 AND process.command_line: (*share* OR *view*)
 
-// PowerShell: process.command_line: (*Get-SmbShare* OR *Win32_Share*)`,
+// PowerShell
+process.command_line: (*Get-SmbShare* OR *Win32_Share*)`,
         powershell: `# Share discovery detection
 Get-WinEvent -FilterHashtable @{
   LogName='Microsoft-Windows-Sysmon/Operational'; Id=1
@@ -358,10 +370,16 @@ Get-WinEvent -FilterHashtable @{
 
 // Linux: Image=(*/ss OR */netstat) AND CommandLine=(*-tunlp* OR *-ano*)
 // Image=*/lsof AND CommandLine=*-i*`,
-        kibana: `// Windows: process.name: "netstat.exe" AND process.args: ("-ano" OR "-b")
-// PowerShell: process.command_line: *Get-NetTCPConnection*
+        kibana: `// Windows
+process.name: "netstat.exe"
+AND process.args: ("-ano" OR "-b")
 
-// Linux: process.name: ("ss" OR "netstat") AND process.args: ("-tunlp" OR "-ano")`,
+// PowerShell
+process.command_line: *Get-NetTCPConnection*
+
+// Linux
+process.name: ("ss" OR "netstat")
+AND process.args: ("-tunlp" OR "-ano")`,
         powershell: `# Connection discovery detection
 # Windows:
 Get-WinEvent -FilterHashtable @{
