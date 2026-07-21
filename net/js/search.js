@@ -22,7 +22,8 @@
     { file: 'js/data/credential.js',     page: 'credential.html',     label: 'Credential Access', id: 'TA0006', color: '#f85149' },
     { file: 'js/data/collection.js',     page: 'collection.html',     label: 'Collection',        id: 'TA0009', color: '#bc8cff' },
     { file: 'js/data/c2.js',             page: 'c2.html',             label: 'Command & Control', id: 'TA0011', color: '#ff7b72' },
-    { file: 'js/data/exfil.js',          page: 'exfil.html',          label: 'Exfiltration',      id: 'TA0010', color: '#7ee787' }
+    { file: 'js/data/exfil.js',          page: 'exfil.html',          label: 'Exfiltration',      id: 'TA0010', color: '#7ee787' },
+    { file: 'js/data/cloud.js',          page: 'cloud.html',          label: 'Cloud Control Plane', id: 'CLOUD', color: '#56d4dd' }
   ];
 
   let INDEX = [];          // flat list of every indicator row

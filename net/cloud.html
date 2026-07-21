@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[N] Exfiltration</title>
+<title>[N] Cloud Control Plane</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -17,7 +17,7 @@
     <a class="switcher-side" href="https://detect.6b74.dev" target="_blank">DETECT</a>
   </div>
   </div>
-  <span class="tactic-badge" style="color:#ff7b72;border-color:#ff7b7240;background:#ff7b7212">TA0010 - Exfiltration</span>
+  <span class="tactic-badge" style="color:#56d4dd;border-color:#56d4dd40;background:#56d4dd12">CLOUD - Control Plane (Identity)</span>
   <div class="search-row">
     <div class="search-box">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
@@ -31,17 +31,12 @@
   <div class="filter-row">
     <span class="filter-label">TTP</span>
     <button class="fbtn active" data-tech="all">All</button>
-    <button class="fbtn" data-tech="T1041">T1041</button>
-    <button class="fbtn" data-tech="T1048.001">T1048.001</button>
-    <button class="fbtn" data-tech="T1048.002">T1048.002</button>
-    <button class="fbtn" data-tech="T1048.003">T1048.003</button>
-    <button class="fbtn" data-tech="T1567.001">T1567.001</button>
-    <button class="fbtn" data-tech="T1567.002">T1567.002</button>
-    <button class="fbtn" data-tech="T1567.003">T1567.003</button>
-    <button class="fbtn" data-tech="T1567.004">T1567.004</button>
-    <button class="fbtn" data-tech="T1029">T1029</button>
-    <button class="fbtn" data-tech="T1030">T1030</button>
-    <button class="fbtn" data-tech="T1020">T1020</button>
+    <button class="fbtn" data-tech="T1078.004">T1078.004</button>
+    <button class="fbtn" data-tech="T1098.001">T1098.001</button>
+    <button class="fbtn" data-tech="T1580">T1580</button>
+    <button class="fbtn" data-tech="T1548.005">T1548.005</button>
+    <button class="fbtn" data-tech="T1562.008">T1562.008</button>
+    <button class="fbtn" data-tech="T1537">T1537</button>
   </div>
   <div class="filter-row">
     <span class="filter-label">Origin</span>
@@ -65,8 +60,8 @@
   <a href="discovery.html">TA0007: Discovery</a>
   <a href="lateral.html">TA0008: Lateral Movement</a>
   <a href="collection.html">TA0009: Collection</a>
-  <a href="exfil.html" class="current" style="color:#ff7b72">TA0010: Exfiltration</a>
-  <a href="cloud.html">CLOUD: Control Plane</a>
+  <a href="exfil.html">TA0010: Exfiltration</a>
+  <a href="cloud.html" class="current" style="color:#56d4dd">CLOUD: Control Plane</a>
 </nav>
 
 <div id="hunt-panel">
@@ -102,7 +97,7 @@
 <!-- mobile floating toggle -->
 <button class="mobile-sidebar-btn" id="mobile-sidebar-btn">&#9776; Techniques</button>
 
-<script src="js/data/exfil.js"></script>
+<script src="js/data/cloud.js"></script>
 <script src="js/core.js"></script>
 </body>
 </html>
