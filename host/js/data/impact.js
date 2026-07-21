@@ -368,7 +368,6 @@ Microsoft Defender for Endpoint:
       }
     ]
   },
-,
   {
     id: "T1561.002",
     name: "Disk Wipe: Disk Structure Wipe",

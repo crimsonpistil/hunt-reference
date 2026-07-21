@@ -472,7 +472,6 @@ Microsoft Defender for Identity:
       }
     ]
   },
-,
   {
     id: "T1047",
     name: "Windows Management Instrumentation",

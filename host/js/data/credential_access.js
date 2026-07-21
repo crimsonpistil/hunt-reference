@@ -615,7 +615,6 @@ osquery:
       }
     ]
   },
-,
   {
     id: "T1003.003",
     name: "OS Credential Dumping: NTDS",
