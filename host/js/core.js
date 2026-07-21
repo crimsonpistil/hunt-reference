@@ -252,19 +252,119 @@ function buildRow(row, techId, rowId) {
   detail.appendChild(tabBar);
 
   // code panels
+
+  // ---------------------------------------------------------------
+  // Query block splitting.
+  //
+  // Many indicators carry several INDEPENDENT queries in one field,
+  // each introduced by a `// label` header. Rendering them as a single
+  // blob means the Copy button hands the analyst several concatenated
+  // queries that are not valid as one query. splitBlocks() separates
+  // them so each gets its own label and its own Copy button.
+  //
+  // Three comment roles are recognised:
+  //   header       `// label` at the start of a block
+  //   continuation a second `// line` before any query content
+  //   annotation   `// note` AFTER query lines, explaining the clause
+  //                above it (stays attached to that block)
+  //
+  // Returns null when there is nothing to split, so single-query
+  // fields render exactly as before.
+  // ---------------------------------------------------------------
+  function splitBlocks(text) {
+    if (!text || text.indexOf('//') === -1) return null;
+    const blocks = [];
+    let cur = null, sawBlank = false;
+
+    text.split('\n').forEach(line => {
+      const isComment = /^\s*\/\//.test(line);
+      if (isComment) {
+        const t = line.replace(/^\s*\/\/\s?/, '').trim();
+        if (cur && cur.query.trim() && !sawBlank) {
+          cur.annotations.push(t);                 // trailing annotation
+        } else if (cur && !cur.query.trim()) {
+          cur.label = (cur.label ? cur.label + ' ' : '') + t;  // continuation
+        } else {
+          cur = { label: t, query: '', annotations: [] };      // new block
+          blocks.push(cur);
+        }
+        sawBlank = false;
+        return;
+      }
+      if (!line.trim()) { sawBlank = true; return; }
+      if (!cur) { cur = { label: '', query: '', annotations: [] }; blocks.push(cur); }
+      cur.query += (cur.query ? '\n' : '') + line;
+      sawBlank = false;
+    });
+
+    const usable = blocks.filter(b => b.query.trim());
+    return usable.length > 1 ? usable : null;
+  }
+
   function codePanel(langCls, langLabel, content) {
     const wrap = document.createElement('div');
     wrap.className = 'code-wrap';
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'copy-btn';
-    copyBtn.textContent = 'Copy';
-    copyBtn.addEventListener('click', () => copyText(content, copyBtn));
     wrap.innerHTML = `<div class="code-hdr"><span class="code-lang ${langCls}">${langLabel}</span></div>`;
-    wrap.querySelector('.code-hdr').appendChild(copyBtn);
-    const pre = document.createElement('pre');
-    pre.className = 'code-body';
-    pre.textContent = content;
-    wrap.appendChild(pre);
+    const hdr = wrap.querySelector('.code-hdr');
+
+    const blocks = splitBlocks(content);
+
+    // Single query: unchanged behaviour.
+    if (!blocks) {
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-btn';
+      copyBtn.textContent = 'Copy';
+      copyBtn.addEventListener('click', () => copyText(content, copyBtn));
+      hdr.appendChild(copyBtn);
+      const pre = document.createElement('pre');
+      pre.className = 'code-body';
+      pre.textContent = content;
+      wrap.appendChild(pre);
+      return wrap;
+    }
+
+    // Several queries: one copy button each, plus a count and copy-all.
+    const count = document.createElement('span');
+    count.className = 'block-count';
+    count.textContent = blocks.length + ' queries';
+    hdr.appendChild(count);
+    const copyAll = document.createElement('button');
+    copyAll.className = 'copy-btn';
+    copyAll.textContent = 'Copy all';
+    copyAll.addEventListener('click', () => copyText(content, copyAll));
+    hdr.appendChild(copyAll);
+
+    blocks.forEach((b, i) => {
+      const blk = document.createElement('div');
+      blk.className = 'query-block';
+
+      const bh = document.createElement('div');
+      bh.className = 'query-block-hdr';
+      const lbl = document.createElement('span');
+      lbl.className = 'query-block-label';
+      lbl.textContent = b.label || ('Query ' + (i + 1));
+      const cb = document.createElement('button');
+      cb.className = 'copy-btn copy-btn-sm';
+      cb.textContent = 'Copy';
+      cb.addEventListener('click', () => copyText(b.query, cb));
+      bh.appendChild(lbl);
+      bh.appendChild(cb);
+      blk.appendChild(bh);
+
+      const pre = document.createElement('pre');
+      pre.className = 'code-body';
+      pre.textContent = b.query;
+      blk.appendChild(pre);
+
+      b.annotations.forEach(a => {
+        const an = document.createElement('div');
+        an.className = 'query-block-note';
+        an.textContent = a;
+        blk.appendChild(an);
+      });
+
+      wrap.appendChild(blk);
+    });
     return wrap;
   }
 
