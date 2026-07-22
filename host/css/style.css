@@ -317,3 +317,54 @@ mark{background:rgba(210,153,34,.3);color:var(--text);border-radius:2px;padding:
 .copy-btn-sm { font-size: 9px; padding: 1px 7px; }
 .query-block-note { font-size: 10px; color: var(--text3); font-style: italic;
   padding: 4px 10px 8px; line-height: 1.5; }
+
+/* ---- environment profile ----------------------------------------------
+   Senior authors the profile, junior inherits it. Unmapped variables are
+   deliberately loud: a query pasted with $MPNET still in it returns zero
+   hits, which reads as a clean network. */
+.env-btn { background: var(--bg3); color: var(--text2); border: 1px solid var(--border);
+  border-radius: 5px; font-family: var(--mono); font-size: 10px; padding: 4px 9px;
+  cursor: pointer; white-space: nowrap; }
+.env-btn:hover { color: var(--text); border-color: var(--accent); }
+.env-badge { font-family: var(--mono); font-size: 9px; background: var(--bg2);
+  color: var(--text3); border-radius: 9px; padding: 0 5px; margin-left: 4px; }
+.env-badge.on { background: var(--phosphor); color: #000; }
+.env-unmapped { font-family: var(--mono); font-size: 9px; color: var(--amber);
+  border: 1px solid var(--amber); border-radius: 3px; padding: 0 5px;
+  margin-left: auto; margin-right: 8px; cursor: help; }
+.env-panel { display: none; position: fixed; top: 0; right: 0; bottom: 0; width: 480px;
+  max-width: 92vw; background: var(--bg2); border-left: 1px solid var(--border);
+  overflow-y: auto; z-index: 90; box-shadow: -8px 0 24px rgba(0,0,0,.45); }
+.env-panel.open { display: block; }
+.env-inner { padding: 16px 18px 40px; }
+.env-top { border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
+.env-title { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); }
+.env-stat { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 5px; }
+.env-toggle { display: flex; align-items: center; gap: 6px; margin-top: 10px;
+  font-size: 11px; color: var(--text2); cursor: pointer; }
+.env-sec { margin-bottom: 18px; }
+.env-sec-head { font-family: var(--mono); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em; color: var(--accent);
+  margin-bottom: 4px; }
+.env-sec-policy .env-sec-head { color: var(--amber); }
+.env-sec-suricata .env-sec-head { color: var(--text3); }
+.env-sec-hint { font-size: 10px; color: var(--text3); line-height: 1.6; margin-bottom: 10px; }
+.env-sec-policy .env-sec-hint { border-left: 2px solid var(--amber); padding-left: 8px; }
+.env-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.env-var { flex: 0 0 45%; min-width: 0; }
+.env-var-name { display: block; font-family: var(--mono); font-size: 11px; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; }
+.env-var-use { display: block; font-family: var(--mono); font-size: 9px; color: var(--text3); }
+.env-input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-family: var(--mono); font-size: 11px;
+  padding: 5px 7px; }
+.env-input:focus { outline: none; border-color: var(--accent); }
+.env-suri { flex: 1; font-family: var(--mono); font-size: 10px; color: var(--text3); font-style: italic; }
+.env-src { font-family: var(--mono); font-size: 9px; color: var(--phosphor);
+  border: 1px solid var(--phosphor); border-radius: 3px; padding: 0 4px; cursor: help; }
+.env-actions { display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid var(--border);
+  padding-top: 12px; }
+.env-act { background: var(--bg3); color: var(--text2); border: 1px solid var(--border);
+  border-radius: 4px; font-family: var(--mono); font-size: 10px; padding: 5px 9px; cursor: pointer; }
+.env-act:hover { color: var(--text); border-color: var(--accent); }
+.env-act.env-danger { color: var(--red); border-color: var(--red); }

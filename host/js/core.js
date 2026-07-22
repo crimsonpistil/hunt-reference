@@ -212,15 +212,15 @@ function buildRow(row, techId, rowId) {
   });
   bar.querySelector('.qt-y').addEventListener('click', e => {
     e.stopPropagation();
-    copyText(row.sysmon, e.target);
+    copyText(envApply(row.sysmon, 'sysmon').text, e.target);
   });
   bar.querySelector('.qt-k').addEventListener('click', e => {
     e.stopPropagation();
-    copyText(row.kibana, e.target);
+    copyText(envApply(row.kibana, 'kibana').text, e.target);
   });
   bar.querySelector('.qt-p').addEventListener('click', e => {
     e.stopPropagation();
-    copyText(row.powershell, e.target);
+    copyText(envApply(row.powershell, 'powershell').text, e.target);
   });
   bar.addEventListener('click', () => el.classList.toggle('open'));
 
@@ -271,6 +271,19 @@ function buildRow(row, techId, rowId) {
   // Returns null when there is nothing to split, so single-query
   // fields render exactly as before.
   // ---------------------------------------------------------------
+
+  // ---------------------------------------------------------------
+  // Environment profile substitution.
+  // Arkime/Kibana queries get $VARIABLES replaced from the saved profile;
+  // Suricata rules are left alone because Suricata resolves its own vars.
+  // Unmapped variables are surfaced loudly: a query pasted with $MPNET still
+  // in it returns zero hits, which reads as a clean network.
+  // ---------------------------------------------------------------
+  function envApply(text, field) {
+    if (!window.TonkEnv) return { text: text, unmapped: [] };
+    return window.TonkEnv.substitute(text, field);
+  }
+
   function splitBlocks(text) {
     if (!text || text.indexOf('//') === -1) return null;
     const blocks = [];
@@ -301,11 +314,21 @@ function buildRow(row, techId, rowId) {
     return usable.length > 1 ? usable : null;
   }
 
-  function codePanel(langCls, langLabel, content) {
+  function codePanel(langCls, langLabel, content, envField) {
+    var _env = envApply(content, envField);
+    content = _env.text;
     const wrap = document.createElement('div');
     wrap.className = 'code-wrap';
     wrap.innerHTML = `<div class="code-hdr"><span class="code-lang ${langCls}">${langLabel}</span></div>`;
     const hdr = wrap.querySelector('.code-hdr');
+    if (_env.unmapped && _env.unmapped.length) {
+      const warn = document.createElement('span');
+      warn.className = 'env-unmapped';
+      warn.textContent = '\u26a0 ' + _env.unmapped.length + ' unmapped';
+      warn.title = 'Not mapped in the environment profile: ' + _env.unmapped.join(', ')
+                 + '\nThis query will not return what you expect until they are set.';
+      hdr.appendChild(warn);
+    }
 
     const blocks = splitBlocks(content);
 
@@ -370,9 +393,9 @@ function buildRow(row, techId, rowId) {
 
   // panels
   const panels = {
-    'sys': codePanel('l-sys', isLinux ? 'Sysmon for Linux Event' : 'Sysmon Event', row.sysmon),
-    'kib': codePanel('l-kib', 'Kibana KQL',      row.kibana),
-    'ps':  codePanel('l-ps',  isLinux ? 'Auditd / Shell Hunt' : 'PowerShell Hunt',  row.powershell),
+    'sys': codePanel('l-sys', isLinux ? 'Sysmon for Linux Event' : 'Sysmon Event', row.sysmon, 'sysmon'),
+    'kib': codePanel('l-kib', 'Kibana KQL',      row.kibana, 'kibana'),
+    'ps':  codePanel('l-ps',  isLinux ? 'Auditd / Shell Hunt' : 'PowerShell Hunt',  row.powershell, 'powershell'),
     'reg': (() => { const d = document.createElement('div'); d.className = 'notes-body'; d.textContent = row.registry || (isLinux ? '(no file artifacts documented)' : '(no registry/file artifacts documented)'); return d; })(),
     'tool': (() => { const d = document.createElement('div'); d.className = 'notes-body'; d.textContent = row.tools || '(no adversary tools documented)'; return d; })(),
     'oss': (() => { const d = document.createElement('div'); d.className = 'notes-body'; d.textContent = row.ossdetect || '(no open-source detections documented)'; return d; })(),
@@ -547,7 +570,7 @@ function exportSelected() {
     const entry = rowRegistry[rowId];
     if (!entry) return;
     const { row, techId } = entry;
-    out += `[${techId}] ${row.indicator}\n${'-'.repeat(50)}\nSYSMON:\n${row.sysmon}\n\nKIBANA:\n${row.kibana}\n\nPOWERSHELL:\n${row.powershell}\n\nREGISTRY/ARTIFACTS:\n${row.registry || '(none)'}\n\nTOOLS:\n${row.tools || '(none)'}\n\nOSS DETECTIONS:\n${row.ossdetect || '(none)'}\n\nNOTES:\n${row.notes}\n\n${'='.repeat(60)}\n\n`;
+    out += `[${techId}] ${row.indicator}\n${'-'.repeat(50)}\nSYSMON:\n${row.sysmon}\n\nKIBANA:\n${envApply(row.kibana,'kibana').text}\n\nPOWERSHELL:\n${row.powershell}\n\nREGISTRY/ARTIFACTS:\n${row.registry || '(none)'}\n\nTOOLS:\n${row.tools || '(none)'}\n\nOSS DETECTIONS:\n${row.ossdetect || '(none)'}\n\nNOTES:\n${row.notes}\n\n${'='.repeat(60)}\n\n`;
   });
   download(out, 'selected_indicators.txt', 'text/plain');
 }
@@ -687,7 +710,7 @@ function exportHunt(fmt) {
       const r = getRow(rowId);
       if (!r) return;
       const ts = item.addedAt ? new Date(item.addedAt).toISOString() : '';
-      csv += [i+1, ts, item.severity.toUpperCase(), item.techId, r.indicator, r.sysmon, r.kibana, r.powershell, r.registry||'', r.tools||'', r.ossdetect||'', r.notes].map(q).join(',') + '\n';
+      csv += [i+1, ts, item.severity.toUpperCase(), item.techId, r.indicator, r.sysmon, envApply(r.kibana,'kibana').text, r.powershell, r.registry||'', r.tools||'', r.ossdetect||'', r.notes].map(q).join(',') + '\n';
     });
     download(csv, 'hunt_package.csv', 'text/csv');
   } else {
@@ -697,7 +720,7 @@ function exportHunt(fmt) {
       const r = getRow(rowId);
       if (!r) return;
       const ts = item.addedAt ? new Date(item.addedAt).toLocaleString() : 'unknown';
-      out += `[${i+1}] [${item.severity.toUpperCase()}] ${item.techId} - ${r.indicator}\nAdded: ${ts}\n${'-'.repeat(50)}\nSYSMON:\n${r.sysmon}\n\nKIBANA:\n${r.kibana}\n\nPOWERSHELL:\n${r.powershell}\n\nREGISTRY/ARTIFACTS:\n${r.registry || '(none)'}\n\nTOOLS:\n${r.tools || '(none)'}\n\nOSS DETECTIONS:\n${r.ossdetect || '(none)'}\n\nNOTES:\n${r.notes}\n\n${'='.repeat(60)}\n\n`;
+      out += `[${i+1}] [${item.severity.toUpperCase()}] ${item.techId} - ${r.indicator}\nAdded: ${ts}\n${'-'.repeat(50)}\nSYSMON:\n${r.sysmon}\n\nKIBANA:\n${envApply(r.kibana,'kibana').text}\n\nPOWERSHELL:\n${r.powershell}\n\nREGISTRY/ARTIFACTS:\n${r.registry || '(none)'}\n\nTOOLS:\n${r.tools || '(none)'}\n\nOSS DETECTIONS:\n${r.ossdetect || '(none)'}\n\nNOTES:\n${r.notes}\n\n${'='.repeat(60)}\n\n`;
     });
     download(out, 'hunt_package.txt', 'text/plain');
   }

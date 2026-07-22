@@ -266,16 +266,16 @@ function buildRow(row, techId, rowId) {
   if (row.arkime) {
     bar.querySelector('.qt-a').addEventListener('click', e => {
       e.stopPropagation();
-      copyText(row.arkime, e.target);
+      copyText(envApply(row.arkime, 'arkime').text, e.target);
     });
   }
   bar.querySelector('.qt-k').addEventListener('click', e => {
     e.stopPropagation();
-    copyText(row.kibana, e.target);
+    copyText(envApply(row.kibana, 'kibana').text, e.target);
   });
   bar.querySelector('.qt-s').addEventListener('click', e => {
     e.stopPropagation();
-    copyText(row.suricata, e.target);
+    copyText(envApply(row.suricata, 'suricata').text, e.target);
   });
   bar.addEventListener('click', () => el.classList.toggle('open'));
 
@@ -327,6 +327,19 @@ function buildRow(row, techId, rowId) {
   // Returns null when there is nothing to split, so single-query
   // fields render exactly as before.
   // ---------------------------------------------------------------
+
+  // ---------------------------------------------------------------
+  // Environment profile substitution.
+  // Arkime/Kibana queries get $VARIABLES replaced from the saved profile;
+  // Suricata rules are left alone because Suricata resolves its own vars.
+  // Unmapped variables are surfaced loudly: a query pasted with $MPNET still
+  // in it returns zero hits, which reads as a clean network.
+  // ---------------------------------------------------------------
+  function envApply(text, field) {
+    if (!window.TonkEnv) return { text: text, unmapped: [] };
+    return window.TonkEnv.substitute(text, field);
+  }
+
   function splitBlocks(text) {
     if (!text || text.indexOf('//') === -1) return null;
     const blocks = [];
@@ -357,11 +370,21 @@ function buildRow(row, techId, rowId) {
     return usable.length > 1 ? usable : null;
   }
 
-  function codePanel(langCls, langLabel, content) {
+  function codePanel(langCls, langLabel, content, envField) {
+    var _env = envApply(content, envField);
+    content = _env.text;
     const wrap = document.createElement('div');
     wrap.className = 'code-wrap';
     wrap.innerHTML = `<div class="code-hdr"><span class="code-lang ${langCls}">${langLabel}</span></div>`;
     const hdr = wrap.querySelector('.code-hdr');
+    if (_env.unmapped && _env.unmapped.length) {
+      const warn = document.createElement('span');
+      warn.className = 'env-unmapped';
+      warn.textContent = '\u26a0 ' + _env.unmapped.length + ' unmapped';
+      warn.title = 'Not mapped in the environment profile: ' + _env.unmapped.join(', ')
+                 + '\nThis query will not return what you expect until they are set.';
+      hdr.appendChild(warn);
+    }
 
     const blocks = splitBlocks(content);
 
@@ -426,9 +449,9 @@ function buildRow(row, techId, rowId) {
 
   // panels - only build ark panel if row has an arkime query
   const panels = {
-    ...(row.arkime ? { 'ark': codePanel('l-ark', 'Arkime SPI/Search', row.arkime) } : {}),
-    'kib': codePanel('l-kib', 'Kibana KQL',        row.kibana),
-    'sur': codePanel('l-sur', 'Suricata Rule',     row.suricata),
+    ...(row.arkime ? { 'ark': codePanel('l-ark', 'Arkime SPI/Search', row.arkime, 'arkime') } : {}),
+    'kib': codePanel('l-kib', 'Kibana KQL',        row.kibana, 'kibana'),
+    'sur': codePanel('l-sur', 'Suricata Rule',     row.suricata, 'suricata'),
     'not': (() => { const d = document.createElement('div'); d.className = 'notes-body'; d.textContent = displayNotes(row); return d; })(),
     'apt': (() => {
       const d = document.createElement('div');
@@ -606,7 +629,7 @@ function exportSelected() {
     const entry = rowRegistry[rowId];
     if (!entry) return;
     const { row, techId } = entry;
-    out += `[${techId}] ${displayIndicator(row)}\n${'-'.repeat(50)}\n${row.arkime ? `ARKIME:\n${row.arkime}\n\n` : ''}KIBANA:\n${row.kibana}\n\nSURICATA:\n${row.suricata}\n\nNOTES:\n${displayNotes(row)}\n\n${'='.repeat(60)}\n\n`;
+    out += `[${techId}] ${displayIndicator(row)}\n${'-'.repeat(50)}\n${row.arkime ? `ARKIME:\n${envApply(row.arkime,'arkime').text}\n\n` : ''}KIBANA:\n${envApply(row.kibana,'kibana').text}\n\nSURICATA:\n${row.suricata}\n\nNOTES:\n${displayNotes(row)}\n\n${'='.repeat(60)}\n\n`;
   });
   download(out, 'selected_indicators.txt', 'text/plain');
 }
@@ -746,7 +769,7 @@ function exportHunt(fmt) {
       const r = getRow(rowId);
       if (!r) return;
       const ts = item.addedAt ? new Date(item.addedAt).toISOString() : '';
-      csv += [i+1, ts, item.severity.toUpperCase(), item.techId, displayIndicator(r), r.arkime, r.kibana, r.suricata, displayNotes(r)].map(q).join(',') + '\n';
+      csv += [i+1, ts, item.severity.toUpperCase(), item.techId, displayIndicator(r), envApply(r.arkime,'arkime').text, envApply(r.kibana,'kibana').text, r.suricata, displayNotes(r)].map(q).join(',') + '\n';
     });
     download(csv, 'hunt_package.csv', 'text/csv');
   } else {
@@ -756,7 +779,7 @@ function exportHunt(fmt) {
       const r = getRow(rowId);
       if (!r) return;
       const ts = item.addedAt ? new Date(item.addedAt).toLocaleString() : 'unknown';
-      out += `[${i+1}] [${item.severity.toUpperCase()}] ${item.techId} - ${displayIndicator(r)}\nAdded: ${ts}\n${'-'.repeat(50)}\n${r.arkime ? `ARKIME:\n${r.arkime}\n\n` : ''}KIBANA:\n${r.kibana}\n\nSURICATA:\n${r.suricata}\n\nNOTES:\n${displayNotes(r)}\n\n${'='.repeat(60)}\n\n`;
+      out += `[${i+1}] [${item.severity.toUpperCase()}] ${item.techId} - ${displayIndicator(r)}\nAdded: ${ts}\n${'-'.repeat(50)}\n${r.arkime ? `ARKIME:\n${envApply(r.arkime,'arkime').text}\n\n` : ''}KIBANA:\n${envApply(r.kibana,'kibana').text}\n\nSURICATA:\n${r.suricata}\n\nNOTES:\n${displayNotes(r)}\n\n${'='.repeat(60)}\n\n`;
     });
     download(out, 'hunt_package.txt', 'text/plain');
   }
