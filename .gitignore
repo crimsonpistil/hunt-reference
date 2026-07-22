@@ -1,0 +1,12 @@
+# Python bytecode from .tools/ scripts
+__pycache__/
+*.pyc
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Generated Sigma ruleset. Regenerate with:
+#   python3 .tools/sigma-export.py
+# Uncomment the next line if you stop committing the generated rules.
+# sigma/

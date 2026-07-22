@@ -155,12 +155,19 @@
      unmapped variable pasted into Kibana returns zero hits, which reads as a
      clean network - the single worst failure mode this feature can have.
   */
+  /*
+     Fields that are genuinely queries pasted into a search bar. Everything
+     else (Suricata rules, Sysmon config, PowerShell/bash hunt scripts) is
+     left untouched: Suricata resolves its own variables, and the script
+     fields contain LOCAL shell variables ($BASELINE, $HAVE_RPM, $BINS,
+     $LASTEXITCODE ...) that would be corrupted by substitution.
+  */
+  var SUBSTITUTABLE = ['arkime', 'kibana'];
+
   function substitute(text, field) {
     var out = { text: text, unmapped: [], mapped: [] };
     if (typeof text !== 'string' || !text) return out;
-    if (field === 'suricata') {            // Suricata resolves its own vars
-      return out;
-    }
+    if (field && SUBSTITUTABLE.indexOf(field) === -1) return out;
     if (!isOn()) {
       (text.match(VAR_RE) || []).forEach(function (n) {
         if (classify(n) === 'ignore') return;
